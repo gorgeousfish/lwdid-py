@@ -1,0 +1,26 @@
+include README.md
+include LICENSE
+include CITATION.cff
+include CHANGELOG.md
+include pytest.ini
+
+# Include data files
+recursive-include data *.csv
+
+# Include examples
+recursive-include examples *.py *.ipynb *.csv
+recursive-include examples/figures *.png
+
+# Include documentation
+recursive-include docs *.rst *.py *.txt *.yaml
+prune docs/_build
+
+# Include tests
+recursive-include tests *.py
+
+# Exclude development and build artifacts
+global-exclude *.pyc __pycache__ *.so *.dylib .DS_Store
+prune .pytest_cache
+prune htmlcov
+prune build
+prune dist

@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both the software and the paper."
+type: software
+title: "lwdid: Difference-in-Differences Estimator for Small Cross-Sectional Samples"
+version: 0.1.0
+date-released: 2025-11-25
+authors:
+  - family-names: Cai
+    given-names: Xuanyu
+    email: F23090105414@cityu.edu.mo
+    affiliation: City University of Macau
+    orcid: https://orcid.org/0009-0003-0980-8081
+  - family-names: Xu
+    given-names: Wenli
+    email: wlxu@cityu.edu.mo
+    affiliation: City University of Macau
+repository-code: "https://github.com/gorgeousfish/lwdid-py"
+url: "https://lwdid.readthedocs.io"
+abstract: >
+  Python implementation of the Lee & Wooldridge (2025) 
+  difference-in-differences estimator for small cross-sectional 
+  samples. Supports unit-specific demeaning and detrending 
+  transformations, quarterly data with seasonal effects, 
+  time-invariant controls, and randomization inference.
+keywords:
+  - difference-in-differences
+  - causal inference
+  - econometrics
+  - panel data
+  - small samples
+  - Python
+license: AGPL-3.0-or-later
+preferred-citation:
+  type: article
+  title: "Simple Approaches to Inference with Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes"
+  authors:
+    - family-names: Lee
+      given-names: Soo Jeong
+    - family-names: Wooldridge
+      given-names: Jeffrey M.
+  journal: ""
+  year: 2025
+  status: submitted
+  notes: "Available at [SSRN 5325686](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5325686). Please cite this paper when using the software."

@@ -1,0 +1,34 @@
+{
+  "title": "lwdid: Python Implementation of Lee & Wooldridge (2025) DID Estimator",
+  "description": "Python implementation of the Lee & Wooldridge (2025) difference-in-differences estimator for small cross-sectional samples. Supports unit-specific demeaning and detrending transformations, quarterly data with seasonal effects, time-invariant controls, and randomization inference.",
+  "creators": [
+    {
+      "name": "Cai, Xuanyu",
+      "affiliation": "City University of Macau",
+      "orcid": "0009-0003-0980-8081"
+    },
+    {
+      "name": "Xu, Wenli",
+      "affiliation": "City University of Macau"
+    }
+  ],
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "difference-in-differences",
+    "causal inference",
+    "econometrics",
+    "panel data",
+    "small samples",
+    "Python"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/gorgeousfish/lwdid-py",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ],
+  "upload_type": "software",
+  "access_right": "open"
+}
+
