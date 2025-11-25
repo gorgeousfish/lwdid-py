@@ -1,0 +1,1062 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exceptions Module (exceptions) &mdash; lwdid 0.1.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Methodological Notes" href="../methodological_notes.html" />
+    <link rel="prev" title="Visualization Module (visualization)" href="visualization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            lwdid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#system-requirements">System Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#installation-methods">Installation Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#install-via-pip-recommended">Install via pip (Recommended)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#install-from-source">Install from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#development-environment-setup">Development Environment Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#numpy-version-conflicts">numpy Version Conflicts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#statsmodels-installation-failure">statsmodels Installation Failure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#virtual-environment-recommended">Virtual Environment (Recommended)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#basic-example">Basic Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#simplest-usage">Simplest Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#output">Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#key-parameters">Key Parameters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#required-parameters">Required Parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#common-options">Common Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#heteroskedasticity-robust-standard-errors">Heteroskedasticity-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#adding-control-variables">Adding Control Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#quarterly-data">Quarterly Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#results-object">Results Object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#core-attributes">Core Attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#sample-information">Sample Information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#period-specific-effects">Period-Specific Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#methods">Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#data-format-requirements">Data Format Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#panel-data-structure">Panel Data Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#key-requirements">Key Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#transformation-methods">Transformation Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrend-did-with-unit-specific-linear-trends">detrend: DiD with Unit-Specific Linear Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demeanq-quarterly-data-with-seasonal-fixed-effects">demeanq: Quarterly Data with Seasonal Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrendq-quarterly-data-with-trends-and-seasonal-effects">detrendq: Quarterly Data with Trends and Seasonal Effects</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#variance-estimation">Variance Estimation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#ols-homoskedastic">OLS (Homoskedastic)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc1-heteroskedasticity-robust">HC1 (Heteroskedasticity-Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc3-small-sample-adjusted-robust">HC3 (Small-Sample Adjusted Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#cluster-robust">Cluster-Robust</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#randomization-inference">Randomization Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#ri-methods">RI Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#accessing-ri-results">Accessing RI Results</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#control-variables">Control Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#id1">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#effect-on-inference">Effect on Inference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#working-with-results">Working with Results</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#core-estimates">Core Estimates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#period-specific-effects">Period-Specific Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-information">Sample Information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#visualization">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#export-results">Export Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#print-summary">Print Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#data-requirements-and-validation">Data Requirements and Validation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#panel-structure">Panel Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#treatment-structure">Treatment Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#treatment-indicator">Treatment Indicator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#missing-data">Missing Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#common-errors">Common Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#performance-tips">Performance Tips</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#further-reading">Further Reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#basic-did-estimation">Basic DiD Estimation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#california-smoking-restriction">California Smoking Restriction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#robustness-checks">Robustness Checks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#quarterly-data">Quarterly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#retail-sales-with-seasonal-patterns">Retail Sales with Seasonal Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#control-variables">Control Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#including-baseline-characteristics">Including Baseline Characteristics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#cluster-robust-inference">Cluster-Robust Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#multi-level-data-structure">Multi-Level Data Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#randomization-inference">Randomization Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#non-parametric-testing">Non-Parametric Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#comparing-ri-methods">Comparing RI Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#diagnostic-checks">Diagnostic Checks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#testing-parallel-trends">Testing Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#sensitivity-analysis">Sensitivity Analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#export-and-reporting">Export and Reporting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#creating-publication-tables">Creating Publication Tables</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#complete-workflow-example">Complete Workflow Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#end-to-end-analysis">End-to-End Analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-modules">Core Modules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="core.html">Core Module (core)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="core.html#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#examples">Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="core.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="results.html">LWDIDResults Class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="results.html#lwdid.LWDIDResults"><code class="docutils literal notranslate"><span class="pre">LWDIDResults</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="results.html#examples">Examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="results.html#accessing-core-estimates">Accessing Core Estimates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#sample-information">Sample Information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#period-specific-effects">Period-Specific Effects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#randomization-inference-results">Randomization Inference Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#printing-summary">Printing Summary</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#visualization">Visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#exporting-results">Exporting Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#working-with-results-programmatically">Working with Results Programmatically</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="results.html#attributes-reference">Attributes Reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="results.html#core-estimates">Core Estimates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#id26">Sample Information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#period-specific-results">Period-Specific Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#randomization-inference">Randomization Inference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="results.html#methods-reference">Methods Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="results.html#see-also">See Also</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transformations.html">Transformations Module (transformations)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.apply_rolling_transform"><code class="docutils literal notranslate"><span class="pre">apply_rolling_transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.detrend_unit"><code class="docutils literal notranslate"><span class="pre">detrend_unit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.demeanq_unit"><code class="docutils literal notranslate"><span class="pre">demeanq_unit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.detrendq_unit"><code class="docutils literal notranslate"><span class="pre">detrendq_unit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#transformation-methods">Transformation Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#technical-notes">Technical Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="estimation.html">Estimation Module (estimation)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#lwdid.estimation.prepare_controls"><code class="docutils literal notranslate"><span class="pre">prepare_controls()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#lwdid.estimation.estimate_att"><code class="docutils literal notranslate"><span class="pre">estimate_att()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#lwdid.estimation.estimate_period_effects"><code class="docutils literal notranslate"><span class="pre">estimate_period_effects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#estimation-functions">Estimation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#variance-estimators">Variance Estimators</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#technical-notes">Technical Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="validation.html">Validation Module (validation)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#validation-checks">Validation Checks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#best-practices">Best Practices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="randomization.html">Randomization Module (randomization)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#lwdid.randomization.randomization_inference"><code class="docutils literal notranslate"><span class="pre">randomization_inference()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#how-randomization-inference-works">How Randomization Inference Works</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#ri-methods">RI Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#practical-considerations">Practical Considerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#interpreting-ri-results">Interpreting RI Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#limitations">Limitations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#examples">Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="visualization.html">Visualization Module (visualization)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#lwdid.visualization.prepare_plot_data"><code class="docutils literal notranslate"><span class="pre">prepare_plot_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#lwdid.visualization.plot_results"><code class="docutils literal notranslate"><span class="pre">plot_results()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#plot-components">Plot Components</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#advanced-customization">Advanced Customization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#exporting-plots">Exporting Plots</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#plot-parameters-reference">Plot Parameters Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#examples-gallery">Examples Gallery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Exceptions Module (exceptions)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.LWDIDError"><code class="docutils literal notranslate"><span class="pre">LWDIDError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.InvalidParameterError"><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.InvalidRollingMethodError"><code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.InvalidVCETypeError"><code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.InsufficientDataError"><code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.NoTreatedUnitsError"><code class="docutils literal notranslate"><span class="pre">NoTreatedUnitsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.NoControlUnitsError"><code class="docutils literal notranslate"><span class="pre">NoControlUnitsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.InsufficientPrePeriodsError"><code class="docutils literal notranslate"><span class="pre">InsufficientPrePeriodsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.InsufficientQuarterDiversityError"><code class="docutils literal notranslate"><span class="pre">InsufficientQuarterDiversityError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.TimeDiscontinuityError"><code class="docutils literal notranslate"><span class="pre">TimeDiscontinuityError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.MissingRequiredColumnError"><code class="docutils literal notranslate"><span class="pre">MissingRequiredColumnError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.RandomizationError"><code class="docutils literal notranslate"><span class="pre">RandomizationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exception-hierarchy">Exception Hierarchy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#exception-classes">Exception Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#error-handling-best-practices">Error Handling Best Practices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#common-error-scenarios">Common Error Scenarios</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#quick-index">Quick Index</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Advanced Topics</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../methodological_notes.html">Methodological Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#the-panel-to-cross-section-transformation">The Panel-to-Cross-Section Transformation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#core-principle">Core Principle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#demean-transformation-procedure-2-1">Demean Transformation (Procedure 2.1)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#detrend-transformation-procedure-3-1">Detrend Transformation (Procedure 3.1)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#quarterly-transformations">Quarterly Transformations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#inference-under-clm-assumptions">Inference Under CLM Assumptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#classical-linear-model-assumptions">Classical Linear Model Assumptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#degrees-of-freedom">Degrees of Freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#period-specific-effects">Period-Specific Effects</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#robust-inference">Robust Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#heteroskedasticity-robust-standard-errors">Heteroskedasticity-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#cluster-robust-standard-errors">Cluster-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#randomization-inference">Randomization Inference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#no-anticipation">No Anticipation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#parallel-trends">Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#common-treatment-timing">Common Treatment Timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#comparison-with-other-did-methods">Comparison with Other DiD Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#two-way-fixed-effects-twfe">Two-Way Fixed Effects (TWFE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#callaway-and-sant-anna-2021">Callaway and Sant’Anna (2021)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#when-to-use-this-method">When to Use This Method</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#practical-considerations">Practical Considerations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#sample-size-requirements">Sample Size Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#time-index-and-panel-structure">Time Index and Panel Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#pre-treatment-periods">Pre-Treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#control-variables">Control Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#computational-considerations">Computational Considerations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#references">References</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#authors">Authors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#further-reading">Further Reading</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../changelog.html#version-0-1-0">Version 0.1.0</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#how-to-contribute">How to Contribute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#development-setup">Development Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#code-standards">Code Standards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#reporting-issues">Reporting Issues</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">lwdid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API Reference</a></li>
+      <li class="breadcrumb-item active">Exceptions Module (exceptions)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/exceptions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="exceptions-module-exceptions">
+<h1>Exceptions Module (exceptions)<a class="headerlink" href="#exceptions-module-exceptions" title="Link to this heading"></a></h1>
+<p>The exceptions module defines custom exception classes for clear error reporting
+in the <code class="docutils literal notranslate"><span class="pre">lwdid</span></code> package.</p>
+<p id="module-lwdid.exceptions">Exception Classes Module</p>
+<p>Defines exception hierarchy for the lwdid package.</p>
+<p>Authors: Xuanyu Cai, Wenli Xu</p>
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.LWDIDError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">LWDIDError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#LWDIDError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.LWDIDError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#Exception" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></a></p>
+<p>Base exception class for all lwdid package errors.</p>
+<p>All custom exceptions in the lwdid package inherit from this class,
+allowing users to catch any lwdid-specific error with:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>try:</dt><dd><p>results = lwdid(…)</p>
+</dd>
+<dt>except LWDIDError as e:</dt><dd><p># Handle any lwdid error
+print(f”lwdid error: {e}”)</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.InvalidParameterError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">InvalidParameterError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#InvalidParameterError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.InvalidParameterError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.LWDIDError" title="lwdid.exceptions.LWDIDError"><code class="xref py py-class docutils literal notranslate"><span class="pre">LWDIDError</span></code></a></p>
+<p>Exception raised when input parameter validation fails.</p>
+<p>This is a general exception for invalid parameter values that do not
+fall into more specific categories. Common triggers include:</p>
+<ul class="simple">
+<li><p>Invalid data types for control variables</p></li>
+<li><p>Cluster variable specified without vce=’cluster’</p></li>
+<li><p>Other parameter constraint violations</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.exceptions.InvalidRollingMethodError" title="lwdid.exceptions.InvalidRollingMethodError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code></a></dt><dd><p>For invalid rolling method values.</p>
+</dd>
+<dt><a class="reference internal" href="#lwdid.exceptions.InvalidVCETypeError" title="lwdid.exceptions.InvalidVCETypeError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code></a></dt><dd><p>For invalid variance estimator types.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.InvalidRollingMethodError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">InvalidRollingMethodError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#InvalidRollingMethodError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.InvalidRollingMethodError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.InvalidParameterError" title="lwdid.exceptions.InvalidParameterError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></p>
+<p>Exception raised when the rolling parameter has an invalid value.</p>
+<p>The rolling parameter must be one of: ‘demean’, ‘detrend’, ‘demeanq’, ‘detrendq’.
+This exception is raised during input validation if an unsupported method is specified.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;invalid_method&#39;</span><span class="p">)</span>
+<span class="go">InvalidRollingMethodError: rolling must be one of [&#39;demean&#39;, &#39;detrend&#39;, &#39;demeanq&#39;, &#39;detrendq&#39;]</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.validation._validate_rolling_parameter</span></code></dt><dd><p>Function that performs this validation.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.InvalidVCETypeError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">InvalidVCETypeError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#InvalidVCETypeError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.InvalidVCETypeError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.InvalidParameterError" title="lwdid.exceptions.InvalidParameterError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></p>
+<p>Exception raised when the vce parameter has an invalid value.</p>
+<p>The vce parameter must be one of: None, ‘robust’, ‘hc1’, ‘hc3’, ‘cluster’.
+This exception is raised during estimation if an unsupported variance
+estimator type is specified.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;invalid_vce&#39;</span><span class="p">)</span>
+<span class="go">InvalidVCETypeError: vce must be one of [None, &#39;robust&#39;, &#39;hc1&#39;, &#39;hc3&#39;, &#39;cluster&#39;]</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="estimation.html#lwdid.estimation.estimate_att" title="lwdid.estimation.estimate_att"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.estimation.estimate_att</span></code></a></dt><dd><p>Function that validates vce parameter.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.InsufficientDataError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">InsufficientDataError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#InsufficientDataError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.InsufficientDataError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.LWDIDError" title="lwdid.exceptions.LWDIDError"><code class="xref py py-class docutils literal notranslate"><span class="pre">LWDIDError</span></code></a></p>
+<p>Exception raised when sample size is insufficient for estimation.</p>
+<p>This is a general exception for data insufficiency issues. More specific
+subclasses indicate the exact nature of the insufficiency (e.g., no treated
+units, no control units, insufficient pre-periods).</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.exceptions.NoTreatedUnitsError" title="lwdid.exceptions.NoTreatedUnitsError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NoTreatedUnitsError</span></code></a></dt><dd><p>No units with treatment indicator d=1.</p>
+</dd>
+<dt><a class="reference internal" href="#lwdid.exceptions.NoControlUnitsError" title="lwdid.exceptions.NoControlUnitsError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NoControlUnitsError</span></code></a></dt><dd><p>No units with treatment indicator d=0.</p>
+</dd>
+<dt><a class="reference internal" href="#lwdid.exceptions.InsufficientPrePeriodsError" title="lwdid.exceptions.InsufficientPrePeriodsError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">InsufficientPrePeriodsError</span></code></a></dt><dd><p>Insufficient pre-treatment periods.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.NoTreatedUnitsError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">NoTreatedUnitsError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#NoTreatedUnitsError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.NoTreatedUnitsError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.InsufficientDataError" title="lwdid.exceptions.InsufficientDataError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></p>
+<p>Exception raised when there are no treated units in the data.</p>
+<p>This occurs when all units have treatment indicator d=0. At least one
+treated unit (d=1) is required for difference-in-differences estimation.</p>
+<p>Trigger condition: N_treated = 0 (no units with d=1 over the panel or in
+the main regression sample).</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.NoControlUnitsError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">NoControlUnitsError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#NoControlUnitsError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.NoControlUnitsError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.InsufficientDataError" title="lwdid.exceptions.InsufficientDataError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></p>
+<p>Exception raised when there are no control units in the data.</p>
+<p>This occurs when all units have treatment indicator d=1. At least one
+control unit (d=0) is required for difference-in-differences estimation.</p>
+<p>Trigger condition: N_control = 0 (no units with d=0 over the panel or in
+the main regression sample).</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.InsufficientPrePeriodsError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">InsufficientPrePeriodsError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#InsufficientPrePeriodsError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.InsufficientPrePeriodsError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.InsufficientDataError" title="lwdid.exceptions.InsufficientDataError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></p>
+<p>Exception raised when pre-treatment periods are insufficient.</p>
+<p>Raised when the number of pre-treatment periods is too small for the chosen
+rolling transformation. Different methods have different minimum global and
+unit-level requirements:</p>
+<ul class="simple">
+<li><p>demean: Each unit must have at least 1 pre-treatment observation.</p></li>
+<li><p>detrend: (i) The panel must contain at least 2 pre-treatment periods in total
+(T0 &gt;= 2); and (ii) Each unit must have at least 2 pre-treatment observations
+so that a unit-specific linear trend can be estimated.</p></li>
+<li><p>demeanq: (i) The panel must contain at least 1 pre-treatment period in total
+(T0 &gt;= 1); (ii) Each unit must have at least 1 pre-treatment observation; and
+(iii) For each unit, the number of pre-treatment observations must be at least
+the number of distinct pre-period quarters plus one, <code class="docutils literal notranslate"><span class="pre">n_pre</span> <span class="pre">&gt;=</span> <span class="pre">(#quarters_pre</span> <span class="pre">+</span> <span class="pre">1)</span></code>,
+to ensure positive degrees of freedom when estimating quarterly fixed effects.</p></li>
+<li><p>detrendq: (i) The panel must contain at least 2 pre-treatment periods in total
+(T0 &gt;= 2); (ii) Each unit must have at least 2 pre-treatment observations; and
+(iii) For each unit, the number of pre-treatment observations must be at least
+1 plus the number of distinct pre-period quarters, <code class="docutils literal notranslate"><span class="pre">n_pre</span> <span class="pre">&gt;=</span> <span class="pre">(1</span> <span class="pre">+</span> <span class="pre">#quarters_pre)</span></code>,
+to avoid rank deficiency when estimating a linear trend with quarterly effects.</p></li>
+</ul>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="transformations.html#lwdid.transformations.apply_rolling_transform" title="lwdid.transformations.apply_rolling_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.transformations.apply_rolling_transform</span></code></a></dt><dd><p>Applies rolling transformations and enforces pre-period requirements.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.InsufficientQuarterDiversityError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">InsufficientQuarterDiversityError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#InsufficientQuarterDiversityError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.InsufficientQuarterDiversityError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.InsufficientDataError" title="lwdid.exceptions.InsufficientDataError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></p>
+<p>Exception raised when quarterly data requirements are not met.</p>
+<p>In the current <code class="docutils literal notranslate"><span class="pre">lwdid()</span></code> workflow this exception is raised for
+quarterly methods (<code class="docutils literal notranslate"><span class="pre">demeanq</span></code>/<code class="docutils literal notranslate"><span class="pre">detrendq</span></code>) when <strong>quarter coverage is
+insufficient</strong>: post-treatment periods contain quarter(s) that do not appear
+in the pre-treatment period for a given unit, so seasonal effects for those
+quarters cannot be estimated from pre-treatment data.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_coverage" title="lwdid.validation.validate_quarter_coverage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.validation.validate_quarter_coverage</span></code></a></dt><dd><p>Quarter coverage validation.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.TimeDiscontinuityError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">TimeDiscontinuityError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#TimeDiscontinuityError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.TimeDiscontinuityError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.LWDIDError" title="lwdid.exceptions.LWDIDError"><code class="xref py py-class docutils literal notranslate"><span class="pre">LWDIDError</span></code></a></p>
+<p>Exception raised when time series is discontinuous or post variable is non-monotone.</p>
+<p>This exception is raised in two scenarios:</p>
+<ol class="arabic">
+<li><p><strong>Time index discontinuity</strong>:
+The time index (tindex) has gaps, meaning there are missing periods in
+the sequence.</p>
+<p>Example: If the data contains years 2000, 2001, and 2003 but is missing
+2002, this creates a gap that violates the continuity assumption.</p>
+</li>
+<li><p><strong>Post variable non-monotonicity</strong>:
+The post-treatment indicator is not monotone non-decreasing in time,
+suggesting that the policy was reversed or suspended.</p>
+<p>Example: If post=0 in period 1, post=1 in period 2, and post=0 again in
+period 3, this indicates policy reversal which is not supported by the method.</p>
+</li>
+</ol>
+<p>Both scenarios violate the assumptions of the Lee and Wooldridge (2025) method
+and will cause estimation to fail or produce incorrect results.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.validation._validate_time_continuity</span></code></dt><dd><p>Function that performs these checks.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.MissingRequiredColumnError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">MissingRequiredColumnError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#MissingRequiredColumnError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.MissingRequiredColumnError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.LWDIDError" title="lwdid.exceptions.LWDIDError"><code class="xref py py-class docutils literal notranslate"><span class="pre">LWDIDError</span></code></a></p>
+<p>Exception raised when input DataFrame is missing required columns.</p>
+<p>Required columns depend on the function call but typically include:</p>
+<ul class="simple">
+<li><p>y: Outcome variable</p></li>
+<li><p>d: Treatment indicator</p></li>
+<li><p>ivar: Unit identifier</p></li>
+<li><p>tvar: Time variable (single column or list of [year, quarter])</p></li>
+<li><p>post: Post-treatment indicator</p></li>
+<li><p>controls: Control variables (if specified)</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+<span class="go">MissingRequiredColumnError: Required column &#39;outcome&#39; not found in data</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.validation._validate_required_columns</span></code></dt><dd><p>Function that performs this check.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.RandomizationError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">RandomizationError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#RandomizationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.RandomizationError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.LWDIDError" title="lwdid.exceptions.LWDIDError"><code class="xref py py-class docutils literal notranslate"><span class="pre">LWDIDError</span></code></a></p>
+<p>Exception raised when randomization inference (RI) fails.</p>
+<p>Trigger conditions include:</p>
+<ul class="simple">
+<li><p>rireps &lt;= 0 (invalid number of replications)</p></li>
+<li><p>firstpost_df missing required columns (<code class="docutils literal notranslate"><span class="pre">ydot_postavg</span></code>, <code class="docutils literal notranslate"><span class="pre">d_</span></code> (treatment indicator))</p></li>
+<li><p>Sample too small (N &lt; 3, insufficient for resampling)</p></li>
+<li><p>Invalid ri_method</p></li>
+<li><p>Number of valid RI replications too small relative to rireps
+(insufficient valid draws for reliable inference)</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">ri</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rireps</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="go">RandomizationError: rireps must be positive, got 0</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="randomization.html#lwdid.randomization.randomization_inference" title="lwdid.randomization.randomization_inference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.randomization.randomization_inference</span></code></a></dt><dd><p>Function that performs RI.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="lwdid.exceptions.VisualizationError">
+<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lwdid.exceptions.</span></span><span class="sig-name descname"><span class="pre">VisualizationError</span></span><a class="reference internal" href="../_modules/lwdid/exceptions.html#VisualizationError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.exceptions.VisualizationError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lwdid.exceptions.LWDIDError" title="lwdid.exceptions.LWDIDError"><code class="xref py py-class docutils literal notranslate"><span class="pre">LWDIDError</span></code></a></p>
+<p>Exception raised for visualization-related errors.</p>
+<p>Trigger conditions include:</p>
+<ul class="simple">
+<li><p>Plot data missing required columns (for example, <code class="docutils literal notranslate"><span class="pre">ydot</span></code>, <code class="docutils literal notranslate"><span class="pre">d_</span></code> (treatment indicator), <code class="docutils literal notranslate"><span class="pre">tindex</span></code>)</p></li>
+<li><p>Missing plotting backend (matplotlib not installed)</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>  <span class="c1"># in an environment without matplotlib installed</span>
+<span class="go">VisualizationError: Install required dependencies: matplotlib&gt;=3.3.</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="visualization.html#lwdid.visualization.plot_results" title="lwdid.visualization.plot_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.visualization.plot_results</span></code></a></dt><dd><p>Function that generates plots.</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid.results.LWDIDResults.plot</span></code></dt><dd><p>Method that calls plot_results.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The package uses custom exceptions to provide informative error messages when
+data or parameters do not meet requirements. All custom exceptions inherit from
+<code class="docutils literal notranslate"><span class="pre">LWDIDError</span></code>, making it easy to catch all package-specific errors.</p>
+</section>
+<section id="exception-hierarchy">
+<h2>Exception Hierarchy<a class="headerlink" href="#exception-hierarchy" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>LWDIDError (base class)
+├── InvalidParameterError
+│   ├── InvalidRollingMethodError
+│   └── InvalidVCETypeError
+├── InsufficientDataError
+│   ├── NoTreatedUnitsError
+│   ├── NoControlUnitsError
+│   ├── InsufficientPrePeriodsError
+│   └── InsufficientQuarterDiversityError
+├── TimeDiscontinuityError
+├── MissingRequiredColumnError
+├── RandomizationError
+└── VisualizationError
+</pre></div>
+</div>
+</section>
+<section id="exception-classes">
+<h2>Exception Classes<a class="headerlink" href="#exception-classes" title="Link to this heading"></a></h2>
+<section id="lwdiderror">
+<h3>LWDIDError<a class="headerlink" href="#lwdiderror" title="Link to this heading"></a></h3>
+<p><strong>Base class</strong> for all lwdid exceptions.</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">LWDIDError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">LWDIDError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LWDID error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>When raised:</strong> Never raised directly; use specific subclasses.</p>
+</section>
+<section id="insufficientdataerror">
+<h3>InsufficientDataError<a class="headerlink" href="#insufficientdataerror" title="Link to this heading"></a></h3>
+<p><strong>Raised when:</strong> Data does not meet minimum sample size or period requirements.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Too few units (N &lt; 3)</p></li>
+<li><p>Insufficient pre-treatment periods for chosen transformation</p></li>
+<li><p>No post-treatment periods</p></li>
+<li><p>Empty dataset after filtering</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InsufficientDataError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">InsufficientDataError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Insufficient data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Use different transformation or collect more data</span>
+</pre></div>
+</div>
+<p><strong>Typical error messages:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InsufficientPrePeriodsError: Insufficient pre-treatment periods for &#39;detrend&#39;.
+All units must have at least 2 pre-treatment periods (T0 &gt;= 2).
+Found units with fewer periods: [&#39;unit_3&#39;, &#39;unit_7&#39;]
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InsufficientDataError: Sample size too small.
+Need at least 3 units for estimation, found 2.
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InsufficientDataError: No post-treatment periods found.
+The &#39;post&#39; variable is 0 for all observations.
+</pre></div>
+</div>
+</section>
+<section id="invalidparametererror">
+<h3>InvalidParameterError<a class="headerlink" href="#invalidparametererror" title="Link to this heading"></a></h3>
+<p><strong>Raised when:</strong> Input parameter validation fails.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Invalid <code class="docutils literal notranslate"><span class="pre">rolling</span></code> method name (see <code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code>)</p></li>
+<li><p>Invalid <code class="docutils literal notranslate"><span class="pre">vce</span></code> option (see <code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cluster_var</span></code> missing or incompatible when <code class="docutils literal notranslate"><span class="pre">vce='cluster'</span></code></p></li>
+<li><p>Treatment indicator or controls not time-invariant</p></li>
+<li><p>Non-numeric outcome or control variables</p></li>
+<li><p>Time variables not convertible to valid numeric year/quarter values</p></li>
+</ul>
+<p><strong>Typical error messages (illustrative):</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InvalidParameterError: rolling() must be one of: demean, detrend, demeanq, detrendq. Got: &#39;invalid_method&#39;
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InvalidParameterError: vce=&#39;cluster&#39; requires cluster_var parameter to be specified.
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InvalidParameterError: Treatment indicator &#39;d&#39; must be time-invariant (constant within each unit).
+</pre></div>
+</div>
+</section>
+<section id="invalidrollingmethoderror">
+<h3>InvalidRollingMethodError<a class="headerlink" href="#invalidrollingmethoderror" title="Link to this heading"></a></h3>
+<p>Specialized subclass of <a class="reference internal" href="#lwdid.exceptions.InvalidParameterError" title="lwdid.exceptions.InvalidParameterError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a> raised when the
+<code class="docutils literal notranslate"><span class="pre">rolling</span></code> argument does not match one of the supported transformation
+methods (<code class="docutils literal notranslate"><span class="pre">'demean'</span></code>, <code class="docutils literal notranslate"><span class="pre">'detrend'</span></code>, <code class="docutils literal notranslate"><span class="pre">'demeanq'</span></code>, <code class="docutils literal notranslate"><span class="pre">'detrendq'</span></code>).</p>
+</section>
+<section id="invalidvcetypeerror">
+<h3>InvalidVCETypeError<a class="headerlink" href="#invalidvcetypeerror" title="Link to this heading"></a></h3>
+<p>Specialized subclass of <a class="reference internal" href="#lwdid.exceptions.InvalidParameterError" title="lwdid.exceptions.InvalidParameterError"><code class="xref py py-class docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a> raised when the
+<code class="docutils literal notranslate"><span class="pre">vce</span></code> argument is not one of <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">'robust'</span></code>, <code class="docutils literal notranslate"><span class="pre">'hc1'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'hc3'</span></code> or <code class="docutils literal notranslate"><span class="pre">'cluster'</span></code>.</p>
+</section>
+<section id="data-validation-errors">
+<h3>Data Validation Errors<a class="headerlink" href="#data-validation-errors" title="Link to this heading"></a></h3>
+<p><strong>Raised as:</strong> <code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code>, <code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code>,
+<code class="docutils literal notranslate"><span class="pre">TimeDiscontinuityError</span></code>, or <code class="docutils literal notranslate"><span class="pre">MissingRequiredColumnError</span></code> when
+input data fail validation checks.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Invalid <code class="docutils literal notranslate"><span class="pre">rolling</span></code> method name (see <code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code>)</p></li>
+<li><p>Invalid <code class="docutils literal notranslate"><span class="pre">vce</span></code> option (see <code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cluster_var</span></code> missing or incompatible when <code class="docutils literal notranslate"><span class="pre">vce='cluster'</span></code></p></li>
+<li><p>Treatment indicator or controls not time-invariant</p></li>
+<li><p>Non-numeric outcome or control variables</p></li>
+<li><p>Time variables not convertible to valid numeric year/quarter values</p></li>
+</ul>
+<p><strong>Typical issues (conceptual):</strong></p>
+<ul class="simple">
+<li><p>Singular matrix or near-singular design matrix (perfect or near-perfect
+collinearity among regressors)</p></li>
+<li><p>Insufficient variation in key variables (for example, all units have
+the same treatment status in the regression sample)</p></li>
+</ul>
+</section>
+<section id="estimation-errors">
+<h3>Estimation Errors<a class="headerlink" href="#estimation-errors" title="Link to this heading"></a></h3>
+<p><strong>Raised as:</strong> subclasses of <code class="docutils literal notranslate"><span class="pre">LWDIDError</span></code> (for example
+<code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code> or <code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code>) when estimation
+fails due to data or parameter issues. Low-level numerical failures from
+underlying libraries (for example, singular matrix errors in
+<code class="docutils literal notranslate"><span class="pre">statsmodels</span></code>) may instead surface as their native exceptions.</p>
+<p><strong>Common causes:</strong></p>
+<ul class="simple">
+<li><p>Singular matrix or near-singular design matrix (perfect or near-perfect
+collinearity among regressors)</p></li>
+<li><p>Insufficient variation in key variables (for example, all units have
+the same treatment status in the regression sample)</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">LWDIDError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">LWDIDError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Estimation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Check for perfect collinearity, insufficient variation, or other issues</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Handle other errors</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="error-handling-best-practices">
+<h2>Error Handling Best Practices<a class="headerlink" href="#error-handling-best-practices" title="Link to this heading"></a></h2>
+<section id="catch-specific-exceptions">
+<h3>Catch Specific Exceptions<a class="headerlink" href="#catch-specific-exceptions" title="Link to this heading"></a></h3>
+<p>Catch specific exceptions for targeted error handling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InvalidParameterError</span><span class="p">,</span>
+    <span class="n">InsufficientDataError</span><span class="p">,</span>
+    <span class="n">TimeDiscontinuityError</span><span class="p">,</span>
+    <span class="n">MissingRequiredColumnError</span><span class="p">,</span>
+    <span class="n">RandomizationError</span><span class="p">,</span>
+    <span class="n">VisualizationError</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="n">MissingRequiredColumnError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing columns: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Fix data and retry</span>
+
+<span class="k">except</span> <span class="n">TimeDiscontinuityError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time structure issue: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Fix time index or post indicator</span>
+
+<span class="k">except</span> <span class="n">InsufficientDataError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not enough data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Use different method or collect more data</span>
+
+<span class="k">except</span> <span class="n">InvalidParameterError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Parameter error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Fix parameters and retry</span>
+
+<span class="k">except</span> <span class="n">RandomizationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Randomization inference failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="n">VisualizationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Plotting failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="catch-all-package-errors">
+<h3>Catch All Package Errors<a class="headerlink" href="#catch-all-package-errors" title="Link to this heading"></a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">LWDIDError</span></code> to catch all package-specific errors:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">LWDIDError</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">LWDIDError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LWDID error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Handle any package error</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Handle other errors</span>
+</pre></div>
+</div>
+</section>
+<section id="logging-errors">
+<h3>Logging Errors<a class="headerlink" href="#logging-errors" title="Link to this heading"></a></h3>
+<p>Log errors for debugging:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">LWDIDError</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">LWDIDError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LWDID estimation failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">raise</span>
+</pre></div>
+</div>
+</section>
+<section id="graceful-degradation">
+<h3>Graceful Degradation<a class="headerlink" href="#graceful-degradation" title="Link to this heading"></a></h3>
+<p>Try alternative specifications when estimation fails:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InsufficientDataError</span>
+
+<span class="c1"># Try detrend first</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using detrend transformation&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="n">InsufficientDataError</span><span class="p">:</span>
+    <span class="c1"># Fall back to demean if insufficient pre-treatment periods</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Insufficient data for detrend, using demean instead&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="common-error-scenarios">
+<h2>Common Error Scenarios<a class="headerlink" href="#common-error-scenarios" title="Link to this heading"></a></h2>
+<section id="scenario-1-insufficient-pre-treatment-periods">
+<h3>Scenario 1: Insufficient Pre-Treatment Periods<a class="headerlink" href="#scenario-1-insufficient-pre-treatment-periods" title="Link to this heading"></a></h3>
+<p><strong>Error:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InsufficientPrePeriodsError: Insufficient pre-treatment periods for &#39;detrend&#39;.
+</pre></div>
+</div>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check pre-treatment periods by unit</span>
+<span class="n">pre_periods</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;unit&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pre_periods</span><span class="p">[</span><span class="n">pre_periods</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>Solution:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Option 1: Use demean instead</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">)</span>
+
+<span class="c1"># Option 2: Drop units with insufficient periods</span>
+<span class="n">units_ok</span> <span class="o">=</span> <span class="n">pre_periods</span><span class="p">[</span><span class="n">pre_periods</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;unit&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">units_ok</span><span class="p">)]</span>
+</pre></div>
+</div>
+</section>
+<section id="scenario-2-time-varying-controls">
+<h3>Scenario 2: Time-Varying Controls<a class="headerlink" href="#scenario-2-time-varying-controls" title="Link to this heading"></a></h3>
+<p><strong>Error:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InvalidParameterError: Control variable &#39;income&#39; must be time-invariant.
+</pre></div>
+</div>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check which controls vary</span>
+<span class="k">for</span> <span class="n">control</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;population&#39;</span><span class="p">]:</span>
+    <span class="n">varying</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;unit&#39;</span><span class="p">)[</span><span class="n">control</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">control</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="p">(</span><span class="n">varying</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2"> units vary&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Solution:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use baseline (first period) value</span>
+<span class="n">baseline</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;unit&#39;</span><span class="p">)[</span><span class="s1">&#39;income&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">baseline</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;income_baseline&#39;</span><span class="p">]</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">baseline</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="validation.html"><span class="doc">Validation Module (validation)</span></a> - Validation functions that raise these exceptions</p></li>
+<li><p><a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a> - Main function that may raise exceptions</p></li>
+<li><p><a class="reference internal" href="../user_guide.html"><span class="doc">User Guide</span></a> - Comprehensive usage guide with troubleshooting</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="visualization.html" class="btn btn-neutral float-left" title="Visualization Module (visualization)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../methodological_notes.html" class="btn btn-neutral float-right" title="Methodological Notes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Xuanyu Cai, Wenli Xu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

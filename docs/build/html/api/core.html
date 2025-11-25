@@ -1,0 +1,854 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Core Module (core) &mdash; lwdid 0.1.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="LWDIDResults Class" href="results.html" />
+    <link rel="prev" title="API Reference" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            lwdid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#system-requirements">System Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#installation-methods">Installation Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#install-via-pip-recommended">Install via pip (Recommended)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#install-from-source">Install from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#development-environment-setup">Development Environment Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#verify-installation">Verify Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#numpy-version-conflicts">numpy Version Conflicts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#statsmodels-installation-failure">statsmodels Installation Failure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#virtual-environment-recommended">Virtual Environment (Recommended)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../installation.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#basic-example">Basic Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#simplest-usage">Simplest Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#output">Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#key-parameters">Key Parameters</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#required-parameters">Required Parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#common-options">Common Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#heteroskedasticity-robust-standard-errors">Heteroskedasticity-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#adding-control-variables">Adding Control Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#quarterly-data">Quarterly Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#results-object">Results Object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#core-attributes">Core Attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#sample-information">Sample Information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#period-specific-effects">Period-Specific Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#methods">Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#data-format-requirements">Data Format Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#panel-data-structure">Panel Data Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#key-requirements">Key Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#transformation-methods">Transformation Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrend-did-with-unit-specific-linear-trends">detrend: DiD with Unit-Specific Linear Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demeanq-quarterly-data-with-seasonal-fixed-effects">demeanq: Quarterly Data with Seasonal Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrendq-quarterly-data-with-trends-and-seasonal-effects">detrendq: Quarterly Data with Trends and Seasonal Effects</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#variance-estimation">Variance Estimation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#ols-homoskedastic">OLS (Homoskedastic)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc1-heteroskedasticity-robust">HC1 (Heteroskedasticity-Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc3-small-sample-adjusted-robust">HC3 (Small-Sample Adjusted Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#cluster-robust">Cluster-Robust</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#randomization-inference">Randomization Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#ri-methods">RI Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#accessing-ri-results">Accessing RI Results</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#control-variables">Control Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#id1">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#effect-on-inference">Effect on Inference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#working-with-results">Working with Results</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#core-estimates">Core Estimates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#period-specific-effects">Period-Specific Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-information">Sample Information</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#visualization">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#export-results">Export Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#print-summary">Print Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#data-requirements-and-validation">Data Requirements and Validation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#panel-structure">Panel Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#treatment-structure">Treatment Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#treatment-indicator">Treatment Indicator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#missing-data">Missing Data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#common-errors">Common Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#performance-tips">Performance Tips</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#further-reading">Further Reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#basic-did-estimation">Basic DiD Estimation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#california-smoking-restriction">California Smoking Restriction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#robustness-checks">Robustness Checks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#quarterly-data">Quarterly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#retail-sales-with-seasonal-patterns">Retail Sales with Seasonal Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#control-variables">Control Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#including-baseline-characteristics">Including Baseline Characteristics</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#cluster-robust-inference">Cluster-Robust Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#multi-level-data-structure">Multi-Level Data Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#randomization-inference">Randomization Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#non-parametric-testing">Non-Parametric Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#comparing-ri-methods">Comparing RI Methods</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#diagnostic-checks">Diagnostic Checks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#testing-parallel-trends">Testing Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#sensitivity-analysis">Sensitivity Analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#export-and-reporting">Export and Reporting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#creating-publication-tables">Creating Publication Tables</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#complete-workflow-example">Complete Workflow Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#end-to-end-analysis">End-to-End Analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-modules">Core Modules</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Core Module (core)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="results.html">LWDIDResults Class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="results.html#lwdid.LWDIDResults"><code class="docutils literal notranslate"><span class="pre">LWDIDResults</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="results.html#examples">Examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="results.html#accessing-core-estimates">Accessing Core Estimates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#sample-information">Sample Information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#period-specific-effects">Period-Specific Effects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#randomization-inference-results">Randomization Inference Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#printing-summary">Printing Summary</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#visualization">Visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#exporting-results">Exporting Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#working-with-results-programmatically">Working with Results Programmatically</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="results.html#attributes-reference">Attributes Reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="results.html#core-estimates">Core Estimates</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#id26">Sample Information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#period-specific-results">Period-Specific Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#randomization-inference">Randomization Inference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="results.html#methods-reference">Methods Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="results.html#see-also">See Also</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transformations.html">Transformations Module (transformations)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.apply_rolling_transform"><code class="docutils literal notranslate"><span class="pre">apply_rolling_transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.detrend_unit"><code class="docutils literal notranslate"><span class="pre">detrend_unit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.demeanq_unit"><code class="docutils literal notranslate"><span class="pre">demeanq_unit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.detrendq_unit"><code class="docutils literal notranslate"><span class="pre">detrendq_unit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#transformation-methods">Transformation Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#technical-notes">Technical Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="estimation.html">Estimation Module (estimation)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#lwdid.estimation.prepare_controls"><code class="docutils literal notranslate"><span class="pre">prepare_controls()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#lwdid.estimation.estimate_att"><code class="docutils literal notranslate"><span class="pre">estimate_att()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#lwdid.estimation.estimate_period_effects"><code class="docutils literal notranslate"><span class="pre">estimate_period_effects()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#estimation-functions">Estimation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#variance-estimators">Variance Estimators</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#technical-notes">Technical Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="validation.html">Validation Module (validation)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#validation-checks">Validation Checks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#best-practices">Best Practices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="randomization.html">Randomization Module (randomization)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#lwdid.randomization.randomization_inference"><code class="docutils literal notranslate"><span class="pre">randomization_inference()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#how-randomization-inference-works">How Randomization Inference Works</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#ri-methods">RI Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#practical-considerations">Practical Considerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#interpreting-ri-results">Interpreting RI Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#limitations">Limitations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#examples">Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="visualization.html">Visualization Module (visualization)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#lwdid.visualization.prepare_plot_data"><code class="docutils literal notranslate"><span class="pre">prepare_plot_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#lwdid.visualization.plot_results"><code class="docutils literal notranslate"><span class="pre">plot_results()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#plot-components">Plot Components</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#advanced-customization">Advanced Customization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#exporting-plots">Exporting Plots</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#plot-parameters-reference">Plot Parameters Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#examples-gallery">Examples Gallery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="exceptions.html">Exceptions Module (exceptions)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.LWDIDError"><code class="docutils literal notranslate"><span class="pre">LWDIDError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidParameterError"><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidRollingMethodError"><code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidVCETypeError"><code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientDataError"><code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoTreatedUnitsError"><code class="docutils literal notranslate"><span class="pre">NoTreatedUnitsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoControlUnitsError"><code class="docutils literal notranslate"><span class="pre">NoControlUnitsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError"><code class="docutils literal notranslate"><span class="pre">InsufficientPrePeriodsError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientQuarterDiversityError"><code class="docutils literal notranslate"><span class="pre">InsufficientQuarterDiversityError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.TimeDiscontinuityError"><code class="docutils literal notranslate"><span class="pre">TimeDiscontinuityError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.MissingRequiredColumnError"><code class="docutils literal notranslate"><span class="pre">MissingRequiredColumnError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.RandomizationError"><code class="docutils literal notranslate"><span class="pre">RandomizationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-classes">Exception Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#error-handling-best-practices">Error Handling Best Practices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#common-error-scenarios">Common Error Scenarios</a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#quick-index">Quick Index</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Advanced Topics</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../methodological_notes.html">Methodological Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#the-panel-to-cross-section-transformation">The Panel-to-Cross-Section Transformation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#core-principle">Core Principle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#demean-transformation-procedure-2-1">Demean Transformation (Procedure 2.1)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#detrend-transformation-procedure-3-1">Detrend Transformation (Procedure 3.1)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#quarterly-transformations">Quarterly Transformations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#inference-under-clm-assumptions">Inference Under CLM Assumptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#classical-linear-model-assumptions">Classical Linear Model Assumptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#degrees-of-freedom">Degrees of Freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#period-specific-effects">Period-Specific Effects</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#robust-inference">Robust Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#heteroskedasticity-robust-standard-errors">Heteroskedasticity-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#cluster-robust-standard-errors">Cluster-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#randomization-inference">Randomization Inference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#no-anticipation">No Anticipation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#parallel-trends">Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#common-treatment-timing">Common Treatment Timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#comparison-with-other-did-methods">Comparison with Other DiD Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#two-way-fixed-effects-twfe">Two-Way Fixed Effects (TWFE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#callaway-and-sant-anna-2021">Callaway and Sant’Anna (2021)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#when-to-use-this-method">When to Use This Method</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#practical-considerations">Practical Considerations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#sample-size-requirements">Sample Size Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#time-index-and-panel-structure">Time Index and Panel Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#pre-treatment-periods">Pre-Treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#control-variables">Control Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#computational-considerations">Computational Considerations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#references">References</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#authors">Authors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#further-reading">Further Reading</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../changelog.html#version-0-1-0">Version 0.1.0</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#how-to-contribute">How to Contribute</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#development-setup">Development Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#code-standards">Code Standards</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../contributing.html#reporting-issues">Reporting Issues</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">lwdid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API Reference</a></li>
+      <li class="breadcrumb-item active">Core Module (core)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/core.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="core-module-core">
+<h1>Core Module (core)<a class="headerlink" href="#core-module-core" title="Link to this heading"></a></h1>
+<p>The core module provides the main user-facing function for difference-in-differences
+estimation.</p>
+<section id="main-function">
+<h2>Main Function<a class="headerlink" href="#main-function" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="lwdid.lwdid">
+<span class="sig-prename descclassname"><span class="pre">lwdid.</span></span><span class="sig-name descname"><span class="pre">lwdid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vce</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ri</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rireps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ri_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bootstrap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/core.html#lwdid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.lwdid" title="Link to this definition"></a></dt>
+<dd><p>Difference-in-Differences Estimator for Small Cross-Sectional Samples</p>
+<p>Implements the Lee and Wooldridge (2025) method for difference-in-differences
+estimation with small numbers of treated or control units. Transforms panel
+data into cross-sectional form by removing unit-specific pre-treatment patterns,
+enabling exact t-based inference under classical linear model assumptions or
+randomization inference without distributional assumptions.</p>
+<p>Confidence intervals use t-distribution critical values with degrees of freedom
+equal to N-k for homoskedastic standard errors (N units, k parameters) or G-1
+for cluster-robust standard errors (G clusters), providing exact coverage under
+classical linear model assumptions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Panel data in long format with one row per unit-time observation. Must
+contain columns for outcome, treatment indicator, unit identifier, time
+variable, and post-treatment indicator. Requires at least 3 cross-sectional
+units. Each (unit, time) combination must be unique.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Outcome variable column name.</p></li>
+<li><p><strong>d</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Treatment indicator column name. Must be a unit-level (time-invariant)
+indicator where non-zero values denote treated units (Dᵢ = 1) and zero
+values denote control units (Dᵢ = 0). Do not use a time-varying treatment
+indicator Wᵢₜ = Dᵢ × postₜ.</p></li>
+<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Unit identifier column name. Accepts numeric or string identifiers;
+string identifiers are internally converted to numeric codes.</p></li>
+<li><p><strong>tvar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Time variable specification:</p>
+<ul>
+<li><p>Annual data: single string (e.g., ‘year’)</p></li>
+<li><p>Quarterly data: list [year_var, quarter_var] where quarter_var
+contains values in {1, 2, 3, 4}</p></li>
+</ul>
+</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Post-treatment indicator column name. Internally binarized as <code class="docutils literal notranslate"><span class="pre">post</span> <span class="pre">!=</span> <span class="pre">0</span></code>:
+non-zero values indicate post-treatment periods (1), zero values indicate
+pre-treatment periods (0). Must be a function of time only (common treatment
+timing) and must be persistent (no treatment reversals).</p></li>
+<li><p><strong>rolling</strong> (<em>{'demean'</em><em>, </em><em>'detrend'</em><em>, </em><em>'demeanq'</em><em>, </em><em>'detrendq'}</em>) – <p>Transformation method (case-insensitive):</p>
+<ul>
+<li><p>’demean’: Unit-specific demeaning (Procedure 2.1)</p></li>
+<li><p>’detrend’: Unit-specific detrending (Procedure 3.1)</p></li>
+<li><p>’demeanq’: Demeaning with quarterly fixed effects</p></li>
+<li><p>’detrendq’: Detrending with quarterly fixed effects</p></li>
+</ul>
+</p></li>
+<li><p><strong>vce</strong> (<em>{None</em><em>, </em><em>'robust'</em><em>, </em><em>'hc1'</em><em>, </em><em>'hc3'</em><em>, </em><em>'cluster'}</em><em>, </em><em>optional</em>) – <p>Variance estimator (default=None, case-insensitive):</p>
+<ul>
+<li><p>None: Homoskedastic standard errors (exact inference under normality)</p></li>
+<li><p>’robust’ or ‘hc1’: HC1 heteroskedasticity-robust standard errors</p></li>
+<li><p>’hc3’: HC3 small-sample adjusted standard errors</p></li>
+<li><p>’cluster’: Cluster-robust standard errors (requires cluster_var)</p></li>
+</ul>
+</p></li>
+<li><p><strong>controls</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Time-invariant control variable names. Controls are included only if both
+N_treated &gt; K+1 and N_control &gt; K+1, where K is the number of controls.
+Otherwise, a warning is issued and controls are excluded.</p></li>
+<li><p><strong>cluster_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Clustering variable name (required when vce=’cluster’).</p></li>
+<li><p><strong>ri</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default=False</em>) – Whether to perform randomization inference. Returns a p-value for H₀: ATT=0
+based on resampling.</p></li>
+<li><p><strong>rireps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>default=1000</em>) – Number of randomization inference replications.</p></li>
+<li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Random seed for reproducibility. If not specified, a random seed is
+generated. Also accepts ‘riseed’ as an alias via <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs.</p></li>
+<li><p><strong>ri_method</strong> (<em>{'bootstrap'</em><em>, </em><em>'permutation'}</em><em>, </em><em>default='bootstrap'</em>) – <p>Randomization inference resampling method (used only if ri=True):</p>
+<ul>
+<li><p>’bootstrap’: With-replacement sampling</p></li>
+<li><p>’permutation’: Without-replacement permutation (Fisher randomization
+inference)</p></li>
+</ul>
+</p></li>
+<li><p><strong>graph</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default=False</em>) – Whether to generate a plot of transformed outcomes over time.</p></li>
+<li><p><strong>gid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Specific unit identifier to plot. If omitted, plots the treated group
+average.</p></li>
+<li><p><strong>graph_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Plotting options (figsize, title, xlabel, ylabel, legend_loc, savefig).</p></li>
+<li><p><strong>**kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Reserved for future extensions.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Results object containing:</p>
+<p><strong>Attributes:</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>att<span class="classifier">float</span></dt><dd><p>Average treatment effect on the treated</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>se_att<span class="classifier">float</span></dt><dd><p>Standard error of ATT</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>t_stat<span class="classifier">float</span></dt><dd><p>t-statistic for H0: ATT=0</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>pvalue<span class="classifier">float</span></dt><dd><p>Two-sided p-value</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>ci_lower, ci_upper<span class="classifier">float</span></dt><dd><p>95% confidence interval bounds</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>df_inference<span class="classifier">int</span></dt><dd><p>Degrees of freedom for inference (N-k for non-clustered, G-1 for clustered)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>nobs<span class="classifier">int</span></dt><dd><p>Number of observations in cross-sectional regression</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>n_treated, n_control<span class="classifier">int</span></dt><dd><p>Number of treated and control units</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>att_by_period<span class="classifier">pd.DataFrame</span></dt><dd><p>Period-specific ATT estimates</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>ri_pvalue<span class="classifier">float</span></dt><dd><p>Randomization inference p-value (if ri=True)</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><strong>Methods:</strong></p>
+<ul class="simple">
+<li><p>summary() : Formatted results summary</p></li>
+<li><p>plot() : Visualization of residualized outcomes</p></li>
+<li><p>to_excel(path) : Export to Excel</p></li>
+<li><p>to_csv(path) : Export period-specific effects to CSV</p></li>
+<li><p>to_latex(path) : Export to LaTeX table</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="results.html#lwdid.LWDIDResults" title="lwdid.LWDIDResults">LWDIDResults</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.MissingRequiredColumnError" title="lwdid.exceptions.MissingRequiredColumnError"><strong>MissingRequiredColumnError</strong></a> – Required columns not found in data.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidRollingMethodError" title="lwdid.exceptions.InvalidRollingMethodError"><strong>InvalidRollingMethodError</strong></a> – Invalid rolling method or quarterly method used without quarterly tvar.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientDataError" title="lwdid.exceptions.InsufficientDataError"><strong>InsufficientDataError</strong></a> – Sample size N &lt; 3 or no pre-/post-treatment observations.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoTreatedUnitsError" title="lwdid.exceptions.NoTreatedUnitsError"><strong>NoTreatedUnitsError</strong></a> – No units with d==1.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoControlUnitsError" title="lwdid.exceptions.NoControlUnitsError"><strong>NoControlUnitsError</strong></a> – No units with d==0.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError" title="lwdid.exceptions.InsufficientPrePeriodsError"><strong>InsufficientPrePeriodsError</strong></a> – Insufficient pre-treatment periods for chosen transformation.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This implementation requires common treatment timing: all treated units begin
+treatment in the same period, treatment is persistent, and the time index forms
+a contiguous sequence. Staggered adoption is not supported in this version. See
+Lee and Wooldridge (2025, Section 7) for methods accommodating staggered rollouts.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="results.html#lwdid.LWDIDResults" title="lwdid.LWDIDResults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LWDIDResults</span></code></a></dt><dd><p>Results class documentation</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<p><strong>Basic usage with demeaning:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;smoking.csv&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATT: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">att</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, SE: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">se_att</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, p=</span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Detrending with HC3 standard errors:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrend&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc3&#39;</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATT (detrend): </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">att</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Quarterly data with seasonal effects:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data_q</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;quarterly_data.csv&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data_q</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;gdp&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;policy&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;country&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">tvar</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;quarter&#39;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrendq&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc3&#39;</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Randomization inference:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ri</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rireps</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">seed</span><span class="o">=</span><span class="mi">12345</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RI p-value: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">ri_pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>With control variables:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;population&#39;</span><span class="p">]</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Visualization:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">gid</span><span class="o">=</span><span class="s1">&#39;California&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">graph_options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;CA Cigarette Sales&#39;</span><span class="p">,</span> <span class="s1">&#39;ylabel&#39;</span><span class="p">:</span> <span class="s1">&#39;Log Sales&#39;</span><span class="p">}</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Export results:</strong></p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">results</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="s1">&#39;did_results.xlsx&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span><span class="o">.</span><span class="n">att_by_period</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;period_effects.csv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<section id="basic-usage">
+<h3>Basic Usage<a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
+<p>Simplest DiD estimation with default settings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1"># Load data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;smoking.csv&#39;</span><span class="p">)</span>
+
+<span class="c1"># Run estimation</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span>      <span class="c1"># Outcome variable</span>
+    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span>             <span class="c1"># Treatment indicator</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">,</span>      <span class="c1"># Unit ID</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>       <span class="c1"># Time variable</span>
+    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>       <span class="c1"># Post-treatment indicator</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span>   <span class="c1"># Transformation method</span>
+<span class="p">)</span>
+
+<span class="c1"># View results</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATT: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">att</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SE: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">se_att</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;p-value: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="with-robust-standard-errors">
+<h3>With Robust Standard Errors<a class="headerlink" href="#with-robust-standard-errors" title="Link to this heading"></a></h3>
+<p>Using HC3 heteroskedasticity-robust standard errors:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">,</span>
+    <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc3&#39;</span>  <span class="c1"># HC3 robust standard errors</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="with-randomization-inference">
+<h3>With Randomization Inference<a class="headerlink" href="#with-randomization-inference" title="Link to this heading"></a></h3>
+<p>Adding randomization inference for non-parametric testing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+    <span class="n">ri</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>           <span class="c1"># Enable randomization inference</span>
+    <span class="n">rireps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>       <span class="c1"># Number of permutations</span>
+    <span class="n">ri_method</span><span class="o">=</span><span class="s1">&#39;permutation&#39;</span><span class="p">,</span>  <span class="c1"># Use permutation (recommended)</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span>            <span class="c1"># For reproducibility</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;t-based p-value: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RI p-value: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">ri_pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="with-control-variables">
+<h3>With Control Variables<a class="headerlink" href="#with-control-variables" title="Link to this heading"></a></h3>
+<p>Including time-invariant control variables:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">,</span>
+    <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;retprice&#39;</span><span class="p">,</span> <span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;beer&#39;</span><span class="p">],</span>  <span class="c1"># Time-invariant controls</span>
+    <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc3&#39;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cluster-robust-standard-errors">
+<h3>Cluster-Robust Standard Errors<a class="headerlink" href="#cluster-robust-standard-errors" title="Link to this heading"></a></h3>
+<p>When errors are correlated within clusters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="s1">&#39;outcome&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+    <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;cluster&#39;</span><span class="p">,</span>
+    <span class="n">cluster_var</span><span class="o">=</span><span class="s1">&#39;state&#39;</span>  <span class="c1"># Cluster by state</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="quarterly-data">
+<h3>Quarterly Data<a class="headerlink" href="#quarterly-data" title="Link to this heading"></a></h3>
+<p>Handling quarterly data with seasonal patterns:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Data has columns: unit, year, quarter, outcome, treated, post</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data_q</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;sales&#39;</span><span class="p">,</span>
+    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;quarter&#39;</span><span class="p">],</span>  <span class="c1"># Composite time variable</span>
+    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrendq&#39;</span>  <span class="c1"># Quarterly detrending with seasonality</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="complete-example-with-all-options">
+<h3>Complete Example with All Options<a class="headerlink" href="#complete-example-with-all-options" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span>
+    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post_treatment&#39;</span><span class="p">,</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrend&#39;</span><span class="p">,</span>
+    <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;baseline_x1&#39;</span><span class="p">,</span> <span class="s1">&#39;baseline_x2&#39;</span><span class="p">],</span>
+    <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc3&#39;</span><span class="p">,</span>
+    <span class="n">ri</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">rireps</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+    <span class="n">ri_method</span><span class="o">=</span><span class="s1">&#39;permutation&#39;</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">12345</span>
+<span class="p">)</span>
+
+<span class="c1"># Access results</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ATT: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">att</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">ci_lower</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">ci_upper</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;t-stat: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">t_stat</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, p-value: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RI p-value: </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">ri_pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;N = </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">nobs</span><span class="si">}</span><span class="s2">, df = </span><span class="si">{</span><span class="n">results</span><span class="o">.</span><span class="n">df_inference</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Export results</span>
+<span class="n">results</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="s1">&#39;results.xlsx&#39;</span><span class="p">)</span>
+<span class="n">results</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="results.html#lwdid.LWDIDResults" title="lwdid.LWDIDResults"><code class="xref py py-class docutils literal notranslate"><span class="pre">lwdid.LWDIDResults</span></code></a> - Results object returned by lwdid()</p></li>
+<li><p><a class="reference internal" href="../user_guide.html"><span class="doc">User Guide</span></a> - Comprehensive usage guide</p></li>
+<li><p><a class="reference internal" href="../quickstart.html"><span class="doc">Quick Start</span></a> - Quick start tutorial</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="results.html" class="btn btn-neutral float-right" title="LWDIDResults Class" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Xuanyu Cai, Wenli Xu.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
