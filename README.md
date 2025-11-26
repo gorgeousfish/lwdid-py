@@ -106,9 +106,18 @@ print(f"RI p-value: {results.ri_pvalue:.4f}")
 ```python
 # Include time-invariant control variables
 # Note: Controls must be constant within each unit across all periods
+# For time-varying variables, use pre-treatment mean or first value
+
+# Create time-invariant controls from time-varying variables
+data_with_controls = data.copy()
+for var in ['retprice', 'beer']:
+    # Use pre-treatment period mean
+    pre_mean = data[data['post']==0].groupby('state')[var].mean()
+    data_with_controls[f'{var}_pre'] = data_with_controls['state'].map(pre_mean)
+
 results = lwdid(
-    data, 'outcome', 'treated', 'unit', 'year', 'post', 'detrend',
-    controls=['baseline_x1', 'baseline_x2'],  # time-invariant covariates
+    data_with_controls, 'lcigsale', 'd', 'state', 'year', 'post', 'detrend',
+    controls=['retprice_pre', 'beer_pre'],  # time-invariant covariates
     vce='hc3'
 )
 ```
@@ -117,9 +126,9 @@ results = lwdid(
 
 ```python
 # Quarterly panel with seasonal effects
-# Example: data with columns [unit, year, quarter, outcome, treated, post]
+# Example: data with columns [unit, year, quarter, outcome, d, post]
 results = lwdid(
-    data, 'outcome', 'treated', 'unit',
+    data, 'outcome', 'd', 'unit',
     tvar=['year', 'quarter'],  # composite time variable
     post='post',
     rolling='detrendq'         # quarterly detrending

@@ -136,9 +136,17 @@ Adding Control Variables
 .. code-block:: python
 
    # Note: Controls must be time-invariant (constant within each unit)
+   # For time-varying variables, create time-invariant versions first
+   
+   # Example: Create pre-treatment mean for time-varying controls
+   data_prep = data.copy()
+   for var in ['retprice']:
+       pre_mean = data[data['post']==0].groupby('state')[var].mean()
+       data_prep[f'{var}_pre'] = data_prep['state'].map(pre_mean)
+   
    results = lwdid(
-       data, 'outcome', 'treated', 'unit', 'year', 'post', 'detrend',
-       controls=['baseline_x1', 'baseline_x2']  # Time-invariant controls
+       data_prep, 'lcigsale', 'd', 'state', 'year', 'post', 'detrend',
+       controls=['retprice_pre']  # Time-invariant controls
    )
 
 Quarterly Data
