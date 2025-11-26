@@ -9,12 +9,9 @@ import pytest
 def find_smoking_data():
     """Helper function to locate the smoking.csv data file in common paths."""
     candidates = [
-        'tests/data/smoking.csv',
-        'lwdid_py/tests/data/smoking.csv',
-        'lwdid_py/smoking.csv',
-        'smoking.csv',
         os.path.join(os.path.dirname(__file__), 'data', 'smoking.csv'),
-        os.path.join(os.path.dirname(__file__), '..', 'smoking.csv'),
+        'tests/data/smoking.csv',
+        'data/smoking.csv',
     ]
     
     for path in candidates:

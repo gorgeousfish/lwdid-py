@@ -51,3 +51,10 @@ Thumbs.db
 # Distribution
 *.tar.gz
 *.whl
+
+# Data files (should only be in tests/data/ or data/ directories)
+/*.csv
+/*.dta
+/*.xlsx
+!tests/data/*.csv
+!data/*.csv

@@ -28,8 +28,8 @@ def _get_test_data():
     """
     candidates = [
         os.path.join(os.path.dirname(__file__), 'data', 'smoking.csv'),
-        os.path.join('lwdid_py', 'tests', 'data', 'smoking.csv'),
-        os.path.join('lwdid_py', 'smoking.csv'),
+        'tests/data/smoking.csv',
+        'data/smoking.csv',
     ]
     for path in candidates:
         if os.path.exists(path):
