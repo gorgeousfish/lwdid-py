@@ -284,7 +284,7 @@ results = lwdid(
 print(results.summary())
 ```
 
-See `examples/smoking.ipynb` for complete example and `examples/ri_method_comparison.py` for randomization inference methods comparison.
+See `examples/smoking.ipynb` for complete example.
 
 ## Testing
 
