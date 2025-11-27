@@ -38,7 +38,6 @@ preferred-citation:
       given-names: Soo Jeong
     - family-names: Wooldridge
       given-names: Jeffrey M.
-  journal: ""
   year: 2025
-  status: submitted
-  notes: "Available at [SSRN 5325686](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5325686). Please cite this paper when using the software."
+  url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5325686"
+  notes: "SSRN Working Paper 5325686"
