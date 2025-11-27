@@ -1,10 +1,8 @@
 """
-Transformation Module
+Transformation module for the Lee and Wooldridge (2025) DiD estimator.
 
 Implements transformation methods for the Lee and Wooldridge (2025)
 difference-in-differences estimator.
-
-Authors: Xuanyu Cai, Wenli Xu
 """
 
 from typing import Optional, Tuple

@@ -40,43 +40,11 @@ If you want to install the development version or contribute code, clone the rep
 .. code-block:: bash
 
    # Clone repository
-   git clone https://github.com/gorgeousfish/lwdid-python.git
-   cd lwdid-python
+   git clone https://github.com/gorgeousfish/lwdid-py.git
+   cd lwdid-py
 
    # Install in development mode
    pip install -e .
-
-Development Environment Setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you plan to contribute to development, install development dependencies:
-
-.. code-block:: bash
-
-   # Install with test dependencies
-   pip install -e ".[dev]"
-
-   # Or manually install development tools
-   pip install pytest pytest-cov
-
-Verify Installation
--------------------
-
-After installation, verify by:
-
-.. code-block:: python
-
-   import lwdid
-   from lwdid import lwdid as lwdid_func
-
-   # Test basic import
-   print("lwdid package imported successfully")
-
-Or run the test suite:
-
-.. code-block:: bash
-
-   pytest tests/
 
 Common Issues
 -------------
@@ -102,25 +70,6 @@ On some systems, statsmodels may require additional dependencies:
 
    # Ubuntu/Debian
    sudo apt-get install build-essential
-
-Virtual Environment (Recommended)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-It is recommended to install in a virtual environment:
-
-.. code-block:: bash
-
-   # Create virtual environment
-   python -m venv lwdid_env
-
-   # Activate virtual environment
-   # macOS/Linux:
-   source lwdid_env/bin/activate
-   # Windows:
-   lwdid_env\Scripts\activate
-
-   # Install lwdid
-   pip install lwdid
 
 Next Steps
 ----------

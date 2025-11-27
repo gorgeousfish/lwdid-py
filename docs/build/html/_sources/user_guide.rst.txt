@@ -257,21 +257,21 @@ RI Methods
 
 The package supports two RI methods:
 
-Permutation (Recommended):
+**Bootstrap** (default):
+
+.. code-block:: python
+
+   results = lwdid(..., ri=True, ri_method='bootstrap')
+
+With-replacement resampling.
+
+**Permutation**:
 
 .. code-block:: python
 
    results = lwdid(..., ri=True, ri_method='permutation')
 
 Fisher randomization inference without replacement.
-
-Bootstrap:
-
-.. code-block:: python
-
-   results = lwdid(..., ri=True, ri_method='bootstrap')
-
-With-replacement sampling.
 
 Accessing RI Results
 ~~~~~~~~~~~~~~~~~~~~

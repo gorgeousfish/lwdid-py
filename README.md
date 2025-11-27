@@ -1,7 +1,7 @@
 # lwdid: Difference-in-Differences Estimator for Small Cross-Sectional Samples
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
-![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)
 
 Python implementation of the Lee and Wooldridge (2025) difference-in-differences estimator for panel data with small cross-sectional sample sizes.

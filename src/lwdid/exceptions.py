@@ -1,9 +1,7 @@
 """
-Exception Classes Module
+Exception classes for the lwdid package.
 
 Defines exception hierarchy for the lwdid package.
-
-Authors: Xuanyu Cai, Wenli Xu
 """
 
 

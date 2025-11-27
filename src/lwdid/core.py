@@ -3,8 +3,6 @@ Lee and Wooldridge (2025) Difference-in-Differences Estimator
 
 Implements the Lee and Wooldridge (2025) method for difference-in-differences
 estimation with small cross-sectional samples.
-
-Authors: Xuanyu Cai, Wenli Xu
 """
 
 from typing import List, Optional, Union

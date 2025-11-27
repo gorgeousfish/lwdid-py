@@ -52,14 +52,11 @@
 <li class="toctree-l2"><a class="reference internal" href="installation.html#installation-methods">Installation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="installation.html#install-via-pip-recommended">Install via pip (Recommended)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="installation.html#install-from-source">Install from Source</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation.html#development-environment-setup">Development Environment Setup</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html#verify-installation">Verify Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#common-issues">Common Issues</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="installation.html#numpy-version-conflicts">numpy Version Conflicts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="installation.html#statsmodels-installation-failure">statsmodels Installation Failure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation.html#virtual-environment-recommended">Virtual Environment (Recommended)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#next-steps">Next Steps</a></li>
@@ -543,9 +540,17 @@ the subsequent cross-sectional regression.</p>
 <section id="adding-control-variables">
 <h3>Adding Control Variables<a class="headerlink" href="#adding-control-variables" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Note: Controls must be time-invariant (constant within each unit)</span>
+<span class="c1"># For time-varying variables, create time-invariant versions first</span>
+
+<span class="c1"># Example: Create pre-treatment mean for time-varying controls</span>
+<span class="n">data_prep</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;retprice&#39;</span><span class="p">]:</span>
+    <span class="n">pre_mean</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;state&#39;</span><span class="p">)[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">data_prep</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">_pre&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_prep</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">pre_mean</span><span class="p">)</span>
+
 <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
-    <span class="n">data</span><span class="p">,</span> <span class="s1">&#39;outcome&#39;</span><span class="p">,</span> <span class="s1">&#39;treated&#39;</span><span class="p">,</span> <span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">,</span>
-    <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;baseline_x1&#39;</span><span class="p">,</span> <span class="s1">&#39;baseline_x2&#39;</span><span class="p">]</span>  <span class="c1"># Time-invariant controls</span>
+    <span class="n">data_prep</span><span class="p">,</span> <span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">,</span>
+    <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;retprice_pre&#39;</span><span class="p">]</span>  <span class="c1"># Time-invariant controls</span>
 <span class="p">)</span>
 </pre></div>
 </div>

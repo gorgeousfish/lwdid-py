@@ -52,14 +52,11 @@
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#installation-methods">Installation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#install-via-pip-recommended">Install via pip (Recommended)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#install-from-source">Install from Source</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../installation.html#development-environment-setup">Development Environment Setup</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../installation.html#verify-installation">Verify Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#common-issues">Common Issues</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#numpy-version-conflicts">numpy Version Conflicts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#statsmodels-installation-failure">statsmodels Installation Failure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../installation.html#virtual-environment-recommended">Virtual Environment (Recommended)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#next-steps">Next Steps</a></li>
@@ -744,12 +741,30 @@ Lee and Wooldridge (2025, Section 7) for methods accommodating staggered rollout
 <section id="with-control-variables">
 <h3>With Control Variables<a class="headerlink" href="#with-control-variables" title="Link to this heading"></a></h3>
 <p>Including time-invariant control variables:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
-    <span class="n">data</span><span class="p">,</span> <span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">,</span>
-    <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;retprice&#39;</span><span class="p">,</span> <span class="s1">&#39;income&#39;</span><span class="p">,</span> <span class="s1">&#39;beer&#39;</span><span class="p">],</span>  <span class="c1"># Time-invariant controls</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Prepare time-invariant controls</span>
+<span class="c1"># Use pre-treatment mean for time-varying variables</span>
+<span class="n">data_prep</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;retprice&#39;</span><span class="p">,</span> <span class="s1">&#39;beer&#39;</span><span class="p">]:</span>
+    <span class="n">pre_mean</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;post&#39;</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;state&#39;</span><span class="p">)[</span><span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">data_prep</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">var</span><span class="si">}</span><span class="s1">_pre&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_prep</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">pre_mean</span><span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data_prep</span><span class="p">,</span> <span class="s1">&#39;lcigsale&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;state&#39;</span><span class="p">,</span> <span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;detrend&#39;</span><span class="p">,</span>
+    <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;retprice_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;beer_pre&#39;</span><span class="p">],</span>  <span class="c1"># Time-invariant controls</span>
     <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc3&#39;</span>
 <span class="p">)</span>
 </pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Control variables must be time-invariant (constant within each unit).
+If you have time-varying variables, you must first aggregate them to
+create unit-level constants. Common approaches:</p>
+<ul class="simple">
+<li><p>Pre-treatment mean: <code class="docutils literal notranslate"><span class="pre">data[data['post']==0].groupby('unit')[var].mean()</span></code></p></li>
+<li><p>First period value: <code class="docutils literal notranslate"><span class="pre">data.groupby('unit')[var].first()</span></code></p></li>
+<li><p>Overall mean: <code class="docutils literal notranslate"><span class="pre">data.groupby('unit')[var].mean()</span></code></p></li>
+</ul>
 </div>
 </section>
 <section id="cluster-robust-standard-errors">
@@ -766,11 +781,11 @@ Lee and Wooldridge (2025, Section 7) for methods accommodating staggered rollout
 <section id="quarterly-data">
 <h3>Quarterly Data<a class="headerlink" href="#quarterly-data" title="Link to this heading"></a></h3>
 <p>Handling quarterly data with seasonal patterns:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Data has columns: unit, year, quarter, outcome, treated, post</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Data has columns: unit, year, quarter, outcome, d, post</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
     <span class="n">data_q</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="s1">&#39;sales&#39;</span><span class="p">,</span>
-    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span>
     <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span>
     <span class="n">tvar</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;quarter&#39;</span><span class="p">],</span>  <span class="c1"># Composite time variable</span>
     <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
@@ -784,7 +799,7 @@ Lee and Wooldridge (2025, Section 7) for methods accommodating staggered rollout
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
     <span class="n">data</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span>
-    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span>
     <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span>
     <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
     <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post_treatment&#39;</span><span class="p">,</span>

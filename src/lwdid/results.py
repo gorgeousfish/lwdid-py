@@ -4,7 +4,6 @@ Results Container Module
 Defines the LWDIDResults class for storing, displaying, and exporting estimation
 results.
 
-Authors: Xuanyu Cai, Wenli Xu
 """
 
 from typing import Any, Dict, Optional, Union

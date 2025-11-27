@@ -78,10 +78,6 @@ References
 Lee, S. J., and Wooldridge, J. M. (2025). Simple Approaches to Inference with
 Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes.
 Available at SSRN 5325686.
-
-Authors
--------
-Xuanyu Cai, Wenli Xu
 """
 
 # Export main function

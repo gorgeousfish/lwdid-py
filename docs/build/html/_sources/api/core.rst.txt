@@ -79,11 +79,28 @@ Including time-invariant control variables:
 
 .. code-block:: python
 
+   # Prepare time-invariant controls
+   # Use pre-treatment mean for time-varying variables
+   data_prep = data.copy()
+   for var in ['retprice', 'beer']:
+       pre_mean = data[data['post']==0].groupby('state')[var].mean()
+       data_prep[f'{var}_pre'] = data_prep['state'].map(pre_mean)
+   
    results = lwdid(
-       data, 'lcigsale', 'd', 'state', 'year', 'post', 'detrend',
-       controls=['retprice', 'income', 'beer'],  # Time-invariant controls
+       data_prep, 'lcigsale', 'd', 'state', 'year', 'post', 'detrend',
+       controls=['retprice_pre', 'beer_pre'],  # Time-invariant controls
        vce='hc3'
    )
+
+.. warning::
+
+   Control variables must be time-invariant (constant within each unit).
+   If you have time-varying variables, you must first aggregate them to
+   create unit-level constants. Common approaches:
+   
+   - Pre-treatment mean: ``data[data['post']==0].groupby('unit')[var].mean()``
+   - First period value: ``data.groupby('unit')[var].first()``
+   - Overall mean: ``data.groupby('unit')[var].mean()``
 
 Cluster-Robust Standard Errors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -105,11 +122,11 @@ Handling quarterly data with seasonal patterns:
 
 .. code-block:: python
 
-   # Data has columns: unit, year, quarter, outcome, treated, post
+   # Data has columns: unit, year, quarter, outcome, d, post
    results = lwdid(
        data_q,
        y='sales',
-       d='treated',
+       d='d',
        ivar='store',
        tvar=['year', 'quarter'],  # Composite time variable
        post='post',
@@ -124,7 +141,7 @@ Complete Example with All Options
    results = lwdid(
        data,
        y='outcome',
-       d='treated',
+       d='d',
        ivar='unit',
        tvar='year',
        post='post_treatment',

@@ -1,9 +1,7 @@
 """
-Visualization Module
+Visualization module for the lwdid package.
 
 Provides plotting functions for transformed outcomes.
-
-Authors: Xuanyu Cai, Wenli Xu
 """
 
 from typing import Dict, Optional, Union

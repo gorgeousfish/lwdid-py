@@ -52,14 +52,11 @@
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#installation-methods">Installation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#install-via-pip-recommended">Install via pip (Recommended)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#install-from-source">Install from Source</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../installation.html#development-environment-setup">Development Environment Setup</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../installation.html#verify-installation">Verify Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#common-issues">Common Issues</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#numpy-version-conflicts">numpy Version Conflicts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#statsmodels-installation-failure">statsmodels Installation Failure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../installation.html#virtual-environment-recommended">Virtual Environment (Recommended)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#next-steps">Next Steps</a></li>
@@ -428,10 +425,9 @@
 <h1>Randomization Module (randomization)<a class="headerlink" href="#randomization-module-randomization" title="Link to this heading"></a></h1>
 <p>The randomization module implements randomization inference (RI) for
 non-parametric hypothesis testing in difference-in-differences estimation.</p>
-<p id="module-lwdid.randomization">Randomization Inference Module</p>
+<p id="module-lwdid.randomization">Randomization inference module for the lwdid package.</p>
 <p>Implements randomization inference for small-sample hypothesis testing by resampling
 treatment labels. Provides p-values without distributional assumptions.</p>
-<p>Authors: Xuanyu Cai, Wenli Xu</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.randomization.randomization_inference">
 <span class="sig-prename descclassname"><span class="pre">lwdid.randomization.</span></span><span class="sig-name descname"><span class="pre">randomization_inference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">firstpost_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ydot_postavg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'d_'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ivar'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rireps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">att_obs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ri_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bootstrap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/randomization.html#randomization_inference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.randomization.randomization_inference" title="Link to this definition"></a></dt>

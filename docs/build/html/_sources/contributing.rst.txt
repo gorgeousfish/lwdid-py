@@ -17,8 +17,8 @@ Development Setup
 
 .. code-block:: bash
 
-   git clone https://github.com/gorgeousfish/lwdid-python.git
-   cd lwdid-python
+   git clone https://github.com/gorgeousfish/lwdid-py.git
+   cd lwdid-py
    pip install -e ".[dev]"
    pytest tests/
 

@@ -52,14 +52,11 @@
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#installation-methods">Installation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#install-via-pip-recommended">Install via pip (Recommended)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#install-from-source">Install from Source</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../installation.html#development-environment-setup">Development Environment Setup</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../installation.html#verify-installation">Verify Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#common-issues">Common Issues</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#numpy-version-conflicts">numpy Version Conflicts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#statsmodels-installation-failure">statsmodels Installation Failure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../installation.html#virtual-environment-recommended">Virtual Environment (Recommended)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#next-steps">Next Steps</a></li>
@@ -445,10 +442,9 @@ rolling=’detrend’,  # choose one of ‘demean’, ‘detrend’, ‘demeanq�
 <h1>Transformations Module (transformations)<a class="headerlink" href="#transformations-module-transformations" title="Link to this heading"></a></h1>
 <p>The transformations module implements the four panel-to-cross-section
 transformations described in Lee and Wooldridge (2025).</p>
-<p id="module-lwdid.transformations">Transformation Module</p>
+<p id="module-lwdid.transformations">Transformation module for the Lee and Wooldridge (2025) DiD estimator.</p>
 <p>Implements transformation methods for the Lee and Wooldridge (2025)
 difference-in-differences estimator.</p>
-<p>Authors: Xuanyu Cai, Wenli Xu</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.transformations.apply_rolling_transform">
 <span class="sig-prename descclassname"><span class="pre">lwdid.transformations.</span></span><span class="sig-name descname"><span class="pre">apply_rolling_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tindex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpost1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quarter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/transformations.html#apply_rolling_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.transformations.apply_rolling_transform" title="Link to this definition"></a></dt>

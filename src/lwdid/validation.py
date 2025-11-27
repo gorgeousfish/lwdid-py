@@ -1,10 +1,9 @@
 """
-Validation Module
+Validation module for the Lee and Wooldridge (2025) DiD estimator.
 
 Implements input validation and data preparation for the Lee and Wooldridge (2025)
 difference-in-differences estimator.
 
-Authors: Xuanyu Cai, Wenli Xu
 """
 
 import warnings

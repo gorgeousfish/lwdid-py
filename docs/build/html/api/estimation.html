@@ -52,14 +52,11 @@
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#installation-methods">Installation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#install-via-pip-recommended">Install via pip (Recommended)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#install-from-source">Install from Source</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../installation.html#development-environment-setup">Development Environment Setup</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../installation.html#verify-installation">Verify Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#common-issues">Common Issues</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#numpy-version-conflicts">numpy Version Conflicts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../installation.html#statsmodels-installation-failure">statsmodels Installation Failure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../installation.html#virtual-environment-recommended">Virtual Environment (Recommended)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../installation.html#next-steps">Next Steps</a></li>
@@ -417,10 +414,9 @@
 <h1>Estimation Module (estimation)<a class="headerlink" href="#estimation-module-estimation" title="Link to this heading"></a></h1>
 <p>The estimation module implements the core regression and inference procedures
 for the Lee and Wooldridge (2025) difference-in-differences method.</p>
-<p id="module-lwdid.estimation">Estimation Module</p>
+<p id="module-lwdid.estimation">Estimation module for the Lee and Wooldridge (2025) DiD estimator.</p>
 <p>Implements cross-sectional OLS regressions for the Lee and Wooldridge (2025)
 difference-in-differences estimator.</p>
-<p>Authors: Xuanyu Cai, Wenli Xu</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.estimation.prepare_controls">
 <span class="sig-prename descclassname"><span class="pre">lwdid.estimation.</span></span><span class="sig-name descname"><span class="pre">prepare_controls</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_treated</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_control</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/estimation.html#prepare_controls"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.estimation.prepare_controls" title="Link to this definition"></a></dt>
