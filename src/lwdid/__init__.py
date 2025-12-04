@@ -93,31 +93,41 @@ from .exceptions import (
     InsufficientQuarterDiversityError,
     InvalidParameterError,
     InvalidRollingMethodError,
+    InvalidStaggeredDataError,
     InvalidVCETypeError,
     LWDIDError,
     MissingRequiredColumnError,
     NoControlUnitsError,
+    NoNeverTreatedError,
     NoTreatedUnitsError,
     RandomizationError,
     TimeDiscontinuityError,
     VisualizationError,
 )
 
+# Export staggered validation functions
+from .validation import is_never_treated, validate_staggered_data
+
 __all__ = [
     # Main function
     'lwdid',
     # Results class
     'LWDIDResults',
+    # Staggered validation functions
+    'is_never_treated',
+    'validate_staggered_data',
     # Exception classes
     'LWDIDError',
     'InvalidParameterError',
     'InvalidRollingMethodError',
+    'InvalidStaggeredDataError',
     'InvalidVCETypeError',
     'InsufficientDataError',
     'InsufficientPrePeriodsError',
     'InsufficientQuarterDiversityError',
     'NoTreatedUnitsError',
     'NoControlUnitsError',
+    'NoNeverTreatedError',
     'TimeDiscontinuityError',
     'MissingRequiredColumnError',
     'RandomizationError',

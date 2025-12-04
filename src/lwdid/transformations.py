@@ -1,5 +1,5 @@
 """
-Transformation module for the Lee and Wooldridge (2025) DiD estimator.
+Transformation Module
 
 Implements transformation methods for the Lee and Wooldridge (2025)
 difference-in-differences estimator.

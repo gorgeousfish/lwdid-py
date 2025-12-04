@@ -18,6 +18,7 @@ This package implements the methodology described in Lee and Wooldridge (2025), 
 
 The package provides inference for small cross-sectional samples by transforming panel data into cross-sectional regressions:
 
+- **Common timing and staggered adoption**: Supports both settings where all units begin treatment simultaneously and settings with staggered treatment rollout
 - Designed for settings with small numbers of treated or control units
 - Exact t-based inference available under classical linear model assumptions (normality and homoskedasticity)
 - Works best with large time dimensions, where the central limit theorem across time supports normality
@@ -25,6 +26,7 @@ The package provides inference for small cross-sectional samples by transforming
 - Unit-specific linear trends and seasonal patterns
 - Heteroskedasticity-robust inference (HC1/HC3) for moderate sample sizes
 - Randomization inference for finite-sample validity without distributional assumptions
+- **Staggered DiD**: Cohort-specific and overall effect estimation based on Lee and Wooldridge (2023)
 
 ### Transformation Methods
 
@@ -135,6 +137,70 @@ results = lwdid(
 )
 ```
 
+### Staggered DiD (NEW)
+
+For settings where different units begin treatment at different times:
+
+```python
+import pandas as pd
+from lwdid import lwdid
+
+# Load Castle Law data (states adopted at different times)
+data = pd.read_csv('castle.csv')
+
+# Create gvar: first treatment year (0 = never treated)
+data['gvar'] = data['effyear'].fillna(0).astype(int)
+
+# Overall weighted effect across all cohorts
+results = lwdid(
+    data=data,
+    y='lhomicide',           # Log homicide rate
+    ivar='sid',              # State ID (integer)
+    tvar='year',             # Year
+    gvar='gvar',             # First treatment year
+    rolling='demean',        # Transformation method
+    control_group='never_treated',  # Use never-treated as controls
+    aggregate='overall',     # Get overall weighted effect
+    vce='hc3'               # HC3 standard errors
+)
+
+print(f"Overall ATT: {results.att_overall:.4f}")
+print(f"SE: {results.se_overall:.4f}")
+# Output: Overall ATT: 0.0917, SE: 0.0612
+```
+
+**Cohort-Specific Effects**
+
+```python
+# Get effects for each treatment cohort
+results = lwdid(
+    data=data, y='lhomicide', ivar='sid', tvar='year', gvar='gvar',
+    aggregate='cohort',  # Aggregate within cohorts
+    vce='hc3'
+)
+print(results.att_by_cohort)
+```
+
+**Event Study**
+
+```python
+# All (cohort, time) specific effects
+results = lwdid(
+    data=data, y='lhomicide', ivar='sid', tvar='year', gvar='gvar',
+    aggregate='none',  # No aggregation
+    vce='hc3'
+)
+
+# Plot event study
+results.plot_event_study(title='Castle Doctrine Effect')
+```
+
+**Key Parameters for Staggered DiD:**
+- `gvar`: Column name for first treatment period (0/NaN = never treated)
+- `control_group`: `'never_treated'` or `'not_yet_treated'`
+- `aggregate`: `'none'` (all g,r effects), `'cohort'`, or `'overall'`
+- `estimator`: `'ra'` (default), `'ipwra'`, or `'psm'`
+
 ## Capabilities
 
 ### Core Features
@@ -146,6 +212,14 @@ results = lwdid(
 - **Randomization inference**: Bootstrap (default) or permutation-based p-values for finite-sample validity
 - **Visualization**: Time series plots comparing treated and control units
 - **Export formats**: Excel (multi-sheet), CSV, LaTeX tables
+
+### Staggered DiD Features
+
+- **Cohort-specific effects**: Estimate ATT for each treatment cohort
+- **Overall weighted effect**: Aggregate across cohorts using optimal weights
+- **Control group strategies**: Never-treated or not-yet-treated units
+- **Multiple estimators**: RA (regression adjustment), IPWRA (doubly robust), PSM
+- **Event study plots**: Visualize treatment effects by event time
 
 ### Validation
 
@@ -263,15 +337,18 @@ lwdid(data, y, d, ivar, tvar, post, rolling, **options)
   - Each (unit, time) combination must be unique
   - Time index must form a continuous sequence
   - Panels may be balanced or unbalanced across units
-- **Treatment timing** (common timing assumption):
+- **Common timing** (use `d` and `post` parameters):
   - All treated units must begin treatment in the same period
   - The `post` indicator must be a function of time only
   - Treatment must be persistent (no reversals)
-  - Staggered adoption is not supported (see Lee and Wooldridge 2025, Section 7)
+- **Staggered adoption** (use `gvar` parameter):
+  - Provide `gvar`: column with first treatment period (0 or NaN = never treated)
+  - Do not provide `d` or `post` (they will be ignored)
+  - See Lee and Wooldridge 2023, Section 7
 - **Time variable format**:
   - Annual data: Single numeric column (e.g., `tvar='year'`)
   - Quarterly data: Two numeric columns (e.g., `tvar=['year', 'quarter']`)
-- **Reserved column names**: Avoid `d_`, `post_`, `tindex`, `tq`, `ydot`, `ydot_postavg`, `firstpost`
+- **Reserved column names**: Avoid `d_`, `post_`, `tindex`, `tq`, `ydot`, `ydot_postavg`, `firstpost`, `ydot_g*_r*`
 
 ## Examples
 
@@ -294,6 +371,28 @@ print(results.summary())
 ```
 
 See `examples/smoking.ipynb` for complete example.
+
+### Castle Law (Staggered DiD)
+
+```python
+# Analysis with staggered adoption (21 treated states, 29 controls)
+data = pd.read_csv('castle.csv')
+data['gvar'] = data['effyear'].fillna(0).astype(int)
+
+results = lwdid(
+    data,
+    y='lhomicide',
+    ivar='sid',
+    tvar='year',
+    gvar='gvar',
+    rolling='demean',
+    aggregate='overall',
+    vce='hc3'
+)
+print(results.summary())
+```
+
+See `examples/castle_law.ipynb` for complete example.
 
 ## Testing
 

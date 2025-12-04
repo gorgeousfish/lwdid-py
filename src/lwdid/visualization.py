@@ -1,5 +1,5 @@
 """
-Visualization module for the lwdid package.
+Visualization Module
 
 Provides plotting functions for transformed outcomes.
 """

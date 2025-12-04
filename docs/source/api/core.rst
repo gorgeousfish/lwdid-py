@@ -164,9 +164,72 @@ Complete Example with All Options
    results.to_excel('results.xlsx')
    results.plot()
 
+Staggered DiD
+~~~~~~~~~~~~~
+
+For staggered treatment adoption (different units treated at different times):
+
+.. code-block:: python
+
+   # Castle Law example - states adopted Castle Doctrine at different years
+   data = pd.read_csv('castle.csv')
+   data['gvar'] = data['effyear'].fillna(0).astype(int)
+   
+   # Overall effect across all cohorts
+   results = lwdid(
+       data=data,
+       y='lhomicide',         # Log homicide rate
+       ivar='sid',            # State ID (must be integer)
+       tvar='year',           # Year
+       gvar='gvar',           # First treatment year (0 = never treated)
+       rolling='demean',      # Transformation method
+       control_group='never_treated',
+       aggregate='overall',   # Get weighted average effect
+       vce='hc3'
+   )
+   
+   print(f"Overall ATT: {results.att_overall:.4f}")
+   print(f"95% CI: [{results.ci_lower_overall:.4f}, {results.ci_upper_overall:.4f}]")
+
+.. code-block:: python
+
+   # Cohort-specific effects
+   results = lwdid(
+       data=data,
+       y='lhomicide',
+       ivar='sid',
+       tvar='year',
+       gvar='gvar',
+       aggregate='cohort',    # Average within each cohort
+   )
+   print(results.att_by_cohort)  # DataFrame with cohort-level estimates
+
+.. code-block:: python
+
+   # All (cohort, time) specific effects for event study
+   results = lwdid(
+       data=data,
+       y='lhomicide',
+       ivar='sid',
+       tvar='year',
+       gvar='gvar',
+       aggregate='none',      # No aggregation
+   )
+   
+   # Plot event study
+   results.plot_event_study(title='Castle Doctrine Effect')
+
+.. note::
+
+   When using ``aggregate='cohort'`` or ``aggregate='overall'``, the control
+   group is automatically switched to ``never_treated`` if ``not_yet_treated``
+   was specified. This is required by the theoretical framework (see Lee &
+   Wooldridge 2023, Section 7).
+
 See Also
 --------
 
 - :class:`lwdid.LWDIDResults` - Results object returned by lwdid()
+- :mod:`lwdid.staggered` - Low-level staggered estimation functions
 - :doc:`../user_guide` - Comprehensive usage guide
 - :doc:`../quickstart` - Quick start tutorial

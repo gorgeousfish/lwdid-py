@@ -12,6 +12,7 @@ Core Modules
 
    core
    results
+   staggered
    transformations
    estimation
    validation
@@ -24,8 +25,9 @@ Quick Index
 
 Main exported components:
 
-- :func:`lwdid.lwdid` - Main estimation function
+- :func:`lwdid.lwdid` - Main estimation function (common timing and staggered)
 - :class:`lwdid.LWDIDResults` - Results container class
+- :mod:`lwdid.staggered` - Staggered DiD module (Lee & Wooldridge 2023)
 - :mod:`lwdid.exceptions` - Exception hierarchy
 
 See individual module pages for detailed documentation.

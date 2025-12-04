@@ -1,5 +1,5 @@
 """
-Validation module for the Lee and Wooldridge (2025) DiD estimator.
+Validation Module
 
 Implements input validation and data preparation for the Lee and Wooldridge (2025)
 difference-in-differences estimator.
@@ -1010,3 +1010,293 @@ def validate_quarter_coverage(
                 f"Please ensure each unit's pre-treatment period covers all quarters that appear in post-treatment, "
                 f"or use demean/detrend methods instead."
             )
+
+
+# =============================================================================
+# Staggered DiD Validation Functions
+# =============================================================================
+
+def is_never_treated(gvar_value: Union[int, float]) -> bool:
+    """
+    Determine if a unit is never treated based on its gvar value.
+    
+    This is the single source of truth for never-treated status identification.
+    All modules (validation, control_groups, aggregation) should use this function
+    to ensure consistent NT determination.
+    
+    Parameters
+    ----------
+    gvar_value : int or float
+        The gvar (first treatment period) value for a unit.
+        
+    Returns
+    -------
+    bool
+        True if the unit is never treated, False otherwise.
+        
+    Notes
+    -----
+    A unit is considered never treated if its gvar value is:
+    - NaN or None (missing value)
+    - 0 (explicitly coded as never treated)
+    - np.inf (infinity, explicitly coded as never treated)
+    
+    Positive integers indicate the first treatment period (cohort membership).
+    Negative values are invalid and should be caught by validate_staggered_data().
+    
+    Examples
+    --------
+    >>> is_never_treated(0)
+    True
+    >>> is_never_treated(np.nan)
+    True
+    >>> is_never_treated(np.inf)
+    True
+    >>> is_never_treated(2005)
+    False
+    """
+    if pd.isna(gvar_value):
+        return True
+    if gvar_value == 0:
+        return True
+    if np.isinf(gvar_value):
+        return True
+    return False
+
+
+def validate_staggered_data(
+    data: pd.DataFrame,
+    gvar: str,
+    ivar: str,
+    tvar: Union[str, List[str]],
+    y: str,
+    controls: Optional[List[str]] = None,
+) -> Dict:
+    """
+    Validate staggered DiD data and extract cohort structure.
+    
+    This function performs comprehensive validation for staggered settings,
+    checking gvar column validity, cohort identification, and data integrity.
+    
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Panel data in long format.
+    gvar : str
+        Column name for first treatment period (cohort indicator).
+        Valid values: positive integers (cohort), 0/inf/NaN (never treated).
+    ivar : str
+        Unit identifier column name.
+    tvar : str or list of str
+        Time variable column name(s).
+    y : str
+        Outcome variable column name.
+    controls : list of str, optional
+        Control variable column names.
+        
+    Returns
+    -------
+    dict
+        Validation result dictionary containing:
+        
+        - 'cohorts': List[int], sorted list of treatment cohorts (excludes NT)
+        - 'n_never_treated': int, number of never-treated units
+        - 'n_treated': int, total number of treated units across all cohorts
+        - 'cohort_sizes': Dict[int, int], {cohort: n_units} mapping
+        - 'T_min': int, minimum time period in data
+        - 'T_max': int, maximum time period in data
+        - 'warnings': List[str], warning messages (e.g., gvar out of tvar range)
+        
+    Raises
+    ------
+    MissingRequiredColumnError
+        If required columns (gvar, ivar, tvar, y) are missing from data.
+    InvalidStaggeredDataError
+        If gvar column contains invalid values (negative numbers, strings)
+        or if there are no valid treatment cohorts.
+        
+    Examples
+    --------
+    >>> data = pd.DataFrame({
+    ...     'id': [1, 1, 2, 2, 3, 3],
+    ...     'year': [2000, 2001, 2000, 2001, 2000, 2001],
+    ...     'y': [1.0, 2.0, 1.5, 2.5, 1.2, 2.2],
+    ...     'gvar': [2001, 2001, 0, 0, 0, 0]
+    ... })
+    >>> result = validate_staggered_data(data, 'gvar', 'id', 'year', 'y')
+    >>> result['cohorts']
+    [2001]
+    >>> result['n_never_treated']
+    2
+    """
+    from .exceptions import InvalidStaggeredDataError, MissingRequiredColumnError
+    
+    # Check DataFrame type
+    if not isinstance(data, pd.DataFrame):
+        raise TypeError(f"data must be a pandas DataFrame, got {type(data).__name__}")
+    
+    if len(data) == 0:
+        raise InvalidStaggeredDataError("Input data is empty")
+    
+    # Check required columns exist
+    required_cols = {gvar: 'gvar', ivar: 'ivar', y: 'y'}
+    
+    # Handle tvar (can be string or list)
+    if isinstance(tvar, str):
+        required_cols[tvar] = 'tvar'
+        tvar_cols = [tvar]
+    else:
+        for t in tvar:
+            required_cols[t] = 'tvar'
+        tvar_cols = list(tvar)
+    
+    missing_cols = [col for col in required_cols.keys() if col not in data.columns]
+    if missing_cols:
+        raise MissingRequiredColumnError(
+            f"Required columns not found in data: {missing_cols}. "
+            f"Available columns: {list(data.columns)}"
+        )
+    
+    # Check controls if specified
+    if controls:
+        missing_controls = [c for c in controls if c not in data.columns]
+        if missing_controls:
+            raise MissingRequiredColumnError(
+                f"Control variable columns not found: {missing_controls}"
+            )
+    
+    # Validate gvar column data type
+    if not pd.api.types.is_numeric_dtype(data[gvar]):
+        raise InvalidStaggeredDataError(
+            f"gvar column '{gvar}' must be numeric, got {data[gvar].dtype}. "
+            f"Please convert string values to numeric (e.g., 'never' -> 0, '2005' -> 2005)."
+        )
+    
+    # Get unit-level gvar (should be time-invariant)
+    unit_gvar = data.groupby(ivar)[gvar].first()
+    
+    # Check gvar is time-invariant within each unit
+    gvar_nunique = data.groupby(ivar)[gvar].nunique()
+    inconsistent_units = gvar_nunique[gvar_nunique > 1].index.tolist()
+    if inconsistent_units:
+        raise InvalidStaggeredDataError(
+            f"gvar must be time-invariant within each unit. "
+            f"Units with varying gvar values: {inconsistent_units[:5]}"
+            f"{'...' if len(inconsistent_units) > 5 else ''}"
+        )
+    
+    # Check for negative values (invalid)
+    non_na_gvar = unit_gvar.dropna()
+    negative_gvar = non_na_gvar[non_na_gvar < 0]
+    if len(negative_gvar) > 0:
+        neg_values = sorted(negative_gvar.unique().tolist())[:5]
+        raise InvalidStaggeredDataError(
+            f"gvar column contains negative values, which are not valid: {neg_values}. "
+            f"Valid values: positive integer (cohort), 0 (never treated), inf (never treated), NaN (never treated)."
+        )
+    
+    # Identify never-treated units using vectorized operation
+    never_treated_mask = unit_gvar.apply(is_never_treated)
+    n_never_treated = int(never_treated_mask.sum())
+    
+    # Identify cohorts (positive gvar values, excluding NT values)
+    treated_mask = ~never_treated_mask
+    treated_gvar = unit_gvar[treated_mask]
+    
+    if len(treated_gvar) == 0:
+        raise InvalidStaggeredDataError(
+            "No treatment cohorts found in data. All units appear to be never-treated. "
+            f"Found gvar values: {sorted(unit_gvar.dropna().unique().tolist()[:10])}"
+        )
+    
+    cohorts = sorted([int(g) for g in treated_gvar.unique() if pd.notna(g) and g > 0 and not np.isinf(g)])
+    
+    if len(cohorts) == 0:
+        raise InvalidStaggeredDataError(
+            "No valid treatment cohorts found. Treatment cohorts must be positive integers. "
+            f"Found gvar values: {sorted(unit_gvar.dropna().unique().tolist()[:10])}"
+        )
+    
+    # Cohort sizes
+    cohort_sizes = {}
+    for g in cohorts:
+        cohort_sizes[g] = int((unit_gvar == g).sum())
+    
+    n_treated = sum(cohort_sizes.values())
+    
+    # Get time range
+    if len(tvar_cols) == 1:
+        T_min = int(data[tvar_cols[0]].min())
+        T_max = int(data[tvar_cols[0]].max())
+    else:
+        # For quarterly data, use year as primary
+        T_min = int(data[tvar_cols[0]].min())
+        T_max = int(data[tvar_cols[0]].max())
+    
+    # Generate warnings
+    warning_list = []
+    
+    # Warn if no never-treated units (important for aggregate estimation)
+    if n_never_treated == 0:
+        warning_list.append(
+            "No never-treated units found in data. "
+            "Impact: Only (g,r)-specific effects can be estimated using not-yet-treated controls. "
+            "Cohort effects (τ_g) and overall effects (τ_ω) cannot be estimated. "
+            "Use aggregate='none' to estimate (g,r)-specific effects only."
+        )
+    
+    # Warn if cohorts are outside tvar range
+    cohorts_outside = [g for g in cohorts if g < T_min or g > T_max]
+    if cohorts_outside:
+        warning_list.append(
+            f"Some cohorts are outside the observed time range [{T_min}, {T_max}]: {cohorts_outside}. "
+            f"This may indicate data issues."
+        )
+    
+    # Warn if earliest cohort has no pre-treatment period
+    min_cohort = min(cohorts)
+    if min_cohort <= T_min:
+        warning_list.append(
+            f"Earliest cohort ({min_cohort}) has no pre-treatment period. "
+            f"Data starts at T_min={T_min}. Demeaning/detrending transformation may be unreliable for this cohort."
+        )
+    
+    # Warn if very few never-treated units
+    if n_never_treated == 1:
+        warning_list.append(
+            f"Only 1 never-treated unit found. "
+            f"Inference for cohort and overall effects may be unreliable with very few NT units."
+        )
+    
+    # Check for unbalanced panel
+    panel_counts = data.groupby(ivar)[tvar_cols[0]].count()
+    if panel_counts.nunique() > 1:
+        min_obs = int(panel_counts.min())
+        max_obs = int(panel_counts.max())
+        warning_list.append(
+            f"Unbalanced panel detected: observation counts range from {min_obs} to {max_obs}. "
+            f"Missing periods will be handled automatically."
+        )
+    
+    # Check for missing values in outcome variable
+    n_missing_y = data[y].isna().sum()
+    if n_missing_y > 0:
+        pct_missing = n_missing_y / len(data) * 100
+        warning_list.append(
+            f"Outcome variable '{y}' has {n_missing_y} missing values ({pct_missing:.1f}%). "
+            f"These observations will be excluded from estimation."
+        )
+    
+    return {
+        'cohorts': cohorts,
+        'n_cohorts': len(cohorts),
+        'n_never_treated': n_never_treated,
+        'n_treated': n_treated,
+        'has_never_treated': n_never_treated > 0,
+        'cohort_sizes': cohort_sizes,
+        'T_min': T_min,
+        'T_max': T_max,
+        'N_total': len(unit_gvar),
+        'N_obs': len(data),
+        'warnings': warning_list,
+    }

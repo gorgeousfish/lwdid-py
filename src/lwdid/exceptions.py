@@ -1,5 +1,5 @@
 """
-Exception classes for the lwdid package.
+Exception Classes Module
 
 Defines exception hierarchy for the lwdid package.
 """
@@ -271,5 +271,82 @@ class VisualizationError(LWDIDError):
     --------
     lwdid.visualization.plot_results : Function that generates plots.
     lwdid.results.LWDIDResults.plot : Method that calls plot_results.
+    """
+    pass
+
+
+# =============================================================================
+# Staggered DiD Exceptions
+# =============================================================================
+
+class InvalidStaggeredDataError(LWDIDError):
+    """
+    Exception raised when staggered data validation fails.
+    
+    This exception is raised in the following scenarios:
+    
+    1. **Invalid gvar values**:
+       - Negative values in gvar column
+       - String values instead of numeric types
+       - Values that cannot be interpreted as treatment cohort or never-treated
+       
+    2. **No valid cohorts**:
+       - All units are never-treated (no treated cohorts to estimate effects for)
+       - All gvar values are NaN/0/inf with no positive integers
+       
+    3. **Inconsistent gvar within unit**:
+       - Same unit has different gvar values across time periods
+       (gvar should be time-invariant within unit)
+    
+    Valid gvar values:
+    - Positive integer: Treatment cohort (first treatment period)
+    - 0: Never treated
+    - np.inf: Never treated
+    - NaN/None: Never treated
+    
+    Examples
+    --------
+    >>> data['gvar'] = [-1, 2005, 2006]  # Negative value
+    >>> lwdid(data, y='y', ivar='id', tvar='year', gvar='gvar')  # doctest: +SKIP
+    InvalidStaggeredDataError: gvar column contains negative values: [-1]
+    
+    >>> data['gvar'] = ['never', '2005', '2006']  # String values
+    >>> lwdid(data, y='y', ivar='id', tvar='year', gvar='gvar')  # doctest: +SKIP
+    InvalidStaggeredDataError: gvar column must be numeric, got object
+    
+    See Also
+    --------
+    lwdid.validation.validate_staggered_data : Function that performs validation.
+    """
+    pass
+
+
+class NoNeverTreatedError(InsufficientDataError):
+    """
+    Exception raised when cohort/overall effect estimation requires never-treated
+    units but none exist in the data.
+    
+    This exception is raised when:
+    - aggregate='cohort' is specified but no never-treated units exist
+    - aggregate='overall' is specified but no never-treated units exist
+    
+    The Lee & Wooldridge (2023, 2025) method requires never-treated units as
+    control group for cohort and overall effect aggregation because:
+    - Different cohorts use different pre-treatment periods for transformation
+    - Only never-treated units can serve as a consistent reference across cohorts
+    
+    For (g,r)-specific effects, not-yet-treated units can be used as controls,
+    so this exception is not raised for aggregate='none'.
+    
+    Examples
+    --------
+    >>> # All units are eventually treated
+    >>> data['gvar'] = [2005, 2005, 2006, 2006]  # No 0/inf/NaN
+    >>> lwdid(data, ..., gvar='gvar', aggregate='overall')  # doctest: +SKIP
+    NoNeverTreatedError: Cannot estimate overall effect without never-treated units.
+    
+    See Also
+    --------
+    lwdid.staggered.aggregation : Aggregation functions requiring NT control.
     """
     pass

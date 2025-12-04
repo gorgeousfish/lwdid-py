@@ -1,5 +1,5 @@
 """
-Estimation module for the Lee and Wooldridge (2025) DiD estimator.
+Estimation Module
 
 Implements cross-sectional OLS regressions for the Lee and Wooldridge (2025)
 difference-in-differences estimator.

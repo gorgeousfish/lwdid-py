@@ -1,5 +1,5 @@
 """
-Randomization inference module for the lwdid package.
+Randomization Inference Module
 
 Implements randomization inference for small-sample hypothesis testing by resampling
 treatment labels. Provides p-values without distributional assumptions.
