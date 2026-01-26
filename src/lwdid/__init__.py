@@ -1,92 +1,136 @@
 """
-lwdid: Difference-in-Differences Estimator for Small Cross-Sectional Samples
-=============================================================================
+Difference-in-differences estimation with unit-specific transformations.
 
-Python implementation of the Lee and Wooldridge (2025) difference-in-differences
-estimator for panel data with small cross-sectional sample sizes.
+This package implements difference-in-differences (DiD) methods using
+unit-specific transformations that convert panel data into cross-sectional
+form. The approach supports both common timing and staggered adoption designs,
+with inference methods appropriate for small, moderate, and large samples.
 
-This package implements the methodology described in Lee and Wooldridge (2025),
-providing inference for difference-in-differences estimation when the number
-of treated or control units is small.
+The core methodology removes pre-treatment unit-specific patterns (means or
+linear trends) before applying standard treatment effect estimators. This
+transformation-based approach enables exact t-based inference for small
+samples, heteroskedasticity-robust inference for moderate samples, and
+propensity score-based methods for large samples.
 
-Key Features
-------------
-- Small-sample inference: Designed for settings with small numbers of treated
-  or control units. Exact t-based inference available under classical linear
-  model assumptions (normality and homoskedasticity). Heteroskedasticity-robust
-  standard errors (HC1/HC3) for moderate sample sizes
-- Four transformation methods:
+Transformation Methods
+----------------------
+Four unit-specific transformation methods remove pre-treatment patterns:
 
-  * ``demean``: Unit-specific demeaning (Procedure 2.1)
-  * ``detrend``: Unit-specific detrending (Procedure 3.1)
-  * ``demeanq``: Quarterly demeaning with seasonal effects
-  * ``detrendq``: Quarterly detrending with linear trends and seasonal effects
+- ``demean`` : Unit-specific demeaning (subtracts pre-treatment mean)
+- ``detrend`` : Unit-specific linear detrending (removes linear trend)
+- ``demeanq`` : Quarterly demeaning with seasonal fixed effects
+- ``detrendq`` : Quarterly detrending with seasonal effects and trends
 
-- Variance estimation: Homoskedastic (exact t-inference), HC1/HC3
-  (heteroskedasticity-robust), and cluster-robust standard errors
-- Randomization inference: Bootstrap or permutation-based p-values for
-  finite-sample validity without distributional assumptions
-- Period-specific effects: Separate treatment effect estimates for each
-  post-treatment period
-- Control variables: Time-invariant covariates
-- Visualization: Residualized outcome plots
-- Export: Excel, CSV, and LaTeX output formats
+Staggered adoption designs support only ``demean`` and ``detrend``.
+
+Estimation Methods
+------------------
+Multiple estimators accommodate different sample sizes and assumptions:
+
+- ``ra`` : Regression adjustment (default). Enables exact inference under
+  classical linear model assumptions for small samples.
+- ``ipw`` : Inverse probability weighting. Reweights control observations
+  using propensity scores for large samples.
+- ``ipwra`` : Doubly robust estimation combining propensity score weighting
+  with outcome regression. Consistent if either model is correctly specified.
+- ``psm`` : Propensity score matching with nearest-neighbor matching,
+  caliper constraints, and replacement options.
+
+Variance Estimation
+-------------------
+Flexible standard error computation methods:
+
+- Homoskedastic : Exact t-based inference under normality assumption
+- Heteroskedasticity-robust : HC0 through HC4 estimators
+- Cluster-robust : For within-group correlation structures
+
+Design Support
+--------------
+- Common timing : All treated units begin treatment simultaneously
+- Staggered adoption : Treatment timing varies across cohorts with flexible
+  control group selection (never-treated or not-yet-treated)
 
 Main Components
 ---------------
-lwdid : function
-    Main estimation function. See ``help(lwdid)`` for detailed documentation.
-LWDIDResults : class
-    Results container with ``summary()``, ``plot()``, and export methods.
-Exception hierarchy : module
-    Typed exceptions inheriting from ``LWDIDError``.
+lwdid : callable
+    Primary estimation function accepting panel data and returning treatment
+    effect estimates with standard errors and inference statistics.
 
-Quick Start
------------
+LWDIDResults : class
+    Results container with ``summary()``, ``plot()``, and export methods
+    for presenting and saving estimation outputs.
+
+validate_staggered_data : callable
+    Comprehensive data validation for staggered adoption designs.
+
+is_never_treated : callable
+    Utility for determining control group membership.
+
+LWDIDError : exception
+    Base exception class with specialized subclasses for data validation,
+    parameter validation, and estimation failures.
+
+Examples
+--------
+Common timing design:
+
 >>> import pandas as pd
 >>> from lwdid import lwdid
->>>
->>> # Load panel data
->>> data = pd.read_csv('smoking.csv')
->>>
->>> # Estimate ATT
+>>> # Assuming panel_data is a DataFrame with required columns
 >>> results = lwdid(
-...     data=data,
-...     y='lcigsale',
+...     data=panel_data,
+...     y='outcome',
 ...     d='treated',
-...     ivar='state',
+...     ivar='unit_id',
 ...     tvar='year',
-...     post='post',
-...     rolling='demean'
+...     post='post_treatment',
+...     rolling='demean',
 ... )
->>>
->>> # View results
->>> print(results.summary())
->>> results.plot()
->>>
->>> # Export results
->>> results.to_excel('results.xlsx')
+>>> print(results.summary())  # doctest: +SKIP
+
+Staggered adoption design:
+
+>>> results = lwdid(
+...     data=panel_data,
+...     y='outcome',
+...     ivar='unit_id',
+...     tvar='year',
+...     gvar='first_treat_year',
+...     rolling='demean',
+...     estimator='ra',
+...     aggregate='overall',
+... )
+>>> print(results.summary())  # doctest: +SKIP
 
 Notes
 -----
-This implementation is designed for common-treatment-timing settings where all
-treated units begin treatment in the same period. Staggered adoption is not
-supported.
+The transformation-based approach removes pre-treatment unit-specific
+heterogeneity before estimation. For common timing designs, this enables
+exact inference even with small numbers of treated or control units (as
+few as one treated unit with two controls). For staggered designs,
+cohort-time specific effects are estimated and aggregated using
+cohort-share or observation-share weighting schemes.
 
-References
-----------
-Lee, S. J., and Wooldridge, J. M. (2025). Simple Approaches to Inference with
-Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes.
-Available at SSRN 5325686.
+See Also
+--------
+lwdid : Main estimation function with full parameter documentation.
+LWDIDResults : Results container with output methods.
 """
 
-# Export main function
+try:
+    from importlib.metadata import version as _version
+    __version__ = _version("lwdid")
+except ImportError:
+    # Python < 3.8 fallback
+    try:
+        import pkg_resources
+        __version__ = pkg_resources.get_distribution("lwdid").version
+    except Exception:
+        __version__ = "0.1.0"  # Fallback if package not installed
+
 from .core import lwdid
-
-# Export results class
 from .results import LWDIDResults
-
-# Export exception classes
+from .staggered.control_groups import ControlGroupStrategy
 from .exceptions import (
     InsufficientDataError,
     InsufficientPrePeriodsError,
@@ -104,19 +148,20 @@ from .exceptions import (
     TimeDiscontinuityError,
     VisualizationError,
 )
-
-# Export staggered validation functions
 from .validation import is_never_treated, validate_staggered_data
 
 __all__ = [
-    # Main function
+    # Package metadata
+    '__version__',
+    # Main API
     'lwdid',
-    # Results class
     'LWDIDResults',
-    # Staggered validation functions
+    # Staggered design utilities
+    'ControlGroupStrategy',
+    # Validation utilities
     'is_never_treated',
     'validate_staggered_data',
-    # Exception classes
+    # Exception hierarchy
     'LWDIDError',
     'InvalidParameterError',
     'InvalidRollingMethodError',
@@ -133,4 +178,3 @@ __all__ = [
     'RandomizationError',
     'VisualizationError',
 ]
-

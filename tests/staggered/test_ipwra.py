@@ -153,78 +153,78 @@ class TestEstimateIPWRA:
         assert result.ci_lower < result.att < result.ci_upper
     
     def test_ipwra_missing_controls_error(self, simple_data):
-        """缺失控制变量应报错"""
-        with pytest.raises(ValueError, match="控制变量不存在"):
+        """Missing control variables should raise error."""
+        with pytest.raises(ValueError, match="Control variables not found"):
             estimate_ipwra(
                 simple_data, 'y', 'd', ['nonexistent']
             )
     
     def test_ipwra_missing_y_error(self, simple_data):
-        """缺失结果变量应报错"""
-        with pytest.raises(ValueError, match="结果变量.*不在数据中"):
+        """Missing outcome variable should raise error."""
+        with pytest.raises(ValueError, match="Outcome variable.*not found"):
             estimate_ipwra(
                 simple_data, 'nonexistent', 'd', ['x']
             )
     
     def test_ipwra_missing_d_error(self, simple_data):
-        """缺失处理指示符应报错"""
-        with pytest.raises(ValueError, match="处理指示符.*不在数据中"):
+        """Missing treatment indicator should raise error."""
+        with pytest.raises(ValueError, match="Treatment indicator.*not found"):
             estimate_ipwra(
                 simple_data, 'y', 'nonexistent', ['x']
             )
     
     def test_ipwra_insufficient_treated(self):
-        """处理组样本量不足应报错"""
+        """Insufficient treated units should raise error."""
         data = pd.DataFrame({
             'y': [1, 2, 3, 4, 5],
-            'd': [1, 0, 0, 0, 0],  # 只有1个treated
+            'd': [1, 0, 0, 0, 0],  # Only 1 treated
             'x': [1, 2, 3, 4, 5]
         })
         
-        with pytest.raises(ValueError, match="处理组样本量不足"):
+        with pytest.raises(ValueError, match="Insufficient treated units"):
             estimate_ipwra(data, 'y', 'd', ['x'])
     
     def test_ipwra_insufficient_control(self):
-        """控制组样本量不足应报错"""
+        """Insufficient control units should raise error."""
         data = pd.DataFrame({
             'y': [1, 2, 3, 4, 5],
-            'd': [1, 1, 1, 1, 0],  # 只有1个control
+            'd': [1, 1, 1, 1, 0],  # Only 1 control
             'x': [1, 2, 3, 4, 5]
         })
         
-        with pytest.raises(ValueError, match="控制组样本量不足"):
+        with pytest.raises(ValueError, match="Insufficient control units"):
             estimate_ipwra(data, 'y', 'd', ['x'])
 
 
 class TestIPWRAEdgeCases:
-    """IPWRA边界条件测试"""
+    """IPWRA edge case tests."""
     
     def test_small_treated_warning(self):
-        """小处理组样本警告"""
+        """Small treated sample should issue warning."""
         np.random.seed(42)
         data = pd.DataFrame({
             'y': np.random.normal(0, 1, 20),
-            'd': np.array([1, 1, 1, 1] + [0] * 16),  # 只有4个treated
+            'd': np.array([1, 1, 1, 1] + [0] * 16),  # Only 4 treated
             'x': np.random.normal(0, 1, 20)
         })
         
-        with pytest.warns(UserWarning, match="处理组样本量较小"):
+        with pytest.warns(UserWarning, match="Small treated sample"):
             estimate_ipwra(data, 'y', 'd', ['x'])
     
     def test_small_control_warning(self):
-        """小控制组样本警告"""
+        """Small control sample should issue warning."""
         np.random.seed(42)
         data = pd.DataFrame({
             'y': np.random.normal(0, 1, 20),
-            'd': np.array([1] * 12 + [0] * 8),  # 只有8个control
+            'd': np.array([1] * 12 + [0] * 8),  # Only 8 control
             'x': np.random.normal(0, 1, 20)
         })
         
-        with pytest.warns(UserWarning, match="控制组样本量较小"):
+        with pytest.warns(UserWarning, match="Small control sample"):
             estimate_ipwra(data, 'y', 'd', ['x'])
     
     def test_unknown_se_method_error(self):
-        """未知标准误方法应报错"""
+        """Unknown SE method should raise error."""
         np.random.seed(42)
         data = pd.DataFrame({
             'y': np.random.normal(0, 1, 100),
@@ -232,7 +232,7 @@ class TestIPWRAEdgeCases:
             'x': np.random.normal(0, 1, 100)
         })
         
-        with pytest.raises(ValueError, match="未知的se_method"):
+        with pytest.raises(ValueError, match="Unknown se_method"):
             estimate_ipwra(data, 'y', 'd', ['x'], se_method='invalid')
     
     def test_extreme_weights_warning(self):

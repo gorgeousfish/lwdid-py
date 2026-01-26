@@ -1,0 +1,28 @@
+# Development dependencies for lwdid
+# Install with: pip install -r requirements-dev.txt
+
+# Core dependencies (pinned for development stability)
+numpy>=2.0,<2.3
+pandas>=2.0,<3.0
+scipy>=1.14,<1.17
+statsmodels>=0.14,<1.0
+matplotlib>=3.7
+openpyxl>=3.1
+
+# Testing dependencies
+pytest>=7.0,<9.0
+pytest-cov>=4.0,<6.0
+
+# Type stubs
+pandas-stubs>=2.0
+
+# Known issue: pytest-cov with NumPy 2.x may cause
+# "ValueError: _CopyMode.IF_NEEDED is neither True nor False"
+# during test collection. This is a known compatibility issue
+# between NumPy 2.x and the coverage tool.
+#
+# Workaround: Run tests without coverage flag:
+#   pytest tests/ -v
+#
+# For coverage in CI, consider using NumPy 1.26.x environment:
+#   pip install "numpy>=1.26,<2.0" "pandas>=1.5,<2.0"

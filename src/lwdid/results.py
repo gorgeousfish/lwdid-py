@@ -1,26 +1,34 @@
 """
-Results Container Module
+Result container for difference-in-differences estimation outputs.
 
-Defines the LWDIDResults class for storing, displaying, and exporting estimation
-results.
+This module provides the LWDIDResults class for encapsulating estimation
+outputs from both common timing and staggered adoption DiD designs. The
+container stores point estimates, standard errors, confidence intervals,
+and supports multiple export formats for reproducible research.
 
+Key features include:
+
+- Immutable core attributes via properties for result integrity
+- Multiple summary formats (text, LaTeX, Excel, CSV)
+- Event study visualization for staggered designs
+- Period-specific effects for common timing designs
 """
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
 
 class LWDIDResults:
     """
-    Container for lwdid estimation results
-    
-    This class stores all estimation outputs from the lwdid() function and provides
-    methods for displaying, visualizing, and exporting results. All core attributes
-    are read-only properties to ensure result integrity.
-    
-    Supports both common timing and staggered DiD settings.
-    
+    Container for difference-in-differences estimation results.
+
+    Stores all estimation outputs from the lwdid() function and provides
+    methods for displaying, visualizing, and exporting results. All core
+    attributes are read-only properties to ensure result integrity.
+
+    Supports both common timing and staggered adoption DiD designs.
+
     Attributes
     ----------
     att : float
@@ -31,12 +39,16 @@ class LWDIDResults:
         t-statistic for H0: ATT = 0.
     pvalue : float
         Two-sided p-value for t-test.
-    ci_lower, ci_upper : float
-        Lower and upper bounds of 95% confidence interval.
+    ci_lower : float
+        Lower bound of 95% confidence interval.
+    ci_upper : float
+        Upper bound of 95% confidence interval.
     nobs : int
         Number of observations in the regression.
-    n_treated, n_control : int
-        Number of treated and control units.
+    n_treated : int
+        Number of treated units.
+    n_control : int
+        Number of control units.
     K : int
         Last pre-treatment period index.
     tpost1 : int
@@ -44,12 +56,12 @@ class LWDIDResults:
     df_resid : int
         Residual degrees of freedom from the main regression.
     df_inference : int
-        Degrees of freedom used for inference. For cluster-robust standard errors,
-        this is G - 1 (number of clusters minus 1). For other variance estimators,
-        this equals df_resid. This is the df value displayed in summary() and used
-        for computing t-statistics and confidence intervals.
+        Degrees of freedom used for inference. For cluster-robust standard
+        errors, this is G - 1 (number of clusters minus 1). For other variance
+        estimators, this equals df_resid.
     rolling : str
-        Transformation method used ('demean', 'detrend', 'demeanq', or 'detrendq').
+        Transformation method used ('demean', 'detrend', 'demeanq', or
+        'detrendq').
     vce_type : str
         Variance estimator type ('ols', 'robust', 'hc1', 'hc3', or 'cluster').
     cluster_var : str or None
@@ -79,96 +91,70 @@ class LWDIDResults:
         Randomization inference method used ('bootstrap' or 'permutation').
         Only available if ri=True was specified.
     ri_valid : int or None
-        Number of valid (successful) RI replications. Only available if ri=True.
+        Number of valid (successful) RI replications. Only available if
+        ri=True.
     ri_failed : int or None
         Number of failed RI replications. Only available if ri=True.
     data : pd.DataFrame
-        Transformed data used for regression (internal attribute, not a public property).
-        Contains the rolling-transformed outcome variable and other regression variables.
-        If the original ivar was string type, this DataFrame contains numeric IDs (1, 2, 3, ...).
-        The mapping between original and numeric IDs is stored in data.attrs['id_mapping'].
-
-        Access via: results.data (not recommended for typical use)
-
-        String ID mapping (if applicable):
-
-        - results.data.attrs['id_mapping']['original_to_numeric']: dict mapping original IDs to numeric
-        - results.data.attrs['id_mapping']['numeric_to_original']: dict mapping numeric to original IDs
-
-        Example:
-        
-        If ivar='state' with values ['CA', 'TX', 'NY'], they are encoded as 1, 2, 3.
-        results.data.attrs['id_mapping'] = {
-            'original_to_numeric': {'CA': 1, 'TX': 2, 'NY': 3},
-            'numeric_to_original': {1: 'CA', 2: 'TX', 3: 'NY'}
-        }
-
-    Staggered-specific attributes (only available when is_staggered=True):
-    
+        Transformed data used for regression. Contains the rolling-transformed
+        outcome variable and other regression variables. If the original ivar
+        was string type, this DataFrame contains numeric IDs (1, 2, 3, ...).
+        The mapping between original and numeric IDs is stored in
+        data.attrs['id_mapping'].
     is_staggered : bool
         Whether this is a staggered DiD estimation.
-    cohorts : List[int]
+    cohorts : list of int
         Sorted list of treatment cohorts (first treatment periods).
-    cohort_sizes : Dict[int, int]
-        Number of units in each cohort.
-    att_by_cohort_time : pd.DataFrame
+        Only available when is_staggered=True.
+    cohort_sizes : dict
+        Number of units in each cohort. Only available when is_staggered=True.
+    att_by_cohort_time : pd.DataFrame or None
         (g,r)-specific ATT estimates with columns: cohort, period, event_time,
         att, se, ci_lower, ci_upper, t_stat, pvalue, n_treated, n_control.
+        Only available when is_staggered=True.
     att_by_cohort : pd.DataFrame or None
         Cohort-specific ATT estimates (if aggregate='cohort' or 'overall').
+        Only available when is_staggered=True.
     att_overall : float or None
         Overall weighted ATT (if aggregate='overall').
+        Only available when is_staggered=True.
     se_overall : float or None
         Standard error of overall ATT.
-    cohort_weights : Dict[int, float]
+        Only available when is_staggered=True.
+    cohort_weights : dict
         Cohort weights used for overall effect (omega_g = N_g / N_treat).
-    control_group : str
+        Only available when is_staggered=True.
+    control_group : str or None
         User-specified control group strategy.
-    control_group_used : str
+        Only available when is_staggered=True.
+    control_group_used : str or None
         Actual control group strategy used (may differ due to auto-switching).
-    aggregate : str
+        Only available when is_staggered=True.
+    aggregate : str or None
         Aggregation level ('none', 'cohort', 'overall').
-    estimator : str
+        Only available when is_staggered=True.
+    estimator : str or None
         Estimation method ('ra', 'ipwra', 'psm').
+        Only available when is_staggered=True.
 
     Methods
     -------
-    summary() : str
+    summary()
         Returns formatted results summary string.
-    plot(gid=None, graph_options=None) : matplotlib.Figure
+    plot(gid=None, graph_options=None)
         Generates plot of residualized outcomes (control vs. treated).
-    to_excel(path) : None
+    plot_event_study(**kwargs)
+        Generates event study diagram for staggered designs.
+    to_excel(path)
         Exports results to Excel file with multiple sheets.
-    to_csv(path) : None
+    to_csv(path)
         Exports period-specific effects to CSV.
-    to_latex(path) : None
+    to_latex(path)
         Exports results to LaTeX table format.
-    
-    Examples
+
+    See Also
     --------
-    >>> from lwdid import lwdid
-    >>> import pandas as pd
-    >>> data = pd.read_csv('smoking.csv')
-    >>> results = lwdid(data, y='lcigsale', d='treated', ivar='state',
-    ...                 tvar='year', post='post', rolling='demean')
-    >>> 
-    >>> # View summary
-    >>> print(results.summary())
-    >>> 
-    >>> # Access attributes
-    >>> print(f"ATT: {results.att:.4f}")
-    >>> print(f"SE: {results.se_att:.4f}")
-    >>> print(f"p-value: {results.pvalue:.3f}")
-    >>> 
-    >>> # Period-specific effects
-    >>> print(results.att_by_period)
-    >>> 
-    >>> # Visualization
-    >>> fig = results.plot()
-    >>> fig.savefig('did_plot.png')
-    >>> 
-    >>> # Export
-    >>> results.to_excel('results.xlsx')
+    lwdid : Main estimation function that produces LWDIDResults objects.
     """
     
     def __init__(
@@ -176,14 +162,24 @@ class LWDIDResults:
         results_dict: Dict[str, Any],
         metadata: Dict[str, Any],
         att_by_period: Optional[pd.DataFrame] = None,
+        cohort_time_effects: Optional[List] = None,
     ):
         """
-        Initialize results object
-        
-        Parameters:
-            results_dict: Results from estimate_att()
-            metadata: Metadata from validate_and_prepare_data()
-            att_by_period: Period-specific effects (optional)
+        Initialize LWDIDResults container with estimation outputs.
+
+        Parameters
+        ----------
+        results_dict : dict
+            Estimation results containing keys: 'att', 'se_att', 't_stat',
+            'pvalue', 'ci_lower', 'ci_upper', 'nobs', 'df_resid', 'params',
+            'bse', 'vcov', 'resid', 'vce_type'.
+        metadata : dict
+            Metadata containing keys: 'K', 'tpost1', 'depvar', 'N_treated',
+            'N_control'.
+        att_by_period : pd.DataFrame, optional
+            Period-specific effect estimates for common timing design.
+        cohort_time_effects : list, optional
+            List of CohortTimeEffect objects for staggered designs.
         """
         self._att = results_dict['att']
         self._se_att = results_dict['se_att']
@@ -215,6 +211,7 @@ class LWDIDResults:
         self._vcov = results_dict['vcov']
         
         self._att_by_period = att_by_period
+        self._cohort_time_effects = cohort_time_effects
         
         self._resid = results_dict['resid']
         self._metadata = metadata
@@ -276,161 +273,161 @@ class LWDIDResults:
     
     @property
     def att(self) -> float:
-        """ATT estimate"""
+        """ATT point estimate."""
         return self._att
-    
+
     @property
     def se_att(self) -> float:
-        """Standard error"""
+        """Standard error of ATT."""
         return self._se_att
-    
+
     @property
     def t_stat(self) -> float:
-        """t-statistic"""
+        """t-statistic for ATT."""
         return self._t_stat
-    
+
     @property
     def pvalue(self) -> float:
-        """p-value"""
+        """Two-sided p-value."""
         return self._pvalue
-    
+
     @property
     def ci_lower(self) -> float:
-        """95% CI lower bound"""
+        """95% CI lower bound."""
         return self._ci_lower
-    
+
     @property
     def ci_upper(self) -> float:
-        """95% CI upper bound"""
+        """95% CI upper bound."""
         return self._ci_upper
-    
+
     @property
     def nobs(self) -> int:
-        """Number of observations"""
+        """Number of observations."""
         return self._nobs
-    
+
     @property
     def n_treated(self) -> int:
-        """Number of treated units"""
+        """Number of treated units."""
         return self._n_treated
-    
+
     @property
     def n_control(self) -> int:
-        """Number of control units"""
+        """Number of control units."""
         return self._n_control
-    
+
     @property
     def df_resid(self) -> int:
-        """Residual degrees of freedom"""
+        """Residual degrees of freedom."""
         return self._df_resid
 
     @property
     def df_inference(self) -> int:
-        """Degrees of freedom for inference (G-1 for cluster, df_resid otherwise)"""
+        """Degrees of freedom for inference."""
         return self._df_inference
 
     @property
     def K(self) -> int:
-        """Last pre-treatment period"""
+        """Last pre-treatment period index."""
         return self._K
-    
+
     @property
     def tpost1(self) -> int:
-        """First post-treatment period"""
+        """First post-treatment period index."""
         return self._tpost1
-    
+
     @property
     def cmd(self) -> str:
-        """Command name"""
+        """Command name."""
         return self._cmd
-    
+
     @property
     def depvar(self) -> str:
-        """Dependent variable"""
+        """Dependent variable name."""
         return self._depvar
-    
+
     @property
     def rolling(self) -> str:
-        """Transformation method"""
+        """Transformation method used."""
         return self._rolling
-    
+
     @property
     def vce_type(self) -> Optional[str]:
-        """Variance estimator"""
+        """Variance estimator type."""
         return self._vce_type
-    
+
     @property
     def cluster_var(self) -> Optional[str]:
-        """Clustering variable"""
+        """Clustering variable name."""
         return self._cluster_var
-    
+
     @property
     def n_clusters(self) -> Optional[int]:
-        """Number of clusters"""
+        """Number of clusters."""
         return self._n_clusters
-    
+
     @property
     def controls_used(self) -> bool:
-        """Controls included"""
+        """Whether control variables were included."""
         return self._controls_used
-    
+
     @property
     def controls(self) -> list:
-        """Control variables"""
+        """List of control variable names."""
         return list(self._controls)
-    
+
     @property
     def params(self):
-        """Coefficient vector"""
+        """Full coefficient vector."""
         return self._params
-    
+
     @property
     def bse(self):
-        """Standard errors"""
+        """Standard errors of coefficients."""
         return self._bse
-    
+
     @property
     def vcov(self):
-        """Variance-covariance matrix"""
+        """Variance-covariance matrix."""
         return self._vcov
-    
+
     @property
     def att_by_period(self) -> Optional[pd.DataFrame]:
-        """Period-specific effects (returns copy)"""
+        """Period-specific ATT estimates (returns copy)."""
         if self._att_by_period is None:
             return None
         return self._att_by_period.copy()
-    
+
     @property
     def ri_pvalue(self) -> Optional[float]:
-        """RI p-value"""
+        """Randomization inference p-value."""
         return self._ri_pvalue
-    
+
     @ri_pvalue.setter
     def ri_pvalue(self, value: Optional[float]) -> None:
         self._ri_pvalue = value
-    
+
     @property
     def ri_seed(self) -> Optional[int]:
-        """RI seed"""
+        """Random seed used for RI."""
         return self._ri_seed
-    
+
     @ri_seed.setter
     def ri_seed(self, value: Optional[int]) -> None:
         self._ri_seed = value
-    
+
     @property
     def rireps(self) -> Optional[int]:
-        """RI replications"""
+        """Number of RI replications."""
         return self._rireps
-    
+
     @rireps.setter
     def rireps(self, value: Optional[int]) -> None:
         self._rireps = value
 
     @property
     def ri_method(self) -> Optional[str]:
-        """RI method"""
+        """Randomization inference method."""
         return self._ri_method
 
     @ri_method.setter
@@ -439,7 +436,7 @@ class LWDIDResults:
 
     @property
     def ri_valid(self) -> Optional[int]:
-        """Valid RI replications"""
+        """Number of valid RI replications."""
         return self._ri_valid
 
     @ri_valid.setter
@@ -448,7 +445,7 @@ class LWDIDResults:
 
     @property
     def ri_failed(self) -> Optional[int]:
-        """Failed RI replications"""
+        """Number of failed RI replications."""
         return self._ri_failed
 
     @ri_failed.setter
@@ -457,110 +454,116 @@ class LWDIDResults:
 
     @property
     def data(self) -> Optional[pd.DataFrame]:
-        """Transformed data"""
+        """Transformed data used for regression."""
         return self._data
-    
+
     @data.setter
     def data(self, value: Optional[pd.DataFrame]) -> None:
         self._data = value
-    
+
     # === Staggered-specific Properties ===
-    
+
     @property
     def is_staggered(self) -> bool:
-        """Whether this is a staggered DiD estimation"""
+        """Whether this is a staggered DiD estimation."""
         return self._is_staggered
-    
+
     @property
     def cohorts(self) -> list:
-        """List of treatment cohorts (first treatment periods)"""
+        """List of treatment cohorts."""
         return list(self._cohorts)
-    
+
     @property
     def cohort_sizes(self) -> dict:
-        """Number of units in each cohort"""
+        """Number of units in each cohort."""
         return dict(self._cohort_sizes)
-    
+
     @property
     def att_by_cohort_time(self) -> Optional[pd.DataFrame]:
-        """(g,r)-specific ATT estimates (returns copy)"""
+        """Cohort-time specific ATT estimates (returns copy)."""
         if self._att_by_cohort_time is None:
             return None
         return self._att_by_cohort_time.copy()
-    
+
     @property
     def att_by_cohort(self) -> Optional[pd.DataFrame]:
-        """Cohort-specific ATT estimates (returns copy)"""
+        """Cohort-specific ATT estimates (returns copy)."""
         if self._att_by_cohort is None:
             return None
         return self._att_by_cohort.copy()
-    
+
     @property
     def att_overall(self) -> Optional[float]:
-        """Overall weighted ATT (if aggregate='overall')"""
+        """Overall weighted ATT estimate."""
         return self._att_overall
-    
+
     @property
     def se_overall(self) -> Optional[float]:
-        """Standard error of overall ATT"""
+        """Standard error of overall ATT."""
         return self._se_overall
-    
+
     @property
     def ci_overall_lower(self) -> Optional[float]:
-        """95% CI lower bound for overall ATT"""
+        """95% CI lower bound for overall ATT."""
         return self._ci_overall_lower
-    
+
     @property
     def ci_overall_upper(self) -> Optional[float]:
-        """95% CI upper bound for overall ATT"""
+        """95% CI upper bound for overall ATT."""
         return self._ci_overall_upper
-    
+
     @property
     def t_stat_overall(self) -> Optional[float]:
-        """t-statistic for overall ATT"""
+        """t-statistic for overall ATT."""
         return self._t_stat_overall
-    
+
     @property
     def pvalue_overall(self) -> Optional[float]:
-        """p-value for overall ATT"""
+        """p-value for overall ATT."""
         return self._pvalue_overall
-    
+
     @property
     def cohort_weights(self) -> dict:
-        """Cohort weights for overall effect (omega_g = N_g / N_treat)"""
+        """Cohort weights for overall effect."""
         return dict(self._cohort_weights)
-    
+
     @property
     def control_group(self) -> Optional[str]:
-        """User-specified control group strategy"""
+        """User-specified control group strategy."""
         return self._control_group
-    
+
     @property
     def control_group_used(self) -> Optional[str]:
-        """Actual control group strategy used (may differ due to auto-switching)"""
+        """Actual control group strategy used."""
         return self._control_group_used
-    
+
     @property
     def aggregate(self) -> Optional[str]:
-        """Aggregation level ('none', 'cohort', 'overall')"""
+        """Aggregation level."""
         return self._aggregate
-    
+
     @property
     def estimator(self) -> Optional[str]:
-        """Estimation method ('ra', 'ipwra', 'psm')"""
+        """Estimation method."""
         return self._estimator
-    
+
     @property
     def n_never_treated(self) -> Optional[int]:
-        """Never treated units count (staggered mode returns value, otherwise None)"""
+        """Number of never-treated units."""
         return self._n_never_treated
     
     def summary(self) -> str:
         """
-        Formatted results summary
-        
-        For staggered results, dispatches to summary_staggered();
-        for common timing results, uses original logic.
+        Generate a formatted summary of estimation results.
+
+        For staggered designs, dispatches to summary_staggered(). For common
+        timing designs, displays ATT estimate, standard error, t-statistic,
+        p-value, confidence interval, and period-specific effects if available.
+
+        Returns
+        -------
+        str
+            Formatted results summary string suitable for console output.
         """
         if self.is_staggered:
             return self.summary_staggered()
@@ -630,23 +633,30 @@ class LWDIDResults:
     
     def summary_staggered(self) -> str:
         """
-        Print formatted summary for staggered estimation results
-        
+        Generate a formatted summary for staggered DiD estimation results.
+
+        Displays treatment cohorts, sample sizes, control group strategy,
+        overall weighted effect (if aggregate='overall'), and cohort-specific
+        effects (if aggregate='cohort' or 'overall').
+
         Returns
         -------
         str
-            Formatted results summary string
-            
+            Formatted results summary string suitable for console output.
+
         Raises
         ------
         ValueError
-            If not a staggered estimation result
-            
+            If called on non-staggered estimation results.
+
         Notes
         -----
-        - When aggregate='none', does not show Overall and Cohort effects
-        - When aggregate='cohort', does not show Overall effect
-        - If control group was auto-switched, shows notification
+        The summary output varies by aggregation level. When aggregate='none',
+        only (g,r)-specific effects are available. When aggregate='cohort',
+        cohort-specific effects are shown. When aggregate='overall', both
+        cohort-specific and overall weighted effects are displayed. If the
+        control group strategy was automatically switched from the user-specified
+        value, a notification is included.
         """
         if not self.is_staggered:
             raise ValueError(
@@ -759,6 +769,7 @@ class LWDIDResults:
         return "\n".join(output)
     
     def __repr__(self) -> str:
+        """Return a concise string representation of the results object."""
         if self.is_staggered:
             if self.att_overall is not None:
                 return (
@@ -778,13 +789,45 @@ class LWDIDResults:
             )
     
     def __str__(self) -> str:
+        """Return the formatted summary as the string representation."""
         return self.summary()
 
     @property
     def metadata(self) -> Dict[str, Any]:
+        """Internal metadata dictionary (returns copy)."""
         return dict(self._metadata)
 
     def plot(self, gid: Optional[Union[str, int]] = None, graph_options: Optional[dict] = None):
+        """
+        Generate a plot of residualized outcomes for treated and control groups.
+
+        Creates a time series plot comparing the average residualized outcomes
+        between treated and control units across all time periods. A vertical
+        line indicates the treatment start period.
+
+        Parameters
+        ----------
+        gid : str or int, optional
+            Specific unit ID to highlight. If provided, plots the individual
+            unit trajectory along with group averages.
+        graph_options : dict, optional
+            Matplotlib customization options including 'title', 'xlabel',
+            'ylabel', 'figsize', 'colors', and other styling parameters.
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            The generated matplotlib figure object.
+
+        Raises
+        ------
+        ValueError
+            If results.data is not set (plotting requires transformed data).
+
+        See Also
+        --------
+        plot_event_study : Event study visualization for staggered designs.
+        """
         from .visualization import prepare_plot_data, plot_results
 
         if self.data is None:
@@ -844,64 +887,62 @@ class LWDIDResults:
         **kwargs
     ):
         """
-        Plot Event Study diagram
-        
-        Aggregates (g,r) effects by event time (e = r - g) and plots dynamic treatment effects.
-        
+        Generate an event study diagram for staggered DiD results.
+
+        Aggregates cohort-time specific effects by event time (e = r - g) and
+        visualizes dynamic treatment effects relative to a reference period.
+
         Parameters
         ----------
-        ref_period : int or None, default=0
-            Reference period (event time). Default is 0 (first treatment period).
-            If None, no normalization is performed.
-            
-        show_ci : bool, default=True
-            Whether to show confidence interval shading.
-            
-        aggregation : {'mean', 'weighted'}
-            Cross-cohort aggregation method:
-            - 'mean': Simple average, SE via √(Σse²/n)
-            - 'weighted': Weighted by cohort weights (uses cohort_weights)
-            
-        include_pre_treatment : bool, default=True
-            Whether to include pre-treatment periods (e<0).
-            
+        ref_period : int or None, optional
+            Reference period for normalization (event time). Default is 0
+            (first treatment period). If None, no normalization is performed.
+        show_ci : bool, optional
+            Whether to display 95% confidence interval shading. Default True.
+        aggregation : {'mean', 'weighted'}, optional
+            Cross-cohort aggregation method. 'mean' computes simple average
+            with SE = sqrt(sum(se^2))/n. 'weighted' uses cohort weights with
+            SE = sqrt(sum(w^2 * se^2)). Default 'mean'.
+        include_pre_treatment : bool, optional
+            Whether to include pre-treatment periods (e < 0). Default True.
         title : str, optional
-            Plot title, default 'Event Study: Dynamic Treatment Effects'
-            
+            Plot title. Default 'Event Study: Dynamic Treatment Effects'.
         xlabel : str, optional
-            X-axis label, default 'Event Time (Periods Since Treatment)'
-            
+            X-axis label. Default 'Event Time (Periods Since Treatment)'.
         ylabel : str, optional
-            Y-axis label, default 'Treatment Effect'
-            
-        figsize : tuple, default=(10, 6)
-            Figure size
-            
+            Y-axis label. Default 'Treatment Effect'.
+        figsize : tuple of int, optional
+            Figure size in inches (width, height). Default (10, 6).
         savefig : str, optional
-            Save path. If provided, saves figure to this path.
-            
-        dpi : int, default=150
-            DPI for saved figure
-            
+            File path to save the figure. If provided, saves automatically.
+        dpi : int, optional
+            Resolution for saved figure. Default 150.
         ax : matplotlib.axes.Axes, optional
-            Existing axes object. If provided, plots on this axes.
-            
-        return_data : bool, default=False
-            If True, return the aggregated event study DataFrame along with plot objects.
-            
+            Existing axes object to plot on. If None, creates new figure.
+        return_data : bool, optional
+            If True, also returns the aggregated event study DataFrame.
+            Default False.
         **kwargs
-            Additional parameters passed to matplotlib
-            
+            Additional keyword arguments passed to matplotlib plotting functions.
+
         Returns
         -------
-        tuple
-            If return_data=False: (fig, ax) matplotlib objects
-            If return_data=True: (fig, ax, event_df) where event_df is the aggregated DataFrame
-            
+        fig : matplotlib.figure.Figure
+            The matplotlib figure object.
+        ax : matplotlib.axes.Axes
+            The matplotlib axes object.
+        event_df : pd.DataFrame
+            Aggregated event study data. Only returned if return_data=True.
+
         Raises
         ------
         ValueError
-            If not a staggered result or att_by_cohort_time is empty
+            If called on non-staggered results or if att_by_cohort_time is
+            empty or None.
+
+        See Also
+        --------
+        plot : Residualized outcomes plot for common timing designs.
         """
         if not self.is_staggered:
             raise ValueError("Event study plot requires staggered DiD results")
@@ -1032,10 +1073,22 @@ class LWDIDResults:
 
     def to_excel(self, path: str):
         """
-        Export results to Excel file
-        
-        For staggered results, dispatches to to_excel_staggered();
-        for common timing results, uses original logic.
+        Export estimation results to an Excel file.
+
+        For common timing designs, creates a workbook with Summary sheet
+        containing ATT, SE, t-statistic, p-value, CI bounds, and sample sizes.
+        If period-specific effects are available, includes a ByPeriod sheet.
+        For staggered designs, dispatches to to_excel_staggered().
+
+        Parameters
+        ----------
+        path : str
+            File path for the Excel output (.xlsx extension recommended).
+
+        See Also
+        --------
+        to_csv : Export period-specific effects to CSV format.
+        to_latex : Export results to LaTeX table format.
         """
         if self.is_staggered:
             return self.to_excel_staggered(path)
@@ -1076,27 +1129,32 @@ class LWDIDResults:
 
     def to_excel_staggered(self, path: str):
         """
-        Export staggered results to Excel file (multi-sheet format)
-        
-        Sheet structure varies by aggregate level:
-        
-        | aggregate | sheets included |
-        |-----------|-----------------|
-        | 'overall' | Summary, Overall, Cohort, CohortTime, Weights, Metadata |
-        | 'cohort'  | Summary, Cohort, CohortTime, Weights, Metadata |
-        | 'none'    | Summary, CohortTime, Metadata |
-        
+        Export staggered DiD results to a multi-sheet Excel file.
+
+        Creates an Excel workbook with sheets tailored to the aggregation level.
+        The Summary sheet is always included. Additional sheets depend on the
+        aggregate parameter used during estimation.
+
         Parameters
         ----------
         path : str
-            Excel file save path (.xlsx)
-            
+            File path for the Excel output (.xlsx extension required).
+
         Raises
         ------
         ValueError
-            If not a staggered estimation result
+            If called on non-staggered estimation results.
         ImportError
-            If openpyxl is not installed
+            If openpyxl package is not installed.
+
+        Notes
+        -----
+        Sheet structure varies by aggregation level:
+
+        - aggregate='overall': Summary, Overall, Cohort, CohortTime, Weights,
+          Metadata
+        - aggregate='cohort': Summary, Cohort, CohortTime, Weights, Metadata
+        - aggregate='none': Summary, CohortTime, Metadata
         """
         if not self.is_staggered:
             raise ValueError("to_excel_staggered requires staggered DiD results")
@@ -1180,11 +1238,45 @@ class LWDIDResults:
             df_metadata.to_excel(writer, sheet_name='Metadata', index=False)
 
     def to_csv(self, path: str):
+        """
+        Export period-specific treatment effects to a CSV file.
+
+        Parameters
+        ----------
+        path : str
+            File path for the CSV output.
+
+        Raises
+        ------
+        ValueError
+            If att_by_period is not available (None or empty DataFrame).
+
+        See Also
+        --------
+        to_excel : Export comprehensive results to Excel format.
+        """
         if not isinstance(self.att_by_period, pd.DataFrame) or self.att_by_period.empty:
             raise ValueError("att_by_period is not available for CSV export")
         self.att_by_period.to_csv(path, index=False)
 
     def to_latex(self, path: str):
+        """
+        Export estimation results to a LaTeX table file.
+
+        Generates a LaTeX document containing summary statistics (ATT, SE,
+        t-statistic, p-value, CI bounds, sample sizes) and period-specific
+        effects if available.
+
+        Parameters
+        ----------
+        path : str
+            File path for the LaTeX output (.tex extension recommended).
+
+        See Also
+        --------
+        to_excel : Export comprehensive results to Excel format.
+        to_csv : Export period-specific effects to CSV format.
+        """
         summary_rows = [
             ["ATT", f"{self.att:.6g}"],
             ["SE", f"{self.se_att:.6g}"],

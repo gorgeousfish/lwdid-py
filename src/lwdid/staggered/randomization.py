@@ -1,17 +1,30 @@
 """
-Staggered Randomization Inference Module
+Randomization inference for staggered difference-in-differences estimation.
 
-Implements randomization inference for staggered DiD estimation based on
-Lee and Wooldridge (2023, 2025).
+This module implements permutation-based inference procedures for staggered
+DiD settings with multiple treatment cohorts. Randomization inference provides
+finite-sample valid p-values without distributional assumptions by comparing
+the observed test statistic to its null distribution generated through random
+reassignment of treatment cohort labels.
 
-Key concepts:
-- Permutes treatment cohort assignments (gvar) across units
-- Re-transforms data and re-estimates effects for each permutation
-- Computes two-sided p-value for H₀: ATT = 0
+The inference procedure operates by:
 
-Reference:
-    Lee & Wooldridge (2025) Section 7
-    Lee & Wooldridge (2023) Section 6
+1. Permuting or bootstrapping treatment cohort assignments across units
+2. Re-transforming the data and re-estimating effects under each permutation
+3. Computing a two-sided p-value as the proportion of permutation statistics
+   at least as extreme as the observed statistic
+
+Notes
+-----
+Randomization inference is particularly useful in staggered DiD settings with
+a small number of treated or control units where asymptotic approximations may
+be unreliable. The permutation distribution preserves the cohort structure by
+shuffling which units belong to each cohort while maintaining the total number
+of units per cohort.
+
+For overall effect inference, never-treated units are required as a consistent
+reference group across permutations. When testing cohort-specific or (g, r)-
+specific effects, the target cohort must be present after each permutation.
 """
 
 from dataclasses import dataclass
@@ -27,25 +40,36 @@ from ..exceptions import RandomizationError
 @dataclass
 class StaggeredRIResult:
     """
-    Staggered randomization inference result.
-    
+    Container for staggered randomization inference results.
+
+    This dataclass stores the output from permutation or bootstrap-based
+    randomization inference procedures, including the p-value, replication
+    diagnostics, and the full distribution of resampled statistics.
+
     Attributes
     ----------
     p_value : float
-        Two-sided p-value for H₀: ATT = 0
+        Two-sided p-value for the null hypothesis that the ATT equals zero.
     ri_method : str
-        Method used: 'permutation' or 'bootstrap'
+        Resampling method used, either 'permutation' or 'bootstrap'.
     ri_reps : int
-        Number of requested replications
+        Number of requested replications.
     ri_valid : int
-        Number of valid replications (non-NaN)
+        Number of valid replications that produced non-missing statistics.
     ri_failed : int
-        Number of failed replications
+        Number of replications that failed due to estimation errors.
     observed_stat : float
-        Observed ATT statistic
-    permutation_stats : np.ndarray
-        Array of permutation/bootstrap ATT statistics (valid only)
+        Observed ATT estimate being tested.
+    permutation_stats : ndarray
+        Array of ATT statistics from valid replications.
+
+    See Also
+    --------
+    randomization_inference_staggered : Main function that produces this result.
+    ri_overall_effect : Convenience wrapper for overall effect inference.
+    ri_cohort_effect : Convenience wrapper for cohort-specific inference.
     """
+
     p_value: float
     ri_method: str
     ri_reps: int
@@ -53,8 +77,9 @@ class StaggeredRIResult:
     ri_failed: int
     observed_stat: float
     permutation_stats: np.ndarray
-    
+
     def __repr__(self) -> str:
+        """Return a concise string representation of the result."""
         return (
             f"StaggeredRIResult(p_value={self.p_value:.4f}, "
             f"method='{self.ri_method}', valid={self.ri_valid}/{self.ri_reps})"
@@ -82,166 +107,204 @@ def randomization_inference_staggered(
     n_never_treated: int = 0,
 ) -> StaggeredRIResult:
     """
-    Staggered DiD randomization inference.
-    
-    Tests H₀: ATT = 0 by permuting/bootstrapping treatment cohort assignments
-    and re-estimating the target effect under each permutation.
-    
-    Algorithm:
-    1. Validate parameters
-    2. Get unit-level gvar assignments
-    3. For each replication:
-       a. Generate new gvar assignment (permutation or bootstrap)
-       b. Re-transform data with permuted gvar
-       c. Re-estimate target effect
-    4. Compute two-sided p-value: P(|ATT_perm| >= |ATT_obs|)
-    
+    Perform randomization inference for staggered DiD estimation.
+
+    Tests the null hypothesis that the average treatment effect on the treated
+    equals zero by permuting or bootstrapping treatment cohort assignments and
+    computing the empirical distribution of the test statistic.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data in long format.
+        Panel data in long format with unit, time, cohort, and outcome columns.
     gvar : str
-        Cohort variable column name.
+        Column name for the treatment cohort variable. Units with missing,
+        zero, or infinite values are treated as never-treated.
     ivar : str
-        Unit identifier column name.
+        Column name for the unit identifier.
     tvar : str
-        Time variable column name.
+        Column name for the time period variable.
     y : str
-        Outcome variable column name.
-    cohorts : List[int]
-        List of treatment cohorts.
+        Column name for the outcome variable.
+    cohorts : list of int
+        List of treatment cohort values present in the data.
     observed_att : float
-        Observed ATT estimate to test.
-    target : {'overall', 'cohort', 'cohort_time'}
-        Target effect level:
-        - 'overall': Overall weighted effect τ_ω
-        - 'cohort': Cohort-specific effect τ_g (requires target_cohort)
-        - 'cohort_time': (g,r)-specific effect (requires target_cohort and target_period)
+        Observed ATT estimate to be tested against the null hypothesis.
+    target : {'overall', 'cohort', 'cohort_time'}, default 'overall'
+        Aggregation level for the target effect:
+
+        - 'overall': Overall weighted average effect across all cohorts
+        - 'cohort': Cohort-specific average effect (requires target_cohort)
+        - 'cohort_time': Effect for a specific (g, r) pair (requires both
+          target_cohort and target_period)
+
     target_cohort : int, optional
         Target cohort for 'cohort' or 'cohort_time' targets.
     target_period : int, optional
-        Target period for 'cohort_time' target.
-    ri_method : {'permutation', 'bootstrap'}
-        Resampling method:
-        - 'permutation': Without-replacement permutation (Fisher RI)
-        - 'bootstrap': With-replacement sampling
+        Target time period for 'cohort_time' target.
+    ri_method : {'permutation', 'bootstrap'}, default 'permutation'
+        Resampling method for generating the null distribution:
+
+        - 'permutation': Without-replacement permutation preserving cohort
+          sizes (Fisher exact randomization inference)
+        - 'bootstrap': With-replacement sampling from unit cohort assignments
+
     rireps : int, default 1000
-        Number of replications.
+        Number of resampling replications.
     seed : int, optional
-        Random seed for reproducibility.
-    rolling : {'demean', 'detrend'}
-        Transformation method.
+        Random seed for reproducibility of the resampling procedure.
+    rolling : {'demean', 'detrend'}, default 'demean'
+        Transformation method for removing pre-treatment variation:
+
+        - 'demean': Subtract pre-treatment mean from each unit
+        - 'detrend': Remove unit-specific linear time trend
+
     controls : list of str, optional
-        Control variables for estimation.
+        Column names for control variables to include in estimation.
     vce : str, optional
-        Variance estimator type.
+        Variance-covariance estimator type for standard errors.
     cluster_var : str, optional
-        Cluster variable for clustered SE.
-    n_never_treated : int
-        Number of never-treated units (for validation).
-        
+        Column name for clustering standard errors.
+    n_never_treated : int, default 0
+        Number of never-treated units. Required for overall effect inference
+        to ensure a consistent reference group across permutations.
+
     Returns
     -------
     StaggeredRIResult
-        Randomization inference results.
-        
+        Dataclass containing the p-value, replication counts, observed
+        statistic, and array of permutation statistics.
+
     Raises
     ------
     RandomizationError
-        If parameters are invalid or insufficient valid replications.
-        
+        If input parameters are invalid, if there are insufficient units
+        for inference, or if too few replications produce valid estimates.
+
+    See Also
+    --------
+    ri_overall_effect : Convenience wrapper for overall effect inference.
+    ri_cohort_effect : Convenience wrapper for cohort-specific inference.
+
     Notes
     -----
-    For overall effects, never-treated units are required to provide a
-    consistent baseline reference across permutations.
-    
-    The permutation preserves the total number of units in each cohort,
-    only shuffling which units belong to which cohort.
+    The permutation procedure shuffles cohort assignments across units while
+    preserving the marginal distribution of cohorts. This generates the null
+    distribution under the sharp null hypothesis that treatment has no effect
+    on any unit.
+
+    For inference on overall effects, never-treated units must be present to
+    serve as a consistent control group across all permutations. When testing
+    cohort-specific effects, replications where the target cohort is absent
+    after permutation are marked as invalid.
+
+    The two-sided p-value is computed as:
+
+    .. math::
+
+        p = \\frac{1}{R} \\sum_{r=1}^{R} \\mathbf{1}\\{|\\hat{\\tau}^{(r)}| \\geq |\\hat{\\tau}^{obs}|\\}
+
+    where :math:`R` is the number of valid replications and
+    :math:`\\hat{\\tau}^{(r)}` is the ATT from replication :math:`r`.
+
+    A minimum of 50 valid replications (or 10% of rireps, whichever is larger)
+    is required to ensure reliable p-value computation.
     """
-    # === Parameter validation ===
+    # Validate replication count
     if rireps <= 0:
         raise RandomizationError("rireps must be positive")
-    
+
+    # Validate target specification
     if target == 'cohort' and target_cohort is None:
         raise RandomizationError("target_cohort required when target='cohort'")
-    
+
     if target == 'cohort_time' and (target_cohort is None or target_period is None):
         raise RandomizationError(
             "target_cohort and target_period required when target='cohort_time'"
         )
-    
+
+    # Validate resampling method
     if ri_method not in ('permutation', 'bootstrap'):
-        raise RandomizationError(f"ri_method must be 'permutation' or 'bootstrap'")
-    
+        raise RandomizationError("ri_method must be 'permutation' or 'bootstrap'")
+
+    # Overall effect requires never-treated units as consistent reference group
     if target == 'overall' and n_never_treated == 0:
         raise RandomizationError(
             "RI for overall effect requires never treated units. "
             "Use target='cohort_time' when no NT units exist."
         )
-    
+
+    # Validate transformation method
     rolling_lower = rolling.lower()
     if rolling_lower not in ('demean', 'detrend'):
         raise RandomizationError(
             f"rolling must be 'demean' or 'detrend', got '{rolling}'"
         )
-    
+
+    # Initialize random number generator with optional seed for reproducibility
     rng = np.random.default_rng(seed)
     
-    # === Get unit-level gvar ===
+    # Extract unit-level cohort assignments (each unit has a single cohort value)
     unit_gvar = data.groupby(ivar)[gvar].first()
     unit_ids = unit_gvar.index.tolist()
     n_units = len(unit_ids)
-    
+
+    # Require minimum sample size for meaningful permutation distribution
     if n_units < 4:
         raise RandomizationError(f"Too few units for RI: N={n_units}")
-    
-    # === Import required functions ===
+
+    # Deferred imports to avoid circular dependencies
     from .transformations import transform_staggered_demean, transform_staggered_detrend
     from .estimation import estimate_cohort_time_effects
     from .aggregation import aggregate_to_cohort, aggregate_to_overall, get_cohorts
-    
-    # Determine transform function
+
+    # Select transformation function based on rolling method
     transform_func = (
-        transform_staggered_demean 
-        if rolling_lower == 'demean' 
+        transform_staggered_demean
+        if rolling_lower == 'demean'
         else transform_staggered_detrend
     )
-    
-    # Get T_max for aggregation
+
+    # Maximum time period for cohort aggregation bounds
     T_max = int(data[tvar].max())
     
-    # === Permutation loop ===
+    # =========================================================================
+    # Resampling Loop
+    # =========================================================================
+    # Pre-allocate array for permutation statistics; NaN indicates invalid rep
     perm_stats = np.empty(rireps, dtype=float)
     perm_stats.fill(np.nan)
-    
+
     for rep in range(rireps):
         try:
-            # Generate permuted gvar assignment
+            # Generate resampled cohort assignments
             if ri_method == 'permutation':
+                # Without-replacement shuffle preserves marginal cohort distribution
                 perm_idx = rng.permutation(n_units)
                 perm_gvar = unit_gvar.values[perm_idx]
-            else:  # bootstrap
+            else:
+                # With-replacement bootstrap allows cohort frequency variation
                 boot_idx = rng.integers(0, n_units, size=n_units)
                 perm_gvar = unit_gvar.values[boot_idx]
-            
-            # Build permuted gvar mapping
+
+            # Map permuted cohorts back to original unit identifiers
             perm_gvar_mapping = dict(zip(unit_ids, perm_gvar))
-            
-            # Create permuted data
+
+            # Apply permuted cohort assignments to data
             data_perm = data.copy()
             data_perm[gvar] = data_perm[ivar].map(perm_gvar_mapping)
-            
-            # Re-transform with permuted gvar
+
+            # Apply rolling transformation with permuted cohort structure
             try:
                 data_transformed = transform_func(
                     data_perm, y, ivar, tvar, gvar
                 )
             except (ValueError, KeyError):
-                # Transformation failed (e.g., no valid cohorts after permutation)
+                # Mark as invalid if transformation fails
                 perm_stats[rep] = np.nan
                 continue
-            
-            # Re-estimate target effect
+
+            # Re-estimate target effect under permuted assignment
             if target == 'overall':
                 try:
                     result = aggregate_to_overall(
@@ -253,14 +316,15 @@ def randomization_inference_staggered(
                     perm_stats[rep] = result.att
                 except (ValueError, KeyError):
                     perm_stats[rep] = np.nan
-                    
+
             elif target == 'cohort':
                 try:
                     perm_cohorts = get_cohorts(data_transformed, gvar, ivar)
+                    # Target cohort may be absent after permutation
                     if target_cohort not in perm_cohorts:
                         perm_stats[rep] = np.nan
                         continue
-                    
+
                     results = aggregate_to_cohort(
                         data_transformed, gvar, ivar, tvar,
                         cohorts=[target_cohort], T_max=T_max,
@@ -274,8 +338,9 @@ def randomization_inference_staggered(
                         perm_stats[rep] = np.nan
                 except (ValueError, KeyError):
                     perm_stats[rep] = np.nan
-                    
-            else:  # cohort_time
+
+            else:
+                # Cohort-time specific effect
                 try:
                     ct_results = estimate_cohort_time_effects(
                         data_transformed, gvar, ivar, tvar,
@@ -284,9 +349,9 @@ def randomization_inference_staggered(
                         cluster_var=cluster_var,
                         transform_type=rolling_lower,
                     )
-                    # Find target (g,r) effect
+                    # Locate effect for target (g, r) pair
                     target_result = [
-                        r for r in ct_results 
+                        r for r in ct_results
                         if r.cohort == target_cohort and r.period == target_period
                     ]
                     if target_result:
@@ -295,17 +360,20 @@ def randomization_inference_staggered(
                         perm_stats[rep] = np.nan
                 except (ValueError, KeyError):
                     perm_stats[rep] = np.nan
-                    
+
         except Exception:
-            # Catch-all for unexpected errors
+            # Mark as invalid for unexpected estimation failures
             perm_stats[rep] = np.nan
     
-    # === Compute p-value ===
+    # =========================================================================
+    # P-Value Computation
+    # =========================================================================
+    # Filter to valid (non-NaN) replication statistics
     valid_stats = perm_stats[~np.isnan(perm_stats)]
     n_valid = len(valid_stats)
     n_failed = rireps - n_valid
-    
-    # Minimum valid replications threshold
+
+    # Require minimum valid replications for reliable p-value estimation
     min_valid = max(50, int(0.1 * rireps))
     if n_valid < min_valid:
         raise RandomizationError(
@@ -313,15 +381,17 @@ def randomization_inference_staggered(
             f"(need at least {min_valid}). "
             f"Consider increasing rireps or checking data quality."
         )
-    
-    # Two-sided p-value: P(|ATT_perm| >= |ATT_obs|)
+
+    # Two-sided p-value: proportion of permutation statistics with absolute
+    # value at least as extreme as the observed statistic
     p_value = float((np.abs(valid_stats) >= abs(observed_att)).mean())
-    
-    # Warn if many failures
+
+    # Issue warning if substantial fraction of replications failed
     if n_failed / rireps > 0.1:
         warnings.warn(
-            f"Staggered RI: {n_failed}/{rireps} replications failed ({n_failed/rireps:.1%}). "
-            f"P-value computed using {n_valid} valid replications.",
+            f"Staggered RI: {n_failed}/{rireps} replications failed "
+            f"({n_failed/rireps:.1%}). P-value computed using {n_valid} "
+            f"valid replications.",
             UserWarning
         )
     
@@ -351,54 +421,63 @@ def ri_overall_effect(
     cluster_var: Optional[str] = None,
 ) -> StaggeredRIResult:
     """
-    Convenience function for randomization inference on overall effect.
-    
+    Perform randomization inference for the overall weighted ATT.
+
+    This is a convenience wrapper around `randomization_inference_staggered`
+    for testing the aggregate effect across all treatment cohorts. The overall
+    effect is a cohort-share-weighted average of cohort-specific ATTs.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data with gvar column.
+        Panel data in long format with unit, time, cohort, and outcome columns.
     gvar : str
-        Cohort variable column name.
+        Column name for the treatment cohort variable.
     ivar : str
-        Unit identifier column name.
+        Column name for the unit identifier.
     tvar : str
-        Time variable column name.
+        Column name for the time period.
     y : str
-        Outcome variable column name.
+        Column name for the outcome variable.
     observed_att : float
-        Observed overall ATT to test.
-    rolling : {'demean', 'detrend'}
-        Transformation method.
-    ri_method : {'permutation', 'bootstrap'}
-        Resampling method.
+        Observed overall ATT estimate to test.
+    rolling : {'demean', 'detrend'}, default 'demean'
+        Transformation method for pre-treatment variation removal.
+    ri_method : {'permutation', 'bootstrap'}, default 'permutation'
+        Resampling method for null distribution generation.
     rireps : int, default 1000
-        Number of replications.
+        Number of resampling replications.
     seed : int, optional
-        Random seed.
+        Random seed for reproducibility.
     vce : str, optional
-        Variance estimator type.
+        Variance-covariance estimator type.
     cluster_var : str, optional
-        Cluster variable.
-        
+        Column name for clustering standard errors.
+
     Returns
     -------
     StaggeredRIResult
-        Randomization inference result.
+        Randomization inference results including p-value and diagnostics.
+
+    See Also
+    --------
+    randomization_inference_staggered : Full-featured inference function.
+    ri_cohort_effect : Inference for cohort-specific effects.
     """
     from .transformations import get_cohorts
-    
-    # Get cohorts and count NT units
+
+    # Extract unit-level cohort assignments
     unit_gvar = data.groupby(ivar)[gvar].first()
     cohorts = get_cohorts(data, gvar, ivar)
-    
-    # Count never-treated: NaN, 0, or inf
+
+    # Identify never-treated units: NaN, zero, or infinite cohort values
     nt_mask = (
-        unit_gvar.isna() | 
-        (unit_gvar == 0) | 
+        unit_gvar.isna() |
+        (unit_gvar == 0) |
         np.isinf(unit_gvar.astype(float))
     )
     n_nt = int(nt_mask.sum())
-    
+
     return randomization_inference_staggered(
         data=data,
         gvar=gvar,
@@ -434,56 +513,66 @@ def ri_cohort_effect(
     cluster_var: Optional[str] = None,
 ) -> StaggeredRIResult:
     """
-    Convenience function for randomization inference on cohort effect.
-    
+    Perform randomization inference for a cohort-specific ATT.
+
+    This is a convenience wrapper around `randomization_inference_staggered`
+    for testing the average effect for a specific treatment cohort. The
+    cohort-specific ATT averages effects across all post-treatment periods
+    for units first treated in the target cohort.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data with gvar column.
+        Panel data in long format with unit, time, cohort, and outcome columns.
     gvar : str
-        Cohort variable column name.
+        Column name for the treatment cohort variable.
     ivar : str
-        Unit identifier column name.
+        Column name for the unit identifier.
     tvar : str
-        Time variable column name.
+        Column name for the time period.
     y : str
-        Outcome variable column name.
+        Column name for the outcome variable.
     target_cohort : int
-        Target cohort to test.
+        Treatment cohort (first treatment period) to test.
     observed_att : float
-        Observed cohort ATT to test.
-    rolling : {'demean', 'detrend'}
-        Transformation method.
-    ri_method : {'permutation', 'bootstrap'}
-        Resampling method.
+        Observed cohort-specific ATT estimate to test.
+    rolling : {'demean', 'detrend'}, default 'demean'
+        Transformation method for pre-treatment variation removal.
+    ri_method : {'permutation', 'bootstrap'}, default 'permutation'
+        Resampling method for null distribution generation.
     rireps : int, default 1000
-        Number of replications.
+        Number of resampling replications.
     seed : int, optional
-        Random seed.
+        Random seed for reproducibility.
     vce : str, optional
-        Variance estimator type.
+        Variance-covariance estimator type.
     cluster_var : str, optional
-        Cluster variable.
-        
+        Column name for clustering standard errors.
+
     Returns
     -------
     StaggeredRIResult
-        Randomization inference result.
+        Randomization inference results including p-value and diagnostics.
+
+    See Also
+    --------
+    randomization_inference_staggered : Full-featured inference function.
+    ri_overall_effect : Inference for overall weighted effect.
     """
     from .transformations import get_cohorts
-    
-    # Get cohorts and count NT units
+
+    # Extract unit-level cohort assignments
     unit_gvar = data.groupby(ivar)[gvar].first()
     cohorts = get_cohorts(data, gvar, ivar)
-    
-    # Count never-treated
+
+    # Identify never-treated units for reference group
     nt_mask = (
-        unit_gvar.isna() | 
-        (unit_gvar == 0) | 
+        unit_gvar.isna() |
+        (unit_gvar == 0) |
         np.isinf(unit_gvar.astype(float))
     )
     n_nt = int(nt_mask.sum())
-    
+
     return randomization_inference_staggered(
         data=data,
         gvar=gvar,

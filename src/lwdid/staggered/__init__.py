@@ -1,15 +1,50 @@
 """
-Staggered DiD Module
+Staggered difference-in-differences estimation for panel data.
 
-Implements staggered difference-in-differences estimation based on 
-Lee and Wooldridge (2023, 2025).
+This module implements estimation methods for staggered adoption settings
+where units begin treatment at different time periods. The approach uses
+rolling time-series transformations at the unit level combined with
+cross-sectional treatment effect estimators.
 
-This module provides:
-- Data transformation functions for staggered settings
-- Control group selection utilities
-- (g,r)-specific effect estimation (RA and IPWRA)
-- Effect aggregation
-- IPWRA doubly robust estimation
+The module provides tools for:
+
+- **Data Transformations**: Unit-specific demeaning and detrending that
+  remove pre-treatment averages or linear trends, converting panel data
+  into cross-sectional regression problems for each (cohort, period) pair.
+
+- **Control Group Selection**: Flexible strategies for choosing valid
+  control units, including never-treated only or not-yet-treated units.
+
+- **Effect Estimation**: Regression adjustment (RA) estimators for
+  cohort-time-specific average treatment effects on the treated (ATT).
+
+- **Doubly Robust Estimation**: Inverse probability weighted regression
+  adjustment (IPWRA) combining propensity score weighting with outcome
+  regression for robustness to model misspecification.
+
+- **Propensity Score Matching**: Nearest-neighbor matching on estimated
+  propensity scores for nonparametric treatment effect estimation.
+
+- **Effect Aggregation**: Aggregation of (g, r)-specific effects to
+  cohort-level or overall average treatment effects with appropriate
+  weighting schemes.
+
+- **Randomization Inference**: Permutation-based inference procedures
+  for finite-sample validity without distributional assumptions.
+
+Notes
+-----
+In staggered designs, treatment cohorts are indexed by g (the first
+treatment period) and calendar time by r. The ATT parameters of interest
+are tau_{g,r} for each cohort g in periods r >= g. The key identification
+assumptions are conditional parallel trends (across all cohort assignments)
+and no anticipation (pre-treatment potential outcomes are identical to the
+never-treated state).
+
+The rolling transformation approach uses all pre-treatment periods for
+each cohort to maximize efficiency while maintaining identification under
+standard assumptions. For cohort g in period r, the control group can
+include never-treated units and units first treated in periods after r.
 """
 
 from .transformations import (
@@ -50,7 +85,6 @@ from .estimators import (
     estimate_ipwra,
     estimate_propensity_score,
     estimate_outcome_model,
-    # PSM estimator
     PSMResult,
     estimate_psm,
 )

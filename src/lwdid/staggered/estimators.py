@@ -1,20 +1,29 @@
 """
-IPWRA (Inverse Probability Weighted Regression Adjustment) Estimator
+Doubly robust estimators for average treatment effect on the treated.
 
-实现doubly robust ATT估计量，与Stata teffects ipwra兼容。
+This module provides inverse probability weighted regression adjustment (IPWRA)
+and propensity score matching (PSM) estimators for ATT estimation in
+difference-in-differences settings. These estimators offer robustness to model
+misspecification and handle covariate imbalance between treated and control groups.
 
-理论基础:
-- Wooldridge (2007) "Inverse probability weighted estimation"
-- Lee & Wooldridge (2023) Section 4.3
-- Stata 17 teffects ipwra manual
+The IPWRA estimator combines propensity score weighting with outcome regression
+to achieve double robustness: consistency requires correct specification of
+either the propensity score model or the outcome regression model, but not
+necessarily both. This property makes IPWRA particularly valuable when there
+is uncertainty about functional form assumptions.
 
-关键特性:
-- Doubly robust: 倾向得分或结果模型有一个正确即可一致
-- 与RA相比，对协变量分布差异更稳健
-- 标准误考虑两阶段估计不确定性
+The PSM estimator uses nearest-neighbor matching on estimated propensity scores,
+with options for caliper constraints, replacement, and multiple matches per
+treated unit. Standard errors use either the Abadie-Imbens heteroskedasticity-
+robust formula or bootstrap resampling.
 
-Reference:
-    Story E3-S1: IPWRA估计量实现
+Notes
+-----
+Both estimators take transformed outcome variables (after unit-specific
+demeaning or detrending) as inputs and return ATT estimates for specific
+cohort-time pairs in staggered adoption designs. The propensity score model
+uses logistic regression without regularization to match standard software
+implementations.
 """
 
 import warnings
@@ -27,36 +36,91 @@ import scipy.stats as stats
 
 
 @dataclass
-class IPWRAResult:
+class IPWResult:
     """
-    IPWRA估计结果容器。
-    
+    Inverse Probability Weighting estimation result container.
+
     Attributes
     ----------
     att : float
-        ATT点估计
+        ATT point estimate.
     se : float
-        标准误
+        Standard error.
     ci_lower : float
-        95% CI下界
+        Lower bound of confidence interval.
     ci_upper : float
-        95% CI上界
+        Upper bound of confidence interval.
     t_stat : float
-        t统计量
+        t-statistic.
     pvalue : float
-        双侧p值
+        Two-sided p-value.
     propensity_scores : np.ndarray
-        倾向得分
+        Estimated propensity scores.
     weights : np.ndarray
-        IPW权重 w = p/(1-p)
-    outcome_model_coef : Dict[str, float]
-        结果模型系数
+        IPW weights w = p/(1-p) for control units.
     propensity_model_coef : Dict[str, float]
-        倾向得分模型系数
+        Propensity score model coefficients.
     n_treated : int
-        处理组样本量
+        Number of treated units.
     n_control : int
-        控制组样本量
+        Number of control units.
+    df_resid : int
+        Residual degrees of freedom.
+    df_inference : int
+        Degrees of freedom for inference.
+    weights_cv : float
+        Coefficient of variation of IPW weights.
+    diagnostics : dict, optional
+        Additional diagnostic information.
+    """
+    att: float
+    se: float
+    ci_lower: float
+    ci_upper: float
+    t_stat: float
+    pvalue: float
+    propensity_scores: np.ndarray
+    weights: np.ndarray
+    propensity_model_coef: Dict[str, float]
+    n_treated: int
+    n_control: int
+    df_resid: int = 0
+    df_inference: int = 0
+    weights_cv: float = 0.0
+    diagnostics: Optional[Dict] = None
+
+
+@dataclass
+class IPWRAResult:
+    """
+    Doubly robust IPWRA estimation result container.
+
+    Attributes
+    ----------
+    att : float
+        ATT point estimate.
+    se : float
+        Standard error.
+    ci_lower : float
+        Lower bound of confidence interval.
+    ci_upper : float
+        Upper bound of confidence interval.
+    t_stat : float
+        t-statistic.
+    pvalue : float
+        Two-sided p-value.
+    propensity_scores : np.ndarray
+        Estimated propensity scores.
+    weights : np.ndarray
+        IPW weights w = p/(1-p) for control units.
+    outcome_model_coef : Dict[str, float]
+        Outcome model coefficients.
+    propensity_model_coef : Dict[str, float]
+        Propensity score model coefficients.
+    n_treated : int
+        Number of treated units.
+    n_control : int
+        Number of control units.
     """
     att: float
     se: float
@@ -72,6 +136,193 @@ class IPWRAResult:
     n_control: int
 
 
+def estimate_ipw(
+    data: pd.DataFrame,
+    y: str,
+    d: str,
+    propensity_controls: List[str],
+    trim_threshold: float = 0.01,
+    alpha: float = 0.05,
+    vce: Optional[str] = None,
+    return_diagnostics: bool = False,
+    gvar_col: Optional[str] = None,
+    ivar_col: Optional[str] = None,
+    cohort_g: Optional[int] = None,
+    period_r: Optional[int] = None,
+) -> IPWResult:
+    """
+    Estimate ATT using inverse probability weighting.
+
+    IPW estimates the average treatment effect on the treated by reweighting
+    control observations to match the covariate distribution of treated units.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Dataset containing outcome, treatment, and control variables.
+    y : str
+        Outcome variable column name.
+    d : str
+        Treatment indicator column name (1=treated, 0=control).
+    propensity_controls : List[str]
+        Variables for propensity score model.
+    trim_threshold : float, default=0.01
+        Propensity score trimming threshold. Observations with propensity
+        scores outside [trim_threshold, 1-trim_threshold] are excluded.
+    return_diagnostics : bool, default=False
+        Whether to return additional diagnostics (currently unused).
+    gvar_col : str, optional
+        Column name for cohort indicator (for staggered designs).
+    ivar_col : str, optional
+        Column name for unit identifier (for staggered designs).
+    cohort_g : int, optional
+        Cohort value (for staggered designs).
+    period_r : int, optional
+        Period value (for staggered designs).
+    alpha : float, default=0.05
+        Significance level for confidence intervals.
+    vce : str, optional
+        Variance estimator type ('robust', 'hc0', 'hc1', 'hc2', 'hc3').
+
+    Returns
+    -------
+    IPWResult
+        Estimation results including ATT, standard error, and diagnostics.
+
+    Notes
+    -----
+    The IPW estimator for ATT is:
+
+    .. math::
+
+        \\hat{\\tau}_{IPW} = \\frac{1}{N_1} \\sum_{i:D_i=1} Y_i
+                           - \\frac{1}{N_1} \\sum_{i:D_i=0} \\frac{\\hat{p}(X_i)}{1-\\hat{p}(X_i)} Y_i
+
+    where :math:`\\hat{p}(X_i)` is the estimated propensity score.
+    """
+    # Validate inputs
+    if not propensity_controls:
+        raise ValueError("propensity_controls must be specified for IPW estimation.")
+
+    # Extract data
+    y_values = data[y].values
+    d_values = data[d].values.astype(int)
+    X_ps = data[propensity_controls].values
+
+    treated_mask = d_values == 1
+    control_mask = d_values == 0
+    n_treated = treated_mask.sum()
+    n_control = control_mask.sum()
+
+    if n_treated == 0:
+        raise ValueError("No treated units in the data.")
+    if n_control == 0:
+        raise ValueError("No control units in the data.")
+
+    # Estimate propensity scores
+    ps, ps_coef = estimate_propensity_score(
+        data=data,
+        d=d,
+        controls=propensity_controls,
+        trim_threshold=trim_threshold,
+    )
+    # Compute trimmed mask based on threshold
+    trimmed_mask = (ps < trim_threshold) | (ps > 1 - trim_threshold)
+
+    # Apply trimming
+    valid_mask = ~trimmed_mask
+    if valid_mask.sum() == 0:
+        raise ValueError("All observations were trimmed. Adjust trim_threshold.")
+
+    y_valid = y_values[valid_mask]
+    d_valid = d_values[valid_mask]
+    ps_valid = ps[valid_mask]
+
+    treated_valid = d_valid == 1
+    control_valid = d_valid == 0
+    n_treated_valid = treated_valid.sum()
+    n_control_valid = control_valid.sum()
+
+    if n_treated_valid == 0:
+        raise ValueError("No treated units remain after trimming.")
+    if n_control_valid == 0:
+        raise ValueError("No control units remain after trimming.")
+
+    # Compute IPW weights for control units: w = p / (1-p)
+    weights = np.zeros(len(y_valid))
+    weights[control_valid] = ps_valid[control_valid] / (1 - ps_valid[control_valid])
+
+    # Normalize weights so they sum to n_treated (matching Stata convention)
+    weight_sum = weights[control_valid].sum()
+    if weight_sum > 0:
+        weights[control_valid] = weights[control_valid] * n_treated_valid / weight_sum
+
+    # Compute ATT
+    y_treated_mean = y_valid[treated_valid].mean()
+    y_control_weighted = np.sum(weights[control_valid] * y_valid[control_valid]) / n_treated_valid
+    att = y_treated_mean - y_control_weighted
+
+    # Compute standard error using influence function approach
+    # Influence function for IPW ATT estimator
+    psi = np.zeros(len(y_valid))
+
+    # For treated: psi_i = (Y_i - tau) / N_1
+    psi[treated_valid] = (y_valid[treated_valid] - att) / n_treated_valid
+
+    # For control: psi_i = -w_i * (Y_i - mu_0) / N_1
+    # where mu_0 is the weighted mean of control outcomes
+    psi[control_valid] = -weights[control_valid] * y_valid[control_valid] / n_treated_valid
+
+    # Variance is sum of squared influence functions
+    var_att = np.sum(psi**2)
+    se = np.sqrt(var_att)
+
+    # Degrees of freedom
+    n_params = len(propensity_controls) + 1  # PS model parameters
+    df_resid = n_treated_valid + n_control_valid - n_params - 1
+    df_resid = max(1, df_resid)
+    df_inference = df_resid
+
+    # t-statistic and p-value
+    if se > 0:
+        t_stat = att / se
+        pvalue = 2 * stats.t.sf(abs(t_stat), df_inference)
+    else:
+        t_stat = np.nan
+        pvalue = np.nan
+
+    # Confidence interval
+    t_crit = stats.t.ppf(1 - alpha / 2, df_inference)
+    ci_lower = att - t_crit * se
+    ci_upper = att + t_crit * se
+
+    # Compute coefficient of variation for weights
+    weights_control = weights[control_valid]
+    if len(weights_control) > 1:
+        weights_mean = np.mean(weights_control)
+        weights_std = np.std(weights_control, ddof=1)
+        weights_cv = weights_std / weights_mean if weights_mean > 0 else np.nan
+    else:
+        weights_cv = 0.0
+
+    return IPWResult(
+        att=att,
+        se=se,
+        ci_lower=ci_lower,
+        ci_upper=ci_upper,
+        t_stat=t_stat,
+        pvalue=pvalue,
+        propensity_scores=ps,
+        weights=weights,
+        propensity_model_coef=ps_coef,
+        n_treated=n_treated_valid,
+        n_control=n_control_valid,
+        df_resid=df_resid,
+        df_inference=df_inference,
+        weights_cv=weights_cv,
+    )
+
+
 def estimate_ipwra(
     data: pd.DataFrame,
     y: str,
@@ -83,84 +334,102 @@ def estimate_ipwra(
     n_bootstrap: int = 200,
     seed: Optional[int] = None,
     alpha: float = 0.05,
+    return_diagnostics: bool = False,
+    gvar_col: Optional[str] = None,
+    ivar_col: Optional[str] = None,
+    cohort_g: Optional[int] = None,
+    period_r: Optional[int] = None,
 ) -> IPWRAResult:
     """
-    IPWRA估计ATT（doubly robust估计量）。
-    
-    等价于Stata命令: teffects ipwra (y controls) (d ps_controls), atet
-    
-    IPWRA-ATT公式:
-    τ = (1/N₁)Σ_{D=1}[Y - m₀(X)] - Σ_{D=0}[w·(Y-m₀(X))] / Σ_{D=0}[w]
-    
-    其中:
-    - m₀(X) = E(Y|X, D=0) 是控制组条件均值
-    - p(X) = P(D=1|X) 是倾向得分
-    - w = p(X) / (1 - p(X)) 是IPW权重
-    
+    Estimate ATT using inverse probability weighted regression adjustment.
+
+    IPWRA is a doubly robust estimator that combines propensity score weighting
+    with outcome regression. The estimator remains consistent if either the
+    propensity score model or the outcome regression model is correctly
+    specified, providing protection against model misspecification.
+
+    The IPWRA-ATT estimator is computed as:
+
+    .. math::
+
+        \\hat{\\tau} = \\frac{1}{N_1} \\sum_{D_i=1} [Y_i - \\hat{m}_0(X_i)]
+                      - \\frac{\\sum_{D_i=0} w_i (Y_i - \\hat{m}_0(X_i))}
+                             {\\sum_{D_i=0} w_i}
+
+    where :math:`\\hat{m}_0(X)` is the estimated outcome regression for controls,
+    and :math:`w_i = \\hat{p}(X_i) / (1 - \\hat{p}(X_i))` are IPW weights.
+
     Parameters
     ----------
     data : pd.DataFrame
-        横截面数据（一行一个单位）
+        Cross-sectional data with one row per unit.
     y : str
-        结果变量列名（通常是变换后的 ydot_g{g}_r{r}）
+        Outcome variable column name (typically transformed outcome).
     d : str
-        处理指示符列名（0/1）
+        Treatment indicator column name (1=treated, 0=control).
     controls : List[str]
-        结果模型控制变量
+        Control variables for the outcome regression model.
     propensity_controls : List[str], optional
-        倾向得分模型控制变量。默认与controls相同。
+        Control variables for the propensity score model.
+        If None, uses the same variables as ``controls``.
     trim_threshold : float, default=0.01
-        倾向得分裁剪阈值。将p(X)裁剪到[trim, 1-trim]以避免极端权重。
+        Propensity score trimming threshold. Scores are clipped to
+        [trim_threshold, 1-trim_threshold] to prevent extreme weights.
     se_method : str, default='analytical'
-        标准误计算方法: 'analytical' 或 'bootstrap'
+        Standard error computation method: 'analytical' uses influence
+        functions, 'bootstrap' uses nonparametric bootstrap.
     n_bootstrap : int, default=200
-        Bootstrap重复次数
+        Number of bootstrap replications when se_method='bootstrap'.
     seed : int, optional
-        随机种子
+        Random seed for bootstrap resampling.
     alpha : float, default=0.05
-        显著性水平
-        
+        Significance level for confidence intervals.
+    return_diagnostics : bool, default=False
+        Whether to return additional diagnostic information.
+    gvar_col : str, optional
+        Cohort indicator column name (for staggered designs).
+    ivar_col : str, optional
+        Unit identifier column name (for staggered designs).
+    cohort_g : int, optional
+        Cohort value (for staggered designs).
+    period_r : int, optional
+        Period value (for staggered designs).
+
     Returns
     -------
     IPWRAResult
-        包含ATT估计、标准误、置信区间等的结果对象
-        
+        Estimation results containing ATT estimate, standard error,
+        confidence interval, propensity scores, and model coefficients.
+
     Raises
     ------
     ValueError
-        控制变量不存在、样本量不足、模型不收敛
-    
-    Examples
+        If required columns are missing, sample sizes are insufficient,
+        or model estimation fails to converge.
+
+    See Also
     --------
-    >>> result = estimate_ipwra(
-    ...     data=sample_data,
-    ...     y='ydot_g2006_r2006',
-    ...     d='D_treat',
-    ...     controls=['income', 'population'],
-    ...     se_method='bootstrap'
-    ... )
-    >>> print(f"ATT = {result.att:.4f} (SE = {result.se:.4f})")
+    estimate_ipw : Pure IPW estimator without outcome regression.
+    estimate_psm : Propensity score matching estimator.
     """
-    # ================================================================
-    # Step 0: 输入验证
-    # ================================================================
+    # Validate inputs
     if y not in data.columns:
-        raise ValueError(f"结果变量 '{y}' 不在数据中")
+        raise ValueError(f"Outcome variable '{y}' not found in data.")
     if d not in data.columns:
-        raise ValueError(f"处理指示符 '{d}' 不在数据中")
+        raise ValueError(f"Treatment indicator '{d}' not found in data.")
     
     missing_controls = [c for c in controls if c not in data.columns]
     if missing_controls:
-        raise ValueError(f"控制变量不存在: {missing_controls}")
+        raise ValueError(f"Control variables not found: {missing_controls}")
     
     if propensity_controls is None:
         propensity_controls = controls
     else:
         missing_ps = [c for c in propensity_controls if c not in data.columns]
         if missing_ps:
-            raise ValueError(f"倾向得分控制变量不存在: {missing_ps}")
+            raise ValueError(f"Propensity score controls not found: {missing_ps}")
     
-    # 删除缺失值
+    # Remove observations with missing values
     all_vars = [y, d] + list(set(controls + propensity_controls))
     data_clean = data[all_vars].dropna().copy()
     
@@ -172,79 +441,73 @@ def estimate_ipwra(
     n_control = int((1 - D).sum())
     
     if n_treated < 2:
-        raise ValueError(f"处理组样本量不足: n_treated={n_treated}, 需要至少2")
+        raise ValueError(f"Insufficient treated units: n_treated={n_treated}, requires at least 2.")
     if n_control < 2:
-        raise ValueError(f"控制组样本量不足: n_control={n_control}, 需要至少2")
+        raise ValueError(f"Insufficient control units: n_control={n_control}, requires at least 2.")
     
     if n_treated < 5:
         warnings.warn(
-            f"处理组样本量较小 (n_treated={n_treated})，IPWRA估计可能不稳定",
+            f"Small treated sample (n_treated={n_treated}); IPWRA estimates may be unstable.",
             UserWarning
         )
     if n_control < 10:
         warnings.warn(
-            f"控制组样本量较小 (n_control={n_control})，结果模型估计可能不稳定",
+            f"Small control sample (n_control={n_control}); outcome model may be unstable.",
             UserWarning
         )
     
-    # ================================================================
-    # Step 1: 估计倾向得分
-    # ================================================================
+    # Estimate propensity scores
     pscores, ps_coef = estimate_propensity_score(
         data_clean, d, propensity_controls, trim_threshold
     )
     
-    # ================================================================
-    # Step 2: 估计控制组结果模型
-    # ================================================================
+    # Estimate outcome model on control units
     m0_hat, outcome_coef = estimate_outcome_model(
         data_clean, y, d, controls
     )
     
-    # ================================================================
-    # Step 3: 计算IPWRA-ATT
-    # ================================================================
+    # Compute IPWRA-ATT estimator
     treat_mask = D == 1
     control_mask = D == 0
     
-    # 处理组部分: (1/N₁) Σ_{D=1} [Y - m₀(X)]
+    # Treated component: (1/N_1) sum_{D=1} [Y - m_0(X)]
     treat_term = (Y[treat_mask] - m0_hat[treat_mask]).mean()
     
-    # 控制组加权部分
+    # Weighted control component
     weights = pscores / (1 - pscores)
     weights_control = weights[control_mask]
     residuals_control = Y[control_mask] - m0_hat[control_mask]
     
-    # 检查极端权重 (overlap violation warning)
+    # Check for extreme weights indicating overlap violation
     weights_cv = np.std(weights_control) / np.mean(weights_control) if np.mean(weights_control) > 0 else np.inf
     if weights_cv > 2.0:
         warnings.warn(
-            f"检测到极端IPW权重 (CV={weights_cv:.2f} > 2.0)，可能存在overlap问题。"
-            f"建议：检查倾向得分分布或增加trim_threshold参数。",
+            f"Extreme IPW weights detected (CV={weights_cv:.2f} > 2.0), indicating potential "
+            f"overlap violation. Consider checking propensity score distribution or increasing "
+            f"trim_threshold.",
             UserWarning
         )
     
-    # 检查极端倾向得分比例
+    # Check proportion of extreme propensity scores
     extreme_low = (pscores < 0.05).mean()
     extreme_high = (pscores > 0.95).mean()
     if extreme_low > 0.1 or extreme_high > 0.1:
         warnings.warn(
-            f"倾向得分极端值比例较高 (p<0.05: {extreme_low:.1%}, p>0.95: {extreme_high:.1%})，"
-            f"可能违反overlap假设。考虑增加trim_threshold或检查协变量选择。",
+            f"High proportion of extreme propensity scores (p<0.05: {extreme_low:.1%}, "
+            f"p>0.95: {extreme_high:.1%}), suggesting overlap assumption may be violated. "
+            f"Consider increasing trim_threshold or reviewing covariate selection.",
             UserWarning
         )
     
     weights_sum = weights_control.sum()
     if weights_sum <= 0:
-        raise ValueError("IPW权重之和为非正，倾向得分模型可能有问题")
+        raise ValueError("Sum of IPW weights is non-positive; propensity score model may be misspecified.")
     
     control_term = (weights_control * residuals_control).sum() / weights_sum
     
     att = treat_term - control_term
     
-    # ================================================================
-    # Step 4: 计算标准误
-    # ================================================================
+    # Compute standard errors
     if se_method == 'analytical':
         se, ci_lower, ci_upper = compute_ipwra_se_analytical(
             data_clean, y, d, controls,
@@ -256,9 +519,9 @@ def estimate_ipwra(
             trim_threshold, n_bootstrap, seed, alpha
         )
     else:
-        raise ValueError(f"未知的se_method: {se_method}. 使用 'analytical' 或 'bootstrap'")
+        raise ValueError(f"Unknown se_method: {se_method}. Use 'analytical' or 'bootstrap'.")
     
-    # t统计量和p值
+    # Compute t-statistic and p-value
     if se > 0:
         t_stat = att / se
         pvalue = 2 * (1 - stats.norm.cdf(abs(t_stat)))
@@ -289,38 +552,47 @@ def estimate_propensity_score(
     trim_threshold: float = 0.01,
 ) -> Tuple[np.ndarray, Dict[str, float]]:
     """
-    使用logit模型估计倾向得分 P(D=1|X)。
-    
-    不使用正则化以保持与Stata兼容。
-    
+    Estimate propensity scores using logistic regression.
+
+    Fits a logit model P(D=1|X) without regularization to maintain
+    compatibility with standard econometric software implementations.
+
     Parameters
     ----------
     data : pd.DataFrame
-        数据
+        Dataset containing treatment and control variables.
     d : str
-        处理指示符
+        Treatment indicator column name.
     controls : List[str]
-        协变量
-    trim_threshold : float
-        裁剪阈值
-        
+        Covariate column names for the propensity score model.
+    trim_threshold : float, default=0.01
+        Trimming threshold for extreme propensity scores.
+
     Returns
     -------
-    Tuple[np.ndarray, Dict[str, float]]
-        (倾向得分数组, 模型系数字典)
+    propensity_scores : np.ndarray
+        Estimated propensity scores, trimmed to [trim_threshold, 1-trim_threshold].
+    coefficients : Dict[str, float]
+        Dictionary mapping variable names to estimated coefficients,
+        including '_intercept' for the constant term.
+
+    Raises
+    ------
+    ValueError
+        If the logistic regression fails to converge.
     """
     from sklearn.linear_model import LogisticRegression
     
     X = data[controls].values.astype(float)
     D = data[d].values.astype(float)
     
-    # 标准化X以提高数值稳定性
+    # Standardize covariates for numerical stability
     X_mean = X.mean(axis=0)
     X_std = X.std(axis=0)
-    X_std[X_std == 0] = 1  # 避免除零
+    X_std[X_std == 0] = 1  # Prevent division by zero
     X_scaled = (X - X_mean) / X_std
     
-    # Logit模型（无正则化）
+    # Fit logit model without regularization
     try:
         model = LogisticRegression(
             penalty=None,
@@ -330,15 +602,15 @@ def estimate_propensity_score(
         )
         model.fit(X_scaled, D)
     except Exception as e:
-        raise ValueError(f"倾向得分模型估计失败: {e}")
+        raise ValueError(f"Propensity score model estimation failed: {e}")
     
-    # 预测倾向得分
+    # Predict propensity scores
     pscores = model.predict_proba(X_scaled)[:, 1]
     
-    # 裁剪极端值
+    # Trim extreme values
     pscores = np.clip(pscores, trim_threshold, 1 - trim_threshold)
     
-    # 还原系数到原始尺度
+    # Transform coefficients back to original scale
     coef_scaled = model.coef_[0]
     intercept = model.intercept_[0]
     
@@ -359,48 +631,59 @@ def estimate_outcome_model(
     controls: List[str],
 ) -> Tuple[np.ndarray, Dict[str, float]]:
     """
-    在控制组上估计结果模型 E(Y|X, D=0)。
-    
+    Estimate the outcome regression model on control units.
+
+    Fits a linear regression E(Y|X, D=0) using control observations only,
+    then generates predicted values for all units.
+
     Parameters
     ----------
     data : pd.DataFrame
-        数据
+        Dataset containing outcome, treatment, and control variables.
     y : str
-        结果变量
+        Outcome variable column name.
     d : str
-        处理指示符
+        Treatment indicator column name.
     controls : List[str]
-        协变量
-        
+        Covariate column names for the outcome model.
+
     Returns
     -------
-    Tuple[np.ndarray, Dict[str, float]]
-        (所有单位的预测值, 模型系数字典)
+    predictions : np.ndarray
+        Predicted outcome values for all units based on control regression.
+    coefficients : Dict[str, float]
+        Dictionary mapping variable names to estimated coefficients,
+        including '_intercept' for the constant term.
+
+    Raises
+    ------
+    ValueError
+        If the design matrix is singular and cannot be inverted.
     """
     D = data[d].values.astype(float)
     Y = data[y].values.astype(float)
     X = data[controls].values.astype(float)
     
-    # 控制组数据
+    # Extract control group data
     control_mask = D == 0
     X_control = X[control_mask]
     Y_control = Y[control_mask]
     
-    # 添加截距项
+    # Add intercept term
     X_control_const = np.column_stack([np.ones(len(X_control)), X_control])
     
-    # OLS: β = (X'X)^{-1} X'Y
+    # OLS estimation: beta = (X'X)^{-1} X'Y
     try:
         XtX_inv = np.linalg.inv(X_control_const.T @ X_control_const)
         beta = XtX_inv @ (X_control_const.T @ Y_control)
     except np.linalg.LinAlgError:
-        raise ValueError("结果模型设计矩阵奇异，无法估计")
+        raise ValueError("Outcome model design matrix is singular; cannot estimate coefficients.")
     
-    # 对所有单位预测
+    # Generate predictions for all units
     X_all_const = np.column_stack([np.ones(len(X)), X])
     m0_hat = X_all_const @ beta
     
-    # 存储系数
+    # Store coefficients
     coef_dict = {'_intercept': beta[0]}
     for i, name in enumerate(controls):
         coef_dict[name] = beta[i + 1]
@@ -420,14 +703,42 @@ def compute_ipwra_se_analytical(
     alpha: float = 0.05,
 ) -> Tuple[float, float, float]:
     """
-    使用influence function计算IPWRA标准误。
-    
-    简化版本：仅考虑主项。完整版本应调整两阶段估计不确定性。
-    
+    Compute IPWRA standard error using the influence function approach.
+
+    Uses a simplified influence function that accounts for the primary
+    estimation uncertainty. The full doubly robust influence function
+    would additionally adjust for uncertainty in the propensity score
+    and outcome model estimation.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Dataset used for estimation.
+    y : str
+        Outcome variable column name.
+    d : str
+        Treatment indicator column name.
+    controls : List[str]
+        Control variable column names.
+    att : float
+        Estimated ATT value.
+    pscores : np.ndarray
+        Estimated propensity scores.
+    m0_hat : np.ndarray
+        Predicted outcomes from control regression.
+    weights : np.ndarray
+        IPW weights for all observations.
+    alpha : float, default=0.05
+        Significance level for confidence interval.
+
     Returns
     -------
-    Tuple[float, float, float]
-        (se, ci_lower, ci_upper)
+    se : float
+        Standard error estimate.
+    ci_lower : float
+        Lower bound of confidence interval.
+    ci_upper : float
+        Upper bound of confidence interval.
     """
     D = data[d].values.astype(float)
     Y = data[y].values.astype(float)
@@ -437,28 +748,28 @@ def compute_ipwra_se_analytical(
     treat_mask = D == 1
     control_mask = D == 0
     
-    # 简化的influence function
+    # Simplified influence function
     p_bar = n_treated / n
     weights_sum = weights[control_mask].sum()
     
-    # 处理组贡献
+    # Treated unit contribution
     psi_treat = (Y[treat_mask] - m0_hat[treat_mask] - att) / p_bar
     
-    # 控制组贡献
+    # Control unit contribution
     residuals_control = Y[control_mask] - m0_hat[control_mask]
     psi_control = -weights[control_mask] * residuals_control / weights_sum
     
-    # 合并
+    # Combine influence functions
     psi = np.zeros(n)
     psi[treat_mask] = psi_treat
     psi[control_mask] = psi_control
     
-    # 方差估计
+    # Variance estimation
     var_psi = np.var(psi, ddof=1)
     var_att = var_psi / n
     se = np.sqrt(var_att)
     
-    # 置信区间
+    # Confidence interval
     z_crit = stats.norm.ppf(1 - alpha / 2)
     ci_lower = att - z_crit * se
     ci_upper = att + z_crit * se
@@ -478,14 +789,41 @@ def compute_ipwra_se_bootstrap(
     alpha: float,
 ) -> Tuple[float, float, float]:
     """
-    使用Bootstrap计算IPWRA标准误。
-    
-    对整个估计过程进行非参数Bootstrap。
-    
+    Compute IPWRA standard error using nonparametric bootstrap.
+
+    Resamples the entire estimation procedure including propensity score
+    estimation, outcome model fitting, and ATT computation. This approach
+    properly accounts for all sources of estimation uncertainty.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Dataset used for estimation.
+    y : str
+        Outcome variable column name.
+    d : str
+        Treatment indicator column name.
+    controls : List[str]
+        Control variable column names for outcome model.
+    propensity_controls : List[str] or None
+        Control variable column names for propensity score model.
+    trim_threshold : float
+        Propensity score trimming threshold.
+    n_bootstrap : int
+        Number of bootstrap replications.
+    seed : int or None
+        Random seed for reproducibility.
+    alpha : float
+        Significance level for confidence interval.
+
     Returns
     -------
-    Tuple[float, float, float]
-        (se, ci_lower, ci_upper)
+    se : float
+        Bootstrap standard error.
+    ci_lower : float
+        Percentile confidence interval lower bound.
+    ci_upper : float
+        Percentile confidence interval upper bound.
     """
     if seed is not None:
         np.random.seed(seed)
@@ -497,7 +835,7 @@ def compute_ipwra_se_bootstrap(
     att_boots = []
     
     for _ in range(n_bootstrap):
-        # 有放回抽样
+        # Resample with replacement
         indices = np.random.choice(n, size=n, replace=True)
         data_boot = data.iloc[indices].reset_index(drop=True)
         
@@ -534,12 +872,12 @@ def compute_ipwra_se_bootstrap(
     
     if len(att_boots) < n_bootstrap * 0.5:
         warnings.warn(
-            f"Bootstrap成功率较低: {len(att_boots)}/{n_bootstrap}",
+            f"Low bootstrap success rate: {len(att_boots)}/{n_bootstrap}",
             UserWarning
         )
     
     if len(att_boots) < 10:
-        raise ValueError(f"Bootstrap样本不足: {len(att_boots)}")
+        raise ValueError(f"Insufficient bootstrap samples: {len(att_boots)}")
     
     att_boots = np.array(att_boots)
     se = np.std(att_boots, ddof=1)
@@ -556,38 +894,38 @@ def compute_ipwra_se_bootstrap(
 @dataclass
 class PSMResult:
     """
-    PSM估计结果容器。
-    
+    Propensity score matching estimation result container.
+
     Attributes
     ----------
     att : float
-        ATT点估计 (Nearest Neighbor Matching)
+        ATT point estimate from nearest neighbor matching.
     se : float
-        标准误 (Abadie-Imbens SE 或 Bootstrap)
+        Standard error (Abadie-Imbens or bootstrap).
     ci_lower : float
-        95% CI下界
+        Lower bound of confidence interval.
     ci_upper : float
-        95% CI上界
+        Upper bound of confidence interval.
     t_stat : float
-        t统计量
+        t-statistic for testing ATT=0.
     pvalue : float
-        双侧p值
+        Two-sided p-value.
     propensity_scores : np.ndarray
-        倾向得分
+        Estimated propensity scores for all observations.
     match_counts : np.ndarray
-        每个处理单位的匹配数
+        Number of matches for each treated unit.
     matched_control_ids : List[List[int]]
-        每个处理单位匹配的控制单位索引
+        List of matched control unit indices for each treated unit.
     n_treated : int
-        处理组样本量
+        Number of treated units.
     n_control : int
-        控制组样本量
+        Number of control units.
     n_matched : int
-        实际匹配的控制单位数（去重后）
-    caliper : Optional[float]
-        使用的caliper值（如果有）
+        Number of unique control units used in matching.
+    caliper : float or None
+        Caliper value used for matching, if any.
     n_dropped : int
-        因caliper被丢弃的处理单位数
+        Number of treated units dropped due to caliper constraint.
     """
     att: float
     se: float
@@ -619,62 +957,92 @@ def estimate_psm(
     n_bootstrap: int = 200,
     seed: Optional[int] = None,
     alpha: float = 0.05,
+    match_order: str = 'data',
+    return_diagnostics: bool = False,
+    gvar_col: Optional[str] = None,
+    ivar_col: Optional[str] = None,
+    cohort_g: Optional[int] = None,
+    period_r: Optional[int] = None,
 ) -> PSMResult:
     """
-    倾向得分匹配估计ATT。
-    
-    等价于Stata命令: teffects psmatch (y) (d ps_controls), atet nn(k)
-    
-    PSM-ATT公式 (Nearest Neighbor):
-    τ̂ = (1/N₁) Σ_{D=1} [Y_i - (1/k) Σ_{j∈M(i)} Y_j]
-    
-    其中 M(i) 是单位i的k个最近邻匹配
-    
+    Estimate ATT using propensity score matching.
+
+    Uses nearest-neighbor matching on estimated propensity scores to find
+    comparable control units for each treated unit. The ATT is estimated as
+    the average difference between treated outcomes and matched control outcomes.
+
+    The PSM-ATT estimator is:
+
+    .. math::
+
+        \\hat{\\tau} = \\frac{1}{N_1} \\sum_{D_i=1} \\left[ Y_i - \\frac{1}{k}
+                       \\sum_{j \\in M(i)} Y_j \\right]
+
+    where M(i) is the set of k nearest-neighbor matches for unit i.
+
     Parameters
     ----------
     data : pd.DataFrame
-        横截面数据（一行一个单位）
+        Cross-sectional data with one row per unit.
     y : str
-        结果变量列名（通常是变换后的 ydot_g{g}_r{r}）
+        Outcome variable column name (typically transformed outcome).
     d : str
-        处理指示符列名（0/1）
+        Treatment indicator column name (1=treated, 0=control).
     propensity_controls : List[str]
-        倾向得分模型协变量
+        Covariate column names for propensity score model.
     n_neighbors : int, default=1
-        每个处理单位匹配的控制单位数 (k)
+        Number of control matches per treated unit (k).
     with_replacement : bool, default=True
-        是否有放回匹配
+        Whether to match with replacement.
     caliper : float, optional
-        倾向得分差距阈值
+        Maximum propensity score distance for valid matches.
     caliper_scale : str, default='sd'
-        caliper的尺度: 'sd' (标准差) 或 'absolute' (绝对值)
+        Scale for caliper: 'sd' (standard deviation units) or 'absolute'.
     trim_threshold : float, default=0.01
-        倾向得分裁剪阈值
+        Propensity score trimming threshold.
     se_method : str, default='abadie_imbens'
-        标准误计算方法: 'abadie_imbens' 或 'bootstrap'
+        Standard error method: 'abadie_imbens' for heteroskedasticity-robust
+        SE or 'bootstrap' for nonparametric bootstrap.
     n_bootstrap : int, default=200
-        Bootstrap重复次数
+        Number of bootstrap replications when se_method='bootstrap'.
     seed : int, optional
-        随机种子
+        Random seed for bootstrap resampling.
     alpha : float, default=0.05
-        显著性水平
-        
+        Significance level for confidence intervals.
+    match_order : str, default='data'
+        Order in which to process treated units for matching.
+    return_diagnostics : bool, default=False
+        Whether to return additional diagnostic information.
+    gvar_col : str, optional
+        Cohort indicator column name (for staggered designs).
+    ivar_col : str, optional
+        Unit identifier column name (for staggered designs).
+    cohort_g : int, optional
+        Cohort value (for staggered designs).
+    period_r : int, optional
+        Period value (for staggered designs).
+
     Returns
     -------
     PSMResult
-        包含ATT估计、标准误、匹配信息等的结果对象
-        
+        Estimation results containing ATT estimate, standard error,
+        confidence interval, and matching diagnostics.
+
     Raises
     ------
     ValueError
-        协变量不存在、样本量不足、无有效匹配
+        If required columns are missing, sample sizes are insufficient,
+        or no valid matches can be found.
+
+    See Also
+    --------
+    estimate_ipwra : Doubly robust IPWRA estimator.
+    estimate_ipw : Pure IPW estimator.
     """
-    # ================================================================
-    # Step 0: 输入验证
-    # ================================================================
+    # Validate inputs
     _validate_psm_inputs(data, y, d, propensity_controls, n_neighbors)
     
-    # 清理数据
+    # Remove observations with missing values
     all_vars = [y, d] + list(set(propensity_controls))
     data_clean = data[all_vars].dropna().copy()
     
@@ -686,36 +1054,32 @@ def estimate_psm(
     n_control = int((1 - D).sum())
     
     if n_treated < 1:
-        raise ValueError("处理组样本量为0，无法进行匹配")
+        raise ValueError("No treated units; cannot perform matching.")
     if n_control < n_neighbors:
         raise ValueError(
-            f"控制组样本量({n_control})小于匹配数({n_neighbors})，"
-            "无法进行匹配"
+            f"Control sample size ({n_control}) is less than number of neighbors "
+            f"({n_neighbors}); cannot perform matching."
         )
     
     if n_treated < 5:
         warnings.warn(
-            f"处理组样本量较小 (n_treated={n_treated})，PSM估计可能不稳定",
+            f"Small treated sample (n_treated={n_treated}); PSM estimates may be unstable.",
             UserWarning
         )
     
-    # ================================================================
-    # Step 1: 估计倾向得分 (复用IPWRA的函数)
-    # ================================================================
+    # Estimate propensity scores
     pscores, _ = estimate_propensity_score(
         data_clean, d, propensity_controls, trim_threshold
     )
     
-    # ================================================================
-    # Step 2: 执行匹配
-    # ================================================================
+    # Perform matching
     treat_indices = np.where(D == 1)[0]
     control_indices = np.where(D == 0)[0]
     
     pscores_treat = pscores[treat_indices]
     pscores_control = pscores[control_indices]
     
-    # 计算caliper（如果指定）
+    # Compute caliper if specified
     actual_caliper = None
     if caliper is not None:
         if caliper_scale == 'sd':
@@ -724,7 +1088,7 @@ def estimate_psm(
         else:
             actual_caliper = caliper
     
-    # 执行最近邻匹配
+    # Execute nearest neighbor matching
     matched_control_ids, match_counts, n_dropped = _nearest_neighbor_match(
         pscores_treat=pscores_treat,
         pscores_control=pscores_control,
@@ -733,41 +1097,37 @@ def estimate_psm(
         caliper=actual_caliper,
     )
     
-    # ================================================================
-    # Step 3: 计算ATT
-    # ================================================================
+    # Compute ATT
     Y_treat = Y[treat_indices]
     Y_control = Y[control_indices]
     
-    # 过滤掉因caliper被丢弃的单位
+    # Filter out treated units dropped due to caliper
     valid_treat_mask = np.array([len(m) > 0 for m in matched_control_ids])
     
     if valid_treat_mask.sum() == 0:
         raise ValueError(
-            "所有处理单位都无法找到有效匹配。"
-            "考虑放宽caliper或检查倾向得分overlap。"
+            "No valid matches found for any treated unit. "
+            "Consider relaxing the caliper or checking propensity score overlap."
         )
     
-    # 计算每个处理单位的匹配均值
+    # Compute matched mean for each treated unit
     att_individual = []
     for i, matches in enumerate(matched_control_ids):
         if len(matches) > 0:
-            # matches是控制组内的相对索引
+            # matches contains indices within control group
             y_matched = Y_control[matches].mean()
             att_i = Y_treat[i] - y_matched
             att_individual.append(att_i)
     
     att = np.mean(att_individual)
     
-    # 计算实际匹配的控制单位数（去重）
+    # Count unique matched control units
     all_matched = set()
     for matches in matched_control_ids:
         all_matched.update(matches)
     n_matched = len(all_matched)
     
-    # ================================================================
-    # Step 4: 计算标准误
-    # ================================================================
+    # Compute standard errors
     if se_method == 'abadie_imbens':
         se, ci_lower, ci_upper = _compute_psm_se_abadie_imbens(
             Y_treat=Y_treat,
@@ -793,11 +1153,11 @@ def estimate_psm(
         )
     else:
         raise ValueError(
-            f"未知的se_method: {se_method}. "
-            "使用 'abadie_imbens' 或 'bootstrap'"
+            f"Unknown se_method: {se_method}. "
+            "Use 'abadie_imbens' or 'bootstrap'."
         )
     
-    # t统计量和p值
+    # Compute t-statistic and p-value
     if se > 0:
         t_stat = att / se
         pvalue = 2 * (1 - stats.norm.cdf(abs(t_stat)))
@@ -831,31 +1191,44 @@ def _validate_psm_inputs(
     n_neighbors: int,
 ) -> None:
     """
-    验证PSM输入参数。
-    
+    Validate PSM input parameters.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Dataset to validate.
+    y : str
+        Outcome variable column name.
+    d : str
+        Treatment indicator column name.
+    propensity_controls : List[str]
+        Propensity score control variable names.
+    n_neighbors : int
+        Number of nearest neighbors.
+
     Raises
     ------
     ValueError
-        参数不符合要求
+        If any validation check fails.
     """
     if y not in data.columns:
-        raise ValueError(f"结果变量 '{y}' 不在数据中")
+        raise ValueError(f"Outcome variable '{y}' not found in data.")
     if d not in data.columns:
-        raise ValueError(f"处理指示符 '{d}' 不在数据中")
+        raise ValueError(f"Treatment indicator '{d}' not found in data.")
     
     missing_controls = [c for c in propensity_controls if c not in data.columns]
     if missing_controls:
-        raise ValueError(f"倾向得分控制变量不存在: {missing_controls}")
+        raise ValueError(f"Propensity score controls not found: {missing_controls}")
     
     if n_neighbors < 1:
-        raise ValueError(f"n_neighbors必须>=1, 当前值: {n_neighbors}")
+        raise ValueError(f"n_neighbors must be >= 1, got: {n_neighbors}")
     
-    # 检查处理指示符是0/1
+    # Check that treatment indicator is binary
     d_vals = data[d].dropna().unique()
     if not set(d_vals).issubset({0, 1, 0.0, 1.0}):
         raise ValueError(
-            f"处理指示符 '{d}' 必须是0/1值, "
-            f"当前唯一值: {d_vals}"
+            f"Treatment indicator '{d}' must be binary (0/1), "
+            f"found unique values: {d_vals}"
         )
 
 
@@ -867,27 +1240,32 @@ def _nearest_neighbor_match(
     caliper: Optional[float],
 ) -> Tuple[List[List[int]], np.ndarray, int]:
     """
-    执行最近邻倾向得分匹配。
-    
+    Perform nearest neighbor propensity score matching.
+
+    For each treated unit, finds the k control units with the closest
+    propensity scores, subject to optional caliper constraints.
+
     Parameters
     ----------
     pscores_treat : np.ndarray
-        处理组倾向得分
+        Propensity scores for treated units.
     pscores_control : np.ndarray
-        控制组倾向得分
+        Propensity scores for control units.
     n_neighbors : int
-        每个处理单位匹配的控制单位数
+        Number of control units to match per treated unit.
     with_replacement : bool
-        是否有放回匹配
-    caliper : float, optional
-        倾向得分差距阈值
-        
+        Whether control units can be matched to multiple treated units.
+    caliper : float or None
+        Maximum propensity score distance for valid matches.
+
     Returns
     -------
-    Tuple[List[List[int]], np.ndarray, int]
-        - matched_control_ids: 每个处理单位匹配的控制单位索引列表
-        - match_counts: 每个处理单位的有效匹配数
-        - n_dropped: 因caliper被丢弃的处理单位数
+    matched_control_ids : List[List[int]]
+        List of matched control unit indices for each treated unit.
+    match_counts : np.ndarray
+        Number of valid matches for each treated unit.
+    n_dropped : int
+        Number of treated units dropped due to caliper constraint.
     """
     n_treat = len(pscores_treat)
     n_control = len(pscores_control)
@@ -896,41 +1274,41 @@ def _nearest_neighbor_match(
     match_counts = np.zeros(n_treat, dtype=int)
     n_dropped = 0
     
-    # 用于无放回匹配时追踪已使用的控制单位
+    # Track used controls for matching without replacement
     used_controls: Optional[set] = None if with_replacement else set()
     
     for i in range(n_treat):
         ps_i = pscores_treat[i]
         
-        # 计算与所有控制单位的距离
+        # Compute distances to all control units
         distances = np.abs(pscores_control - ps_i)
         
-        # 如果无放回，排除已使用的控制单位
+        # For matching without replacement, exclude already-used controls
         if not with_replacement and used_controls:
             available_mask = np.array([
                 j not in used_controls for j in range(n_control)
             ])
             if not available_mask.any():
-                # 无可用控制单位
+                # No available control units
                 matched_control_ids.append([])
                 n_dropped += 1
                 continue
             distances[~available_mask] = np.inf
         
-        # 应用caliper
+        # Apply caliper constraint
         if caliper is not None:
             valid_mask = distances <= caliper
             if not valid_mask.any():
-                # 无有效匹配
+                # No valid matches within caliper
                 matched_control_ids.append([])
                 n_dropped += 1
                 continue
         
-        # 找k个最近邻
+        # Find k nearest neighbors
         k = min(n_neighbors, n_control)
         nearest_indices = np.argsort(distances)[:k]
         
-        # 再次检查caliper
+        # Verify caliper constraint for selected neighbors
         if caliper is not None:
             nearest_indices = [
                 idx for idx in nearest_indices 
@@ -942,11 +1320,11 @@ def _nearest_neighbor_match(
             n_dropped += 1
             continue
         
-        # 记录匹配
+        # Record matches
         matched_control_ids.append(list(nearest_indices))
         match_counts[i] = len(nearest_indices)
         
-        # 无放回时标记已使用
+        # Mark controls as used for matching without replacement
         if not with_replacement and used_controls is not None:
             used_controls.update(nearest_indices)
     
@@ -961,21 +1339,40 @@ def _compute_psm_se_abadie_imbens(
     alpha: float = 0.05,
 ) -> Tuple[float, float, float]:
     """
-    计算Abadie-Imbens (2006) 异方差稳健标准误。
-    
-    简化实现：使用匹配对的残差方差估计。
-    
+    Compute Abadie-Imbens heteroskedasticity-robust standard error.
+
+    Uses the variance of individual treatment effects to estimate the
+    standard error of the ATT, following a simplified version of the
+    Abadie-Imbens (2006) variance formula.
+
+    Parameters
+    ----------
+    Y_treat : np.ndarray
+        Outcome values for treated units.
+    Y_control : np.ndarray
+        Outcome values for control units.
+    matched_control_ids : List[List[int]]
+        Matched control indices for each treated unit.
+    att : float
+        Estimated ATT value.
+    alpha : float, default=0.05
+        Significance level for confidence interval.
+
     Returns
     -------
-    Tuple[float, float, float]
-        (se, ci_lower, ci_upper)
+    se : float
+        Standard error estimate.
+    ci_lower : float
+        Lower bound of confidence interval.
+    ci_upper : float
+        Upper bound of confidence interval.
     """
     n_valid = sum(1 for m in matched_control_ids if len(m) > 0)
     
     if n_valid < 2:
         return np.nan, np.nan, np.nan
     
-    # 计算每个处理单位的匹配差异
+    # Compute individual treatment effects for each matched pair
     individual_effects = []
     for i, matches in enumerate(matched_control_ids):
         if len(matches) > 0:
@@ -985,12 +1382,12 @@ def _compute_psm_se_abadie_imbens(
     
     individual_effects = np.array(individual_effects)
     
-    # 使用个体效应的方差作为SE估计
+    # Use variance of individual effects for SE estimation
     var_effects = np.var(individual_effects, ddof=1)
     var_att = var_effects / n_valid
     se = np.sqrt(var_att)
     
-    # 置信区间
+    # Confidence interval
     z_crit = stats.norm.ppf(1 - alpha / 2)
     ci_lower = att - z_crit * se
     ci_upper = att + z_crit * se
@@ -1013,14 +1410,47 @@ def _compute_psm_se_bootstrap(
     alpha: float,
 ) -> Tuple[float, float, float]:
     """
-    使用Bootstrap计算PSM标准误。
-    
-    对整个PSM流程（包括倾向得分估计和匹配）进行Bootstrap。
-    
+    Compute PSM standard error using nonparametric bootstrap.
+
+    Resamples the entire PSM procedure including propensity score estimation
+    and nearest-neighbor matching. This approach properly accounts for all
+    sources of estimation uncertainty.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Dataset used for estimation.
+    y : str
+        Outcome variable column name.
+    d : str
+        Treatment indicator column name.
+    propensity_controls : List[str]
+        Propensity score control variable names.
+    n_neighbors : int
+        Number of nearest neighbors.
+    with_replacement : bool
+        Whether to match with replacement.
+    caliper : float or None
+        Caliper constraint value.
+    caliper_scale : str
+        Scale for caliper ('sd' or 'absolute').
+    trim_threshold : float
+        Propensity score trimming threshold.
+    n_bootstrap : int
+        Number of bootstrap replications.
+    seed : int or None
+        Random seed for reproducibility.
+    alpha : float
+        Significance level for confidence interval.
+
     Returns
     -------
-    Tuple[float, float, float]
-        (se, ci_lower, ci_upper)
+    se : float
+        Bootstrap standard error.
+    ci_lower : float
+        Percentile confidence interval lower bound.
+    ci_upper : float
+        Percentile confidence interval upper bound.
     """
     if seed is not None:
         np.random.seed(seed)
@@ -1029,12 +1459,12 @@ def _compute_psm_se_bootstrap(
     att_boots = []
     
     for _ in range(n_bootstrap):
-        # 有放回抽样
+        # Resample with replacement
         indices = np.random.choice(n, size=n, replace=True)
         data_boot = data.iloc[indices].reset_index(drop=True)
         
         try:
-            # 估计倾向得分
+            # Estimate propensity scores
             pscores_boot, _ = estimate_propensity_score(
                 data_boot, d, propensity_controls, trim_threshold
             )
@@ -1051,7 +1481,7 @@ def _compute_psm_se_bootstrap(
             pscores_treat = pscores_boot[treat_indices]
             pscores_control = pscores_boot[control_indices]
             
-            # 计算caliper
+            # Compute caliper
             actual_caliper = None
             if caliper is not None:
                 if caliper_scale == 'sd':
@@ -1060,13 +1490,13 @@ def _compute_psm_se_bootstrap(
                 else:
                     actual_caliper = caliper
             
-            # 执行匹配
+            # Perform matching
             matched_ids, _, _ = _nearest_neighbor_match(
                 pscores_treat, pscores_control,
                 n_neighbors, with_replacement, actual_caliper
             )
             
-            # 计算ATT
+            # Compute ATT
             Y_treat = Y_boot[treat_indices]
             Y_control = Y_boot[control_indices]
             
@@ -1086,12 +1516,12 @@ def _compute_psm_se_bootstrap(
     
     if len(att_boots) < n_bootstrap * 0.5:
         warnings.warn(
-            f"Bootstrap成功率较低: {len(att_boots)}/{n_bootstrap}",
+            f"Low bootstrap success rate: {len(att_boots)}/{n_bootstrap}",
             UserWarning
         )
     
     if len(att_boots) < 10:
-        raise ValueError(f"Bootstrap样本不足: {len(att_boots)}")
+        raise ValueError(f"Insufficient bootstrap samples: {len(att_boots)}")
     
     att_boots = np.array(att_boots)
     se = np.std(att_boots, ddof=1)

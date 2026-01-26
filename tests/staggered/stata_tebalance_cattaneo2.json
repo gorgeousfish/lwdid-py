@@ -1,0 +1,72 @@
+{
+  "source": "Stata 18 cattaneo2 dataset via MCP, 2026-01-15",
+  "description": "tebalance summarize results after teffects psmatch on cattaneo2 data",
+  "command": "teffects psmatch (bweight) (mbsmoke mmarried mage prenatal1 fbaby), generate(matchv)",
+  "sample_info": {
+    "n_obs_raw": 4642,
+    "n_obs_matched": 9284,
+    "n_treated": 864,
+    "n_treated_matched": 4642,
+    "n_control": 3778,
+    "n_control_matched": 4642
+  },
+  "covariates": {
+    "mmarried": {
+      "smd_raw": -0.59530094,
+      "smd_matched": 0.00141074,
+      "vr_raw": 1.3359436,
+      "vr_matched": 0.99876592,
+      "mean_control": 0.7514558,
+      "mean_treated": 0.47337963,
+      "var_control": 0.18681943,
+      "var_treated": 0.24958022
+    },
+    "mage": {
+      "smd_raw": -0.300179,
+      "smd_matched": -0.01202771,
+      "vr_raw": 0.88180253,
+      "vr_matched": 0.99529163,
+      "mean_control": 26.810482,
+      "mean_treated": 25.166667,
+      "var_control": 31.871407,
+      "var_treated": 28.104287
+    },
+    "prenatal1": {
+      "smd_raw": -0.32426954,
+      "smd_matched": 0.03336094,
+      "vr_raw": 1.4961553,
+      "vr_matched": 0.94915244,
+      "mean_control": 0.82689254,
+      "mean_treated": 0.68981481,
+      "var_control": 0.14317917,
+      "var_treated": 0.21421827
+    },
+    "fbaby": {
+      "smd_raw": -0.16632706,
+      "smd_matched": -0.0117326,
+      "vr_raw": 0.94309444,
+      "vr_matched": 0.99690945,
+      "mean_control": 0.45314981,
+      "mean_treated": 0.37152778,
+      "var_control": 0.24787067,
+      "var_treated": 0.23376545
+    }
+  },
+  "r_size": {
+    "Number_of_obs": {"Raw": 4642, "Matched": 9284},
+    "Treated_obs": {"Raw": 864, "Matched": 4642},
+    "Control_obs": {"Raw": 3778, "Matched": 4642}
+  },
+  "r_table_default": {
+    "mmarried": {"std_diff_Raw": -0.59530094, "std_diff_Matched": 0.00141074, "ratio_Raw": 1.3359436, "ratio_Matched": 0.99876592},
+    "mage": {"std_diff_Raw": -0.300179, "std_diff_Matched": -0.01202771, "ratio_Raw": 0.88180253, "ratio_Matched": 0.99529163},
+    "prenatal1": {"std_diff_Raw": -0.32426954, "std_diff_Matched": 0.03336094, "ratio_Raw": 1.4961553, "ratio_Matched": 0.94915244},
+    "fbaby": {"std_diff_Raw": -0.16632706, "std_diff_Matched": -0.0117326, "ratio_Raw": 0.94309444, "ratio_Matched": 0.99690945}
+  },
+  "r_table_baseline": {
+    "mmarried": {"means_Control": 0.7514558, "means_Treated": 0.47337963, "variance_Control": 0.18681943, "variance_Treated": 0.24958022},
+    "mage": {"means_Control": 26.810482, "means_Treated": 25.166667, "variance_Control": 31.871407, "variance_Treated": 28.104287},
+    "prenatal1": {"means_Control": 0.82689254, "means_Treated": 0.68981481, "variance_Control": 0.14317917, "variance_Treated": 0.21421827},
+    "fbaby": {"means_Control": 0.45314981, "means_Treated": 0.37152778, "variance_Control": 0.24787067, "variance_Treated": 0.23376545}
+  }
+}

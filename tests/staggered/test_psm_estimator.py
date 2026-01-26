@@ -408,8 +408,8 @@ class TestSEMethods:
         assert 0.3 < ratio < 3.0, f"SE ratio out of range: {ratio}"
     
     def test_invalid_se_method(self, simple_psm_data):
-        """测试无效的SE方法"""
-        with pytest.raises(ValueError, match="未知的se_method"):
+        """Test invalid SE method raises error."""
+        with pytest.raises(ValueError, match="Unknown se_method"):
             estimate_psm(
                 data=simple_psm_data,
                 y='Y',
@@ -424,11 +424,11 @@ class TestSEMethods:
 # ============================================================================
 
 class TestInputValidation:
-    """输入验证测试"""
+    """Input validation tests."""
     
     def test_missing_y_column(self, simple_psm_data):
-        """测试缺失结果变量"""
-        with pytest.raises(ValueError, match="结果变量.*不在数据中"):
+        """Test missing outcome variable raises error."""
+        with pytest.raises(ValueError, match="Outcome variable.*not found"):
             estimate_psm(
                 data=simple_psm_data,
                 y='nonexistent',
@@ -437,8 +437,8 @@ class TestInputValidation:
             )
     
     def test_missing_d_column(self, simple_psm_data):
-        """测试缺失处理指示符"""
-        with pytest.raises(ValueError, match="处理指示符.*不在数据中"):
+        """Test missing treatment indicator raises error."""
+        with pytest.raises(ValueError, match="Treatment indicator.*not found"):
             estimate_psm(
                 data=simple_psm_data,
                 y='Y',
@@ -447,8 +447,8 @@ class TestInputValidation:
             )
     
     def test_missing_control_column(self, simple_psm_data):
-        """测试缺失控制变量"""
-        with pytest.raises(ValueError, match="控制变量不存在"):
+        """Test missing control variable raises error."""
+        with pytest.raises(ValueError, match="Propensity score controls not found"):
             estimate_psm(
                 data=simple_psm_data,
                 y='Y',
@@ -457,8 +457,8 @@ class TestInputValidation:
             )
     
     def test_invalid_n_neighbors(self, simple_psm_data):
-        """测试无效的n_neighbors"""
-        with pytest.raises(ValueError, match="n_neighbors必须>=1"):
+        """Test invalid n_neighbors raises error."""
+        with pytest.raises(ValueError, match="n_neighbors must be >= 1"):
             estimate_psm(
                 data=simple_psm_data,
                 y='Y',
@@ -468,11 +468,11 @@ class TestInputValidation:
             )
     
     def test_empty_treatment_group(self, simple_psm_data):
-        """测试空处理组"""
+        """Test empty treatment group raises error."""
         data = simple_psm_data.copy()
-        data['D'] = 0  # 全部设为控制组
+        data['D'] = 0  # All control
         
-        with pytest.raises(ValueError, match="处理组样本量为0"):
+        with pytest.raises(ValueError, match="No treated units"):
             estimate_psm(
                 data=data,
                 y='Y',
@@ -481,15 +481,15 @@ class TestInputValidation:
             )
     
     def test_insufficient_controls(self):
-        """测试控制组不足"""
-        # 创建只有很少控制组的数据
+        """Test insufficient controls raises error."""
+        # Create data with very few controls
         data = pd.DataFrame({
             'Y': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            'D': [1, 1, 1, 1, 1, 1, 1, 1, 1, 0],  # 只有1个控制
+            'D': [1, 1, 1, 1, 1, 1, 1, 1, 1, 0],  # Only 1 control
             'x1': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         })
         
-        with pytest.raises(ValueError, match="控制组样本量.*小于匹配数"):
+        with pytest.raises(ValueError, match="Control sample size.*is less than number of neighbors"):
             estimate_psm(
                 data=data,
                 y='Y',
@@ -499,11 +499,11 @@ class TestInputValidation:
             )
     
     def test_invalid_d_values(self, simple_psm_data):
-        """测试非0/1的处理指示符"""
+        """Test non-binary treatment indicator raises error."""
         data = simple_psm_data.copy()
-        data['D'] = data['D'] + 1  # 变成1/2
+        data['D'] = data['D'] + 1  # Becomes 1/2
         
-        with pytest.raises(ValueError, match="处理指示符.*必须是0/1值"):
+        with pytest.raises(ValueError, match="Treatment indicator.*must be binary"):
             estimate_psm(
                 data=data,
                 y='Y',
@@ -541,24 +541,24 @@ class TestEdgeCases:
             assert result.att is not None  # 但仍应返回结果
     
     def test_caliper_too_strict(self):
-        """测试caliper过于严格"""
+        """Test overly strict caliper raises error."""
         np.random.seed(999)
         n = 50
         data = pd.DataFrame({
             'Y': np.random.normal(0, 1, n),
             'D': [1] * 25 + [0] * 25,
-            # x1差异很大，导致倾向得分差异大
+            # Large x1 difference leads to large propensity score gap
             'x1': np.concatenate([np.random.normal(5, 0.1, 25), 
                                   np.random.normal(-5, 0.1, 25)]),
         })
         
-        with pytest.raises(ValueError, match="所有处理单位都无法找到有效匹配"):
+        with pytest.raises(ValueError, match="No valid matches found"):
             estimate_psm(
                 data=data,
                 y='Y',
                 d='D',
                 propensity_controls=['x1'],
-                caliper=0.001,  # 非常严格的caliper
+                caliper=0.001,  # Very strict caliper
                 caliper_scale='absolute',
             )
     

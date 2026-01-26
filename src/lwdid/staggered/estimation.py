@@ -1,17 +1,47 @@
 """
-Staggered Effect Estimation Module
+Cohort-time treatment effect estimation for staggered adoption designs.
 
-Implements (g,r)-specific treatment effect estimation for staggered DiD
-based on Lee and Wooldridge (2023, 2025) Procedure 4.1.
+This module implements cohort-time-specific ATT estimation for staggered
+difference-in-differences designs. Each (cohort, period) pair receives
+its own average treatment effect on the treated (ATT) estimate through
+cross-sectional regression on transformed outcome data.
 
-Key concepts:
-- Each (cohort, period) pair has its own ATT estimate τ_{gr}
-- Estimation is cross-sectional regression on transformed data
-- Sample restricted to: treatment cohort g + valid controls (gvar > r or NT)
+The estimation approach proceeds as follows:
 
-Reference:
-    Lee & Wooldridge (2023) Section 4, Procedure 4.1
-    Lee & Wooldridge (2025) Section 7.1, Equation (7.8)
+1. Transform outcome data by removing pre-treatment unit-specific patterns
+   (demeaning or detrending) for each treatment cohort.
+2. For each treated cohort g in each post-treatment period r, restrict
+   the sample to cohort g units plus valid control units.
+3. Run cross-sectional regression of transformed outcomes on a treatment
+   indicator to estimate the ATT.
+
+Valid control units for cohort g at time r include never-treated units and
+units first treated in periods after r. This rolling approach efficiently
+uses not-yet-treated observations while maintaining identification under
+conditional parallel trends and no anticipation assumptions.
+
+Notes
+-----
+Three estimation methods are supported:
+
+- Regression adjustment (RA): OLS estimation with optional covariate
+  adjustment. Enables exact t-based inference under classical linear
+  model assumptions.
+- Inverse probability weighted regression adjustment (IPWRA): Doubly
+  robust estimation combining propensity score weighting with outcome
+  regression. Consistent if either model is correctly specified.
+- Propensity score matching (PSM): Nearest-neighbor matching on
+  estimated propensity scores.
+
+The cross-sectional regression for each (g, r) pair has the form:
+
+.. math::
+
+    \\hat{Y}_{irg} = \\alpha + \\tau_{gr} D_{ig} + X_i \\beta + u_i
+
+where :math:`\\hat{Y}_{irg}` is the transformed outcome, :math:`D_{ig}`
+is the treatment indicator for cohort g, and :math:`\\tau_{gr}` is the
+ATT for cohort g in period r.
 """
 
 import warnings
@@ -34,38 +64,42 @@ from .estimators import estimate_ipwra, estimate_psm, IPWRAResult, PSMResult
 @dataclass
 class CohortTimeEffect:
     """
-    Single (cohort, period) treatment effect estimate.
-    
-    Represents τ_{gr}, the ATT for cohort g at calendar time r.
-    
+    Container for a single cohort-time treatment effect estimate.
+
+    Stores the average treatment effect on the treated (ATT) for a specific
+    treatment cohort g at calendar time r, along with inference statistics.
+
     Attributes
     ----------
     cohort : int
-        Treatment cohort (first treatment period g)
+        Treatment cohort identifier (first treatment period g).
     period : int
-        Calendar time (r)
+        Calendar time period r.
     event_time : int
-        Event time (e = r - g)
-        - e = 0: instantaneous effect
-        - e > 0: dynamic effects
+        Event time relative to treatment onset (e = r - g). Zero indicates
+        the instantaneous effect; positive values indicate dynamic effects.
     att : float
-        Estimated ATT τ̂_{gr}
+        Estimated average treatment effect on the treated.
     se : float
-        Standard error
+        Standard error of the ATT estimate.
     ci_lower : float
-        95% confidence interval lower bound
+        Lower bound of the confidence interval.
     ci_upper : float
-        95% confidence interval upper bound
+        Upper bound of the confidence interval.
     t_stat : float
-        t-statistic = att / se
+        t-statistic (att / se).
     pvalue : float
-        Two-sided p-value
+        Two-sided p-value from t-distribution.
     n_treated : int
-        Number of treated units in sample
+        Number of treated units in the estimation sample.
     n_control : int
-        Number of control units in sample
+        Number of control units in the estimation sample.
     n_total : int
-        Total sample size
+        Total sample size (n_treated + n_control).
+    df_resid : int
+        Residual degrees of freedom from the regression.
+    df_inference : int
+        Degrees of freedom used for inference.
     """
     cohort: int
     period: int
@@ -79,6 +113,8 @@ class CohortTimeEffect:
     n_treated: int
     n_control: int
     n_total: int
+    df_resid: int = 0
+    df_inference: int = 0
 
 
 def run_ols_regression(
@@ -91,41 +127,53 @@ def run_ols_regression(
     alpha: float = 0.05,
 ) -> Dict[str, Any]:
     """
-    Run OLS regression to estimate ATT.
-    
-    Implements the cross-sectional regression:
-    Ŷ_{ir} on 1, D_i [, X_i, D_i·(X_i - X̄₁)]
-    
+    Estimate the ATT via OLS regression on cross-sectional data.
+
+    Regresses the transformed outcome on a constant and treatment indicator,
+    optionally including control variables with treatment-control interactions.
+    When controls are included and sample sizes permit, the regression includes
+    interactions of controls with the treatment indicator centered at the
+    treated group mean.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Cross-sectional data (one row per unit)
+        Cross-sectional data with one row per unit.
     y : str
-        Dependent variable (transformed Y)
+        Name of the dependent variable column (transformed outcome).
     d : str
-        Treatment indicator column name
+        Name of the treatment indicator column.
     controls : list of str, optional
-        Control variable names
+        Names of control variable columns.
     vce : str, optional
-        Variance type: None (homoskedastic), 'hc3', 'cluster'
+        Variance estimation type. Options are None (homoskedastic), 'hc3'
+        (heteroskedasticity-robust), or 'cluster' (cluster-robust).
     cluster_var : str, optional
-        Cluster variable (required if vce='cluster')
+        Name of the cluster variable column. Required when vce='cluster'.
     alpha : float, default=0.05
-        Significance level for confidence intervals
-        
+        Significance level for confidence interval construction.
+
     Returns
     -------
     dict
-        {'att': float, 'se': float, 'ci_lower': float, 'ci_upper': float,
-         't_stat': float, 'pvalue': float, 'nobs': int, 'df_resid': int}
+        Dictionary containing estimation results with keys:
+        'att' (point estimate), 'se' (standard error), 'ci_lower' and
+        'ci_upper' (confidence interval bounds), 't_stat' (t-statistic),
+        'pvalue' (two-sided p-value), 'nobs' (number of observations),
+        'df_resid' (residual degrees of freedom), 'df_inference'
+        (degrees of freedom for inference).
+
+    Raises
+    ------
+    ValueError
+        If required columns are missing, sample size is insufficient,
+        or the design matrix is singular.
     """
-    # Validate inputs
     if y not in data.columns:
         raise ValueError(f"Dependent variable '{y}' not in data")
     if d not in data.columns:
         raise ValueError(f"Treatment indicator '{d}' not in data")
     
-    # Drop rows with missing y or d
     valid_mask = data[y].notna() & data[d].notna()
     data_clean = data[valid_mask].copy()
     
@@ -133,17 +181,16 @@ def run_ols_regression(
     if n < 2:
         raise ValueError(f"Insufficient observations: n={n}, need at least 2")
     
-    # Build design matrix
+    # Extract outcome and treatment vectors
     y_vals = data_clean[y].values.astype(float)
     d_vals = data_clean[d].values.astype(float)
     
     if controls is not None and len(controls) > 0:
-        # Check controls exist
         missing_controls = [c for c in controls if c not in data_clean.columns]
         if missing_controls:
             raise ValueError(f"Control variables not found: {missing_controls}")
         
-        # Drop rows with missing controls
+        # Exclude observations with missing control values
         control_valid = data_clean[controls].notna().all(axis=1)
         data_clean = data_clean[control_valid].copy()
         y_vals = data_clean[y].values.astype(float)
@@ -153,20 +200,19 @@ def run_ols_regression(
         if n < 2:
             raise ValueError(f"Insufficient observations after dropping missing controls: n={n}")
         
-        # Compute treated-group mean of controls
         treated_mask = d_vals == 1
         n_treated = treated_mask.sum()
         n_control = (~treated_mask).sum()
         
         K = len(controls)
         if n_treated > K + 1 and n_control > K + 1:
-            # Include controls with interactions
+            # Center controls at treated-group mean for interpretability
             X_controls = data_clean[controls].values.astype(float)
             X_mean_treated = X_controls[treated_mask].mean(axis=0)
             X_centered = X_controls - X_mean_treated
             X_interactions = d_vals.reshape(-1, 1) * X_centered
             
-            # Design matrix: [1, D, X, D*(X - X̄₁)]
+            # Full design: intercept, treatment, controls, interactions
             X = np.column_stack([
                 np.ones(n),
                 d_vals,
@@ -174,7 +220,7 @@ def run_ols_regression(
                 X_interactions
             ])
         else:
-            # Not enough observations to include controls
+            # Insufficient sample size for covariate adjustment
             warnings.warn(
                 f"Controls not included: N_treated={n_treated}, N_control={n_control}, K={K}. "
                 f"Need N_treated > K+1 and N_control > K+1.",
@@ -182,10 +228,9 @@ def run_ols_regression(
             )
             X = np.column_stack([np.ones(n), d_vals])
     else:
-        # No controls: X = [1, D]
+        # Simple model: intercept and treatment indicator only
         X = np.column_stack([np.ones(n), d_vals])
     
-    # OLS estimation: β = (X'X)^{-1} X'y
     try:
         XtX_inv = np.linalg.inv(X.T @ X)
     except np.linalg.LinAlgError:
@@ -193,14 +238,11 @@ def run_ols_regression(
     
     beta = XtX_inv @ (X.T @ y_vals)
     
-    # Residuals and sigma^2
     y_hat = X @ beta
     residuals = y_vals - y_hat
     df_resid = n - X.shape[1]
     
     if df_resid <= 0:
-        # No degrees of freedom - can estimate ATT but not SE
-        # ATT is coefficient on D (index 1)
         att = beta[1]
         warnings.warn(
             f"No degrees of freedom (n={n}, k={X.shape[1]}). "
@@ -221,23 +263,21 @@ def run_ols_regression(
     
     sigma2 = (residuals ** 2).sum() / df_resid
     
-    # Compute variance of beta
+    # Variance estimation based on specified method
     if vce is None:
-        # Homoskedastic: Var(β) = σ² (X'X)^{-1}
+        # Classical homoskedastic variance
         var_beta = sigma2 * XtX_inv
         df_inference = df_resid
         
     elif vce == 'hc3':
-        # HC3 robust: Var(β) = (X'X)^{-1} X' Ω X (X'X)^{-1}
-        # where Ω_ii = e_i² / (1 - h_ii)²
-        H = X @ XtX_inv @ X.T  # Hat matrix
+        # HC3 heteroskedasticity-robust variance with leverage adjustment
+        H = X @ XtX_inv @ X.T
         h_ii = np.diag(H)
         
-        # Avoid division by zero
+        # Bound leverage to prevent numerical instability
         h_ii = np.clip(h_ii, 0, 0.9999)
         omega_diag = (residuals ** 2) / ((1 - h_ii) ** 2)
         
-        # Meat matrix
         meat = X.T @ np.diag(omega_diag) @ X
         var_beta = XtX_inv @ meat @ XtX_inv
         df_inference = df_resid
@@ -255,8 +295,7 @@ def run_ols_regression(
         if G < 2:
             raise ValueError(f"Need at least 2 clusters, got {G}")
         
-        # Cluster-robust variance
-        # Var(β) = (X'X)^{-1} (Σ_g X'_g e_g e'_g X_g) (X'X)^{-1} * G/(G-1) * (n-1)/(n-k)
+        # Cluster-robust variance with finite-sample correction
         meat = np.zeros((X.shape[1], X.shape[1]))
         for cluster in unique_clusters:
             mask = cluster_ids == cluster
@@ -265,7 +304,6 @@ def run_ols_regression(
             score_g = X_g.T @ e_g
             meat += np.outer(score_g, score_g)
         
-        # Small sample correction
         correction = (G / (G - 1)) * ((n - 1) / (n - X.shape[1]))
         var_beta = correction * XtX_inv @ meat @ XtX_inv
         df_inference = G - 1
@@ -273,11 +311,10 @@ def run_ols_regression(
     else:
         raise ValueError(f"Unknown vce type: {vce}. Use None, 'hc3', or 'cluster'.")
     
-    # ATT is the coefficient on D (index 1)
+    # Treatment coefficient is at index 1 in the design matrix
     att = beta[1]
     se = np.sqrt(var_beta[1, 1])
     
-    # t-statistic and p-value
     if se > 0:
         t_stat = att / se
         pvalue = 2 * (1 - stats.t.cdf(abs(t_stat), df_inference))
@@ -285,7 +322,6 @@ def run_ols_regression(
         t_stat = np.nan
         pvalue = np.nan
     
-    # Confidence interval
     t_crit = stats.t.ppf(1 - alpha / 2, df_inference)
     ci_lower = att - t_crit * se
     ci_upper = att + t_crit * se
@@ -318,102 +354,105 @@ def estimate_cohort_time_effects(
     min_control: int = 1,
     alpha: float = 0.05,
     estimator: str = 'ra',
-    transform_type: str = 'demean',  # 'demean' or 'detrend'
-    # IPWRA专用参数
+    transform_type: str = 'demean',
     propensity_controls: Optional[List[str]] = None,
     trim_threshold: float = 0.01,
     se_method: str = 'analytical',
-    # PSM专用参数
     n_neighbors: int = 1,
     with_replacement: bool = True,
     caliper: Optional[float] = None,
+    return_diagnostics: bool = False,
+    match_order: Optional[str] = None,
 ) -> List[CohortTimeEffect]:
     """
-    Estimate treatment effects for all (cohort, period) pairs.
-    
-    Implements Lee & Wooldridge (2023) Procedure 4.1.
-    
-    Data Flow
-    ---------
-    1. Input: data_transformed (long panel with ydot_g{g}_r{r} columns)
-    2. For each (g, r) pair:
-       a. Extract period r cross-section (tvar == r)
-       b. Apply control group mask (from get_valid_control_units)
-       c. Build estimation sample (treatment + controls)
-       d. Run OLS: ydot_g{g}_r{r} ~ 1 + D_g
-       e. Extract ATT coefficient and SE
-    3. Output: List[CohortTimeEffect]
-    
+    Estimate treatment effects for all valid cohort-period pairs.
+
+    Iterates over all treatment cohorts and their post-treatment periods,
+    estimating the ATT for each (cohort, period) combination using the
+    specified estimation method. For each pair, the estimation sample
+    consists of the treatment cohort units plus valid control units
+    determined by the control group strategy.
+
     Parameters
     ----------
     data_transformed : pd.DataFrame
-        Panel data with transformation columns from transform_staggered_demean/detrend.
-        Must contain: gvar, ivar, tvar, ydot_g{g}_r{r} columns.
+        Panel data containing transformed outcome columns generated by
+        ``transform_staggered_demean`` or ``transform_staggered_detrend``.
+        Must include columns for gvar, ivar, tvar, and transformed
+        outcomes named 'ydot_g{g}_r{r}' or 'ycheck_g{g}_r{r}'.
     gvar : str
-        Cohort variable column name
+        Name of the cohort variable column indicating first treatment period.
     ivar : str
-        Unit identifier column name
+        Name of the unit identifier column.
     tvar : str
-        Time variable column name
+        Name of the time variable column.
     controls : list of str, optional
-        Control variable names (time-invariant)
+        Names of time-invariant control variable columns.
     vce : str, optional
-        Standard error type: None, 'hc3', 'cluster'
+        Variance estimation type: None (homoskedastic), 'hc3'
+        (heteroskedasticity-robust), or 'cluster' (cluster-robust).
     cluster_var : str, optional
-        Cluster variable (required if vce='cluster')
+        Name of the cluster variable column. Required when vce='cluster'.
     control_strategy : str, default='not_yet_treated'
-        Control group strategy: 'never_treated', 'not_yet_treated', 'auto'
+        Control group selection strategy: 'never_treated' uses only
+        never-treated units; 'not_yet_treated' includes units first
+        treated after the current period; 'auto' selects based on
+        data availability.
     never_treated_values : list, optional
-        Values indicating never treated. Default: [0, np.inf, NaN]
+        Values in gvar indicating never-treated units. Defaults to
+        [0, np.inf] and NaN values.
     min_obs : int, default=3
-        Minimum total sample size for estimation
+        Minimum total sample size required for estimation.
     min_treated : int, default=1
-        Minimum treated units required
+        Minimum number of treated units required.
     min_control : int, default=1
-        Minimum control units required
+        Minimum number of control units required.
     alpha : float, default=0.05
-        Significance level for CIs
+        Significance level for confidence interval construction.
     estimator : str, default='ra'
-        Estimation method:
-        - 'ra': Regression Adjustment (OLS)
-        - 'ipwra': Inverse Probability Weighted Regression Adjustment
-        - 'psm': Propensity Score Matching
+        Estimation method: 'ra' (regression adjustment), 'ipwra'
+        (inverse probability weighted regression adjustment), or
+        'psm' (propensity score matching).
+    transform_type : str, default='demean'
+        Transformation type applied to the data: 'demean' or 'detrend'.
+        Determines the column prefix for transformed outcomes.
     propensity_controls : list of str, optional
-        Controls for propensity score model (IPWRA/PSM). If None, uses `controls`.
+        Control variables for the propensity score model. If None,
+        uses the same variables as ``controls``.
     trim_threshold : float, default=0.01
-        Propensity score trimming threshold (IPWRA/PSM).
+        Propensity score trimming threshold for IPWRA and PSM.
+        Observations with extreme propensity scores are excluded.
     se_method : str, default='analytical'
-        SE method for IPWRA: 'analytical' or 'bootstrap'.
+        Standard error method for IPWRA: 'analytical' or 'bootstrap'.
     n_neighbors : int, default=1
-        Number of matches per treated unit (PSM only).
+        Number of nearest neighbors for PSM matching.
     with_replacement : bool, default=True
-        Whether to match with replacement (PSM only).
+        Whether PSM matching allows replacement.
     caliper : float, optional
-        Caliper for matching (PSM only).
-        
+        Maximum propensity score distance for PSM matching.
+
     Returns
     -------
-    List[CohortTimeEffect]
-        Estimation results for all valid (g, r) pairs, sorted by cohort and period.
-        
+    list of CohortTimeEffect
+        Estimation results for all valid (cohort, period) pairs,
+        sorted by cohort and period.
+
     Raises
     ------
     ValueError
-        Missing required columns, no valid cohorts, or invalid parameters.
-        
-    Examples
+        If required columns are missing, no valid treatment cohorts
+        exist, or parameter values are invalid.
+
+    See Also
     --------
-    >>> results = estimate_cohort_time_effects(
-    ...     data_transformed=transformed_data,
-    ...     gvar='gvar', ivar='sid', tvar='year',
-    ...     control_strategy='not_yet_treated'
-    ... )
-    >>> for r in results:
-    ...     print(f"τ_{{{r.cohort},{r.period}}} = {r.att:.4f}")
+    transform_staggered_demean : Demeaning transformation for staggered designs.
+    transform_staggered_detrend : Detrending transformation for staggered designs.
+    aggregate_to_cohort : Aggregate cohort-time effects to cohort-level effects.
+    aggregate_to_overall : Aggregate effects to a single overall estimate.
     """
-    # ================================================================
-    # Step 1: Input validation
-    # ================================================================
+    # =========================================================================
+    # Input Validation
+    # =========================================================================
     required_cols = [gvar, ivar, tvar]
     missing = [c for c in required_cols if c not in data_transformed.columns]
     if missing:
@@ -422,7 +461,6 @@ def estimate_cohort_time_effects(
     if vce == 'cluster' and cluster_var is None:
         raise ValueError("cluster_var required when vce='cluster'")
     
-    # Parse control strategy
     strategy_map = {
         'never_treated': ControlGroupStrategy.NEVER_TREATED,
         'not_yet_treated': ControlGroupStrategy.NOT_YET_TREATED,
@@ -435,9 +473,9 @@ def estimate_cohort_time_effects(
         )
     strategy = strategy_map[control_strategy]
     
-    # ================================================================
-    # Step 2: Extract cohorts and time range
-    # ================================================================
+    # =========================================================================
+    # Cohort and Period Extraction
+    # =========================================================================
     if never_treated_values is None:
         nt_values = [0, np.inf]
     else:
@@ -450,40 +488,36 @@ def estimate_cohort_time_effects(
     
     T_max = int(data_transformed[tvar].max())
     
-    # ================================================================
-    # Step 3: Estimate effects for each (g, r) pair
-    # ================================================================
+    # =========================================================================
+    # Cohort-Time Effect Estimation
+    # =========================================================================
     results = []
     skipped_pairs = []
     
-    # Determine column prefix based on transform_type (once, outside loop)
     prefix = 'ydot' if transform_type == 'demean' else 'ycheck'
     
     for g in cohorts:
-        # Valid periods for cohort g: {g, g+1, ..., T_max}
         valid_periods = get_valid_periods_for_cohort(g, T_max)
         
         for r in valid_periods:
-            # Transformation column name
             ydot_col = f'{prefix}_g{g}_r{r}'
             
-            # Check if transformation column exists
             if ydot_col not in data_transformed.columns:
                 skipped_pairs.append((g, r, 'missing_transform_column'))
                 continue
             
-            # --------------------------------------------------------
-            # Step 3a: Extract period r cross-section
-            # --------------------------------------------------------
+            # -------------------------------------------------------------------------
+            # Extract Period Cross-Section
+            # -------------------------------------------------------------------------
             period_data = data_transformed[data_transformed[tvar] == r].copy()
             
             if len(period_data) == 0:
                 skipped_pairs.append((g, r, 'no_data_in_period'))
                 continue
             
-            # --------------------------------------------------------
-            # Step 3b: Get control group mask
-            # --------------------------------------------------------
+            # -------------------------------------------------------------------------
+            # Identify Valid Control Units
+            # -------------------------------------------------------------------------
             try:
                 unit_control_mask = get_valid_control_units(
                     period_data, gvar, ivar, 
@@ -495,24 +529,19 @@ def estimate_cohort_time_effects(
                 skipped_pairs.append((g, r, f'control_mask_error: {e}'))
                 continue
             
-            # Map unit-level mask to row-level mask
-            # unit_control_mask index = ivar values
+            # Map unit-level mask to observation-level mask
             control_mask = period_data[ivar].map(unit_control_mask).fillna(False).astype(bool)
             
-            # --------------------------------------------------------
-            # Step 3c: Build estimation sample
-            # --------------------------------------------------------
-            # Treatment group: cohort g units
+            # -------------------------------------------------------------------------
+            # Construct Estimation Sample
+            # -------------------------------------------------------------------------
             treat_mask = (period_data[gvar] == g)
-            
-            # Sample: treatment + controls (D_ig + A_{r+1} = 1)
             sample_mask = treat_mask | control_mask
             
             n_treat = treat_mask.sum()
             n_control = control_mask.sum()
             n_total = sample_mask.sum()
             
-            # Check minimum requirements
             if n_total < min_obs:
                 skipped_pairs.append((g, r, f'insufficient_total: {n_total}<{min_obs}'))
                 continue
@@ -523,15 +552,12 @@ def estimate_cohort_time_effects(
                 skipped_pairs.append((g, r, f'insufficient_control: {n_control}<{min_control}'))
                 continue
             
-            # Extract sample data
             sample_data = period_data[sample_mask].copy()
-            
-            # Create treatment indicator for this cohort
             sample_data['_D_treat'] = (sample_data[gvar] == g).astype(int)
             
-            # --------------------------------------------------------
-            # Step 3d: Run estimation (RA, IPWRA, or PSM)
-            # --------------------------------------------------------
+            # -------------------------------------------------------------------------
+            # Run Estimator
+            # -------------------------------------------------------------------------
             try:
                 if estimator == 'ra':
                     est_result = run_ols_regression(
@@ -572,9 +598,6 @@ def estimate_cohort_time_effects(
                 skipped_pairs.append((g, r, f'{estimator}_error: {e}'))
                 continue
             
-            # --------------------------------------------------------
-            # Step 3e: Store result
-            # --------------------------------------------------------
             results.append(CohortTimeEffect(
                 cohort=int(g),
                 period=int(r),
@@ -588,11 +611,13 @@ def estimate_cohort_time_effects(
                 n_treated=int(n_treat),
                 n_control=int(n_control),
                 n_total=int(n_total),
+                df_resid=int(est_result.get('df_resid', 0) or 0),
+                df_inference=int(est_result.get('df_inference', 0) or 0),
             ))
     
-    # ================================================================
-    # Step 4: Report skipped pairs if any
-    # ================================================================
+    # =========================================================================
+    # Reporting
+    # =========================================================================
     if skipped_pairs:
         n_skipped = len(skipped_pairs)
         n_total_pairs = sum(len(get_valid_periods_for_cohort(g, T_max)) for g in cohorts)
@@ -602,7 +627,6 @@ def estimate_cohort_time_effects(
             UserWarning
         )
     
-    # Sort by cohort and period
     results.sort(key=lambda x: (x.cohort, x.period))
     
     return results
@@ -610,18 +634,20 @@ def estimate_cohort_time_effects(
 
 def results_to_dataframe(results: List[CohortTimeEffect]) -> pd.DataFrame:
     """
-    Convert list of CohortTimeEffect to DataFrame.
-    
+    Convert a list of CohortTimeEffect objects to a pandas DataFrame.
+
     Parameters
     ----------
-    results : List[CohortTimeEffect]
-        Estimation results from estimate_cohort_time_effects
-        
+    results : list of CohortTimeEffect
+        Estimation results from ``estimate_cohort_time_effects``.
+
     Returns
     -------
     pd.DataFrame
-        DataFrame with columns: cohort, period, event_time, att, se, 
-        ci_lower, ci_upper, t_stat, pvalue, n_treated, n_control, n_total
+        DataFrame with columns: cohort, period, event_time, att, se,
+        ci_lower, ci_upper, t_stat, pvalue, n_treated, n_control, n_total.
+        Returns an empty DataFrame with appropriate columns if the input
+        list is empty.
     """
     if len(results) == 0:
         return pd.DataFrame(columns=[
@@ -649,9 +675,9 @@ def results_to_dataframe(results: List[CohortTimeEffect]) -> pd.DataFrame:
     ])
 
 
-# ============================================================================
-# IPWRA and PSM Wrapper Functions
-# ============================================================================
+# =============================================================================
+# Internal Estimator Wrappers
+# =============================================================================
 
 def _estimate_single_effect_ipwra(
     data: pd.DataFrame,
@@ -664,33 +690,36 @@ def _estimate_single_effect_ipwra(
     alpha: float = 0.05,
 ) -> Dict[str, Any]:
     """
-    Wrapper for estimate_ipwra() that returns dict matching run_ols_regression output.
-    
-    This ensures consistent return format across all estimators.
-    
+    Estimate ATT using inverse probability weighted regression adjustment.
+
+    Internal wrapper that calls the IPWRA estimator and returns results
+    in a standardized dictionary format consistent with ``run_ols_regression``.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Cross-sectional sample data
+        Cross-sectional sample data with one row per unit.
     y : str
-        Outcome variable (transformed)
+        Name of the transformed outcome variable column.
     d : str
-        Treatment indicator column name
-    controls : List[str]
-        Outcome model controls
-    propensity_controls : List[str]
-        Propensity score model controls
-    trim_threshold : float
-        Propensity score trimming threshold
-    se_method : str
-        'analytical' or 'bootstrap'
-    alpha : float
-        Significance level
-        
+        Name of the treatment indicator column.
+    controls : list of str
+        Control variables for the outcome regression model.
+    propensity_controls : list of str
+        Control variables for the propensity score model.
+    trim_threshold : float, default=0.01
+        Threshold for trimming extreme propensity scores.
+    se_method : str, default='analytical'
+        Standard error computation method: 'analytical' or 'bootstrap'.
+    alpha : float, default=0.05
+        Significance level for confidence interval construction.
+
     Returns
     -------
-    Dict
-        Estimation results matching run_ols_regression format
+    dict
+        Estimation results with keys: 'att', 'se', 'ci_lower', 'ci_upper',
+        't_stat', 'pvalue', 'nobs', 'df_resid', 'df_inference', 'estimator'.
+        Returns NaN values if estimation fails.
     """
     try:
         result: IPWRAResult = estimate_ipwra(
@@ -718,7 +747,6 @@ def _estimate_single_effect_ipwra(
         }
         
     except Exception as e:
-        # If IPWRA fails, return NaN result with warning
         warnings.warn(
             f"IPWRA estimation failed: {str(e)}. Returning NaN.",
             UserWarning
@@ -750,33 +778,38 @@ def _estimate_single_effect_psm(
     alpha: float = 0.05,
 ) -> Dict[str, Any]:
     """
-    Wrapper for estimate_psm() that returns dict matching run_ols_regression output.
-    
+    Estimate ATT using propensity score matching.
+
+    Internal wrapper that calls the PSM estimator and returns results
+    in a standardized dictionary format consistent with ``run_ols_regression``.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Cross-sectional sample data
+        Cross-sectional sample data with one row per unit.
     y : str
-        Outcome variable (transformed)
+        Name of the transformed outcome variable column.
     d : str
-        Treatment indicator column name
-    propensity_controls : List[str]
-        Propensity score model controls
-    n_neighbors : int
-        Number of nearest neighbors for matching
-    with_replacement : bool
-        Whether to match with replacement
+        Name of the treatment indicator column.
+    propensity_controls : list of str
+        Control variables for the propensity score model.
+    n_neighbors : int, default=1
+        Number of nearest neighbors for matching each treated unit.
+    with_replacement : bool, default=True
+        Whether control units can be matched to multiple treated units.
     caliper : float, optional
-        Maximum propensity score distance for matching
-    trim_threshold : float
-        Propensity score trimming threshold
-    alpha : float
-        Significance level
-        
+        Maximum propensity score distance for valid matches.
+    trim_threshold : float, default=0.01
+        Threshold for trimming extreme propensity scores.
+    alpha : float, default=0.05
+        Significance level for confidence interval construction.
+
     Returns
     -------
-    Dict
-        Estimation results matching run_ols_regression format
+    dict
+        Estimation results with keys: 'att', 'se', 'ci_lower', 'ci_upper',
+        't_stat', 'pvalue', 'nobs', 'df_resid', 'df_inference', 'estimator',
+        'n_matched', 'n_dropped'. Returns NaN values if estimation fails.
     """
     try:
         result: PSMResult = estimate_psm(

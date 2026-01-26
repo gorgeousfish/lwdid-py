@@ -128,14 +128,15 @@ def estimate_att(
     vce: Optional[str],
     cluster_var: Optional[str],
     sample_filter: pd.Series,
+    alpha: float = 0.05,
 ) -> Dict[str, Any]:
     """
-    Estimate ATT via cross-sectional OLS regression
-    
+    Estimate ATT via cross-sectional OLS regression.
+
     Runs OLS on the firstpost cross-section using transformed outcome ydot_postavg
-    as dependent variable. Implements equation (2.13) or (2.18) with controls.
-    Supports homoskedastic, HC1/HC3, and cluster-robust standard errors.
-    
+    as dependent variable. Supports homoskedastic, HC1/HC3, and cluster-robust
+    standard errors.
+
     Parameters
     ----------
     data : pd.DataFrame
@@ -147,27 +148,28 @@ def estimate_att(
     ivar : str
         Unit identifier.
     controls : list of str or None
-        Time-invariant controls. Included if N₁ > K+1 and N₀ > K+1.
+        Time-invariant controls. Included if N_1 > K+1 and N_0 > K+1.
     vce : {None, 'robust', 'hc1', 'hc3', 'cluster'}, optional
         Variance estimator (None=homoskedastic, 'hc3'=HC3, 'cluster'=clustered).
     cluster_var : str or None
         Clustering variable (required for vce='cluster').
     sample_filter : pd.Series
         Boolean indicating regression sample (firstpost).
-    
+    alpha : float, default=0.05
+        Significance level for confidence intervals.
+
     Returns
     -------
     dict
-        'att', 'se_att', 't_stat', 'pvalue', 'ci_lower', 'ci_upper', 'params',
-        'bse', 'vcov', 'resid', 'nobs', 'df_resid', 'df_inference', 'vce_type',
-        'cluster_var', 'n_clusters', 'controls_used', 'controls', 'controls_spec',
-        'n_treated_sample', 'n_control_sample'.
-    
+        Dictionary containing: 'att', 'se_att', 't_stat', 'pvalue', 'ci_lower',
+        'ci_upper', 'params', 'bse', 'vcov', 'resid', 'nobs', 'df_resid',
+        'df_inference', 'vce_type', 'cluster_var', 'n_clusters', 'controls_used',
+        'controls', 'controls_spec', 'n_treated_sample', 'n_control_sample'.
+
     Notes
     -----
     Confidence intervals use t-distribution with df = df_resid (non-clustered)
-    or G-1 (clustered). See equations (2.10), (2.19) for exact inference under
-    normality.
+    or G-1 (clustered) for exact inference under normality.
     """
     data_sample = data[sample_filter].copy()
 
@@ -409,8 +411,8 @@ def estimate_att(
 
     pvalue = 2 * scipy.stats.t.cdf(-abs(t_stat), df)
 
-    # 95% CI using t critical value (exact under normality, eq 2.10, 2.19)
-    t_crit = scipy.stats.t.ppf(0.975, df)
+    # Confidence interval using t critical value (exact under normality)
+    t_crit = scipy.stats.t.ppf(1 - alpha / 2, df)
     ci_lower = att - t_crit * se_att
     ci_upper = att + t_crit * se_att
     
@@ -453,13 +455,14 @@ def estimate_period_effects(
     vce: Optional[str],
     cluster_var: Optional[str],
     period_labels: dict,
+    alpha: float = 0.05,
 ) -> pd.DataFrame:
     """
-    Estimate period-specific ATTs via independent cross-sectional regressions
-    
-    Runs separate OLS for each t ∈ {tpost1, ..., Tmax} using residualized
-    outcome ydot, implementing equation (2.20) or its analog with controls.
-    
+    Estimate period-specific ATTs via independent cross-sectional regressions.
+
+    Runs separate OLS for each t in {tpost1, ..., Tmax} using residualized
+    outcome ydot.
+
     Parameters
     ----------
     data : pd.DataFrame
@@ -481,8 +484,10 @@ def estimate_period_effects(
     cluster_var : str or None
         Clustering variable.
     period_labels : dict
-        Mapping tindex → period label.
-    
+        Mapping tindex to period label.
+    alpha : float, default=0.05
+        Significance level for confidence intervals.
+
     Returns
     -------
     pd.DataFrame
@@ -583,7 +588,7 @@ def estimate_period_effects(
                 p_val = 2 * scipy.stats.t.cdf(-abs(t_stat), df_t)
                 N_t = int(model_t.nobs)
 
-                t_crit_t = scipy.stats.t.ppf(0.975, df_t)
+                t_crit_t = scipy.stats.t.ppf(1 - alpha / 2, df_t)
                 ci_lower = beta_t - t_crit_t * se_t
                 ci_upper = beta_t + t_crit_t * se_t
         except Exception as e:

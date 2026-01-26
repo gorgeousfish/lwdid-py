@@ -153,7 +153,7 @@ class TestModeDetection:
             'post': [0, 1, 0, 1]
         })
         
-        with pytest.raises(ValueError, match="'d'参数"):
+        with pytest.raises(ValueError, match="'d' parameter"):
             lwdid(data=data, y='y', ivar='id', tvar='year', post='post', rolling='demean')
     
     def test_common_timing_missing_post_raises(self):
@@ -167,7 +167,7 @@ class TestModeDetection:
             'd': [1, 1, 0, 0]
         })
         
-        with pytest.raises(ValueError, match="'post'参数"):
+        with pytest.raises(ValueError, match="'post' parameter"):
             lwdid(data=data, y='y', d='d', ivar='id', tvar='year', rolling='demean')
 
 
@@ -182,7 +182,7 @@ class TestControlGroupStrategy:
         """AC-4: aggregate='cohort' should force never_treated."""
         from lwdid import lwdid
         
-        with pytest.warns(UserWarning, match="切换到'never_treated'"):
+        with pytest.warns(UserWarning, match="automatically switched.*to 'never_treated'"):
             result = lwdid(
                 data=staggered_test_data,
                 y='y',
@@ -200,7 +200,7 @@ class TestControlGroupStrategy:
         """AC-4: aggregate='overall' should force never_treated."""
         from lwdid import lwdid
         
-        with pytest.warns(UserWarning, match="切换到'never_treated'"):
+        with pytest.warns(UserWarning, match="automatically switched.*to 'never_treated'"):
             result = lwdid(
                 data=staggered_test_data,
                 y='y',
@@ -216,8 +216,9 @@ class TestControlGroupStrategy:
     def test_no_nt_raises_for_overall(self, staggered_test_data_no_nt):
         """AC-5: No NT units with aggregate='overall' should raise error."""
         from lwdid import lwdid
+        from lwdid.exceptions import NoNeverTreatedError
         
-        with pytest.raises(ValueError, match="没有never treated单位"):
+        with pytest.raises(NoNeverTreatedError, match="no never-treated units"):
             lwdid(
                 data=staggered_test_data_no_nt,
                 y='y',
@@ -260,7 +261,7 @@ class TestModeConflict:
         data['d'] = 1
         data['post'] = 0
         
-        with pytest.warns(UserWarning, match="同时提供了gvar和d/post"):
+        with pytest.warns(UserWarning, match="Both gvar and d/post parameters provided"):
             result = lwdid(
                 data=data,
                 y='y',
@@ -375,7 +376,7 @@ class TestRollingMethod:
         """AC-8: Quarterly rolling methods should not be supported in staggered."""
         from lwdid import lwdid
         
-        with pytest.raises(ValueError, match="不支持"):
+        with pytest.raises(ValueError, match="does not support"):
             lwdid(
                 data=staggered_test_data,
                 y='y',

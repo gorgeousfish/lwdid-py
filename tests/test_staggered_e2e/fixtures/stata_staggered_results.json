@@ -1,0 +1,122 @@
+{
+  "metadata": {
+    "source": "Lee_Wooldridge_2023-main 3/2.lee_wooldridge_staggered_data.dta",
+    "stata_version": "17",
+    "generated_at": "2026-01-17",
+    "reference": "Lee & Wooldridge (2023) Section 4, Procedure 4.1, Section 7.2",
+    "stata_script": "Lee_Wooldridge_2023-main 3/2.lee_wooldridge_rolling_staggered.do"
+  },
+  "data_info": {
+    "T": 6,
+    "cohorts": [4, 5, 6],
+    "never_treated_code": "Infinity",
+    "gr_combinations": [[4,4], [4,5], [4,6], [5,5], [5,6], [6,6]],
+    "transformation_formula": "y_{gr} = y_r - (1/(g-1)) * sum(y_s for s=1 to g-1)",
+    "transformation_description": "Y_r - mean(Y_pre) where pre = {1,...,g-1}, denominator = g-1"
+  },
+  "sample_info": {
+    "n_total": 1000,
+    "n_by_cohort": {
+      "g4": 129,
+      "g5": 109,
+      "g6": 110,
+      "ginf": 652
+    },
+    "n_treated_total": 348
+  },
+  "gr_combinations": {
+    "(4,4)": {
+      "n_obs": 1000,
+      "n_treated": 129,
+      "n_control": 871,
+      "control_cohorts": ["g5", "g6", "ginf"],
+      "stata_condition": "if f04"
+    },
+    "(4,5)": {
+      "n_obs": 891,
+      "n_treated": 129,
+      "n_control": 762,
+      "control_cohorts": ["g6", "ginf"],
+      "stata_condition": "if f05 & ~g5"
+    },
+    "(4,6)": {
+      "n_obs": 781,
+      "n_treated": 129,
+      "n_control": 652,
+      "control_cohorts": ["ginf"],
+      "stata_condition": "if f06 & (g5 + g6 != 1)"
+    },
+    "(5,5)": {
+      "n_obs": 871,
+      "n_treated": 109,
+      "n_control": 762,
+      "control_cohorts": ["g6", "ginf"],
+      "stata_condition": "if f05 & ~g4"
+    },
+    "(5,6)": {
+      "n_obs": 761,
+      "n_treated": 109,
+      "n_control": 652,
+      "control_cohorts": ["ginf"],
+      "stata_condition": "if f06 & (g4 + g6 != 1)"
+    },
+    "(6,6)": {
+      "n_obs": 762,
+      "n_treated": 110,
+      "n_control": 652,
+      "control_cohorts": ["ginf"],
+      "stata_condition": "if f06 & (g4 + g5 != 1)"
+    }
+  },
+  "estimators": {
+    "ra": {
+      "stata_command": "teffects ra (y_{gr} x1 x2) (g{g}) if <condition>, atet",
+      "description": "Regression Adjustment",
+      "(4,4)": {"att": 4.24825, "se": 0.4246985, "ci_lower": 3.415856, "ci_upper": 5.080644},
+      "(4,5)": {"att": 6.470576, "se": 0.410519, "ci_lower": 5.665973, "ci_upper": 7.275178},
+      "(4,6)": {"att": 8.155675, "se": 0.4354133, "ci_lower": 7.30228, "ci_upper": 9.009069},
+      "(5,5)": {"att": 2.948093, "se": 0.4055165, "ci_lower": 2.153295, "ci_upper": 3.742891},
+      "(5,6)": {"att": 4.808718, "se": 0.4387234, "ci_lower": 3.948836, "ci_upper": 5.668601},
+      "(6,6)": {"att": 2.274351, "se": 0.4641536, "ci_lower": 1.364626, "ci_upper": 3.184075}
+    },
+    "ipwra": {
+      "stata_command": "teffects ipwra (y_{gr} x1 x2) (g{g} x1 x2) if <condition>, atet",
+      "description": "Inverse Probability Weighted Regression Adjustment (doubly robust)",
+      "(4,4)": {"att": 4.3029238, "se": 0.42367713, "ci_lower": 3.472524, "ci_upper": 5.133324},
+      "(4,5)": {"att": 6.6112909, "se": 0.43215951, "ci_lower": 5.764262, "ci_upper": 7.458320},
+      "(4,6)": {"att": 8.3343553, "se": 0.44138304, "ci_lower": 7.469240, "ci_upper": 9.199471},
+      "(5,5)": {"att": 3.0283627, "se": 0.42077459, "ci_lower": 2.203646, "ci_upper": 3.853079},
+      "(5,6)": {"att": 4.9326076, "se": 0.44026846, "ci_lower": 4.069673, "ci_upper": 5.795542},
+      "(6,6)": {"att": 2.4200472, "se": 0.48314986, "ci_lower": 1.473077, "ci_upper": 3.367018}
+    },
+    "psm": {
+      "stata_command": "teffects psmatch (y_{gr}) (g{g} x1 x2) if <condition>, atet",
+      "description": "Propensity Score Matching (nearest neighbor, 1:1)",
+      "se_method": "Abadie-Imbens",
+      "(4,4)": {"att": 3.554019, "se": 0.5866075, "ci_lower": 2.40429, "ci_upper": 4.703749},
+      "(4,5)": {"att": 7.801825, "se": 0.6506115, "ci_lower": 6.52665, "ci_upper": 9.077},
+      "(4,6)": {"att": 8.543539, "se": 0.5665262, "ci_lower": 7.433168, "ci_upper": 9.65391},
+      "(5,5)": {"att": 3.837064, "se": 0.5198648, "ci_lower": 2.818147, "ci_upper": 4.85598},
+      "(5,6)": {"att": 5.314513, "se": 0.6649302, "ci_lower": 4.011274, "ci_upper": 6.617753},
+      "(6,6)": {"att": 1.934457, "se": 0.6671495, "ci_lower": 0.6268682, "ci_upper": 3.242046}
+    }
+  },
+  "tolerances": {
+    "att_relative_error": 1e-6,
+    "se_relative_error_ra_ipwra": 0.05,
+    "se_relative_error_psm": 0.10,
+    "transformation_absolute_error": 1e-10
+  },
+  "notes": {
+    "lag_structure": {
+      "(4,4)": "L1+L2+L3 at f04 = periods 3,2,1, denominator=3",
+      "(4,5)": "L2+L3+L4 at f05 = periods 3,2,1, denominator=3",
+      "(4,6)": "L3+L4+L5 at f06 = periods 3,2,1, denominator=3",
+      "(5,5)": "L1+L2+L3+L4 at f05 = periods 4,3,2,1, denominator=4",
+      "(5,6)": "L2+L3+L4+L5 at f06 = periods 4,3,2,1, denominator=4",
+      "(6,6)": "L1+L2+L3+L4+L5 at f06 = periods 5,4,3,2,1, denominator=5"
+    },
+    "key_insight": "For cohort g, pre-mean is always mean(y_1, ..., y_{g-1}) regardless of evaluation period r. Denominator is (g-1), NOT (r-1).",
+    "control_group_rule": "Control group uses strict inequality: gvar > period. gvar == period is TREATED group, not control."
+  }
+}

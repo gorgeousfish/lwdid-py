@@ -1,9 +1,20 @@
 """
-Validation Module
+Input validation and data preparation for difference-in-differences estimation.
 
-Implements input validation and data preparation for the Lee and Wooldridge (2025)
-difference-in-differences estimator.
+This module provides comprehensive validation utilities for panel data used in
+difference-in-differences analysis. It ensures data integrity, validates
+structural assumptions (time-invariance, continuity), and prepares data for
+downstream transformation and estimation.
 
+The module supports both common timing designs (all units treated simultaneously)
+and staggered adoption designs (treatment timing varies by cohort). Validation
+checks include column existence, data types, time-invariance of treatment
+indicators and controls, time continuity, and treatment/control group adequacy.
+
+Notes
+-----
+Reserved column names created internally (d_, post_, tindex, tq, ydot,
+ydot_postavg, firstpost) should not exist in input data to avoid conflicts.
 """
 
 import warnings
@@ -145,27 +156,13 @@ def validate_and_prepare_data(
     -----
     Reserved column names that cannot exist in input data:
 
-    - 'd_': Binary treatment indicator (created internally)
-    - 'post_': Binary post indicator (created internally)
-    - 'tindex': Time index (created internally)
-    - 'tq': Quarter index (created internally for quarterly data)
-    - 'ydot': Residualized outcome (created in transformation)
-    - 'ydot_postavg': Post-period average of ydot (created in transformation)
-    - 'firstpost': Main regression sample indicator (created in transformation)
-
-    Examples
-    --------
-    >>> data_clean, metadata = validate_and_prepare_data(
-    ...     data=df,
-    ...     y='outcome',
-    ...     d='treated',
-    ...     ivar='state',
-    ...     tvar='year',
-    ...     post='post',
-    ...     rolling='demean'
-    ... )
-    >>> print(f"N={metadata['N']}, T={metadata['T']}, K={metadata['K']}")
-    N=50, T=20, K=10
+    - ``d_`` : Binary treatment indicator (created internally)
+    - ``post_`` : Binary post indicator (created internally)
+    - ``tindex`` : Time index (created internally)
+    - ``tq`` : Quarter index (created internally for quarterly data)
+    - ``ydot`` : Residualized outcome (created in transformation)
+    - ``ydot_postavg`` : Post-period average of ydot (created in transformation)
+    - ``firstpost`` : Main regression sample indicator (created in transformation)
 
     See Also
     --------
@@ -336,9 +333,9 @@ def _validate_no_reserved_columns(data: pd.DataFrame) -> None:
     """
     Check that input data does not contain reserved column names.
 
-    lwdid uses several internal column names that should not exist in user data.
-    If these columns exist, they will be silently overwritten, causing data loss
-    and potentially incorrect results.
+    This package uses several internal column names that should not exist in
+    user data. If these columns exist, they will be silently overwritten,
+    causing data loss and potentially incorrect results.
 
     Parameters
     ----------
@@ -352,21 +349,15 @@ def _validate_no_reserved_columns(data: pd.DataFrame) -> None:
 
     Notes
     -----
-    Reserved columns (created internally by lwdid):
+    Reserved columns created internally:
 
-    - ``d_`` (treatment indicator): Binary treatment indicator (0/1)
-    - ``post_`` (post-period indicator): Binary post-period indicator (0/1)
-    - ``tindex``: Time index (1, 2, 3, ...)
-    - ``tq``: Quarter index (for quarterly data)
-    - ``ydot``: Residualized outcome variable
-    - ``ydot_postavg``: Post-period average of ydot
-    - ``firstpost``: Main regression sample indicator
-
-    Examples
-    --------
-    >>> data = pd.DataFrame({'y': [1, 2], 'd_': [0, 1]})  # doctest: +SKIP
-    >>> _validate_no_reserved_columns(data)
-    InvalidParameterError: Input data contains reserved column names: ['d_']
+    - ``d_`` : Binary treatment indicator (0/1)
+    - ``post_`` : Binary post-period indicator (0/1)
+    - ``tindex`` : Time index (1, 2, 3, ...)
+    - ``tq`` : Quarter index (for quarterly data)
+    - ``ydot`` : Residualized outcome variable
+    - ``ydot_postavg`` : Post-period average of ydot
+    - ``firstpost`` : Main regression sample indicator
 
     See Also
     --------
@@ -394,7 +385,29 @@ def _validate_required_columns(
     controls: Optional[List[str]],
 ) -> None:
     """
-    Validate existence of required columns
+    Validate that all required columns exist in the input data.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input data to validate.
+    y : str
+        Outcome variable column name.
+    d : str
+        Treatment indicator column name.
+    ivar : str
+        Unit identifier column name.
+    tvar : str or list of str
+        Time variable column name(s).
+    post : str
+        Post-treatment indicator column name.
+    controls : list of str or None
+        Control variable column names.
+
+    Raises
+    ------
+    MissingRequiredColumnError
+        If any required column is not found in data.
     """
     # Core variables
     required_cols = [y, d, ivar, post]
@@ -424,19 +437,25 @@ def _validate_outcome_dtype(
     y: str,
 ) -> None:
     """
-    Validate outcome variable is numeric
+    Validate that the outcome variable is numeric.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Input data
+        Input data containing the outcome variable.
     y : str
-        Outcome variable column name
+        Outcome variable column name.
 
     Raises
     ------
     InvalidParameterError
-        If outcome variable is not numeric
+        If the outcome variable is not a numeric type.
+
+    Warns
+    -----
+    UserWarning
+        If the outcome variable has boolean type, which will be treated as
+        numeric (1/0).
     """
     dtype = data[y].dtype
 
@@ -474,19 +493,19 @@ def _validate_controls_dtype(
     controls: Optional[List[str]],
 ) -> None:
     """
-    Validate control variables are numeric
+    Validate that all control variables are numeric.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Input data
-    controls : Optional[List[str]]
-        Control variable names
+        Input data containing the control variables.
+    controls : list of str or None
+        Control variable column names. If None, validation is skipped.
 
     Raises
     ------
     InvalidParameterError
-        If any control is not numeric
+        If any control variable is not a numeric type.
     """
     if not controls:
         return
@@ -518,24 +537,24 @@ def _validate_treatment_time_invariance(
     ivar: str,
 ) -> None:
     """
-    Validate treatment indicator is time-invariant (D_i, not W_it)
+    Validate treatment indicator is time-invariant within each unit.
 
     The method requires unit-level treatment status D_i (constant within unit),
-    not time-varying W_it = D_i·post_t. See equations (2.1)-(2.2).
+    not time-varying treatment indicator W_it = D_i * post_t.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data
+        Panel data in long format.
     d : str
-        Treatment indicator
+        Treatment indicator column name.
     ivar : str
-        Unit identifier
+        Unit identifier column name.
 
     Raises
     ------
     InvalidParameterError
-        If treatment varies within any unit
+        If treatment indicator varies within any unit over time.
     """
     within_unit_std = data.groupby(ivar)[d].std()
     max_std = within_unit_std.max()
@@ -551,26 +570,27 @@ def _validate_treatment_time_invariance(
 
         raise InvalidParameterError(
             f"Treatment indicator '{d}' must be time-invariant (constant within each unit).\n"
-            f"The paper (§2.1, eq. 2.1) requires unit-level D_i, not time-varying W_it.\n\n"
+            f"This method requires unit-level D_i, not time-varying W_it.\n\n"
             f"Found {n_varying_units} units with time-varying treatment status:\n"
             f"{example_details}\n"
             f"{'  ...' if n_varying_units > 3 else ''}\n\n"
             f"Why this matters:\n"
-            f"  - The paper defines D_i as unit-level treatment status (0 or 1, time-invariant)\n"
-            f"  - W_it = D_i · post_t is the time-varying indicator (derived from D_i)\n"
+            f"  - D_i is unit-level treatment status (0 or 1, time-invariant)\n"
+            f"  - W_it = D_i * post_t is the time-varying indicator (derived from D_i)\n"
             f"  - You should pass D_i as 'd', NOT W_it\n"
             f"  - Time-varying d violates the identification assumptions\n"
-            f"  - Results cannot be interpreted under the paper's framework\n\n"
+            f"  - Results cannot be interpreted under the DiD framework\n\n"
             f"How to fix:\n"
             f"  1. If you have D_i (unit-level): use it directly as 'd' parameter\n"
             f"  2. If you have W_it (time-varying): create D_i first:\n"
             f"     data['D_i'] = data.groupby('{ivar}')['{d}'].transform('max')\n"
             f"     Then use 'D_i' as the 'd' parameter\n"
             f"  3. Verify: Each unit should have the same d value in all periods\n\n"
-            f"Example:\n"
-            f"  Correct:   id=1 has d=1 in all periods (treated unit)\n"
-            f"  Correct:   id=2 has d=0 in all periods (control unit)\n"
-            f"  Incorrect: id=1 has d=0 in pre, d=1 in post (this is W_it, not D_i!)"
+            f"Correct usage:\n"
+            f"  id=1 has d=1 in all periods (treated unit)\n"
+            f"  id=2 has d=0 in all periods (control unit)\n"
+            f"Incorrect usage:\n"
+            f"  id=1 has d=0 in pre, d=1 in post (this is W_it, not D_i)"
         )
 
 
@@ -580,24 +600,24 @@ def _validate_time_invariant_controls(
     controls: Optional[List[str]],
 ) -> None:
     """
-    Validate control variables are time-invariant (X_i, not X_it)
+    Validate control variables are time-invariant within each unit.
 
-    Method requires time-constant controls X_i as in Section 2.2, equation (2.18).
-    Centering uses X_i - X̄₁ with unit-level means.
+    This method requires time-constant controls X_i (constant within unit),
+    not time-varying X_it. Centering uses unit-level means (X_i - mean(X)).
 
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data
+        Panel data in long format.
     ivar : str
-        Unit identifier
-    controls : Optional[List[str]]
-        Control variable names
+        Unit identifier column name.
+    controls : list of str or None
+        Control variable column names.
 
     Raises
     ------
     InvalidParameterError
-        If any control varies within units
+        If any control variable varies within units over time.
     """
     if not controls:
         return
@@ -621,11 +641,11 @@ def _validate_time_invariant_controls(
 
         raise InvalidParameterError(
             f"Control variables must be time-invariant (constant within each unit).\n"
-            f"The paper (§2.2) requires 'time-constant controls X_i', not X_it.\n\n"
+            f"This method requires time-constant controls X_i, not time-varying X_it.\n\n"
             f"Found time-varying controls:\n"
             f"{error_details}\n\n"
             f"Why this matters:\n"
-            f"  - Time-varying controls violate the paper's theoretical assumptions\n"
+            f"  - Time-varying controls violate the theoretical assumptions\n"
             f"  - They can cause substantial estimation bias in ATT\n"
             f"  - The method uses unit-level X_i, not period-specific X_it\n\n"
             f"How to fix:\n"
@@ -639,19 +659,27 @@ def _validate_time_invariant_controls(
 
 def _validate_rolling_parameter(rolling: str, tvar: Union[str, List[str]]) -> str:
     """
-    Validate rolling parameter
+    Validate the rolling transformation parameter.
 
     Parameters
     ----------
     rolling : str
-        Transformation method (case-insensitive)
-    tvar : Union[str, List[str]]
-        Time variable
+        Transformation method name. Case-insensitive. Must be one of:
+        'demean', 'detrend', 'demeanq', 'detrendq'.
+    tvar : str or list of str
+        Time variable column name(s). Quarterly methods require a list
+        of two elements [year, quarter].
 
     Returns
     -------
     str
-        Standardized rolling parameter (lowercase)
+        Standardized rolling parameter in lowercase.
+
+    Raises
+    ------
+    InvalidRollingMethodError
+        If rolling is not a valid method name, or if quarterly method
+        is specified without proper tvar format.
     """
     rolling_lower = rolling.lower()
 
@@ -677,21 +705,26 @@ def _convert_string_id(
     data: pd.DataFrame, ivar: str
 ) -> Tuple[pd.DataFrame, Optional[Dict]]:
     """
-    Convert string unit IDs to numeric codes
+    Convert string unit identifiers to numeric codes.
+
+    If the unit identifier column contains string values, converts them to
+    consecutive integer codes starting from 1. Returns a bidirectional
+    mapping for later recovery of original identifiers.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Input data
+        Input data containing the unit identifier column.
     ivar : str
-        Unit identifier
+        Unit identifier column name.
 
     Returns
     -------
     data_copy : pd.DataFrame
-        Copy with numeric IDs
+        Copy of input data with numeric unit identifiers.
     id_mapping : dict or None
-        Bidirectional mapping if conversion occurred
+        Bidirectional mapping dictionary with keys 'original_to_numeric' and
+        'numeric_to_original' if conversion occurred, None otherwise.
     """
     data_work = data.copy()
     id_mapping = None
@@ -714,14 +747,31 @@ def _create_time_index(
     data: pd.DataFrame, tvar: Union[str, List[str]]
 ) -> Tuple[pd.DataFrame, bool]:
     """
-    Create time index (tindex column)
-    
+    Create a sequential time index column starting from 1.
+
+    For annual data, converts year values to consecutive integers. For
+    quarterly data, creates a combined year-quarter index and stores the
+    quarter separately in a 'tq' column.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input data containing time variable column(s).
+    tvar : str or list of str
+        Time variable column name(s). Single string for annual data,
+        list of [year, quarter] for quarterly data.
+
     Returns
     -------
     data : pd.DataFrame
-        Data with 'tindex' column added.
+        Data with 'tindex' column added (and 'tq' for quarterly data).
     is_quarterly : bool
-        True if quarterly data, False if annual.
+        True if quarterly data format, False if annual.
+
+    Raises
+    ------
+    InvalidParameterError
+        If year or quarter variables contain non-numeric or invalid values.
     """
     if isinstance(tvar, str):
         year_var = tvar
@@ -807,25 +857,34 @@ def _create_time_index(
 
 def _validate_time_continuity(data: pd.DataFrame) -> Tuple[int, int, int]:
     """
-    Validate time continuity and extract time structure
+    Validate time continuity and extract time structure parameters.
+
+    Checks that the time index forms a continuous sequence without gaps and
+    that the post-treatment indicator is monotone non-decreasing in time.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Panel data with 'tindex' and 'post_' columns already created.
 
     Returns
     -------
     K : int
-        Last pre-treatment period
+        Last pre-treatment period index.
     tpost1 : int
-        First post-treatment period
+        First post-treatment period index.
     T : int
-        Total number of periods
+        Total number of time periods.
 
     Raises
     ------
     InsufficientDataError
-        No pre or post observations
+        If no pre-treatment or post-treatment observations exist.
     TimeDiscontinuityError
-        Time series has gaps
+        If time series has gaps or post indicator is non-monotone.
     InvalidParameterError
-        Common timing violated
+        If common timing assumption is violated (post varies across units
+        within a time period).
     """
     pre_period = data[data['post_'] == 0]
     post_period = data[data['post_'] == 1]
@@ -852,8 +911,7 @@ def _validate_time_continuity(data: pd.DataFrame) -> Tuple[int, int, int]:
             f"Common timing assumption violated: 'post' must be a pure function of time. "
             f"Found time periods where 'post' varies across units: tindex={violating_times}. "
             f"Current implementation requires all units to switch from pre to post at the same time. "
-            f"For staggered adoption scenarios, please refer to the extended methods in "
-            f"Lee and Wooldridge (2025, Section 7)."
+            f"For staggered adoption scenarios, use the staggered module with gvar parameter."
         )
 
     # Validate tindex continuity (gaps distort trend estimation)
@@ -875,7 +933,7 @@ def _validate_time_continuity(data: pd.DataFrame) -> Tuple[int, int, int]:
             f"continuous sequence without gaps."
         )
 
-    # Validate post monotonicity (persistent treatment, eq 2.2)
+    # Validate post monotonicity: once treated, always treated
     post_by_time = data.groupby('tindex')['post_'].first().sort_index()
 
     if (post_by_time == 1).any():
@@ -888,12 +946,11 @@ def _validate_time_continuity(data: pd.DataFrame) -> Tuple[int, int, int]:
             raise TimeDiscontinuityError(
                 f"Post variable is not monotone in time: policy appears to be reversed or suspended. "
                 f"Found post=0 at time periods {reversal_times} after first post=1 at tindex={first_post_t}. "
-                f"\n\nThis violates the paper's core assumption (§2.1, eq. 2.2): "
-                f"post_t = 1 if t ∈ {{S, S+1,...,T}} and zero otherwise. "
+                f"\n\nThis violates the core assumption: post_t = 1 if t >= S and zero otherwise. "
                 f"This definition implies 'once treated, always treated' (monotonicity). "
                 f"\n\nPolicy reversals break the identification strategy because:"
                 f"\n  - K (last pre-period) and tpost1 (first post-period) become contradictory"
-                f"\n  - The pre/post dichotomy used in ydot/yddot transformations loses meaning"
+                f"\n  - The pre/post dichotomy used in transformations loses meaning"
                 f"\n  - The parallel trends assumption cannot be tested or maintained"
                 f"\n\nPlease ensure your 'post' variable is monotone non-decreasing in time. "
                 f"If your intervention was truly reversed, this method is not applicable."
@@ -909,26 +966,32 @@ def validate_quarter_diversity(
     post: str
 ) -> None:
     """
-    Validate quarter diversity and coverage for seasonal effects identification
+    Validate quarter diversity and coverage for seasonal effects identification.
 
-    Requires ≥2 distinct quarters per unit in pre-period and that all post-period
-    quarters appear in pre-period.
+    Ensures each unit has at least two distinct quarters in the pre-treatment
+    period (required to identify seasonal effects) and that all post-period
+    quarters also appear in the pre-period.
 
     Parameters
     ----------
-    data : pandas.DataFrame
-        Panel data
+    data : pd.DataFrame
+        Panel data in long format.
     ivar : str
-        Unit identifier
+        Unit identifier column name.
     quarter : str
-        Quarter variable
+        Quarter variable column name (values should be 1, 2, 3, or 4).
     post : str
-        Post-treatment indicator
+        Post-treatment indicator column name.
 
     Raises
     ------
     InsufficientQuarterDiversityError
-        Quarter diversity or coverage violated
+        If any unit has fewer than 2 distinct quarters in pre-period, or
+        if any post-period quarter does not appear in the pre-period.
+
+    See Also
+    --------
+    validate_quarter_coverage : Validates only quarter coverage.
     """
     for unit_id in data[ivar].unique():
         unit_pre_mask = (data[ivar] == unit_id) & (data[post] == 0)
@@ -969,26 +1032,32 @@ def validate_quarter_coverage(
     post: str
 ) -> None:
     """
-    Validate post-period quarters appear in pre-period for each unit
+    Validate that post-period quarters appear in pre-period for each unit.
 
-    Quarterly methods assume seasonal effects are constant over time. Each
-    post-period quarter must appear in pre-period to identify its coefficient.
+    Quarterly transformation methods assume seasonal effects are constant
+    over time. Each post-period quarter must appear in the pre-period to
+    identify its seasonal coefficient.
 
     Parameters
     ----------
-    data : pandas.DataFrame
-        Panel data
+    data : pd.DataFrame
+        Panel data in long format.
     ivar : str
-        Unit identifier
+        Unit identifier column name.
     quarter : str
-        Quarter variable
+        Quarter variable column name (values should be 1, 2, 3, or 4).
     post : str
-        Post-treatment indicator
+        Post-treatment indicator column name.
 
     Raises
     ------
     InsufficientQuarterDiversityError
-        Post-period quarter not in pre-period
+        If any unit has a post-period quarter that does not appear in its
+        pre-period data.
+
+    See Also
+    --------
+    validate_quarter_diversity : Also validates minimum quarter diversity.
     """
     for unit_id in data[ivar].unique():
         unit_pre_mask = (data[ivar] == unit_id) & (data[post] == 0)
@@ -1016,44 +1085,73 @@ def validate_quarter_coverage(
 # Staggered DiD Validation Functions
 # =============================================================================
 
+# Tolerance for floating-point cohort value comparisons.
+# Used when comparing gvar values that may have accumulated floating-point
+# errors through transformations or aggregations.
+COHORT_FLOAT_TOLERANCE = 1e-9
+
+
+def get_cohort_mask(unit_gvar: pd.Series, g: int) -> pd.Series:
+    """
+    Create a boolean mask identifying units belonging to a specific cohort.
+
+    Handles floating-point comparison with tolerance to account for
+    potential rounding errors in gvar values.
+
+    Parameters
+    ----------
+    unit_gvar : pd.Series
+        Series mapping unit identifiers to their gvar (first treatment period)
+        values. Index should be unit identifiers.
+    g : int
+        Target cohort (first treatment period) to identify.
+
+    Returns
+    -------
+    pd.Series
+        Boolean series with same index as unit_gvar. True for units in cohort g,
+        False otherwise.
+
+    Notes
+    -----
+    Uses COHORT_FLOAT_TOLERANCE for floating-point comparison to handle
+    potential precision issues from data transformations.
+    """
+    return (unit_gvar - g).abs() < COHORT_FLOAT_TOLERANCE
+
+
 def is_never_treated(gvar_value: Union[int, float]) -> bool:
     """
     Determine if a unit is never treated based on its gvar value.
-    
+
     This is the single source of truth for never-treated status identification.
     All modules (validation, control_groups, aggregation) should use this function
-    to ensure consistent NT determination.
-    
+    to ensure consistent never-treated determination.
+
     Parameters
     ----------
     gvar_value : int or float
         The gvar (first treatment period) value for a unit.
-        
+
     Returns
     -------
     bool
         True if the unit is never treated, False otherwise.
-        
+
     Notes
     -----
     A unit is considered never treated if its gvar value is:
+
     - NaN or None (missing value)
     - 0 (explicitly coded as never treated)
     - np.inf (infinity, explicitly coded as never treated)
-    
+
     Positive integers indicate the first treatment period (cohort membership).
     Negative values are invalid and should be caught by validate_staggered_data().
-    
-    Examples
+
+    See Also
     --------
-    >>> is_never_treated(0)
-    True
-    >>> is_never_treated(np.nan)
-    True
-    >>> is_never_treated(np.inf)
-    True
-    >>> is_never_treated(2005)
-    False
+    validate_staggered_data : Validates staggered DiD data structure.
     """
     if pd.isna(gvar_value):
         return True
@@ -1074,60 +1172,58 @@ def validate_staggered_data(
 ) -> Dict:
     """
     Validate staggered DiD data and extract cohort structure.
-    
-    This function performs comprehensive validation for staggered settings,
+
+    Performs comprehensive validation for staggered adoption settings,
     checking gvar column validity, cohort identification, and data integrity.
-    
+
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data in long format.
+        Panel data in long format with one row per unit-time observation.
     gvar : str
         Column name for first treatment period (cohort indicator).
         Valid values: positive integers (cohort), 0/inf/NaN (never treated).
     ivar : str
         Unit identifier column name.
     tvar : str or list of str
-        Time variable column name(s).
+        Time variable column name(s). Single string for annual data,
+        list of two strings for quarterly data (year, quarter).
     y : str
         Outcome variable column name.
     controls : list of str, optional
-        Control variable column names.
-        
+        Control variable column names. Default: None.
+
     Returns
     -------
     dict
         Validation result dictionary containing:
-        
-        - 'cohorts': List[int], sorted list of treatment cohorts (excludes NT)
-        - 'n_never_treated': int, number of never-treated units
-        - 'n_treated': int, total number of treated units across all cohorts
-        - 'cohort_sizes': Dict[int, int], {cohort: n_units} mapping
-        - 'T_min': int, minimum time period in data
-        - 'T_max': int, maximum time period in data
-        - 'warnings': List[str], warning messages (e.g., gvar out of tvar range)
-        
+
+        - ``cohorts`` : list of int, sorted list of treatment cohorts (excludes NT)
+        - ``n_cohorts`` : int, number of distinct treatment cohorts
+        - ``n_never_treated`` : int, number of never-treated units
+        - ``n_treated`` : int, total number of treated units across all cohorts
+        - ``has_never_treated`` : bool, whether never-treated units exist
+        - ``cohort_sizes`` : dict, {cohort: n_units} mapping
+        - ``T_min`` : int, minimum time period in data
+        - ``T_max`` : int, maximum time period in data
+        - ``N_total`` : int, total number of units
+        - ``N_obs`` : int, total number of observations
+        - ``warnings`` : list of str, warning messages
+
     Raises
     ------
+    TypeError
+        If data is not a pandas DataFrame.
     MissingRequiredColumnError
         If required columns (gvar, ivar, tvar, y) are missing from data.
     InvalidStaggeredDataError
         If gvar column contains invalid values (negative numbers, strings)
         or if there are no valid treatment cohorts.
-        
-    Examples
+
+    See Also
     --------
-    >>> data = pd.DataFrame({
-    ...     'id': [1, 1, 2, 2, 3, 3],
-    ...     'year': [2000, 2001, 2000, 2001, 2000, 2001],
-    ...     'y': [1.0, 2.0, 1.5, 2.5, 1.2, 2.2],
-    ...     'gvar': [2001, 2001, 0, 0, 0, 0]
-    ... })
-    >>> result = validate_staggered_data(data, 'gvar', 'id', 'year', 'y')
-    >>> result['cohorts']
-    [2001]
-    >>> result['n_never_treated']
-    2
+    is_never_treated : Determines never-treated status from gvar value.
+    validate_and_prepare_data : Validation for common timing designs.
     """
     from .exceptions import InvalidStaggeredDataError, MissingRequiredColumnError
     
