@@ -6,26 +6,27 @@ panel data into cross-sectional form for each cohort-time pair in staggered
 adoption settings. The transformations remove pre-treatment patterns at the
 unit level, enabling application of standard treatment effect estimators.
 
-Two transformation methods are available:
+Two transformation methods are provided:
 
 - **Demeaning**: Subtracts the unit-specific pre-treatment mean from post-
-  treatment outcomes. Requires at least one pre-treatment period per cohort.
+  treatment outcomes. Valid when at least one pre-treatment period exists.
 
 - **Detrending**: Removes unit-specific linear trends estimated from pre-
   treatment data. Requires at least two pre-treatment periods per cohort
   to identify both intercept and slope parameters.
 
-For cohort g in calendar time r, the transformation uses all periods prior
-to g as the pre-treatment window. This cohort-specific definition ensures
-that transformed outcomes reflect the appropriate counterfactual for each
-treatment cohort.
+For treatment cohort g in calendar time r, the transformation uses all
+periods strictly prior to g as the pre-treatment window. This cohort-specific
+definition ensures that transformed outcomes reflect the appropriate
+counterfactual for each treatment cohort.
 
 Notes
 -----
 The pre-treatment transformation parameters (mean or trend coefficients)
-are fixed for each cohort regardless of the calendar time r at which effects
-are estimated. All units (including never-treated and not-yet-treated) are
-transformed for each cohort to enable valid control group construction.
+are computed once per cohort and remain fixed regardless of the calendar
+time r at which effects are estimated. All units (treated, not-yet-treated,
+and never-treated) are transformed for each cohort to enable flexible
+control group selection during estimation.
 """
 
 from __future__ import annotations
@@ -45,26 +46,29 @@ def get_cohorts(
     """
     Extract valid treatment cohorts from panel data.
 
-    Identifies all distinct first-treatment periods in the data, excluding
-    units that are never treated. Never-treated status is determined by
-    missing values (NaN) or explicit indicator values.
+    Identifies all distinct first-treatment periods present in the data,
+    excluding units that are never treated. Never-treated status is
+    determined by missing values (NaN) or explicit indicator values
+    specified by the user.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data containing unit and cohort identifiers.
+        Panel data in long format containing unit and cohort identifiers.
     gvar : str
         Column name for the cohort variable indicating first treatment period.
     ivar : str
         Column name for the unit identifier.
     never_treated_values : list or None, optional
-        Values in gvar that indicate never-treated units. Default is [0, np.inf].
-        NaN values are always treated as never-treated regardless of this list.
+        Values in gvar that indicate never-treated units. Default is
+        [0, np.inf]. NaN values are always treated as never-treated
+        regardless of this parameter.
 
     Returns
     -------
     list of int
-        Sorted list of treatment cohorts, excluding never-treated indicators.
+        Sorted list of unique treatment cohort values, excluding any
+        never-treated indicators.
 
     Raises
     ------
@@ -73,7 +77,7 @@ def get_cohorts(
 
     See Also
     --------
-    get_valid_periods_for_cohort : Get post-treatment periods for a cohort.
+    get_valid_periods_for_cohort : Determine post-treatment periods for a cohort.
     transform_staggered_demean : Apply demeaning transformation.
     """
     if never_treated_values is None:
@@ -101,25 +105,27 @@ def get_valid_periods_for_cohort(
     """
     Determine valid post-treatment periods for a treatment cohort.
 
-    For cohort g, returns the set of calendar times {g, g+1, ..., T_max}
-    during which the cohort is exposed to treatment and treatment effects
-    can be estimated.
+    For treatment cohort g, returns the set of calendar times {g, g+1, ...,
+    T_max} during which the cohort is exposed to treatment and cohort-time
+    specific average treatment effects on the treated can be estimated.
 
     Parameters
     ----------
     cohort : int
-        Treatment cohort identifier (first treatment period).
+        Treatment cohort identifier representing the first treatment period.
     T_max : int
-        Maximum time period available in the data.
+        Maximum calendar time period available in the panel data.
 
     Returns
     -------
     list of int
-        Consecutive integers from cohort through T_max inclusive.
+        Consecutive integers from cohort through T_max inclusive,
+        representing all periods where the cohort experiences treatment.
 
     See Also
     --------
     get_cohorts : Extract treatment cohorts from data.
+    transform_staggered_demean : Apply demeaning transformation.
     """
     return list(range(int(cohort), int(T_max) + 1))
 
@@ -136,19 +142,19 @@ def _compute_pre_treatment_mean(
     Parameters
     ----------
     unit_data : pd.DataFrame
-        Time series data for a single unit.
+        Time series observations for a single unit.
     y : str
         Outcome variable column name.
     tvar : str
         Time variable column name.
     cohort : int
-        Cohort value defining the pre-treatment cutoff.
+        Treatment cohort defining the pre-treatment cutoff (t < cohort).
 
     Returns
     -------
     float
         Mean of outcome values for periods strictly before cohort.
-        Returns NaN if no valid pre-treatment observations.
+        Returns NaN if no valid pre-treatment observations exist.
     """
     pre_data = unit_data[unit_data[tvar] < cohort]
     y_pre = pre_data[y].dropna()
@@ -168,25 +174,25 @@ def _compute_pre_treatment_trend(
     """
     Estimate pre-treatment linear trend parameters for a single unit.
 
-    Fits the model Y_t = A + B * t using ordinary least squares on
+    Fits a linear model Y_t = A + B * t using ordinary least squares on
     observations with t < cohort.
 
     Parameters
     ----------
     unit_data : pd.DataFrame
-        Time series data for a single unit.
+        Time series observations for a single unit.
     y : str
         Outcome variable column name.
     tvar : str
         Time variable column name.
     cohort : int
-        Cohort value defining the pre-treatment cutoff.
+        Treatment cohort defining the pre-treatment cutoff (t < cohort).
 
     Returns
     -------
     tuple of float
         (intercept, slope) parameters from the fitted linear trend.
-        Returns (NaN, NaN) if fewer than 2 pre-treatment periods.
+        Returns (NaN, NaN) if fewer than two pre-treatment periods exist.
     """
     pre_data = unit_data[unit_data[tvar] < cohort].dropna(subset=[y])
 
@@ -214,8 +220,8 @@ def transform_staggered_demean(
     """
     Apply cohort-specific demeaning transformation for staggered designs.
 
-    Computes the transformed outcome for each cohort g and post-treatment
-    period r:
+    Computes the transformed outcome for each treatment cohort g and
+    post-treatment calendar time r:
 
     .. math::
 
@@ -249,7 +255,7 @@ def transform_staggered_demean(
     -------
     pd.DataFrame
         Copy of input data with additional columns named ``ydot_g{g}_r{r}``
-        containing the transformed outcome for each cohort-period pair.
+        containing the transformed outcome for each (cohort, period) pair.
 
     Raises
     ------
@@ -264,7 +270,7 @@ def transform_staggered_demean(
 
     See Also
     --------
-    transform_staggered_detrend : Apply detrending transformation.
+    transform_staggered_detrend : Apply linear detrending transformation.
     get_cohorts : Extract treatment cohorts from data.
 
     Notes
@@ -339,7 +345,7 @@ def transform_staggered_demean(
 
             period_mask = result[tvar] == r
 
-            # Apply demeaning transformation to all units in period r
+            # Transform all units to enable both treated and control estimation
             result.loc[period_mask, col_name] = (
                 result.loc[period_mask, y].values -
                 result.loc[period_mask, ivar].map(pre_means).values
@@ -357,7 +363,7 @@ def transform_staggered_detrend(
     never_treated_values: list | None = None,
 ) -> pd.DataFrame:
     """
-    Apply cohort-specific detrending transformation for staggered designs.
+    Apply cohort-specific linear detrending transformation for staggered designs.
 
     Fits unit-specific linear trends using pre-treatment data and computes
     out-of-sample residuals for post-treatment periods:
@@ -384,23 +390,24 @@ def transform_staggered_detrend(
     ivar : str
         Unit identifier column name.
     tvar : str
-        Time variable column name.
+        Time variable column name (must be numeric or coercible to numeric).
     gvar : str
         Cohort variable column name indicating first treatment period.
     never_treated_values : list or None, optional
-        Values in gvar indicating never-treated units.
+        Values in gvar indicating never-treated units. Default recognizes
+        NaN, 0, and np.inf as never-treated indicators.
 
     Returns
     -------
     pd.DataFrame
         Copy of input data with additional columns named ``ycheck_g{g}_r{r}``
-        containing the detrended outcome for each cohort-period pair.
+        containing the detrended outcome for each (cohort, period) pair.
 
     Raises
     ------
     ValueError
         If required columns are missing, no valid cohorts exist, or any
-        cohort has fewer than 2 pre-treatment periods.
+        cohort has fewer than two pre-treatment periods.
 
     Warns
     -----
@@ -410,6 +417,7 @@ def transform_staggered_detrend(
     See Also
     --------
     transform_staggered_demean : Apply demeaning transformation.
+    get_cohorts : Extract treatment cohorts from data.
 
     Notes
     -----
@@ -506,7 +514,7 @@ def transform_staggered_detrend(
                 # Collinearity or other numerical issues prevent estimation
                 continue
 
-            # Project trend forward and compute out-of-sample residuals
+            # Compute out-of-sample prediction errors for causal identification
             for r in post_periods:
                 col_name = f'ycheck_g{int(g)}_r{r}'
                 period_mask = unit_mask & (result[tvar] == r)

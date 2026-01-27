@@ -26,9 +26,11 @@ uses logistic regression without regularization to match standard software
 implementations.
 """
 
+from __future__ import annotations
+
 import warnings
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -58,7 +60,7 @@ class IPWResult:
         Estimated propensity scores.
     weights : np.ndarray
         IPW weights w = p/(1-p) for control units.
-    propensity_model_coef : Dict[str, float]
+    propensity_model_coef : dict[str, float]
         Propensity score model coefficients.
     n_treated : int
         Number of treated units.
@@ -81,13 +83,13 @@ class IPWResult:
     pvalue: float
     propensity_scores: np.ndarray
     weights: np.ndarray
-    propensity_model_coef: Dict[str, float]
+    propensity_model_coef: dict[str, float]
     n_treated: int
     n_control: int
     df_resid: int = 0
     df_inference: int = 0
     weights_cv: float = 0.0
-    diagnostics: Optional[Dict] = None
+    diagnostics: dict | None = None
 
 
 @dataclass
@@ -113,9 +115,9 @@ class IPWRAResult:
         Estimated propensity scores.
     weights : np.ndarray
         IPW weights w = p/(1-p) for control units.
-    outcome_model_coef : Dict[str, float]
+    outcome_model_coef : dict[str, float]
         Outcome model coefficients.
-    propensity_model_coef : Dict[str, float]
+    propensity_model_coef : dict[str, float]
         Propensity score model coefficients.
     n_treated : int
         Number of treated units.
@@ -130,8 +132,8 @@ class IPWRAResult:
     pvalue: float
     propensity_scores: np.ndarray
     weights: np.ndarray
-    outcome_model_coef: Dict[str, float]
-    propensity_model_coef: Dict[str, float]
+    outcome_model_coef: dict[str, float]
+    propensity_model_coef: dict[str, float]
     n_treated: int
     n_control: int
 
@@ -140,15 +142,15 @@ def estimate_ipw(
     data: pd.DataFrame,
     y: str,
     d: str,
-    propensity_controls: List[str],
+    propensity_controls: list[str],
     trim_threshold: float = 0.01,
     alpha: float = 0.05,
-    vce: Optional[str] = None,
+    vce: str | None = None,
     return_diagnostics: bool = False,
-    gvar_col: Optional[str] = None,
-    ivar_col: Optional[str] = None,
-    cohort_g: Optional[int] = None,
-    period_r: Optional[int] = None,
+    gvar_col: str | None = None,
+    ivar_col: str | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> IPWResult:
     """
     Estimate ATT using inverse probability weighting.
@@ -164,13 +166,13 @@ def estimate_ipw(
         Outcome variable column name.
     d : str
         Treatment indicator column name (1=treated, 0=control).
-    propensity_controls : List[str]
+    propensity_controls : list[str]
         Variables for propensity score model.
     trim_threshold : float, default=0.01
         Propensity score trimming threshold. Observations with propensity
         scores outside [trim_threshold, 1-trim_threshold] are excluded.
     return_diagnostics : bool, default=False
-        Whether to return additional diagnostics (currently unused).
+        Whether to return additional diagnostic information.
     gvar_col : str, optional
         Column name for cohort indicator (for staggered designs).
     ivar_col : str, optional
@@ -252,7 +254,7 @@ def estimate_ipw(
     weights = np.zeros(len(y_valid))
     weights[control_valid] = ps_valid[control_valid] / (1 - ps_valid[control_valid])
 
-    # Normalize weights so they sum to n_treated (matching Stata convention)
+    # Normalize weights so they sum to n_treated for proper ATT estimation
     weight_sum = weights[control_valid].sum()
     if weight_sum > 0:
         weights[control_valid] = weights[control_valid] * n_treated_valid / weight_sum
@@ -327,18 +329,18 @@ def estimate_ipwra(
     data: pd.DataFrame,
     y: str,
     d: str,
-    controls: List[str],
-    propensity_controls: Optional[List[str]] = None,
+    controls: list[str],
+    propensity_controls: list[str] | None = None,
     trim_threshold: float = 0.01,
     se_method: str = 'analytical',
     n_bootstrap: int = 200,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     alpha: float = 0.05,
     return_diagnostics: bool = False,
-    gvar_col: Optional[str] = None,
-    ivar_col: Optional[str] = None,
-    cohort_g: Optional[int] = None,
-    period_r: Optional[int] = None,
+    gvar_col: str | None = None,
+    ivar_col: str | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> IPWRAResult:
     """
     Estimate ATT using inverse probability weighted regression adjustment.
@@ -367,9 +369,9 @@ def estimate_ipwra(
         Outcome variable column name (typically transformed outcome).
     d : str
         Treatment indicator column name (1=treated, 0=control).
-    controls : List[str]
+    controls : list[str]
         Control variables for the outcome regression model.
-    propensity_controls : List[str], optional
+    propensity_controls : list[str], optional
         Control variables for the propensity score model.
         If None, uses the same variables as ``controls``.
     trim_threshold : float, default=0.01
@@ -548,14 +550,14 @@ def estimate_ipwra(
 def estimate_propensity_score(
     data: pd.DataFrame,
     d: str,
-    controls: List[str],
+    controls: list[str],
     trim_threshold: float = 0.01,
-) -> Tuple[np.ndarray, Dict[str, float]]:
+) -> Tuple[np.ndarray, dict[str, float]]:
     """
     Estimate propensity scores using logistic regression.
 
-    Fits a logit model P(D=1|X) without regularization to maintain
-    compatibility with standard econometric software implementations.
+    Fits a logit model P(D=1|X) without regularization, using maximum
+    likelihood estimation for unbiased coefficient estimates.
 
     Parameters
     ----------
@@ -563,7 +565,7 @@ def estimate_propensity_score(
         Dataset containing treatment and control variables.
     d : str
         Treatment indicator column name.
-    controls : List[str]
+    controls : list[str]
         Covariate column names for the propensity score model.
     trim_threshold : float, default=0.01
         Trimming threshold for extreme propensity scores.
@@ -572,7 +574,7 @@ def estimate_propensity_score(
     -------
     propensity_scores : np.ndarray
         Estimated propensity scores, trimmed to [trim_threshold, 1-trim_threshold].
-    coefficients : Dict[str, float]
+    coefficients : dict[str, float]
         Dictionary mapping variable names to estimated coefficients,
         including '_intercept' for the constant term.
 
@@ -628,8 +630,8 @@ def estimate_outcome_model(
     data: pd.DataFrame,
     y: str,
     d: str,
-    controls: List[str],
-) -> Tuple[np.ndarray, Dict[str, float]]:
+    controls: list[str],
+) -> Tuple[np.ndarray, dict[str, float]]:
     """
     Estimate the outcome regression model on control units.
 
@@ -644,14 +646,14 @@ def estimate_outcome_model(
         Outcome variable column name.
     d : str
         Treatment indicator column name.
-    controls : List[str]
+    controls : list[str]
         Covariate column names for the outcome model.
 
     Returns
     -------
     predictions : np.ndarray
         Predicted outcome values for all units based on control regression.
-    coefficients : Dict[str, float]
+    coefficients : dict[str, float]
         Dictionary mapping variable names to estimated coefficients,
         including '_intercept' for the constant term.
 
@@ -695,13 +697,13 @@ def compute_ipwra_se_analytical(
     data: pd.DataFrame,
     y: str,
     d: str,
-    controls: List[str],
+    controls: list[str],
     att: float,
     pscores: np.ndarray,
     m0_hat: np.ndarray,
     weights: np.ndarray,
     alpha: float = 0.05,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
     Compute IPWRA standard error using the influence function approach.
 
@@ -718,7 +720,7 @@ def compute_ipwra_se_analytical(
         Outcome variable column name.
     d : str
         Treatment indicator column name.
-    controls : List[str]
+    controls : list[str]
         Control variable column names.
     att : float
         Estimated ATT value.
@@ -781,13 +783,13 @@ def compute_ipwra_se_bootstrap(
     data: pd.DataFrame,
     y: str,
     d: str,
-    controls: List[str],
-    propensity_controls: Optional[List[str]],
+    controls: list[str],
+    propensity_controls: list[str] | None,
     trim_threshold: float,
     n_bootstrap: int,
-    seed: Optional[int],
+    seed: int | None,
     alpha: float,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
     Compute IPWRA standard error using nonparametric bootstrap.
 
@@ -803,9 +805,9 @@ def compute_ipwra_se_bootstrap(
         Outcome variable column name.
     d : str
         Treatment indicator column name.
-    controls : List[str]
+    controls : list[str]
         Control variable column names for outcome model.
-    propensity_controls : List[str] or None
+    propensity_controls : list[str] or None
         Control variable column names for propensity score model.
     trim_threshold : float
         Propensity score trimming threshold.
@@ -914,7 +916,7 @@ class PSMResult:
         Estimated propensity scores for all observations.
     match_counts : np.ndarray
         Number of matches for each treated unit.
-    matched_control_ids : List[List[int]]
+    matched_control_ids : list[list[int]]
         List of matched control unit indices for each treated unit.
     n_treated : int
         Number of treated units.
@@ -935,11 +937,11 @@ class PSMResult:
     pvalue: float
     propensity_scores: np.ndarray
     match_counts: np.ndarray
-    matched_control_ids: List[List[int]]
+    matched_control_ids: list[list[int]]
     n_treated: int
     n_control: int
     n_matched: int
-    caliper: Optional[float]
+    caliper: float | None
     n_dropped: int
 
 
@@ -947,22 +949,22 @@ def estimate_psm(
     data: pd.DataFrame,
     y: str,
     d: str,
-    propensity_controls: List[str],
+    propensity_controls: list[str],
     n_neighbors: int = 1,
     with_replacement: bool = True,
-    caliper: Optional[float] = None,
+    caliper: float | None = None,
     caliper_scale: str = 'sd',
     trim_threshold: float = 0.01,
     se_method: str = 'abadie_imbens',
     n_bootstrap: int = 200,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     alpha: float = 0.05,
     match_order: str = 'data',
     return_diagnostics: bool = False,
-    gvar_col: Optional[str] = None,
-    ivar_col: Optional[str] = None,
-    cohort_g: Optional[int] = None,
-    period_r: Optional[int] = None,
+    gvar_col: str | None = None,
+    ivar_col: str | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> PSMResult:
     """
     Estimate ATT using propensity score matching.
@@ -988,7 +990,7 @@ def estimate_psm(
         Outcome variable column name (typically transformed outcome).
     d : str
         Treatment indicator column name (1=treated, 0=control).
-    propensity_controls : List[str]
+    propensity_controls : list[str]
         Covariate column names for propensity score model.
     n_neighbors : int, default=1
         Number of control matches per treated unit (k).
@@ -1187,7 +1189,7 @@ def _validate_psm_inputs(
     data: pd.DataFrame,
     y: str,
     d: str,
-    propensity_controls: List[str],
+    propensity_controls: list[str],
     n_neighbors: int,
 ) -> None:
     """
@@ -1201,7 +1203,7 @@ def _validate_psm_inputs(
         Outcome variable column name.
     d : str
         Treatment indicator column name.
-    propensity_controls : List[str]
+    propensity_controls : list[str]
         Propensity score control variable names.
     n_neighbors : int
         Number of nearest neighbors.
@@ -1237,8 +1239,8 @@ def _nearest_neighbor_match(
     pscores_control: np.ndarray,
     n_neighbors: int,
     with_replacement: bool,
-    caliper: Optional[float],
-) -> Tuple[List[List[int]], np.ndarray, int]:
+    caliper: float | None,
+) -> Tuple[list[list[int]], np.ndarray, int]:
     """
     Perform nearest neighbor propensity score matching.
 
@@ -1260,7 +1262,7 @@ def _nearest_neighbor_match(
 
     Returns
     -------
-    matched_control_ids : List[List[int]]
+    matched_control_ids : list[list[int]]
         List of matched control unit indices for each treated unit.
     match_counts : np.ndarray
         Number of valid matches for each treated unit.
@@ -1270,12 +1272,12 @@ def _nearest_neighbor_match(
     n_treat = len(pscores_treat)
     n_control = len(pscores_control)
     
-    matched_control_ids: List[List[int]] = []
+    matched_control_ids: list[list[int]] = []
     match_counts = np.zeros(n_treat, dtype=int)
     n_dropped = 0
     
     # Track used controls for matching without replacement
-    used_controls: Optional[set] = None if with_replacement else set()
+    used_controls: set | None = None if with_replacement else set()
     
     for i in range(n_treat):
         ps_i = pscores_treat[i]
@@ -1334,16 +1336,16 @@ def _nearest_neighbor_match(
 def _compute_psm_se_abadie_imbens(
     Y_treat: np.ndarray,
     Y_control: np.ndarray,
-    matched_control_ids: List[List[int]],
+    matched_control_ids: list[list[int]],
     att: float,
     alpha: float = 0.05,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
-    Compute Abadie-Imbens heteroskedasticity-robust standard error.
+    Compute heteroskedasticity-robust standard error for matching estimators.
 
     Uses the variance of individual treatment effects to estimate the
-    standard error of the ATT, following a simplified version of the
-    Abadie-Imbens (2006) variance formula.
+    standard error of the ATT, based on the asymptotic variance formula
+    that accounts for heterogeneous treatment effects across matched pairs.
 
     Parameters
     ----------
@@ -1351,7 +1353,7 @@ def _compute_psm_se_abadie_imbens(
         Outcome values for treated units.
     Y_control : np.ndarray
         Outcome values for control units.
-    matched_control_ids : List[List[int]]
+    matched_control_ids : list[list[int]]
         Matched control indices for each treated unit.
     att : float
         Estimated ATT value.
@@ -1399,16 +1401,16 @@ def _compute_psm_se_bootstrap(
     data: pd.DataFrame,
     y: str,
     d: str,
-    propensity_controls: List[str],
+    propensity_controls: list[str],
     n_neighbors: int,
     with_replacement: bool,
-    caliper: Optional[float],
+    caliper: float | None,
     caliper_scale: str,
     trim_threshold: float,
     n_bootstrap: int,
-    seed: Optional[int],
+    seed: int | None,
     alpha: float,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
     Compute PSM standard error using nonparametric bootstrap.
 
@@ -1424,7 +1426,7 @@ def _compute_psm_se_bootstrap(
         Outcome variable column name.
     d : str
         Treatment indicator column name.
-    propensity_controls : List[str]
+    propensity_controls : list[str]
         Propensity score control variable names.
     n_neighbors : int
         Number of nearest neighbors.

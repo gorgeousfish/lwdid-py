@@ -7,13 +7,6 @@ finite-sample valid p-values without distributional assumptions by comparing
 the observed test statistic to its null distribution generated through random
 reassignment of treatment cohort labels.
 
-The inference procedure operates by:
-
-1. Permuting or bootstrapping treatment cohort assignments across units
-2. Re-transforming the data and re-estimating effects under each permutation
-3. Computing a two-sided p-value as the proportion of permutation statistics
-   at least as extreme as the observed statistic
-
 Notes
 -----
 Randomization inference is particularly useful in staggered DiD settings with
@@ -210,11 +203,12 @@ def randomization_inference_staggered(
     A minimum of 50 valid replications (or 10% of rireps, whichever is larger)
     is required to ensure reliable p-value computation.
     """
-    # Validate replication count
+    # -------------------------------------------------------------------------
+    # Input Validation
+    # -------------------------------------------------------------------------
     if rireps <= 0:
         raise RandomizationError("rireps must be positive")
 
-    # Validate target specification
     if target == 'cohort' and target_cohort is None:
         raise RandomizationError("target_cohort required when target='cohort'")
 
@@ -223,61 +217,57 @@ def randomization_inference_staggered(
             "target_cohort and target_period required when target='cohort_time'"
         )
 
-    # Validate resampling method
     if ri_method not in ('permutation', 'bootstrap'):
         raise RandomizationError("ri_method must be 'permutation' or 'bootstrap'")
 
     # Overall effect requires never-treated units as consistent reference group
+    # across all permutations; without them, the control group varies arbitrarily
     if target == 'overall' and n_never_treated == 0:
         raise RandomizationError(
             "RI for overall effect requires never treated units. "
             "Use target='cohort_time' when no NT units exist."
         )
 
-    # Validate transformation method
     rolling_lower = rolling.lower()
     if rolling_lower not in ('demean', 'detrend'):
         raise RandomizationError(
             f"rolling must be 'demean' or 'detrend', got '{rolling}'"
         )
 
-    # Initialize random number generator with optional seed for reproducibility
+    # Seed ensures reproducibility of permutation sequence across runs
     rng = np.random.default_rng(seed)
     
-    # Extract unit-level cohort assignments (each unit has a single cohort value)
+    # Cohort is time-invariant within unit; extract once for efficient permutation
     unit_gvar = data.groupby(ivar)[gvar].first()
     unit_ids = unit_gvar.index.tolist()
     n_units = len(unit_ids)
 
-    # Require minimum sample size for meaningful permutation distribution
+    # Permutation distribution requires sufficient units for meaningful inference
     if n_units < 4:
         raise RandomizationError(f"Too few units for RI: N={n_units}")
 
-    # Deferred imports to avoid circular dependencies
+    # Deferred imports to avoid circular dependencies between submodules
     from .transformations import transform_staggered_demean, transform_staggered_detrend
     from .estimation import estimate_cohort_time_effects
     from .aggregation import aggregate_to_cohort, aggregate_to_overall, get_cohorts
 
-    # Select transformation function based on rolling method
     transform_func = (
         transform_staggered_demean
         if rolling_lower == 'demean'
         else transform_staggered_detrend
     )
 
-    # Maximum time period for cohort aggregation bounds
     T_max = int(data[tvar].max())
     
     # =========================================================================
     # Resampling Loop
     # =========================================================================
-    # Pre-allocate array for permutation statistics; NaN indicates invalid rep
+    # NaN indicates invalid replication for later filtering
     perm_stats = np.empty(rireps, dtype=float)
     perm_stats.fill(np.nan)
 
     for rep in range(rireps):
         try:
-            # Generate resampled cohort assignments
             if ri_method == 'permutation':
                 # Without-replacement shuffle preserves marginal cohort distribution
                 perm_idx = rng.permutation(n_units)
@@ -287,24 +277,19 @@ def randomization_inference_staggered(
                 boot_idx = rng.integers(0, n_units, size=n_units)
                 perm_gvar = unit_gvar.values[boot_idx]
 
-            # Map permuted cohorts back to original unit identifiers
             perm_gvar_mapping = dict(zip(unit_ids, perm_gvar))
 
-            # Apply permuted cohort assignments to data
             data_perm = data.copy()
             data_perm[gvar] = data_perm[ivar].map(perm_gvar_mapping)
 
-            # Apply rolling transformation with permuted cohort structure
             try:
                 data_transformed = transform_func(
                     data_perm, y, ivar, tvar, gvar
                 )
             except (ValueError, KeyError):
-                # Mark as invalid if transformation fails
                 perm_stats[rep] = np.nan
                 continue
 
-            # Re-estimate target effect under permuted assignment
             if target == 'overall':
                 try:
                     result = aggregate_to_overall(
@@ -320,7 +305,7 @@ def randomization_inference_staggered(
             elif target == 'cohort':
                 try:
                     perm_cohorts = get_cohorts(data_transformed, gvar, ivar)
-                    # Target cohort may be absent after permutation
+                    # Permutation may reassign all units away from target cohort
                     if target_cohort not in perm_cohorts:
                         perm_stats[rep] = np.nan
                         continue
@@ -340,7 +325,7 @@ def randomization_inference_staggered(
                     perm_stats[rep] = np.nan
 
             else:
-                # Cohort-time specific effect
+                # target == 'cohort_time'
                 try:
                     ct_results = estimate_cohort_time_effects(
                         data_transformed, gvar, ivar, tvar,
@@ -349,7 +334,6 @@ def randomization_inference_staggered(
                         cluster_var=cluster_var,
                         transform_type=rolling_lower,
                     )
-                    # Locate effect for target (g, r) pair
                     target_result = [
                         r for r in ct_results
                         if r.cohort == target_cohort and r.period == target_period
@@ -362,18 +346,17 @@ def randomization_inference_staggered(
                     perm_stats[rep] = np.nan
 
         except Exception:
-            # Mark as invalid for unexpected estimation failures
+            # Catch-all for unexpected failures; NaN exclusion handles these
             perm_stats[rep] = np.nan
     
     # =========================================================================
     # P-Value Computation
     # =========================================================================
-    # Filter to valid (non-NaN) replication statistics
     valid_stats = perm_stats[~np.isnan(perm_stats)]
     n_valid = len(valid_stats)
     n_failed = rireps - n_valid
 
-    # Require minimum valid replications for reliable p-value estimation
+    # Insufficient valid replications yield unreliable p-value estimates
     min_valid = max(50, int(0.1 * rireps))
     if n_valid < min_valid:
         raise RandomizationError(
@@ -382,11 +365,10 @@ def randomization_inference_staggered(
             f"Consider increasing rireps or checking data quality."
         )
 
-    # Two-sided p-value: proportion of permutation statistics with absolute
-    # value at least as extreme as the observed statistic
+    # Two-sided p-value under sharp null hypothesis of no treatment effect
     p_value = float((np.abs(valid_stats) >= abs(observed_att)).mean())
 
-    # Issue warning if substantial fraction of replications failed
+    # High failure rate may indicate data quality issues or model misspecification
     if n_failed / rireps > 0.1:
         warnings.warn(
             f"Staggered RI: {n_failed}/{rireps} replications failed "
@@ -466,11 +448,10 @@ def ri_overall_effect(
     """
     from .transformations import get_cohorts
 
-    # Extract unit-level cohort assignments
     unit_gvar = data.groupby(ivar)[gvar].first()
     cohorts = get_cohorts(data, gvar, ivar)
 
-    # Identify never-treated units: NaN, zero, or infinite cohort values
+    # Never-treated units: NaN, zero, or infinite gvar values
     nt_mask = (
         unit_gvar.isna() |
         (unit_gvar == 0) |
@@ -561,11 +542,10 @@ def ri_cohort_effect(
     """
     from .transformations import get_cohorts
 
-    # Extract unit-level cohort assignments
     unit_gvar = data.groupby(ivar)[gvar].first()
     cohorts = get_cohorts(data, gvar, ivar)
 
-    # Identify never-treated units for reference group
+    # Never-treated units: NaN, zero, or infinite gvar values
     nt_mask = (
         unit_gvar.isna() |
         (unit_gvar == 0) |

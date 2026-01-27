@@ -127,16 +127,16 @@ class TestDemeanTransform:
         assert abs(unit3_postavg.iloc[0] - (-1.5)) < 1e-7
 
     def test_firstpost_identification(self):
-        """Test that firstpost flag correctly identifies first observation per unit.
+        """Test that firstpost flag correctly identifies first post-treatment observation per unit.
 
-        The 'firstpost' flag marks the first observation for each unit, which is
-        used for visualization purposes. This is NOT the first post-treatment
-        observation, but rather the first observation in the dataset for each unit.
+        The 'firstpost' flag marks the first post-treatment observation for each unit
+        (tindex == tpost1), which is used for cross-sectional OLS regression in ATT
+        estimation. This creates a cross-sectional sample with one observation per unit.
 
         Verifies:
         1. Exactly N rows are flagged (one per unit)
         2. Each unit has exactly one firstpost row
-        3. The flagged row is the first observation (minimum tindex) for that unit
+        3. The flagged row is at tindex == tpost1 for that unit
         """
         data = pd.read_csv('tests/data/mve_demean.csv')
         data['d_'] = (data['d'] != 0).astype(int)
@@ -151,7 +151,7 @@ class TestDemeanTransform:
         n_firstpost = data_transformed['firstpost'].sum()
         assert n_firstpost == 3, f"Expected 3 firstpost rows, got {n_firstpost}"
 
-        # Verify each unit has exactly one firstpost row at its minimum tindex
+        # Verify each unit has exactly one firstpost row at tindex == tpost1
         for unit_id in [1, 2, 3]:
             unit_firstpost = data_transformed[
                 (data_transformed['id'] == unit_id) &
@@ -160,10 +160,9 @@ class TestDemeanTransform:
             assert len(unit_firstpost) == 1, \
                 f"Unit {unit_id} should have exactly 1 firstpost row"
 
-            # Verify it's the first observation for that unit
-            unit_data = data_transformed[data_transformed['id'] == unit_id]
-            assert unit_firstpost['tindex'].iloc[0] == unit_data['tindex'].min(), \
-                f"Unit {unit_id} firstpost should be at minimum tindex"
+            # Verify it's at tpost1 (the first post-treatment period)
+            assert unit_firstpost['tindex'].iloc[0] == 3, \
+                f"Unit {unit_id} firstpost should be at tpost1=3"
     
     def test_ydot_all_periods(self):
         """Verify that ``ydot`` is computed for all periods (including pre).
