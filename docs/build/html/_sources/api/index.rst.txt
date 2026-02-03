@@ -12,6 +12,7 @@ Core Modules
 
    core
    results
+   staggered
    transformations
    estimation
    validation
@@ -24,8 +25,14 @@ Quick Index
 
 Main exported components:
 
-- :func:`lwdid.lwdid` - Main estimation function
+- :func:`lwdid.lwdid` - Main estimation function supporting three scenarios:
+
+  - Small-sample common timing with exact t-based inference (Lee and Wooldridge, 2026)
+  - Large-sample common timing with robust standard errors (Lee and Wooldridge, 2025)
+  - Staggered adoption with cohort-time effects (Lee and Wooldridge, 2025)
+
 - :class:`lwdid.LWDIDResults` - Results container class
+- :mod:`lwdid.staggered` - Staggered DiD module
 - :mod:`lwdid.exceptions` - Exception hierarchy
 
 See individual module pages for detailed documentation.

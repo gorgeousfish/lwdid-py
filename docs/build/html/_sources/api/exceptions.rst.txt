@@ -29,7 +29,9 @@ Exception Hierarchy
    │   ├── NoTreatedUnitsError
    │   ├── NoControlUnitsError
    │   ├── InsufficientPrePeriodsError
-   │   └── InsufficientQuarterDiversityError
+   │   ├── InsufficientQuarterDiversityError
+   │   └── NoNeverTreatedError
+   ├── InvalidStaggeredDataError
    ├── TimeDiscontinuityError
    ├── MissingRequiredColumnError
    ├── RandomizationError
@@ -142,6 +144,103 @@ Specialized subclass of :class:`InvalidParameterError` raised when the
 ``vce`` argument is not one of ``None``, ``'robust'``, ``'hc1'``,
 ``'hc3'`` or ``'cluster'``.
 
+InvalidStaggeredDataError
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Raised when:** Staggered adoption data validation fails.
+
+**Common causes:**
+
+- ``gvar`` column contains invalid values (negative numbers or non-numeric types)
+- No valid treatment cohorts (all units are never-treated)
+- ``gvar`` is not time-invariant within units (same unit has different gvar
+  values across time periods)
+
+**Valid gvar values:**
+
+- Positive integer: Treatment cohort (first treatment period)
+- 0: Never treated
+- np.inf: Never treated
+- NaN/None: Never treated
+
+**Example:**
+
+.. code-block:: python
+
+   from lwdid import lwdid
+   from lwdid.exceptions import InvalidStaggeredDataError
+
+   try:
+       results = lwdid(
+           data, y='outcome', ivar='unit', tvar='year',
+           gvar='first_treat', rolling='demean'
+       )
+   except InvalidStaggeredDataError as e:
+       print(f"Staggered data error: {e}")
+       # Check gvar column for invalid values
+
+**Typical error messages:**
+
+.. code-block:: text
+
+   InvalidStaggeredDataError: gvar column contains negative values.
+
+.. code-block:: text
+
+   InvalidStaggeredDataError: No valid treatment cohorts found.
+   All units are never-treated.
+
+.. code-block:: text
+
+   InvalidStaggeredDataError: gvar is not time-invariant within unit 'unit_5'.
+
+NoNeverTreatedError
+~~~~~~~~~~~~~~~~~~~
+
+**Raised when:** Never-treated units are required but absent.
+
+This is a subclass of :class:`InsufficientDataError` raised in staggered
+adoption settings when cohort-level or overall aggregation is requested
+but no never-treated units exist in the data.
+
+**Common causes:**
+
+- ``aggregate='cohort'`` specified but no never-treated units
+- ``aggregate='overall'`` specified but no never-treated units
+
+**Why never-treated units are required:**
+
+For cohort and overall effect aggregation, different cohorts use different
+pre-treatment periods for transformation. Only never-treated units can
+serve as a consistent reference across cohorts.
+
+For (g,r)-specific effects with ``aggregate='none'``, not-yet-treated units
+can serve as controls, so this exception is not raised.
+
+**Example:**
+
+.. code-block:: python
+
+   from lwdid import lwdid
+   from lwdid.exceptions import NoNeverTreatedError
+
+   try:
+       results = lwdid(
+           data, y='outcome', ivar='unit', tvar='year',
+           gvar='first_treat', rolling='demean',
+           aggregate='overall'  # Requires never-treated units
+       )
+   except NoNeverTreatedError as e:
+       print(f"No never-treated units: {e}")
+       # Use aggregate='none' or add never-treated units to data
+
+**Typical error message:**
+
+.. code-block:: text
+
+   NoNeverTreatedError: aggregate='overall' requires never-treated units,
+   but none were found in the data.
+
 Data Validation Errors
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -211,6 +310,8 @@ Catch specific exceptions for targeted error handling:
    from lwdid.exceptions import (
        InvalidParameterError,
        InsufficientDataError,
+       InvalidStaggeredDataError,
+       NoNeverTreatedError,
        TimeDiscontinuityError,
        MissingRequiredColumnError,
        RandomizationError,
@@ -227,6 +328,14 @@ Catch specific exceptions for targeted error handling:
    except TimeDiscontinuityError as e:
        print(f"Time structure issue: {e}")
        # Fix time index or post indicator
+
+   except InvalidStaggeredDataError as e:
+       print(f"Staggered data error: {e}")
+       # Check gvar column for valid values
+
+   except NoNeverTreatedError as e:
+       print(f"No never-treated units: {e}")
+       # Use aggregate='none' or add never-treated units
 
    except InsufficientDataError as e:
        print(f"Not enough data: {e}")

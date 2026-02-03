@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Transformations Module (transformations) &mdash; lwdid 0.1.0</title>
+  <title>Transformations Module &mdash; lwdid 0.2.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -14,16 +14,17 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Estimation Module (estimation)" href="estimation.html" />
-    <link rel="prev" title="LWDIDResults Class" href="results.html" /> 
+    <link rel="prev" title="Staggered DiD Module (staggered)" href="staggered.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -65,7 +66,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart.html#basic-example">Basic Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#simplest-usage">Simplest Usage</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#output">Output</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart.html#key-parameters">Key Parameters</a><ul>
@@ -73,7 +73,9 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart.html#common-options">Common Options</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#heteroskedasticity-robust-standard-errors">Heteroskedasticity-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#small-sample-exact-inference">Small-Sample Exact Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#large-sample-inference">Large-Sample Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#randomization-inference">Randomization Inference</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#adding-control-variables">Adding Control Variables</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#quarterly-data">Quarterly Data</a></li>
@@ -91,11 +93,17 @@
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#key-requirements">Key Requirements</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#staggered-adoption">Staggered Adoption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#staggered-results">Staggered Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#key-staggered-parameters">Key Staggered Parameters</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart.html#next-steps">Next Steps</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#scenario-selection-guide">Scenario Selection Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#quick-reference">Quick Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
@@ -106,8 +114,11 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#variance-estimation">Variance Estimation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#ols-homoskedastic">OLS (Homoskedastic)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc0-white-s-heteroskedasticity-consistent">HC0 (White’s Heteroskedasticity-Consistent)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc1-heteroskedasticity-robust">HC1 (Heteroskedasticity-Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc2-leverage-adjusted">HC2 (Leverage-Adjusted)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc3-small-sample-adjusted-robust">HC3 (Small-Sample Adjusted Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc4-high-leverage-adjusted">HC4 (High-Leverage Adjusted)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#cluster-robust">Cluster-Robust</a></li>
 </ul>
 </li>
@@ -143,12 +154,22 @@
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#troubleshooting">Troubleshooting</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#common-errors">Common Errors</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#performance-tips">Performance Tips</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#staggered-adoption-design">Staggered Adoption Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#id2">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#accessing-staggered-results">Accessing Staggered Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#control-group-strategies">Control Group Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#estimator-selection">Estimator Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#staggered-example">Staggered Example</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#further-reading">Further Reading</a></li>
@@ -186,6 +207,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../examples/index.html#creating-publication-tables">Creating Publication Tables</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#staggered-did-castle-law">Staggered DiD: Castle Law</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#castle-doctrine-analysis">Castle Doctrine Analysis</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../examples/index.html#complete-workflow-example">Complete Workflow Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../examples/index.html#end-to-end-analysis">End-to-End Analysis</a></li>
 </ul>
@@ -204,40 +229,39 @@
 <li class="toctree-l4"><a class="reference internal" href="core.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="results.html">LWDIDResults Class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="results.html#lwdid.LWDIDResults"><code class="docutils literal notranslate"><span class="pre">LWDIDResults</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="results.html">Results Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="results.html#attributes-reference">Attributes Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#methods-reference">Methods Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#usage-by-design-type">Usage by Design Type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#lwdidresults-class">LWDIDResults Class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="results.html#examples">Examples</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="results.html#accessing-core-estimates">Accessing Core Estimates</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#sample-information">Sample Information</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#period-specific-effects">Period-Specific Effects</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#randomization-inference-results">Randomization Inference Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#printing-summary">Printing Summary</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#visualization">Visualization</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#exporting-results">Exporting Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#working-with-results-programmatically">Working with Results Programmatically</a></li>
+<li class="toctree-l3"><a class="reference internal" href="staggered.html">Staggered DiD Module (staggered)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#key-concepts">Key Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#transformations">Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#control-groups">Control Groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#estimation">Estimation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#aggregation">Aggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#ipw-estimator">IPW Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#examples">Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="results.html#attributes-reference">Attributes Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="results.html#core-estimates">Core Estimates</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#id26">Sample Information</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#period-specific-results">Period-Specific Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#randomization-inference">Randomization Inference</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="results.html#methods-reference">Methods Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="results.html#see-also">See Also</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">Transformations Module (transformations)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#lwdid.transformations.apply_rolling_transform"><code class="docutils literal notranslate"><span class="pre">apply_rolling_transform()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lwdid.transformations.detrend_unit"><code class="docutils literal notranslate"><span class="pre">detrend_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lwdid.transformations.demeanq_unit"><code class="docutils literal notranslate"><span class="pre">demeanq_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lwdid.transformations.detrendq_unit"><code class="docutils literal notranslate"><span class="pre">detrendq_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#overview">Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#transformation-methods">Transformation Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#implementation-details">Implementation Details</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Transformations Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#available-transformations">Available Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Available Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#unit-level-functions">Unit-Level Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#internal-functions">Internal Functions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#example-usage">Example Usage</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#technical-notes">Technical Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transformation-selection-guide">Transformation Selection Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#staggered-adoption-transformations">Staggered Adoption Transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#see-also">See Also</a></li>
 </ul>
 </li>
@@ -251,6 +275,8 @@
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#implementation-details">Implementation Details</a></li>
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#technical-notes">Technical Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#large-sample-inference">Large-Sample Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#estimator-selection-for-large-samples">Estimator Selection for Large Samples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -258,23 +284,25 @@
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#best-practices">Best Practices</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="randomization.html">Randomization Module (randomization)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#lwdid.randomization.randomization_inference"><code class="docutils literal notranslate"><span class="pre">randomization_inference()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#overview">Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#how-randomization-inference-works">How Randomization Inference Works</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#ri-methods">RI Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#practical-considerations">Practical Considerations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#interpreting-ri-results">Interpreting RI Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#limitations">Limitations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#examples">Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="randomization.html">Randomization Inference Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#resampling-methods">Resampling Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#parameters">Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#returns">Returns</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#methodological-notes">Methodological Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="randomization.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -285,6 +313,7 @@
 <li class="toctree-l4"><a class="reference internal" href="visualization.html#plot-components">Plot Components</a></li>
 <li class="toctree-l4"><a class="reference internal" href="visualization.html#basic-usage">Basic Usage</a></li>
 <li class="toctree-l4"><a class="reference internal" href="visualization.html#advanced-customization">Advanced Customization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="visualization.html#staggered-adoption-visualization">Staggered Adoption Visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="visualization.html#exporting-plots">Exporting Plots</a></li>
 <li class="toctree-l4"><a class="reference internal" href="visualization.html#plot-parameters-reference">Plot Parameters Reference</a></li>
 <li class="toctree-l4"><a class="reference internal" href="visualization.html#examples-gallery">Examples Gallery</a></li>
@@ -305,6 +334,8 @@
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.MissingRequiredColumnError"><code class="docutils literal notranslate"><span class="pre">MissingRequiredColumnError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.RandomizationError"><code class="docutils literal notranslate"><span class="pre">RandomizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-classes">Exception Classes</a></li>
@@ -342,10 +373,20 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#efficiency-considerations">Efficiency Considerations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../methodological_notes.html#monte-carlo-simulation-evidence">Monte Carlo Simulation Evidence</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#no-anticipation">No Anticipation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#parallel-trends">Parallel Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#common-treatment-timing">Common Treatment Timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#common-treatment-timing-common-timing-mode">Common Treatment Timing (Common Timing Mode)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
 </ul>
 </li>
@@ -364,6 +405,15 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#staggered-adoption">Staggered Adoption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#identification">Identification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#transformation">Transformation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#aggregation">Aggregation</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#references">References</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#further-reading">Further Reading</a></li>
@@ -372,10 +422,6 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../changelog.html#version-0-1-0">Version 0.1.0</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../contributing.html#how-to-contribute">How to Contribute</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../contributing.html#development-setup">Development Setup</a></li>
@@ -400,7 +446,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="index.html">API Reference</a></li>
-      <li class="breadcrumb-item active">Transformations Module (transformations)</li>
+      <li class="breadcrumb-item active">Transformations Module</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/api/transformations.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -410,78 +456,143 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <blockquote>
-<div><p>143Advanced users who need direct access to the low-level transformation
-144step can consult the docstring and source of
-145:func:<cite>lwdid.transformations.apply_rolling_transform</cite>, which implements
-146all four modes used by <a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a>.
-133  results = lwdid(</p>
-</div></blockquote>
+  <section id="transformations-module">
+<h1>Transformations Module<a class="headerlink" href="#transformations-module" title="Link to this heading"></a></h1>
+<p>Unit-specific panel data transformations for difference-in-differences.</p>
+<p>This module implements unit-specific outcome transformations that remove
+pre-treatment heterogeneity from panel data. Transformation parameters are
+estimated using only pre-treatment observations, then applied out-of-sample
+to all periods including post-treatment.</p>
+<p>The transformations convert panel difference-in-differences estimation into
+cross-sectional treatment effects problems, enabling the application of various
+estimators (regression adjustment, inverse probability weighting, doubly robust,
+matching) to the transformed outcomes.</p>
+<p id="module-lwdid.transformations">Unit-specific panel data transformations for difference-in-differences.</p>
+<p>This module implements unit-specific outcome transformations that remove
+pre-treatment heterogeneity from panel data. Transformation parameters are
+estimated using only pre-treatment observations, then applied out-of-sample
+to all periods including post-treatment.</p>
+<p>The transformations convert panel difference-in-differences estimation into
+cross-sectional treatment effects problems. Under no anticipation and parallel
+trends assumptions, standard treatment effect estimators (regression adjustment,
+inverse probability weighting, doubly robust, matching) can be applied to the
+transformed outcomes.</p>
+<section id="available-transformations">
+<h2>Available Transformations<a class="headerlink" href="#available-transformations" title="Link to this heading"></a></h2>
 <dl>
-<dt>data,</dt><dd><blockquote>
-<div><p>y=’outcome’,
-d=’treated’,
-ivar=’unit’,
-tvar=’year’,
-post=’post_treatment’,
-rolling=’detrend’,  # choose one of ‘demean’, ‘detrend’, ‘demeanq’, ‘detrendq’</p>
-</div></blockquote>
-<p>)
-142131  from lwdid import lwdid
-132129.. code-block:: python
-130125In typical applications you do not call the transformation routines
-126directly. Instead, you specify the desired transformation mode via the
-127``rolling`` argument to <a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a>:
-12821- <code class="docutils literal notranslate"><span class="pre">'demean'</span></code>: Remove unit-specific pre-treatment means (unit fixed effects)
-22- <code class="docutils literal notranslate"><span class="pre">'detrend'</span></code>: Remove unit-specific linear trends
-23- <code class="docutils literal notranslate"><span class="pre">'demeanq'</span></code>: Demean with quarter-of-year fixed effects
-24- <code class="docutils literal notranslate"><span class="pre">'detrendq'</span></code>: Detrend with linear trends and quarter-of-year fixed effects</p>
+<dt>demean</dt><dd><p>Removes unit-specific pre-treatment mean:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \bar{Y}_{i,pre}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\bar{Y}_{i,pre} = T_0^{-1} \sum_{s&lt;g} Y_{is}\)</span>.
+Requires at least 1 pre-treatment period per unit.</p>
+</dd>
+<dt>detrend</dt><dd><p>Removes unit-specific linear time trend:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \hat{\alpha}_i - \hat{\beta}_i t\]</div>
+<p>where <span class="math notranslate nohighlight">\((\hat{\alpha}_i, \hat{\beta}_i)\)</span> are OLS estimates from
+pre-treatment data. Requires at least 2 pre-treatment periods per unit.</p>
+</dd>
+<dt>demeanq</dt><dd><p>Removes unit-specific mean with quarterly seasonal fixed effects:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \hat{\mu}_i - \sum_{q=2}^{4} \hat{\gamma}_q D_q\]</div>
+<p>where <span class="math notranslate nohighlight">\(D_q\)</span> are quarter dummies with the smallest observed quarter
+as reference category. Requires <span class="math notranslate nohighlight">\(n_{pre} \geq Q + 1\)</span> per unit.</p>
+</dd>
+<dt>detrendq</dt><dd><p>Removes unit-specific linear trend with quarterly seasonal effects:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \hat{\alpha}_i - \hat{\beta}_i t
+                - \sum_{q=2}^{4} \hat{\gamma}_q D_q\]</div>
+<p>Requires <span class="math notranslate nohighlight">\(n_{pre} \geq Q + 2\)</span> per unit.</p>
 </dd>
 </dl>
-<section id="transformations-module-transformations">
-<h1>Transformations Module (transformations)<a class="headerlink" href="#transformations-module-transformations" title="Link to this heading"></a></h1>
-<p>The transformations module implements the four panel-to-cross-section
-transformations described in Lee and Wooldridge (2025).</p>
-<p id="module-lwdid.transformations">Transformation module for the Lee and Wooldridge (2025) DiD estimator.</p>
-<p>Implements transformation methods for the Lee and Wooldridge (2025)
-difference-in-differences estimator.</p>
+<p class="rubric">Notes</p>
+<p>The transformations eliminate unit-specific level differences or trends that
+may be correlated with treatment assignment. By removing these pre-treatment
+patterns, the parallel trends assumption becomes an assumption about the
+transformed outcomes rather than the original levels.</p>
+<p>Time centering is applied in detrending methods to improve numerical stability
+of OLS estimation. This reduces the condition number of the design matrix
+without affecting the final residuals, as centering is an affine transformation
+that preserves predicted values.</p>
+</section>
+<section id="id1">
+<h2>Available Transformations<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="demean">
+<h3>demean<a class="headerlink" href="#demean" title="Link to this heading"></a></h3>
+<p>Removes unit-specific pre-treatment mean:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \bar{Y}_{i,pre}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\bar{Y}_{i,pre} = T_0^{-1} \sum_{s&lt;g} Y_{is}\)</span>.</p>
+<p><strong>Requirements</strong>: At least 1 pre-treatment period per unit.</p>
+<p><strong>Use case</strong>: Standard parallel trends assumption where treatment and control
+groups have parallel outcome paths in levels.</p>
+</section>
+<section id="detrend">
+<h3>detrend<a class="headerlink" href="#detrend" title="Link to this heading"></a></h3>
+<p>Removes unit-specific linear time trend:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \hat{\alpha}_i - \hat{\beta}_i t\]</div>
+<p>where <span class="math notranslate nohighlight">\((\hat{\alpha}_i, \hat{\beta}_i)\)</span> are OLS estimates from
+pre-treatment data.</p>
+<p><strong>Requirements</strong>: At least 2 pre-treatment periods per unit.</p>
+<p><strong>Use case</strong>: Heterogeneous linear trends where treatment and control units
+may follow different linear growth paths.</p>
+</section>
+<section id="demeanq">
+<h3>demeanq<a class="headerlink" href="#demeanq" title="Link to this heading"></a></h3>
+<p>Removes unit-specific mean with quarterly seasonal fixed effects:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \hat{\mu}_i - \sum_{q=2}^{4} \hat{\gamma}_q D_q\]</div>
+<p>where <span class="math notranslate nohighlight">\(D_q\)</span> are quarter dummies with the smallest observed quarter
+as reference category.</p>
+<p><strong>Requirements</strong>: Quarterly data with quarter values in {1, 2, 3, 4}. Each
+unit needs sufficient pre-treatment observations for seasonal pattern estimation.</p>
+<p><strong>Use case</strong>: Quarterly data with seasonal patterns.</p>
+</section>
+<section id="detrendq">
+<h3>detrendq<a class="headerlink" href="#detrendq" title="Link to this heading"></a></h3>
+<p>Removes unit-specific linear trend with quarterly seasonal effects:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \hat{\alpha}_i - \hat{\beta}_i t
+               - \sum_{q=2}^{4} \hat{\gamma}_q D_q\]</div>
+<p><strong>Requirements</strong>: At least 2 pre-treatment periods per unit plus adequate
+quarter diversity for seasonal estimation.</p>
+<p><strong>Use case</strong>: Quarterly data with both trends and seasonal patterns.</p>
+</section>
+</section>
+<section id="main-function">
+<h2>Main Function<a class="headerlink" href="#main-function" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.transformations.apply_rolling_transform">
 <span class="sig-prename descclassname"><span class="pre">lwdid.transformations.</span></span><span class="sig-name descname"><span class="pre">apply_rolling_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tindex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpost1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quarter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/transformations.html#apply_rolling_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.transformations.apply_rolling_transform" title="Link to this definition"></a></dt>
-<dd><p>Apply unit-specific transformation</p>
-<p>Transforms panel data by removing unit-specific pre-treatment patterns
-(means, linear trends, or seasonal effects) to enable cross-sectional
-difference-in-differences estimation. Implements Procedures 2.1 and 3.1
-from Lee and Wooldridge (2025).</p>
+<dd><p>Apply unit-specific transformation to panel data.</p>
+<p>Dispatches to the appropriate transformation method (demean, detrend,
+demeanq, or detrendq), computes post-treatment averages, and marks the
+cross-sectional regression sample.</p>
+<p>Transformation parameters are estimated from pre-treatment data only, then
+applied out-of-sample to all observations to obtain residualized outcomes.
+This out-of-sample application is essential for valid causal inference.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Cleaned panel data containing <a href="#id1"><span class="problematic" id="id2">d_</span></a>, <a href="#id3"><span class="problematic" id="id4">post_</span></a>, and tindex columns (and tq
-for quarterly data). Structural assumptions (common timing, time
-continuity) are enforced in the validation stage.</p></li>
-<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Outcome variable column name.</p></li>
-<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Unit identifier column name.</p></li>
-<li><p><strong>tindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Time index column name.</p></li>
-<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Post-treatment indicator column name.</p></li>
-<li><p><strong>rolling</strong> (<em>{'demean'</em><em>, </em><em>'detrend'</em><em>, </em><em>'demeanq'</em><em>, </em><em>'detrendq'}</em>) – <p>Transformation method:</p>
-<ul>
-<li><p>’demean’: Unit-specific demeaning (Procedure 2.1)</p></li>
-<li><p>’detrend’: Unit-specific detrending (Procedure 3.1)</p></li>
-<li><p>’demeanq’: Demeaning with quarterly fixed effects</p></li>
-<li><p>’detrendq’: Detrending with quarterly fixed effects</p></li>
-</ul>
-</p></li>
-<li><p><strong>tpost1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – First post-treatment period index.</p></li>
-<li><p><strong>quarter</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Quarter variable column name (required for demeanq and detrendq).
-Values must be in {1, 2, 3, 4}.</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Panel data in long format with one row per unit-period observation.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of outcome variable.</p></li>
+<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of unit identifier.</p></li>
+<li><p><strong>tindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of integer-valued time index.</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of binary post-treatment indicator (0=pre, 1=post).</p></li>
+<li><p><strong>rolling</strong> (<em>{'demean'</em><em>, </em><em>'detrend'</em><em>, </em><em>'demeanq'</em><em>, </em><em>'detrendq'}</em>) – Transformation method to apply.</p></li>
+<li><p><strong>tpost1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – First post-treatment period index. Identifies the cross-sectional
+regression sample (firstpost=True for observations at tindex==tpost1).</p></li>
+<li><p><strong>quarter</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Column name of quarter indicator (values in {1, 2, 3, 4}).
+Required for quarterly methods (demeanq, detrendq).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>Input data with additional columns:</p>
+<dd class="field-even"><p><p>Copy of input data with added columns:</p>
 <ul class="simple">
-<li><p>’ydot’: Residualized outcome for all periods</p></li>
-<li><p>’ydot_postavg’: Unit-level average of ydot over post-treatment periods</p></li>
-<li><p>’firstpost’: Indicator for regression sample (one row per unit)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ydot</span></code>: Transformed (residualized) outcome for each observation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ydot_postavg</span></code>: Post-treatment average of ydot per unit.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">firstpost</span></code>: Boolean indicator for cross-sectional regression sample.</p></li>
 </ul>
 </p>
 </dd>
@@ -490,332 +601,391 @@ Values must be in {1, 2, 3, 4}.</p></li>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError" title="lwdid.exceptions.InsufficientPrePeriodsError"><strong>InsufficientPrePeriodsError</strong></a> – Insufficient pre-treatment periods for chosen method.</p></li>
-<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientQuarterDiversityError" title="lwdid.exceptions.InsufficientQuarterDiversityError"><strong>InsufficientQuarterDiversityError</strong></a> – Quarterly diversity/coverage requirements not met for demeanq or detrendq.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError" title="lwdid.exceptions.InsufficientPrePeriodsError"><strong>InsufficientPrePeriodsError</strong></a> – If any unit has insufficient pre-treatment observations for the
+    chosen transformation method.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If rolling method is invalid or quarterly method lacks quarter column.</p></li>
 </ul>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.transformations._demean_transform" title="lwdid.transformations._demean_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_demean_transform</span></code></a></dt><dd><p>Unit-specific demeaning implementation.</p>
+</dd>
+<dt><a class="reference internal" href="#lwdid.transformations._detrend_transform" title="lwdid.transformations._detrend_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_detrend_transform</span></code></a></dt><dd><p>Unit-specific detrending implementation.</p>
+</dd>
+<dt><a class="reference internal" href="#lwdid.transformations.demeanq_unit" title="lwdid.transformations.demeanq_unit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">demeanq_unit</span></code></a></dt><dd><p>Seasonal demeaning for a single unit.</p>
+</dd>
+<dt><a class="reference internal" href="#lwdid.transformations.detrendq_unit" title="lwdid.transformations.detrendq_unit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detrendq_unit</span></code></a></dt><dd><p>Seasonal detrending for a single unit.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
+</section>
+<section id="unit-level-functions">
+<h2>Unit-Level Functions<a class="headerlink" href="#unit-level-functions" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.transformations.detrend_unit">
 <span class="sig-prename descclassname"><span class="pre">lwdid.transformations.</span></span><span class="sig-name descname"><span class="pre">detrend_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tindex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/transformations.html#detrend_unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.transformations.detrend_unit" title="Link to this definition"></a></dt>
-<dd><p>Remove unit-specific linear trend estimated from pre-treatment periods</p>
-<section id="algorithm">
-<h2>Algorithm<a class="headerlink" href="#algorithm" title="Link to this heading"></a></h2>
-<ol class="arabic simple">
-<li><p>Estimate linear trend from pre-treatment data: y_it = α_i + β_i·t + ε_it</p></li>
-<li><p>Extrapolate trend to all periods: ŷ_it = α̂_i + β̂_i·t</p></li>
-<li><p>Compute residuals: ẏ_it = y_it − ŷ_it</p></li>
-</ol>
+<dd><p>Remove unit-specific linear time trend for a single unit.</p>
+<p>Estimates <span class="math notranslate nohighlight">\(Y_{it} = \alpha + \beta t + \varepsilon\)</span> via OLS using
+pre-treatment observations only, then computes out-of-sample residuals
+for all periods:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \hat{\alpha} - \hat{\beta} t\]</div>
+<p>This transformation removes unit-specific linear trends that may violate
+the parallel trends assumption in levels.</p>
 <dl class="field-list simple">
-<dt class="field-odd">type unit_data<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span></p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>unit_data</strong> (<em>pd.DataFrame</em>) – Data for a single unit containing all time periods.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of outcome variable.</p></li>
+<li><p><strong>tindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of time index.</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of binary post-treatment indicator (0=pre, 1=post).</p></li>
+</ul>
 </dd>
-<dt class="field-even">param unit_data<span class="colon">:</span></dt>
-<dd class="field-even"><p>Data for a single unit.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>]</span></p>
 </dd>
-<dt class="field-odd">type unit_data<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pandas.DataFrame</p>
-</dd>
-<dt class="field-even">type y<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-odd">param y<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Outcome variable column name.</p>
-</dd>
-<dt class="field-even">type y<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
-</dd>
-<dt class="field-odd">type tindex<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-even">param tindex<span class="colon">:</span></dt>
-<dd class="field-even"><p>Time index column name.</p>
-</dd>
-<dt class="field-odd">type tindex<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-<dt class="field-even">type post<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-odd">param post<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Post-treatment indicator column name.</p>
-</dd>
-<dt class="field-even">type post<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
-</dd>
-<dt class="field-odd">returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>(yhat_all, ydot) where yhat_all contains predicted values α̂_i + β̂_i·t
-and ydot contains residuals y_it − ŷ_it for all periods.</p>
-</dd>
-<dt class="field-even">rtype<span class="colon">:</span></dt>
-<dd class="field-even"><p>tuple of numpy.ndarray</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>yhat_all</strong> (<em>ndarray</em>) – Fitted values <span class="math notranslate nohighlight">\(\hat{\alpha} + \hat{\beta} t\)</span> for all periods.
+Returns NaN array if estimation fails.</p></li>
+<li><p><strong>ydot</strong> (<em>ndarray</em>) – Detrended outcomes for all periods. Returns NaN array if estimation
+fails due to numerical issues.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
-</section>
-<dl class="field-list simple">
+<p class="rubric">Notes</p>
+<p>Time centering at the pre-treatment mean improves numerical stability by
+reducing the condition number of <span class="math notranslate nohighlight">\(X'X\)</span>. Centering is an affine
+transformation that preserves predicted values.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.transformations._detrend_transform" title="lwdid.transformations._detrend_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_detrend_transform</span></code></a></dt><dd><p>Apply detrending to all units in panel data.</p>
+</dd>
 </dl>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.transformations.demeanq_unit">
 <span class="sig-prename descclassname"><span class="pre">lwdid.transformations.</span></span><span class="sig-name descname"><span class="pre">demeanq_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quarter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/transformations.html#demeanq_unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.transformations.demeanq_unit" title="Link to this definition"></a></dt>
-<dd><p>Remove unit-specific quarterly fixed effects estimated from pre-treatment periods</p>
+<dd><p>Remove unit-specific mean with quarterly seasonal fixed effects.</p>
+<p>Estimates a seasonal mean model using pre-treatment observations:</p>
+<div class="math notranslate nohighlight">
+\[Y_{it} = \mu + \sum_{q=2}^{Q} \gamma_q D_q + \varepsilon_{it}\]</div>
+<p>where <span class="math notranslate nohighlight">\(D_q\)</span> are quarter dummies. The smallest observed quarter serves
+as the reference category for identification.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>unit_data</strong> (<em>pd.DataFrame</em>) – Single unit’s data (all time periods).</p></li>
-<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Outcome variable column name.</p></li>
-<li><p><strong>quarter</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Quarter variable column name (values in {1, 2, 3, 4}).</p></li>
-<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Post-treatment indicator column name.</p></li>
+<li><p><strong>unit_data</strong> (<em>pd.DataFrame</em>) – Data for a single unit containing all time periods.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of outcome variable.</p></li>
+<li><p><strong>quarter</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of quarter indicator (values in {1, 2, 3, 4}).</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of binary post-treatment indicator (0=pre, 1=post).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>]</span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
-<li><p><strong>yhat_all</strong> (<em>np.ndarray</em>) – Predicted values (α̂_i + Σ γ̂_q·1{quarter=q}).</p></li>
-<li><p><strong>ydot</strong> (<em>np.ndarray</em>) – Residuals y_it − ŷ_it for all periods.</p></li>
+<li><p><strong>yhat_all</strong> (<em>ndarray</em>) – Fitted values <span class="math notranslate nohighlight">\(\hat{\mu} + \sum_q \hat{\gamma}_q D_q\)</span> for
+all periods. Returns NaN array if estimation fails.</p></li>
+<li><p><strong>ydot</strong> (<em>ndarray</em>) – Seasonally-adjusted demeaned outcomes for all periods. Returns NaN
+array if estimation fails due to numerical issues.</p></li>
 </ul>
 </p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>Estimates y_it = α_i + Σ_{q=2}^4 γ_q·1{quarter=q} + ε_it using pre-treatment
-data, with quarter=1 as baseline. Extrapolates to all periods.</p>
+<p>Using observed quarters rather than all four quarters as categories
+prevents rank-deficient design matrices when some quarters are absent
+from pre-treatment data.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.transformations.detrendq_unit" title="lwdid.transformations.detrendq_unit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detrendq_unit</span></code></a></dt><dd><p>Combines seasonal adjustment with linear trend removal.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.transformations.detrendq_unit">
 <span class="sig-prename descclassname"><span class="pre">lwdid.transformations.</span></span><span class="sig-name descname"><span class="pre">detrendq_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unit_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tindex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quarter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/transformations.html#detrendq_unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.transformations.detrendq_unit" title="Link to this definition"></a></dt>
-<dd><p>Remove unit-specific linear trend and quarterly fixed effects from pre-treatment periods</p>
+<dd><p>Remove unit-specific linear trend with quarterly seasonal fixed effects.</p>
+<p>Estimates a combined trend and seasonal model using pre-treatment data:</p>
+<div class="math notranslate nohighlight">
+\[Y_{it} = \alpha + \beta t + \sum_{q=2}^{Q} \gamma_q D_q + \varepsilon_{it}\]</div>
+<p>The smallest observed quarter serves as the reference category. Time is
+centered at its pre-treatment mean for numerical stability.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>unit_data</strong> (<em>pd.DataFrame</em>) – Single unit’s data (all time periods).</p></li>
-<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Outcome variable column name.</p></li>
-<li><p><strong>tindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Time index column name.</p></li>
-<li><p><strong>quarter</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Quarter variable column name.</p></li>
-<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Post-treatment indicator column name.</p></li>
+<li><p><strong>unit_data</strong> (<em>pd.DataFrame</em>) – Data for a single unit containing all time periods.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of outcome variable.</p></li>
+<li><p><strong>tindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of time index.</p></li>
+<li><p><strong>quarter</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of quarter indicator (values in {1, 2, 3, 4}).</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of binary post-treatment indicator (0=pre, 1=post).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Tuple" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code></a>[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>]</span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>, <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>]</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">
-<li><p><strong>yhat_all</strong> (<em>np.ndarray</em>) – Predicted values (α̂_i + β̂_i·t + Σ γ̂_q·1{quarter=q}).</p></li>
-<li><p><strong>ydot</strong> (<em>np.ndarray</em>) – Residuals y_it − ŷ_it for all periods.</p></li>
+<li><p><strong>yhat_all</strong> (<em>ndarray</em>) – Fitted values for all periods. Returns NaN array if estimation fails.</p></li>
+<li><p><strong>ydot</strong> (<em>ndarray</em>) – Seasonally-adjusted detrended outcomes for all periods. Returns NaN
+array if estimation fails due to numerical issues.</p></li>
 </ul>
 </p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>Estimates y_it = α_i + β_i·t + Σ_{q=2}^4 γ_q·1{quarter=q} + ε_it using
-pre-treatment data. Extrapolates trend and seasonal effects to all periods.</p>
+<p>This transformation combines trend removal and seasonal adjustment,
+accounting for both unit-specific growth patterns and quarterly cycles.
+Time centering reduces the condition number of the design matrix without
+affecting predicted values.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.transformations.demeanq_unit" title="lwdid.transformations.demeanq_unit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">demeanq_unit</span></code></a></dt><dd><p>Seasonal adjustment without trend removal.</p>
+</dd>
+<dt><a class="reference internal" href="#lwdid.transformations.detrend_unit" title="lwdid.transformations.detrend_unit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detrend_unit</span></code></a></dt><dd><p>Linear trend removal without seasonal adjustment.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
-<section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
-<p>This module provides four transformation <strong>modes</strong> that convert panel data
-into cross-sectional form by removing within-unit time-series patterns using
-only pre-treatment information. These modes correspond to the
-<code class="docutils literal notranslate"><span class="pre">rolling</span></code> argument in <a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a> and are implemented internally
-by <a class="reference internal" href="#lwdid.transformations.apply_rolling_transform" title="lwdid.transformations.apply_rolling_transform"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.transformations.apply_rolling_transform()</span></code></a>:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">'demean'</span></code>: Unit-specific demeaning</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">'detrend'</span></code>: Unit-specific linear detrending</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">'demeanq'</span></code>: Quarterly demeaning with seasonal effects</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">'detrendq'</span></code>: Quarterly detrending with seasonal effects</p></li>
+</section>
+<section id="internal-functions">
+<h2>Internal Functions<a class="headerlink" href="#internal-functions" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="lwdid.transformations._demean_transform">
+<span class="sig-prename descclassname"><span class="pre">lwdid.transformations.</span></span><span class="sig-name descname"><span class="pre">_demean_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/transformations.html#_demean_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.transformations._demean_transform" title="Link to this definition"></a></dt>
+<dd><p>Apply unit-specific demeaning transformation to all units.</p>
+<p>Computes <span class="math notranslate nohighlight">\(\dot{Y}_{it} = Y_{it} - \bar{Y}_{i,pre}\)</span> for all
+observations, where <span class="math notranslate nohighlight">\(\bar{Y}_{i,pre}\)</span> is the pre-treatment mean:</p>
+<div class="math notranslate nohighlight">
+\[\bar{Y}_{i,pre} = T_{0i}^{-1} \sum_{t: \text{post}=0} Y_{it}\]</div>
+<p>This transformation removes unit-specific level heterogeneity that may
+be correlated with treatment assignment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Panel data containing outcome and post indicator columns.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of outcome variable.</p></li>
+<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of unit identifier.</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of binary post-treatment indicator (0=pre, 1=post).</p></li>
 </ul>
-<p>All four methods are implemented through the high-level
-<code class="docutils literal notranslate"><span class="pre">apply_rolling_transform</span></code> function together with internal helper
-functions. They remove unit-specific pre-treatment patterns using only
-pre-treatment information and produce transformed outcomes (<code class="docutils literal notranslate"><span class="pre">ydot</span></code> and
-<code class="docutils literal notranslate"><span class="pre">ydot_postavg</span></code>) that are then used in the cross-sectional regressions
-for ATT estimation.</p>
-</section>
-<section id="transformation-methods">
-<h2>Transformation Methods<a class="headerlink" href="#transformation-methods" title="Link to this heading"></a></h2>
-<section id="demean-unit-fixed-effects">
-<h3>demean: Unit Fixed Effects<a class="headerlink" href="#demean-unit-fixed-effects" title="Link to this heading"></a></h3>
-<p><strong>Purpose:</strong> Remove time-invariant unit characteristics (unit fixed effects).</p>
-<p><strong>Mathematical form (Lee and Wooldridge 2025, Procedure 2.1):</strong></p>
-<p>For each unit i with T₀ pre-treatment periods:</p>
-<ol class="arabic simple">
-<li><p>Compute pre-treatment mean: ȳᵢ₀ = (1/T₀) Σₜ₌₁^T₀ yᵢₜ</p></li>
-<li><p>Transform all observations: ỹᵢₜ = yᵢₜ - ȳᵢ₀</p></li>
-</ol>
-<p><strong>Requirements:</strong></p>
-<ul class="simple">
-<li><p>T₀ ≥ 1 (at least one pre-treatment period)</p></li>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Input data with <code class="docutils literal notranslate"><span class="pre">ydot</span></code> column containing demeaned outcomes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError" title="lwdid.exceptions.InsufficientPrePeriodsError"><strong>InsufficientPrePeriodsError</strong></a> – If any unit has no pre-treatment observations.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.transformations._detrend_transform" title="lwdid.transformations._detrend_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_detrend_transform</span></code></a></dt><dd><p>Removes unit-specific linear trends.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lwdid.transformations._detrend_transform">
+<span class="sig-prename descclassname"><span class="pre">lwdid.transformations.</span></span><span class="sig-name descname"><span class="pre">_detrend_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tindex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/transformations.html#_detrend_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.transformations._detrend_transform" title="Link to this definition"></a></dt>
+<dd><p>Apply unit-specific linear detrending transformation to all units.</p>
+<p>For each unit i, estimates a linear trend from pre-treatment data and
+computes out-of-sample residuals:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \hat{\alpha}_i - \hat{\beta}_i t\]</div>
+<p>This transformation removes unit-specific linear trends that may violate
+the parallel trends assumption when trends differ across treatment groups.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Panel data containing outcome, time index, and post indicator columns.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of outcome variable.</p></li>
+<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of unit identifier.</p></li>
+<li><p><strong>tindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of integer-valued time index.</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of binary post-treatment indicator (0=pre, 1=post).</p></li>
 </ul>
-<p><strong>Use case:</strong> Standard DiD with unit fixed effects.</p>
-</section>
-<section id="detrend-unit-specific-linear-trends">
-<h3>detrend: Unit-Specific Linear Trends<a class="headerlink" href="#detrend-unit-specific-linear-trends" title="Link to this heading"></a></h3>
-<p><strong>Purpose:</strong> Remove both unit fixed effects and unit-specific linear trends.</p>
-<p><strong>Mathematical form (Lee and Wooldridge 2025, Procedure 3.1):</strong></p>
-<p>For each unit i with T₀ pre-treatment periods:</p>
-<ol class="arabic simple">
-<li><p>Estimate linear trend from pre-treatment data:
-yᵢₜ = αᵢ + βᵢ·t + εᵢₜ for t = 1, …, T₀</p></li>
-<li><p>Compute predicted values: ŷᵢₜ = α̂ᵢ + β̂ᵢ·t</p></li>
-<li><p>Detrend all observations: ỹᵢₜ = yᵢₜ - ŷᵢₜ</p></li>
-</ol>
-<p><strong>Requirements:</strong></p>
-<ul class="simple">
-<li><p>T₀ ≥ 2 (need at least 2 points to estimate a linear trend)</p></li>
-</ul>
-<p><strong>Use case:</strong> DiD with differential pre-treatment trends across units.</p>
-</section>
-<section id="demeanq-quarterly-data-with-seasonality">
-<h3>demeanq: Quarterly Data with Seasonality<a class="headerlink" href="#demeanq-quarterly-data-with-seasonality" title="Link to this heading"></a></h3>
-<p><strong>Purpose:</strong> Remove unit fixed effects and quarter-of-year effects.</p>
-<p><strong>Extension of demean:</strong> Uses quarter-of-year dummy variables in the</p>
-<p>pre-treatment transformation step to remove seasonal patterns before the
-cross-sectional ATT regression. The seasonal adjustment is done at the
-unit level using only pre-treatment data; the subsequent ATT regression
-is run on the transformed outcome.</p>
-<p><strong>Requirements:</strong></p>
-<ul class="simple">
-<li><p>T₀ ≥ 1</p></li>
-<li><p>Time variable must be composite: <code class="docutils literal notranslate"><span class="pre">tvar=['year',</span> <span class="pre">'quarter']</span></code></p></li>
-<li><p>Each unit must have enough pre-treatment observations relative to the
-number of distinct pre-treatment quarters to avoid rank-deficient
-seasonal regressions (at least <code class="docutils literal notranslate"><span class="pre">q</span> <span class="pre">+</span> <span class="pre">1</span></code> pre-treatment observations
-when <code class="docutils literal notranslate"><span class="pre">q</span></code> distinct quarters are observed pre-treatment)</p></li>
-<li><p>For each unit, every quarter appearing in the post-treatment period
-must also appear in the pre-treatment period (quarter-coverage
-condition)</p></li>
-</ul>
-<p><strong>Use case:</strong> Quarterly data with seasonal patterns.</p>
-</section>
-<section id="detrendq-quarterly-data-with-trends-and-seasonality">
-<h3>detrendq: Quarterly Data with Trends and Seasonality<a class="headerlink" href="#detrendq-quarterly-data-with-trends-and-seasonality" title="Link to this heading"></a></h3>
-<p><strong>Purpose:</strong> Remove unit-specific trends and quarter-of-year effects.</p>
-<p><strong>Extension of detrend:</strong> Combines detrending with quarterly fixed effects</p>
-<p>in the pre-treatment transformation step. For each unit, a linear trend
-and quarter dummies are estimated using pre-treatment data only, and the
-resulting fitted values are subtracted from all periods to obtain the
-transformed outcome used in ATT estimation.</p>
-<p><strong>Requirements:</strong></p>
-<ul class="simple">
-<li><p>T₀ ≥ 2</p></li>
-<li><p>Time variable must be composite: <code class="docutils literal notranslate"><span class="pre">tvar=['year',</span> <span class="pre">'quarter']</span></code></p></li>
-<li><p>Each unit must have enough pre-treatment observations relative to the
-number of distinct pre-treatment quarters to avoid rank-deficient
-trend-plus-seasonality regressions (at least <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">q</span></code> pre-treatment
-observations when <code class="docutils literal notranslate"><span class="pre">q</span></code> distinct quarters are observed pre-treatment)</p></li>
-<li><p>For each unit, every quarter appearing in the post-treatment period
-must also appear in the pre-treatment period (quarter-coverage
-condition)</p></li>
-</ul>
-<p><strong>Use case:</strong> Quarterly data with both trends and seasonal patterns.</p>
-</section>
-</section>
-<section id="implementation-details">
-<h2>Implementation Details<a class="headerlink" href="#implementation-details" title="Link to this heading"></a></h2>
-<section id="common-features">
-<h3>Common Features<a class="headerlink" href="#common-features" title="Link to this heading"></a></h3>
-<p>All transformation functions:</p>
-<ol class="arabic simple">
-<li><p><strong>Use only pre-treatment data</strong> for computing transformations (means, trends)</p></li>
-<li><p><strong>Apply transformations to all periods</strong> (both pre- and post-treatment)</p></li>
-<li><p><strong>Preserve treatment variation</strong> for estimation in the regression step</p></li>
-<li><p><strong>Assume cleaned required variables</strong>: rows with missing outcome,</p></li>
-</ol>
-<blockquote>
-<div><p>treatment indicator, time variables, unit identifiers, or post
-indicators are removed during the validation step before
-transformations are applied</p>
-</div></blockquote>
-</section>
-<section id="data-flow">
-<h3>Data Flow<a class="headerlink" href="#data-flow" title="Link to this heading"></a></h3>
-<p>The transformation process:</p>
-<ol class="arabic simple">
-<li><p><strong>Input:</strong> Panel data in long format with outcome variable <code class="docutils literal notranslate"><span class="pre">y</span></code></p></li>
-<li><p><strong>Identify pre-treatment periods</strong> using <code class="docutils literal notranslate"><span class="pre">post</span></code> indicator</p></li>
-<li><p><strong>Compute transformation parameters</strong> from pre-treatment data only</p></li>
-<li><p><strong>Apply transformation</strong> to all observations</p></li>
-<li><p><strong>Output:</strong> Transformed data ready for cross-sectional regression</p></li>
-</ol>
-</section>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Input data with <code class="docutils literal notranslate"><span class="pre">ydot</span></code> column containing detrended outcomes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError" title="lwdid.exceptions.InsufficientPrePeriodsError"><strong>InsufficientPrePeriodsError</strong></a> – If any unit has fewer than 2 pre-treatment observations.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.transformations.detrend_unit" title="lwdid.transformations.detrend_unit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detrend_unit</span></code></a></dt><dd><p>Detrending implementation for a single unit.</p>
+</dd>
+<dt><a class="reference internal" href="#lwdid.transformations._demean_transform" title="lwdid.transformations._demean_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_demean_transform</span></code></a></dt><dd><p>Removes unit-specific means instead of trends.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
 </section>
 <section id="example-usage">
 <h2>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading"></a></h2>
-<p>In typical applications, users do not call the transformation functions
-directly. Instead, they choose the desired transformation through the
-<code class="docutils literal notranslate"><span class="pre">rolling</span></code> argument of <a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a>, for example:</p>
+<p>The transformation is automatically applied by the main <code class="docutils literal notranslate"><span class="pre">lwdid()</span></code> function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
 
+<span class="c1"># Standard demeaning (parallel trends in levels)</span>
+<span class="n">results_dm</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">,</span>
+                   <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">)</span>
+
+<span class="c1"># Detrending (allows heterogeneous linear trends)</span>
+<span class="n">results_dt</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;t&#39;</span><span class="p">,</span>
+                   <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrend&#39;</span><span class="p">)</span>
+
+<span class="c1"># Quarterly demeaning with seasonality</span>
+<span class="n">results_dmq</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;i&#39;</span><span class="p">,</span>
+                    <span class="n">tvar</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;quarter&#39;</span><span class="p">],</span>  <span class="c1"># Composite time variable</span>
+                    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demeanq&#39;</span><span class="p">)</span>
+
+<span class="c1"># Quarterly detrending with seasonality</span>
+<span class="n">results_dtq</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;i&#39;</span><span class="p">,</span>
+                    <span class="n">tvar</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="s1">&#39;quarter&#39;</span><span class="p">],</span>  <span class="c1"># Composite time variable</span>
+                    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrendq&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="transformation-selection-guide">
+<h2>Transformation Selection Guide<a class="headerlink" href="#transformation-selection-guide" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>demean</strong>: Pre-periods required &gt;= 1. No seasonal support. Assumes parallel
+levels (common trends).</p></li>
+<li><p><strong>detrend</strong>: Pre-periods required &gt;= 2. No seasonal support. Allows
+heterogeneous linear trends.</p></li>
+<li><p><strong>demeanq</strong>: Pre-periods required &gt;= 1. Quarterly seasonal support. Assumes
+parallel levels (common trends).</p></li>
+<li><p><strong>detrendq</strong>: Pre-periods required &gt;= 2. Quarterly seasonal support. Allows
+heterogeneous linear trends.</p></li>
+</ul>
+</section>
+<section id="staggered-adoption-transformations">
+<h2>Staggered Adoption Transformations<a class="headerlink" href="#staggered-adoption-transformations" title="Link to this heading"></a></h2>
+<p>For staggered adoption designs, transformations are applied separately for each
+treatment cohort <span class="math notranslate nohighlight">\(g\)</span>, using cohort-specific pre-treatment periods. This
+approach follows Lee and Wooldridge (2025, Section 4).</p>
+<section id="cohort-specific-demeaning">
+<h3>Cohort-Specific Demeaning<a class="headerlink" href="#cohort-specific-demeaning" title="Link to this heading"></a></h3>
+<p>For cohort <span class="math notranslate nohighlight">\(g\)</span> (units first treated in period <span class="math notranslate nohighlight">\(g\)</span>) and calendar
+time <span class="math notranslate nohighlight">\(r \geq g\)</span>, the transformed outcome is computed as:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{irg} = Y_{ir} - \bar{Y}_{i,pre(g)}\]</div>
+<p>where the cohort-specific pre-treatment mean is:</p>
+<div class="math notranslate nohighlight">
+\[\bar{Y}_{i,pre(g)} = \frac{1}{g-1} \sum_{s=1}^{g-1} Y_{is}\]</div>
+<p>The key difference from common timing demeaning is that the pre-treatment
+average uses only periods <span class="math notranslate nohighlight">\(\{1, 2, \ldots, g-1\}\)</span> specific to each
+cohort, rather than a fixed set of pre-treatment periods for all units.</p>
+<p><strong>Requirements</strong>: For each cohort <span class="math notranslate nohighlight">\(g\)</span>, at least <span class="math notranslate nohighlight">\(g - 1 \geq 1\)</span>
+pre-treatment periods must exist. Early cohorts (e.g., <span class="math notranslate nohighlight">\(g = 2\)</span>) may
+have limited pre-treatment data.</p>
+</section>
+<section id="cohort-specific-detrending">
+<h3>Cohort-Specific Detrending<a class="headerlink" href="#cohort-specific-detrending" title="Link to this heading"></a></h3>
+<p>For cohort <span class="math notranslate nohighlight">\(g\)</span> and calendar time <span class="math notranslate nohighlight">\(r \geq g\)</span>, the detrended outcome
+is:</p>
+<div class="math notranslate nohighlight">
+\[\ddot{Y}_{irg} = Y_{ir} - \hat{A}_{ig} - \hat{B}_{ig} \cdot r\]</div>
+<p>where <span class="math notranslate nohighlight">\((\hat{A}_{ig}, \hat{B}_{ig})\)</span> are estimated from the unit-specific
+regression using only pre-treatment periods for cohort <span class="math notranslate nohighlight">\(g\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[Y_{it} = A_i + B_i \cdot t + \varepsilon_{it}, \quad t \in \{1, 2, \ldots, g-1\}\]</div>
+<p>This removes both unit-specific levels and unit-specific linear trends,
+allowing for heterogeneous trend paths across units while preserving the
+treatment variation for estimation.</p>
+<p><strong>Requirements</strong>: For each cohort <span class="math notranslate nohighlight">\(g\)</span>, at least <span class="math notranslate nohighlight">\(g - 1 \geq 2\)</span>
+pre-treatment periods must exist to estimate both intercept and slope.</p>
+</section>
+<section id="staggered-transformation-usage">
+<h3>Staggered Transformation Usage<a class="headerlink" href="#staggered-transformation-usage" title="Link to this heading"></a></h3>
+<p>The staggered transformations are applied automatically when the <code class="docutils literal notranslate"><span class="pre">gvar</span></code>
+parameter is specified in <code class="docutils literal notranslate"><span class="pre">lwdid()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+
+<span class="c1"># Staggered demeaning</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
-    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">,</span>
     <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span>
-    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
     <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span>
     <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
-    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
-    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrend&#39;</span><span class="p">,</span>   <span class="c1"># or &#39;demean&#39;, &#39;demeanq&#39;, &#39;detrendq&#39;</span>
+    <span class="n">gvar</span><span class="o">=</span><span class="s1">&#39;first_treat_year&#39;</span><span class="p">,</span>  <span class="c1"># Cohort indicator</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Staggered detrending</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">gvar</span><span class="o">=</span><span class="s1">&#39;first_treat_year&#39;</span><span class="p">,</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrend&#39;</span>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>For advanced use cases, one can apply the transformation step explicitly
-by calling <a class="reference internal" href="#lwdid.transformations.apply_rolling_transform" title="lwdid.transformations.apply_rolling_transform"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.transformations.apply_rolling_transform()</span></code></a> on data
-that have already been validated and prepared by
-<code class="docutils literal notranslate"><span class="pre">validation.validate_and_prepare_data</span></code>. This returns a DataFrame with
-the residualized outcome <code class="docutils literal notranslate"><span class="pre">ydot</span></code>, the post-period average
-<code class="docutils literal notranslate"><span class="pre">ydot_postavg</span></code>, and the <code class="docutils literal notranslate"><span class="pre">firstpost</span></code> indicator marking the
-cross-sectional regression sample.</p>
 </section>
-<section id="technical-notes">
-<h2>Technical Notes<a class="headerlink" href="#technical-notes" title="Link to this heading"></a></h2>
-<section id="degrees-of-freedom">
-<h3>Degrees of Freedom<a class="headerlink" href="#degrees-of-freedom" title="Link to this heading"></a></h3>
-<p>The transformation step does not consume degrees of freedom for inference
-because:</p>
+<section id="staggered-transformation-limitations">
+<h3>Staggered Transformation Limitations<a class="headerlink" href="#staggered-transformation-limitations" title="Link to this heading"></a></h3>
+<p><strong>Quarterly transformations are not supported in staggered mode.</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">demeanq</span></code> and <code class="docutils literal notranslate"><span class="pre">detrendq</span></code> transformations are only available for common
+timing designs and cannot be used with staggered adoption (<code class="docutils literal notranslate"><span class="pre">gvar</span></code> parameter).
+This is a design decision based on the following considerations:</p>
 <ol class="arabic simple">
-<li><p>Transformations use only pre-treatment data</p></li>
-<li><p>Treatment variation is preserved in the post-treatment period</p></li>
-<li><p>Inference is based on the cross-sectional regression, not the transformation</p></li>
+<li><p><strong>Complexity</strong>: Cohort-specific quarterly fixed effects would require
+estimating separate seasonal patterns for each cohort’s pre-treatment
+period, which may have insufficient quarter diversity for reliable
+estimation.</p></li>
+<li><p><strong>Identification</strong>: With staggered timing, the number of pre-treatment
+quarters varies by cohort, making it difficult to ensure consistent
+seasonal adjustment across cohorts.</p></li>
+<li><p><strong>Practical relevance</strong>: Most staggered adoption studies use annual data
+(e.g., policy adoption year), where quarterly adjustments are not needed.</p></li>
 </ol>
-<p>This is a key insight of the Lee and Wooldridge method.</p>
+<p>If quarterly seasonal adjustment is required for staggered designs, users
+should pre-process the data to remove seasonal patterns before applying
+<code class="docutils literal notranslate"><span class="pre">lwdid()</span></code> with <code class="docutils literal notranslate"><span class="pre">demean</span></code> or <code class="docutils literal notranslate"><span class="pre">detrend</span></code>.</p>
 </section>
-<section id="handling-unbalanced-panels">
-<h3>Handling Unbalanced Panels<a class="headerlink" href="#handling-unbalanced-panels" title="Link to this heading"></a></h3>
-<p>The transformations handle unbalanced panels correctly:</p>
+<section id="staggered-transformation-selection">
+<h3>Staggered Transformation Selection<a class="headerlink" href="#staggered-transformation-selection" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p>Each unit’s transformation is computed independently</p></li>
-<li><p>Units with different numbers of pre-treatment periods are allowed</p></li>
-<li><p>Each unit must satisfy the minimum T₀ requirement for the chosen method</p></li>
-</ul>
-</section>
-<section id="missing-data">
-<h3>Missing Data<a class="headerlink" href="#missing-data" title="Link to this heading"></a></h3>
-<ul class="simple">
-<li><p>Observations with missing outcome values (and other required variables
-such as treatment indicator, time variables, unit identifier, or post
-indicator) are dropped during validation before the transformation
-step, with an informative warning</p></li>
-<li><p>Additional missingness in variables used only at later stages (for
-example, control variables or clustering variables) is handled in the
-estimation module, which may drop observations or raise errors
-depending on the context</p></li>
-<li><p>The transformation preserves the panel structure for the remaining
-non-missing observations</p></li>
+<li><p><strong>demean</strong>: Staggered support = Yes. Pre-periods required:
+<span class="math notranslate nohighlight">\(g - 1 \geq 1\)</span> per cohort.</p></li>
+<li><p><strong>detrend</strong>: Staggered support = Yes. Pre-periods required:
+<span class="math notranslate nohighlight">\(g - 1 \geq 2\)</span> per cohort.</p></li>
+<li><p><strong>demeanq</strong>: Staggered support = No. Not available for staggered designs.</p></li>
+<li><p><strong>detrendq</strong>: Staggered support = No. Not available for staggered designs.</p></li>
 </ul>
 </section>
 </section>
 <section id="see-also">
 <h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a> - Main estimation function that calls these transformations</p></li>
-<li><p><a class="reference internal" href="../methodological_notes.html"><span class="doc">Methodological Notes</span></a> - Theoretical background</p></li>
-<li><p><a class="reference internal" href="../user_guide.html"><span class="doc">User Guide</span></a> - Comprehensive usage guide</p></li>
-</ul>
+<p><a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a> : Main estimation function.
+<a class="reference internal" href="../methodological_notes.html"><span class="doc">Methodological Notes</span></a> : Theoretical foundations of transformations.
+<a class="reference internal" href="../user_guide.html"><span class="doc">User Guide</span></a> : Practical guidance on transformation selection.</p>
 </section>
 </section>
 
@@ -823,7 +993,7 @@ non-missing observations</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="results.html" class="btn btn-neutral float-left" title="LWDIDResults Class" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="staggered.html" class="btn btn-neutral float-left" title="Staggered DiD Module (staggered)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="estimation.html" class="btn btn-neutral float-right" title="Estimation Module (estimation)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

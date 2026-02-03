@@ -1,8 +1,20 @@
 Core Module (core)
 ==================
 
-The core module provides the main user-facing function for difference-in-differences
-estimation.
+Main entry point for difference-in-differences estimation with panel data.
+
+This module provides the main user-facing function ``lwdid()`` for estimating
+average treatment effects on the treated (ATT) using the Lee and Wooldridge
+transformation-based approach. The function supports both common timing designs
+(where all treated units receive treatment simultaneously) and staggered
+adoption designs (where units are treated at different times).
+
+The method transforms panel data via unit-specific time-series operations
+(demeaning or detrending), then applies cross-sectional regression to the
+transformed outcomes. Under classical linear model assumptions, exact t-based
+inference is available for small samples. For large samples, asymptotic
+inference with robust standard errors or doubly robust estimators (IPW, IPWRA,
+PSM) is supported.
 
 Main Function
 -------------
@@ -164,6 +176,54 @@ Complete Example with All Options
    results.to_excel('results.xlsx')
    results.plot()
 
+Doubly Robust Estimation (Large-Sample Common Timing)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For large cross-sectional samples in common timing designs, multiple estimators
+are available beyond regression adjustment (RA). Lee and Wooldridge (2025) shows
+that the rolling transformation approach enables application of doubly robust
+estimators.
+
+.. code-block:: python
+
+   # IPWRA (doubly robust) estimator
+   results = lwdid(
+       data, 'outcome', 'd', 'unit', 'year', 'post', 'demean',
+       estimator='ipwra',           # Doubly robust estimator
+       controls=['x1', 'x2'],       # Controls for outcome and propensity score
+       vce='hc3'
+   )
+
+   # IPW (inverse probability weighting) estimator
+   results_ipw = lwdid(
+       data, 'outcome', 'd', 'unit', 'year', 'post', 'demean',
+       estimator='ipw',
+       controls=['x1', 'x2'],
+       vce='hc3'
+   )
+
+   # PSM (propensity score matching) estimator
+   results_psm = lwdid(
+       data, 'outcome', 'd', 'unit', 'year', 'post', 'demean',
+       estimator='psm',
+       controls=['x1', 'x2'],
+       n_neighbors=3,               # 3 nearest neighbors
+       caliper=0.1                  # Caliper in PS standard deviations
+   )
+
+.. note::
+
+   **Estimator Selection Guidelines:**
+
+   - **RA** (default): Efficient under correct outcome model specification.
+   - **IPWRA**: Doubly robust; consistent if either outcome or propensity score
+     model is correctly specified. Recommended when functional form is uncertain.
+   - **IPW/PSM**: Use when propensity score methods are preferred for substantive
+     reasons.
+
+   For detailed guidance on estimator selection, see :doc:`estimation` and
+   :doc:`../user_guide`.
+
 Staggered DiD
 ~~~~~~~~~~~~~
 
@@ -223,8 +283,8 @@ For staggered treatment adoption (different units treated at different times):
 
    When using ``aggregate='cohort'`` or ``aggregate='overall'``, the control
    group is automatically switched to ``never_treated`` if ``not_yet_treated``
-   was specified. This is required by the theoretical framework (see Lee &
-   Wooldridge 2023, Section 7).
+   was specified. This is required by the theoretical framework (see Lee and
+   Wooldridge, 2025).
 
 See Also
 --------

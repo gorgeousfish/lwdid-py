@@ -1,24 +1,29 @@
 """
-Core estimation interface for Difference-in-Differences with panel data.
+Core estimation interface for difference-in-differences with panel data.
 
-This module provides the main entry point for LWDID estimation, supporting both
-common timing and staggered adoption scenarios. The method applies unit-specific
-time-series transformations that remove pre-treatment patterns, enabling valid
-inference even with small cross-sectional samples.
+This module provides the main entry point for LWDID estimation, supporting
+three methodological scenarios based on Lee and Wooldridge's rolling
+transformation approach:
 
-The primary function `lwdid()` accepts panel data and returns estimated average
-treatment effects on the treated (ATT) along with standard errors, confidence
-intervals, and period-specific estimates. Multiple estimation methods are
-supported: regression adjustment (RA), inverse probability weighting (IPW),
-doubly robust estimation (IPWRA), and propensity score matching (PSM).
+1. **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based
+   inference under classical linear model (CLM) assumptions when the number
+   of cross-sectional units is small.
+
+2. **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic
+   inference with heteroskedasticity-robust standard errors for moderate to
+   large samples.
+
+3. **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific
+   effect estimation with flexible control group strategies (never-treated
+   or not-yet-treated) for settings where treatment timing varies.
+
+The method applies unit-specific time-series transformations that remove
+pre-treatment patterns, converting the panel DiD problem into a cross-sectional
+treatment effects problem. Under no anticipation and parallel trends
+assumptions, standard estimators can be applied to the transformed outcomes.
 
 Notes
 -----
-The transformation approach converts the panel data difference-in-differences
-problem into a cross-sectional treatment effects estimation problem. Under
-no anticipation and parallel trends assumptions, standard treatment effect
-estimators (RA, IPW, IPWRA, PSM) can be applied to the transformed outcomes.
-
 Two transformation methods are available:
 
 - **Demeaning** ('demean'): Subtracts the unit-specific pre-treatment mean.
@@ -26,8 +31,15 @@ Two transformation methods are available:
 - **Detrending** ('detrend'): Removes unit-specific linear time trends.
   Requires at least two pre-treatment periods.
 
-For staggered adoption, the transformation is applied separately for each
-treatment cohort, using cohort-specific pre-treatment periods.
+Four estimation methods are supported:
+
+- **RA**: Regression adjustment via OLS on transformed outcomes.
+- **IPW**: Inverse probability weighting using propensity scores.
+- **IPWRA**: Doubly robust combining IPW with regression adjustment.
+- **PSM**: Propensity score matching with nearest-neighbor matching.
+
+For staggered adoption, transformations are applied separately for each
+treatment cohort using cohort-specific pre-treatment periods.
 """
 
 from __future__ import annotations
@@ -67,19 +79,13 @@ def _generate_ri_seed() -> int:
     """
     Generate a random seed for randomization inference.
 
-    Produces a random integer seed by combining two uniform random draws,
-    ensuring unique seeds across repeated calls.
+    Combines two independent uniform random draws to produce a unique seed,
+    reducing the probability of seed collisions across repeated calls.
 
     Returns
     -------
     int
-        Random seed in range [1, 1001000].
-
-    Notes
-    -----
-    The formula is: ceil(U1 * 1e6 + 1000 * U2) where U1, U2 ~ Uniform(0, 1).
-    This yields seeds in [1, 1001000], providing adequate randomness for
-    reproducibility control in Monte Carlo procedures.
+        Random seed in the range [1, 1001000].
     """
     return math.ceil(random.random() * 1e6 + 1000 * random.random())
 
@@ -93,23 +99,28 @@ def _validate_psm_params(
     """
     Validate propensity score matching parameters.
 
+    Checks type and value constraints for PSM-specific parameters before
+    estimation proceeds.
+
     Parameters
     ----------
     n_neighbors : int
         Number of nearest neighbors for matching. Must be >= 1.
-    caliper : float, optional
-        Maximum propensity score distance for valid matches. Must be > 0 if provided.
+    caliper : float or None
+        Maximum propensity score distance for valid matches. Must be positive
+        and finite if specified.
     with_replacement : bool
         Whether control units can be matched to multiple treated units.
     match_order : {'data', 'random', 'largest', 'smallest'}, default='data'
-        Order in which treated units are processed for without-replacement matching.
+        Order in which treated units are processed for matching without
+        replacement.
 
     Raises
     ------
     TypeError
-        If parameter types are incorrect.
+        If parameter types do not match expected types.
     ValueError
-        If parameter values are out of valid range.
+        If parameter values are outside valid ranges.
     """
     if not isinstance(n_neighbors, (int, np.integer)):
         raise TypeError(
@@ -125,7 +136,7 @@ def _validate_psm_params(
             raise TypeError(
                 f"caliper must be numeric or None, got {type(caliper).__name__}"
             )
-        # Reject NaN and Inf values: np.nan <= 0 returns False, bypassing the check
+        # Explicit finiteness check required because np.nan <= 0 returns False.
         if not np.isfinite(caliper) or caliper <= 0:
             raise ValueError(
                 f"caliper must be a finite positive number, got {caliper}"
@@ -157,32 +168,32 @@ def _convert_ipw_result_to_dict(
 ) -> dict:
     """
     Convert IPWResult to the standard results dictionary format.
-    
+
+    Transforms the IPW estimator output into the unified dictionary structure
+    expected by LWDIDResults.
+
     Parameters
     ----------
     ipw_result : IPWResult
-        Result from estimate_ipw().
+        Result object from estimate_ipw().
     alpha : float
         Significance level for confidence intervals.
     vce : str or None
-        Variance estimator type (for metadata).
+        Variance estimator type for metadata storage.
     cluster_var : str or None
-        Cluster variable name (for metadata).
+        Cluster variable name for metadata storage.
     controls : list of str or None
-        Control variable names for outcome model (used for metadata).
+        Control variable names for outcome model.
     ps_controls : list of str or None
-        Control variable names for propensity score model. If None, falls back
-        to controls. The degrees of freedom calculation uses ps_controls since
-        IPW estimation depends on the propensity score model specification.
-        
+        Control variable names for propensity score model.
+
     Returns
     -------
     dict
-        Results dictionary compatible with LWDIDResults.
+        Results dictionary compatible with LWDIDResults constructor.
     """
-    # Degrees of freedom for IPW: n - 2 (intercept + treatment indicator).
-    # Propensity score model parameters do not enter the ATT variance formula.
-    # IPW standard errors are based on influence functions.
+    # IPW df uses n - 2: intercept + treatment indicator.
+    # PS model parameters do not enter the ATT variance formula.
     df_val = ipw_result.n_treated + ipw_result.n_control - 2
 
     return {
@@ -223,41 +234,41 @@ def _convert_ipwra_result_to_dict(
 ) -> dict:
     """
     Convert IPWRAResult to the standard results dictionary format.
-    
+
+    Transforms the doubly robust estimator output into the unified dictionary
+    structure expected by LWDIDResults.
+
     Parameters
     ----------
     ipwra_result : IPWRAResult
-        Result from estimate_ipwra().
+        Result object from estimate_ipwra().
     alpha : float
         Significance level for confidence intervals.
     vce : str or None
-        Variance estimator type (for metadata).
+        Variance estimator type for metadata storage.
     cluster_var : str or None
-        Cluster variable name (for metadata).
+        Cluster variable name for metadata storage.
     controls : list of str or None
-        Control variable names.
-        
+        Control variable names for outcome model.
+
     Returns
     -------
     dict
-        Results dictionary compatible with LWDIDResults.
+        Results dictionary compatible with LWDIDResults constructor.
     """
-    # Compute coefficient of variation for IPW weights if available.
-    # CV requires at least 2 observations for meaningful variance calculation.
+    # CV requires at least 2 observations for meaningful variance.
     weights = getattr(ipwra_result, 'weights', None)
     if weights is not None and len(weights) > 1:
         weights_mean = np.mean(weights)
         weights_std = np.std(weights, ddof=1)
         weights_cv = weights_std / weights_mean if weights_mean > 0 else np.nan
     elif weights is not None and len(weights) == 1:
-        # Single observation implies zero variance, hence CV = 0.
+        # Single observation has zero variance by definition.
         weights_cv = 0.0
     else:
-        # No weights available, so CV is undefined.
         weights_cv = np.nan
 
-    # Degrees of freedom: n - k where k includes intercept, treatment, and controls.
-    # For IPWRA: k = 2 (intercept + treatment) + number of controls in outcome model.
+    # IPWRA df: n - k where k = intercept + treatment + outcome model controls.
     n_controls = len(controls) if controls else 0
     n_params = 2 + n_controls
     df_val = ipwra_result.n_treated + ipwra_result.n_control - n_params
@@ -300,28 +311,29 @@ def _convert_psm_result_to_dict(
 ) -> dict:
     """
     Convert PSMResult to the standard results dictionary format.
-    
+
+    Transforms the propensity score matching output into the unified dictionary
+    structure expected by LWDIDResults.
+
     Parameters
     ----------
     psm_result : PSMResult
-        Result from estimate_psm().
+        Result object from estimate_psm().
     alpha : float
         Significance level for confidence intervals.
     vce : str or None
-        Variance estimator type (for metadata).
+        Variance estimator type for metadata storage.
     cluster_var : str or None
-        Cluster variable name (for metadata).
+        Cluster variable name for metadata storage.
     controls : list of str or None
-        Control variable names.
-        
+        Control variable names for propensity score model.
+
     Returns
     -------
     dict
-        Results dictionary compatible with LWDIDResults.
+        Results dictionary compatible with LWDIDResults constructor.
     """
-    # Compute match rate as proportion of treated units successfully matched.
-    # Use n_matched directly for clarity (n_matched / n_treated).
-    # Handle case where n_matched attribute may be None by falling back to n_treated.
+    # Compute match rate, handling None n_matched by falling back to n_treated.
     n_matched_attr = getattr(psm_result, 'n_matched', None)
     n_matched = n_matched_attr if n_matched_attr is not None else psm_result.n_treated
     if psm_result.n_treated > 0:
@@ -354,7 +366,8 @@ def _convert_psm_result_to_dict(
         'resid': None,
         'diagnostics': psm_result.diagnostics if hasattr(psm_result, 'diagnostics') else None,
         'propensity_scores': psm_result.propensity_scores,
-        'weights_cv': np.nan,  # PSM uses direct matching, not IPW weights
+        # PSM uses direct matching without IPW weights.
+        'weights_cv': np.nan,
         'n_matched': n_matched,
         'match_rate': match_rate,
         'estimator': 'psm',
@@ -380,56 +393,55 @@ def _estimate_period_effects_ipw(
     alpha: float = 0.05,
 ) -> pd.DataFrame:
     """
-    Estimate period-specific treatment effects using IPW/IPWRA/PSM.
-    
-    For each post-treatment period t in [tpost1, Tmax], estimates ATT using
-    the specified estimator (ipw, ipwra, or psm) applied to the cross-section
-    of that period.
-    
+    Estimate period-specific treatment effects using propensity score methods.
+
+    Applies the specified estimator (IPW, IPWRA, or PSM) to each post-treatment
+    period cross-section independently, producing period-specific ATT estimates.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data with transformed outcome variable.
+        Panel data containing the transformed outcome variable.
     ydot : str
-        Name of the transformed outcome column.
+        Column name of the transformed outcome.
     d : str
-        Name of the treatment indicator column.
+        Column name of the binary treatment indicator.
     tindex : str
-        Name of the time index column.
+        Column name of the time period index.
     tpost1 : int
         Index of the first post-treatment period.
     Tmax : int
         Index of the last period in the panel.
-    estimator : str
-        Estimation method: 'ipw', 'ipwra', or 'psm'.
+    estimator : {'ipw', 'ipwra', 'psm'}
+        Estimation method to apply at each period.
     controls : list of str or None
-        Control variables for outcome model (IPWRA).
+        Control variables for the outcome model (IPWRA only).
     ps_controls : list of str or None
-        Control variables for propensity score model.
+        Control variables for the propensity score model.
     trim_threshold : float
-        Propensity score trimming threshold.
+        Propensity score trimming threshold in (0, 0.5).
     n_neighbors : int
-        Number of nearest neighbors for PSM.
+        Number of nearest neighbors for PSM matching.
     caliper : float or None
-        Maximum propensity score distance for PSM.
+        Maximum propensity score distance for PSM matches.
     with_replacement : bool
-        Whether to allow replacement in PSM.
+        Whether PSM allows control unit reuse.
     match_order : str
-        Match order for PSM.
+        Order for processing treated units in PSM without replacement.
     period_labels : dict
-        Mapping from time index to period labels.
+        Mapping from time index to human-readable period labels.
     alpha : float, default=0.05
         Significance level for confidence intervals.
-        
+
     Returns
     -------
     pd.DataFrame
-        Period-specific estimates with columns:
-        'period', 'tindex', 'beta', 'se', 'ci_lower', 'ci_upper', 'tstat', 'pval', 'N'
+        Period-specific estimates with columns: 'period', 'tindex', 'beta',
+        'se', 'ci_lower', 'ci_upper', 'tstat', 'pval', 'N'.
     """
     results_list = []
-    
-    # Handle edge case where first post-treatment period exceeds data range.
+
+    # Return empty DataFrame if no post-treatment periods exist.
     if tpost1 > Tmax:
         warnings.warn(
             f"First post-treatment period ({tpost1}) is after the last period ({Tmax}). "
@@ -441,8 +453,8 @@ def _estimate_period_effects_ipw(
         return pd.DataFrame(columns=[
             'period', 'tindex', 'beta', 'se', 'ci_lower', 'ci_upper', 'tstat', 'pval', 'N'
         ])
-    
-    # Collect problematic periods for consolidated warning messages.
+
+    # Track periods with estimation issues for consolidated warnings.
     empty_periods = []
     insufficient_periods = []
     failed_periods = []
@@ -451,8 +463,7 @@ def _estimate_period_effects_ipw(
         mask_t = (data[tindex] == t)
         data_t = data[mask_t].copy()
         period_label = period_labels.get(t, str(t))
-        
-        # Skip periods with no observations.
+
         if len(data_t) == 0:
             empty_periods.append(period_label)
             results_list.append({
@@ -467,8 +478,7 @@ def _estimate_period_effects_ipw(
                 'N': 0
             })
             continue
-        
-        # Verify both treatment groups are represented in this period.
+
         n_treated_t = int(data_t[d].sum())
         n_control_t = int(len(data_t) - n_treated_t)
         
@@ -562,8 +572,7 @@ def _estimate_period_effects_ipw(
                 'pval': np.nan,
                 'N': n_treated_t + n_control_t
             })
-    
-    # Emit consolidated warnings for periods with estimation issues.
+
     if empty_periods:
         warnings.warn(
             f"{len(empty_periods)} period(s) contain no observations: "
@@ -610,6 +619,7 @@ def lwdid(
     control_group: str = 'not_yet_treated',
     estimator: str = 'ra',
     aggregate: str = 'cohort',
+    balanced_panel: str = 'warn',
     ps_controls: list[str] | None = None,
     trim_threshold: float = 0.01,
     return_diagnostics: bool = False,
@@ -628,14 +638,32 @@ def lwdid(
     graph: bool = False,
     gid: str | int | None = None,
     graph_options: dict | None = None,
+    season_var: str | None = None,
+    Q: int = 4,
+    auto_detect_frequency: bool = False,
+    include_pretreatment: bool = False,
+    pretreatment_test: bool = True,
+    pretreatment_alpha: float = 0.05,
+    exclude_pre_periods: int = 0,
     **kwargs,
 ) -> LWDIDResults:
     """
     Difference-in-differences estimator with unit-specific transformations.
 
-    Transforms panel data by removing unit-specific pre-treatment patterns, enabling
-    valid inference with small cross-sectional samples. Supports both common timing
-    and staggered adoption designs.
+    Implements the Lee-Wooldridge rolling transformation approach for DiD
+    estimation, supporting three methodological scenarios:
+
+    1. **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based
+       inference under classical linear model assumptions.
+
+    2. **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic
+       inference with heteroskedasticity-robust standard errors.
+
+    3. **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific
+       effect estimation with flexible control group strategies.
+
+    The transformation removes unit-specific pre-treatment patterns, converting
+    panel DiD into a cross-sectional treatment effects problem.
 
     Parameters
     ----------
@@ -647,7 +675,7 @@ def lwdid(
     d : str, optional
         Column name of the unit-level treatment indicator (required for common
         timing mode). Must be time-invariant: non-zero for treated units, zero
-        for control units. Not used in staggered mode.
+        for control units. Ignored in staggered mode.
     ivar : str
         Column name of the unit identifier.
     tvar : str or list of str
@@ -663,38 +691,53 @@ def lwdid(
 
         - 'demean': Remove unit-specific pre-treatment mean.
         - 'detrend': Remove unit-specific linear time trend.
-        - 'demeanq': Demeaning with quarterly fixed effects.
-        - 'detrendq': Detrending with quarterly fixed effects.
+        - 'demeanq': Demeaning with seasonal fixed effects. Requires ``season_var``
+          and ``Q`` parameters. Supports quarterly (Q=4), monthly (Q=12), or
+          weekly (Q=52) data.
+        - 'detrendq': Detrending with seasonal fixed effects. Requires ``season_var``
+          and ``Q`` parameters. Supports quarterly (Q=4), monthly (Q=12), or
+          weekly (Q=52) data.
 
-        Note: Quarterly methods ('demeanq', 'detrendq') are only supported in
-        common timing mode.
-
+        Seasonal methods (demeanq, detrendq) are only supported in common timing mode.
     gvar : str, optional
         Column name indicating first treatment period for staggered adoption.
-        If specified, activates staggered mode and ignores `d` and `post`.
+        If specified, activates staggered mode and ignores ``d`` and ``post``.
         Valid values: positive integers (treatment cohort), 0/inf/NaN (never-treated).
-    control_group : {'not_yet_treated', 'never_treated'}, default='not_yet_treated'
+    control_group : {'not_yet_treated', 'never_treated', 'all_others'}, default='not_yet_treated'
         Control group composition for staggered adoption:
 
         - 'not_yet_treated': Never-treated plus not-yet-treated units.
         - 'never_treated': Only never-treated units.
+        - 'all_others': All units not in the treated cohort (including already-treated units).
+          This option is mainly intended for replication/diagnostics and may introduce
+          forbidden comparisons under no-anticipation.
 
-        Automatically switched to 'never_treated' for cohort/overall aggregation.
+        Auto-switched to 'never_treated' for cohort/overall aggregation.
     estimator : {'ra', 'ipw', 'ipwra', 'psm'}, default='ra'
         Estimation method (case-insensitive):
 
-        - 'ra': Regression adjustment (OLS on transformed outcomes).
-        - 'ipw': Inverse probability weighting. Requires `controls`.
-        - 'ipwra': Doubly robust IPW with regression adjustment. Requires `controls`.
-        - 'psm': Propensity score matching. Requires `controls`.
+        - 'ra': Regression adjustment via OLS on transformed outcomes.
+        - 'ipw': Inverse probability weighting. Requires ``controls``.
+        - 'ipwra': Doubly robust combining IPW with RA. Requires ``controls``.
+        - 'psm': Propensity score matching. Requires ``controls``.
     aggregate : {'none', 'cohort', 'overall'}, default='cohort'
         Aggregation level for staggered adoption:
 
         - 'none': Return cohort-time specific effects only.
         - 'cohort': Aggregate to cohort-specific effects.
         - 'overall': Aggregate to a single weighted overall effect.
+    balanced_panel : {'warn', 'error', 'ignore'}, default='warn'
+        How to handle unbalanced panels (units with different observation counts):
+
+        - 'warn': Issue a warning with selection mechanism diagnostics (default).
+        - 'error': Raise UnbalancedPanelError if panel is unbalanced.
+        - 'ignore': Silently proceed without warnings.
+
+        From Lee & Wooldridge (2025) Section 4.4: Selection may depend on
+        time-invariant heterogeneity but not on Y_it(∞) shocks. Use
+        ``diagnose_selection_mechanism()`` for detailed diagnostics.
     ps_controls : list of str, optional
-        Control variables for propensity score model. If None, uses `controls`.
+        Control variables for propensity score model. If None, uses ``controls``.
     trim_threshold : float, default=0.01
         Propensity score trimming threshold. Observations with propensity scores
         outside [trim_threshold, 1 - trim_threshold] are excluded.
@@ -703,15 +746,15 @@ def lwdid(
     n_neighbors : int, default=1
         Number of nearest neighbors for PSM matching.
     caliper : float, optional
-        Maximum propensity score distance for PSM, in units of PS standard deviation.
-        Treated units without valid matches are dropped.
+        Maximum propensity score distance for PSM, in units of PS standard
+        deviation. Treated units without valid matches are dropped.
     with_replacement : bool, default=True
         Whether PSM allows control units to be matched multiple times.
     match_order : {'data', 'random', 'largest', 'smallest'}, default='data'
         Order for processing treated units in without-replacement PSM:
 
         - 'data': Original data order.
-        - 'random': Randomized order (use `seed` for reproducibility).
+        - 'random': Randomized order (use ``seed`` for reproducibility).
         - 'largest': Prioritize units with extreme propensity scores.
         - 'smallest': Prioritize units with propensity scores near 0.5.
     vce : {None, 'robust', 'hc0', 'hc1', 'hc2', 'hc3', 'hc4', 'cluster'}, optional
@@ -723,15 +766,15 @@ def lwdid(
         - 'hc2': Leverage-adjusted using (1 - h_ii)^{-1}.
         - 'hc3': Small-sample adjusted using (1 - h_ii)^{-2}.
         - 'hc4': Adaptive leverage correction.
-        - 'cluster': Cluster-robust (requires `cluster_var`).
+        - 'cluster': Cluster-robust (requires ``cluster_var``).
     controls : list of str, optional
         Time-invariant control variables for outcome regression.
     cluster_var : str, optional
         Column name for clustering (required when vce='cluster').
     alpha : float, default=0.05
-        Significance level for confidence intervals. CI = ATT +/- t_{df,1-alpha/2} * SE.
+        Significance level for confidence intervals.
     ri : bool, default=False
-        Whether to perform randomization inference for the null hypothesis ATT=0.
+        Whether to perform randomization inference for the null H0: ATT=0.
     rireps : int, default=1000
         Number of randomization inference replications.
     seed : int, optional
@@ -747,6 +790,77 @@ def lwdid(
         Specific unit identifier to highlight in the plot.
     graph_options : dict, optional
         Additional plotting options passed to the visualization function.
+    season_var : str, optional
+        Column name of seasonal indicator variable for seasonal transformations
+        (demeanq, detrendq). Values should be integers from 1 to Q representing
+        seasonal periods (e.g., quarters 1-4, months 1-12, or weeks 1-52).
+        This parameter is preferred over the legacy ``quarter`` parameter in
+        ``tvar`` for non-quarterly seasonal data.
+    Q : int, default=4
+        Number of seasonal periods per cycle. Used with seasonal transformations
+        (demeanq, detrendq). Common values:
+
+        - 4: Quarterly data (default)
+        - 12: Monthly data
+        - 52: Weekly data
+
+        Must match the range of values in ``season_var`` (1 to Q).
+    auto_detect_frequency : bool, default=False
+        Whether to automatically detect data frequency and set Q accordingly.
+        When True, the function analyzes the time variable to infer whether
+        data is quarterly (Q=4), monthly (Q=12), or weekly (Q=52).
+
+        - If detection succeeds with high confidence, Q is set automatically.
+        - If detection fails or has low confidence, a warning is issued and
+          the explicit Q value is used.
+        - An explicit Q value always overrides auto-detection when both are
+          specified (Q != 4 and auto_detect_frequency=True).
+
+        This parameter is useful when working with datasets of unknown frequency
+        or when building generic analysis pipelines.
+    include_pretreatment : bool, default=False
+        Whether to compute pre-treatment transformed outcomes and ATT estimates
+        for parallel trends assessment. Only applicable in staggered mode.
+        
+        When True:
+        
+        - Applies rolling transformations to pre-treatment periods using
+          future pre-treatment periods {t+1, ..., g-1} as reference.
+        - Estimates pre-treatment ATT for each (cohort, period) pair.
+        - Stores results in ``att_pre_treatment`` attribute of LWDIDResults.
+        - Enables extended event study visualization with pre-treatment effects.
+        
+        Under the parallel trends assumption, pre-treatment ATT estimates
+        should be statistically indistinguishable from zero.
+    pretreatment_test : bool, default=True
+        Whether to perform parallel trends statistical test when
+        ``include_pretreatment=True``. The test includes:
+        
+        - Individual t-tests for each pre-treatment period ATT.
+        - Joint F-test for H0: all pre-treatment ATT = 0.
+        
+        Results are stored in ``parallel_trends_test`` attribute.
+    pretreatment_alpha : float, default=0.05
+        Significance level for parallel trends test. Used for determining
+        ``reject_null`` in the test results.
+    exclude_pre_periods : int, default=0
+        Number of pre-treatment periods to exclude immediately before treatment.
+        Used to address potential anticipation effects when the no-anticipation
+        assumption may be violated.
+        
+        When ``exclude_pre_periods > 0``:
+        
+        - The specified number of periods immediately before treatment are
+          excluded from the pre-treatment sample used for transformation.
+        - For common timing: excludes the last k pre-treatment periods.
+        - For staggered adoption: excludes k periods before each cohort's
+          treatment date.
+        
+        This implements the robustness check recommended in Lee & Wooldridge
+        (2026) Section 8.1 for testing sensitivity to anticipation effects.
+        
+        Example: If treatment occurs at t=6 and ``exclude_pre_periods=2``,
+        periods t=4 and t=5 are excluded from the pre-treatment sample.
 
     Returns
     -------
@@ -758,14 +872,17 @@ def lwdid(
         - t_stat : t-statistic for H0: ATT=0.
         - pvalue : Two-sided p-value.
         - ci_lower, ci_upper : Confidence interval bounds.
-        - df_inference : Degrees of freedom (N-k or G-1 for clustered).
-        - nobs : Number of observations.
+        - df_inference : Degrees of freedom for inference.
+        - nobs : Number of observations in estimation sample.
         - n_treated, n_control : Unit counts by treatment status.
         - att_by_period : Period-specific ATT estimates (DataFrame).
         - ri_pvalue : Randomization inference p-value (if ri=True).
+        - att_pre_treatment : Pre-treatment ATT estimates (if include_pretreatment=True).
+        - parallel_trends_test : Parallel trends test results (if include_pretreatment=True).
+        - include_pretreatment : Whether pre-treatment dynamics were computed.
 
         Key methods: summary(), plot(), to_excel(), to_csv(), to_latex(),
-        get_diagnostics().
+        get_diagnostics(), plot_event_study().
 
     Raises
     ------
@@ -788,8 +905,8 @@ def lwdid(
     -----
     Mode selection:
 
-    - **Common timing** (gvar=None): Requires `d`, `post`, `rolling`.
-    - **Staggered adoption** (gvar specified): Requires `gvar`, `rolling`.
+    - **Common timing** (gvar=None): Requires ``d``, ``post``, ``rolling``.
+    - **Staggered adoption** (gvar specified): Requires ``gvar``, ``rolling``.
 
     Confidence intervals use t-distribution critical values with degrees of
     freedom N-k (homoskedastic) or G-1 (cluster-robust).
@@ -798,8 +915,11 @@ def lwdid(
     --------
     LWDIDResults : Detailed documentation of the results container.
     """
+    from .exceptions import UnbalancedPanelError
+    
     # Validate unknown kwargs to catch parameter typos.
-    _KNOWN_KWARGS = {'riseed'}  # Backward compatibility: riseed as alias for seed.
+    # Reserved for backward compatibility: riseed is an alias for seed.
+    _KNOWN_KWARGS = {'riseed'}
     unknown_kwargs = set(kwargs.keys()) - _KNOWN_KWARGS
     if unknown_kwargs:
         warnings.warn(
@@ -807,6 +927,12 @@ def lwdid(
             f"Valid extra arguments: {sorted(_KNOWN_KWARGS)}.",
             UserWarning,
             stacklevel=2
+        )
+
+    # Validate balanced_panel parameter
+    if balanced_panel not in ('warn', 'error', 'ignore'):
+        raise ValueError(
+            f"balanced_panel must be 'warn', 'error', or 'ignore', got '{balanced_panel}'"
         )
 
     if vce is not None:
@@ -818,6 +944,114 @@ def lwdid(
         vce = vce.lower()
 
     _validate_psm_params(n_neighbors, caliper, with_replacement, match_order)
+
+    # Validate Q parameter for seasonal transformations.
+    if not isinstance(Q, (int, np.integer)):
+        raise TypeError(
+            f"Parameter 'Q' must be an integer, got {type(Q).__name__}.\n"
+            f"Common values: 4 (quarterly), 12 (monthly), 52 (weekly)."
+        )
+    if Q < 2:
+        raise ValueError(
+            f"Parameter 'Q' must be >= 2, got {Q}.\n"
+            f"Q represents the number of seasonal periods per cycle.\n"
+            f"Common values: 4 (quarterly), 12 (monthly), 52 (weekly)."
+        )
+
+    # Validate season_var parameter.
+    if season_var is not None and not isinstance(season_var, str):
+        raise TypeError(
+            f"Parameter 'season_var' must be a string or None, got {type(season_var).__name__}.\n"
+            f"Specify the column name containing seasonal values (1 to Q)."
+        )
+
+    # Auto-detect frequency if requested and using seasonal transformations.
+    # Detection only applies when rolling method requires seasonal adjustment.
+    if auto_detect_frequency:
+        if not isinstance(auto_detect_frequency, bool):
+            raise TypeError(
+                f"Parameter 'auto_detect_frequency' must be a boolean, "
+                f"got {type(auto_detect_frequency).__name__}."
+            )
+        
+        # Only auto-detect for seasonal transformations.
+        rolling_lower = rolling.lower() if isinstance(rolling, str) else ''
+        if rolling_lower in ('demeanq', 'detrendq'):
+            # Determine time variable for detection.
+            tvar_for_detection = tvar if isinstance(tvar, str) else (tvar[0] if tvar else None)
+            
+            if tvar_for_detection is not None and ivar is not None:
+                try:
+                    detection_result = validation.detect_frequency(
+                        data, tvar=tvar_for_detection, ivar=ivar
+                    )
+                    
+                    detected_Q = detection_result.get('Q')
+                    confidence = detection_result.get('confidence', 0)
+                    frequency = detection_result.get('frequency')
+                    
+                    # Check if user explicitly set Q (not default value).
+                    user_specified_Q = Q != 4
+                    
+                    if detected_Q is not None and confidence >= 0.5:
+                        if user_specified_Q and Q != detected_Q:
+                            # User explicitly set Q, warn about mismatch but use user's value.
+                            logger.warning(
+                                f"Auto-detected frequency '{frequency}' (Q={detected_Q}) "
+                                f"differs from explicit Q={Q}. Using explicit Q={Q}."
+                            )
+                        else:
+                            # Use detected Q value.
+                            Q = detected_Q
+                            logger.info(
+                                f"Auto-detected data frequency: {frequency} (Q={Q}, "
+                                f"confidence={confidence:.2f})"
+                            )
+                    elif detected_Q is None or confidence < 0.5:
+                        # Detection failed or low confidence.
+                        warnings.warn(
+                            f"Could not reliably detect data frequency "
+                            f"(confidence={confidence:.2f}). Using Q={Q}. "
+                            f"Consider setting Q explicitly for seasonal transformations.",
+                            UserWarning,
+                            stacklevel=2
+                        )
+                except Exception as e:
+                    # Detection failed, use default Q.
+                    warnings.warn(
+                        f"Frequency auto-detection failed: {e}. Using Q={Q}.",
+                        UserWarning,
+                        stacklevel=2
+                    )
+            else:
+                warnings.warn(
+                    "Cannot auto-detect frequency: tvar or ivar not specified. Using Q={Q}.",
+                    UserWarning,
+                    stacklevel=2
+                )
+
+    # Check panel balance if balanced_panel='error'
+    if balanced_panel == 'error' and ivar is not None:
+        tvar_col = tvar if isinstance(tvar, str) else tvar[0]
+        if tvar_col in data.columns and ivar in data.columns:
+            panel_counts = data.groupby(ivar)[tvar_col].count()
+            is_balanced = panel_counts.nunique() == 1
+            
+            if not is_balanced:
+                min_obs = int(panel_counts.min())
+                max_obs = int(panel_counts.max())
+                n_incomplete = int((panel_counts < max_obs).sum())
+                
+                raise UnbalancedPanelError(
+                    f"Unbalanced panel detected: {n_incomplete} units have incomplete "
+                    f"observations (range: {min_obs}-{max_obs}). "
+                    f"Set balanced_panel='warn' to proceed with warnings, or create "
+                    f"a balanced subsample. Use diagnose_selection_mechanism() for "
+                    f"detailed diagnostics on selection bias risk.",
+                    min_obs=min_obs,
+                    max_obs=max_obs,
+                    n_incomplete_units=n_incomplete,
+                )
 
     # Dispatch to staggered or common timing implementation.
     if gvar is not None:
@@ -841,6 +1075,11 @@ def lwdid(
             alpha=alpha,
             ri=ri, rireps=rireps, seed=seed, ri_method=ri_method,
             graph=graph, gid=gid, graph_options=graph_options,
+            season_var=season_var, Q=Q,
+            include_pretreatment=include_pretreatment,
+            pretreatment_test=pretreatment_test,
+            pretreatment_alpha=pretreatment_alpha,
+            exclude_pre_periods=exclude_pre_periods,
             **kwargs
         )
     else:
@@ -856,6 +1095,7 @@ def lwdid(
         VALID_ESTIMATORS_COMMON = ('ra', 'ipw', 'ipwra', 'psm')
         if estimator_lower not in VALID_ESTIMATORS_COMMON:
             raise ValueError(
+                f"无效的estimator: '{estimator}'.\n"
                 f"Invalid estimator='{estimator}'.\n"
                 f"Valid values for common timing mode: {VALID_ESTIMATORS_COMMON}"
             )
@@ -889,6 +1129,7 @@ def lwdid(
         # IPW/PSM: requires controls OR ps_controls (propensity score model only).
         if estimator_lower == 'ipwra' and not controls:
             raise ValueError(
+                f"需要提供controls参数（IPWRA 需要结果模型控制变量）。\n"
                 f"estimator='ipwra' requires 'controls' parameter for outcome model.\n"
                 f"IPWRA (doubly robust) uses controls in both outcome regression and "
                 f"propensity score model.\n"
@@ -897,6 +1138,7 @@ def lwdid(
             )
         elif estimator_lower in ('ipw', 'psm') and not controls and not ps_controls:
             raise ValueError(
+                f"需要提供controls参数（或ps_controls参数）。\n"
                 f"estimator='{estimator}' requires 'controls' or 'ps_controls' parameter.\n"
                 f"IPW and PSM estimators need control variables for propensity score model.\n"
                 f"  - Use 'controls' to specify variables (also used as ps_controls by default)\n"
@@ -986,6 +1228,20 @@ def lwdid(
                 "Common values: 0.05 (95% CI), 0.10 (90% CI), 0.01 (99% CI)."
             )
 
+        # Validate exclude_pre_periods parameter.
+        if not isinstance(exclude_pre_periods, (int, np.integer)):
+            raise TypeError(
+                f"Parameter 'exclude_pre_periods' must be an integer, "
+                f"got {type(exclude_pre_periods).__name__}.\n"
+                f"Example: exclude_pre_periods=2 to exclude 2 periods before treatment."
+            )
+        if exclude_pre_periods < 0:
+            raise ValueError(
+                f"Parameter 'exclude_pre_periods' must be non-negative, "
+                f"got {exclude_pre_periods}.\n"
+                f"Use 0 for no exclusion, or a positive integer to exclude periods."
+            )
+
         if isinstance(tvar, (list, tuple)):
             if len(tvar) != 2:
                 raise ValueError(
@@ -1048,9 +1304,17 @@ def lwdid(
         post=post,
         rolling=rolling,
         controls=controls,
+        season_var=season_var,
     )
 
     rolling = metadata['rolling']
+
+    # Resolve season_var: prefer explicit season_var over tvar[1] for backward compatibility.
+    # If season_var is provided, use it; otherwise fall back to tvar[1] for quarterly data.
+    effective_season_var = season_var
+    if effective_season_var is None and not isinstance(tvar, str):
+        # Legacy behavior: use tvar[1] as quarter variable when tvar is a list
+        effective_season_var = tvar[1]
 
     data_transformed = transformations.apply_rolling_transform(
         data=data_clean,
@@ -1061,6 +1325,9 @@ def lwdid(
         rolling=rolling,
         tpost1=metadata['tpost1'],
         quarter=tvar[1] if not isinstance(tvar, str) else None,
+        season_var=effective_season_var,
+        Q=Q,
+        exclude_pre_periods=exclude_pre_periods,
     )
 
     # Extract first post-treatment cross-section for ATT estimation.
@@ -1172,7 +1439,8 @@ def lwdid(
                 if year == int(year):
                     period_labels[t] = str(int(year))
                 else:
-                    period_labels[t] = str(year)  # Preserve decimal part.
+                    # Preserve decimal part for non-integer years.
+                    period_labels[t] = str(year)
             else:
                 period_labels[t] = f"T{t}"
     else:
@@ -1359,26 +1627,30 @@ def _validate_control_group_for_aggregate(
     n_never_treated: int = 0
 ) -> tuple:
     """
-    Validate and auto-switch control group strategy based on aggregation level.
+    Validate and adjust control group strategy based on aggregation level.
 
     Cohort and overall aggregation require never-treated units as a consistent
-    reference group across different treatment cohorts.
+    reference group across different treatment cohorts. This function auto-
+    switches to 'never_treated' when needed and validates that sufficient
+    never-treated units exist.
 
     Parameters
     ----------
-    aggregate : str
-        Aggregation level: 'none', 'cohort', or 'overall'.
-    control_group : str
-        Requested control group strategy.
+    aggregate : {'none', 'cohort', 'overall'}
+        Aggregation level for effect estimates.
+    control_group : {'never_treated', 'not_yet_treated', 'all_others'}
+        Requested control group composition strategy.
     has_never_treated : bool
-        Whether the data contains never-treated units.
-    n_never_treated : int, default=0
-        Number of never-treated units.
+        Whether the data contains any never-treated units.
+    n_never_treated : int
+        Number of never-treated units in the data.
 
     Returns
     -------
-    tuple
-        (control_group_used, warning_message or None)
+    control_group_used : str
+        The control group strategy that will be used.
+    warning_msg : str or None
+        Warning message if auto-switching occurred, None otherwise.
 
     Raises
     ------
@@ -1447,55 +1719,62 @@ def _lwdid_staggered(
     graph: bool,
     gid: str | int | None,
     graph_options: dict | None,
+    season_var: str | None = None,
+    Q: int = 4,
+    include_pretreatment: bool = False,
+    pretreatment_test: bool = True,
+    pretreatment_alpha: float = 0.05,
+    exclude_pre_periods: int = 0,
     **kwargs
 ) -> LWDIDResults:
     """
     Estimate treatment effects under staggered adoption design.
 
-    Internal dispatcher for staggered difference-in-differences estimation.
-    Applies cohort-specific transformations, estimates cohort-time effects,
-    and aggregates results according to the specified level.
+    Internal dispatcher that applies cohort-specific transformations, estimates
+    cohort-time ATT effects, and aggregates results according to the specified
+    aggregation level. This function handles all staggered adoption logic when
+    the ``gvar`` parameter is provided to ``lwdid()``.
 
     Parameters
     ----------
     data : pd.DataFrame
         Panel data with unit, time, treatment cohort, and outcome variables.
     y : str
-        Outcome variable column name.
+        Column name of the outcome variable.
     ivar : str
-        Unit identifier column name.
+        Column name of the unit identifier.
     tvar : str or list of str
-        Time variable column name(s).
+        Column name(s) of the time variable.
     gvar : str
-        Treatment cohort column name indicating first treatment period.
+        Column name indicating the first treatment period for each unit.
     rolling : {'demean', 'detrend'}
         Transformation method for removing pre-treatment patterns.
-    control_group : {'never_treated', 'not_yet_treated'}
+    control_group : {'never_treated', 'not_yet_treated', 'all_others'}
         Control group composition strategy.
     estimator : {'ra', 'ipw', 'ipwra', 'psm'}
         Treatment effect estimation method.
     aggregate : {'none', 'cohort', 'overall'}
-        Aggregation level for effect estimates.
+        Aggregation level for the effect estimates.
     ps_controls : list of str or None
-        Variables for propensity score model.
+        Variables for the propensity score model.
     trim_threshold : float
-        Propensity score trimming bound.
+        Propensity score trimming bound in (0, 0.5).
     return_diagnostics : bool
-        Whether to include estimation diagnostics.
+        Whether to include estimation diagnostics in results.
     n_neighbors : int
-        Number of nearest neighbors for PSM.
+        Number of nearest neighbors for PSM matching.
     caliper : float or None
-        Maximum propensity score distance for PSM.
+        Maximum propensity score distance for PSM matches.
     with_replacement : bool
-        Whether PSM uses replacement.
+        Whether PSM allows control unit reuse.
     match_order : str
-        Order for processing treated units in PSM.
+        Order for processing treated units in PSM without replacement.
     vce : str or None
         Variance-covariance estimator type.
     controls : list of str or None
-        Control variables for outcome model.
+        Control variables for the outcome model.
     cluster_var : str or None
-        Clustering variable for standard errors.
+        Variable name for cluster-robust standard errors.
     alpha : float
         Significance level for confidence intervals.
     ri : bool
@@ -1504,22 +1783,22 @@ def _lwdid_staggered(
         Number of randomization inference replications.
     seed : int or None
         Random seed for reproducibility.
-    ri_method : str
-        Randomization inference method.
+    ri_method : {'bootstrap', 'permutation'}
+        Randomization inference resampling method.
     graph : bool
-        Whether to generate plots.
-    gid : str or int or None
-        Specific unit to highlight in plots.
+        Whether to generate visualization plots.
+    gid : str, int, or None
+        Specific unit identifier to highlight in plots.
     graph_options : dict or None
-        Additional plotting options.
+        Additional plotting configuration options.
     **kwargs
-        Additional keyword arguments.
+        Additional keyword arguments (reserved for future use).
 
     Returns
     -------
     LWDIDResults
         Results object containing ATT estimates, standard errors, confidence
-        intervals, and cohort-time specific effects.
+        intervals, cohort-time specific effects, and aggregated effects.
     """
     from .staggered import (
         transformations as stag_trans,
@@ -1569,11 +1848,22 @@ def _lwdid_staggered(
         )
     
     rolling_lower = rolling.lower()
-    if rolling_lower not in ('demean', 'detrend'):
+
+    # Seasonal rolling transformations are only supported in common timing mode.
+    # In staggered mode (gvar provided), they are intentionally disabled to avoid
+    # ambiguity about cohort-specific seasonal adjustments.
+    if rolling_lower in ('demeanq', 'detrendq'):
         raise ValueError(
-            f"Staggered mode does not support rolling='{rolling}'.\n"
-            f"Valid values: 'demean', 'detrend'.\n"
-            f"Note: Quarterly transformations ('demeanq', 'detrendq') are not yet supported in staggered mode."
+            f"Staggered mode does not support rolling='{rolling}'. "
+            f"Seasonal rolling transformations are only supported in common timing mode "
+            f"(set gvar=None)."
+        )
+
+    VALID_ROLLING_STAGGERED = ('demean', 'detrend')
+    if rolling_lower not in VALID_ROLLING_STAGGERED:
+        raise ValueError(
+            f"Invalid rolling='{rolling}' for staggered mode.\n"
+            f"Valid values: {VALID_ROLLING_STAGGERED}"
         )
 
     # Validate aggregate parameter type before string operations.
@@ -1600,17 +1890,18 @@ def _lwdid_staggered(
         raise TypeError(
             f"Parameter 'control_group' must be a string or None, "
             f"got {type(control_group).__name__}.\n"
-            f"Valid values: 'never_treated', 'not_yet_treated'"
+            f"Valid values: 'never_treated', 'not_yet_treated', 'all_others'"
         )
 
-    VALID_CONTROL_GROUPS = ('never_treated', 'not_yet_treated')
+    VALID_CONTROL_GROUPS = ('never_treated', 'not_yet_treated', 'all_others')
     control_group_lower = control_group.lower() if control_group else 'not_yet_treated'
     if control_group_lower not in VALID_CONTROL_GROUPS:
         raise ValueError(
             f"Invalid control_group='{control_group}'.\n"
             f"Valid values: {VALID_CONTROL_GROUPS}\n"
             f"  - 'never_treated': Use only never-treated units as control\n"
-            f"  - 'not_yet_treated': Use never-treated + not-yet-treated units as control"
+            f"  - 'not_yet_treated': Use never-treated + not-yet-treated units as control\n"
+            f"  - 'all_others': Use all non-cohort units as control (includes already-treated)"
         )
 
     # Validate estimator type before string operations.
@@ -1625,6 +1916,7 @@ def _lwdid_staggered(
     VALID_ESTIMATORS = ('ra', 'ipw', 'ipwra', 'psm')
     if estimator_lower not in VALID_ESTIMATORS:
         raise ValueError(
+            f"无效的estimator: '{estimator}'.\n"
             f"Invalid estimator='{estimator}'.\n"
             f"Valid values: {VALID_ESTIMATORS}"
         )
@@ -1634,6 +1926,7 @@ def _lwdid_staggered(
     # IPW/PSM: requires controls OR ps_controls (propensity score model only).
     if estimator_lower == 'ipwra' and not controls:
         raise ValueError(
+            f"需要提供controls参数（IPWRA 需要结果模型控制变量）。\n"
             f"estimator='ipwra' requires 'controls' parameter for outcome model.\n"
             f"IPWRA (doubly robust) uses controls in both outcome regression and "
             f"propensity score model.\n"
@@ -1642,6 +1935,7 @@ def _lwdid_staggered(
         )
     elif estimator_lower in ('ipw', 'psm') and not controls and not ps_controls:
         raise ValueError(
+            f"需要提供controls参数（或ps_controls参数）。\n"
             f"estimator='{estimator}' requires 'controls' or 'ps_controls' parameter.\n"
             f"IPW and PSM estimators need control variables for propensity score model.\n"
             f"  - Use 'controls' to specify variables (also used as ps_controls by default)\n"
@@ -1755,18 +2049,50 @@ def _lwdid_staggered(
 
     # Apply transformation.
     tvar_str = tvar if isinstance(tvar, str) else tvar[0]
-    transform_func = (
-        stag_trans.transform_staggered_demean 
-        if rolling_lower == 'demean' 
-        else stag_trans.transform_staggered_detrend
-    )
-    data_transformed = transform_func(
-        data=data,
-        y=y,
-        ivar=ivar,
-        tvar=tvar_str,
-        gvar=gvar,
-    )
+    
+    # Select appropriate transformation function based on rolling method.
+    if rolling_lower == 'demean':
+        transform_func = stag_trans.transform_staggered_demean
+        data_transformed = transform_func(
+            data=data,
+            y=y,
+            ivar=ivar,
+            tvar=tvar_str,
+            gvar=gvar,
+            exclude_pre_periods=exclude_pre_periods,
+        )
+    elif rolling_lower == 'detrend':
+        transform_func = stag_trans.transform_staggered_detrend
+        data_transformed = transform_func(
+            data=data,
+            y=y,
+            ivar=ivar,
+            tvar=tvar_str,
+            gvar=gvar,
+            exclude_pre_periods=exclude_pre_periods,
+        )
+    elif rolling_lower == 'demeanq':
+        data_transformed = stag_trans.transform_staggered_demeanq(
+            data=data,
+            y=y,
+            ivar=ivar,
+            tvar=tvar_str,
+            gvar=gvar,
+            season_var=season_var,
+            Q=Q,
+            exclude_pre_periods=exclude_pre_periods,
+        )
+    elif rolling_lower == 'detrendq':
+        data_transformed = stag_trans.transform_staggered_detrendq(
+            data=data,
+            y=y,
+            ivar=ivar,
+            tvar=tvar_str,
+            gvar=gvar,
+            season_var=season_var,
+            Q=Q,
+            exclude_pre_periods=exclude_pre_periods,
+        )
 
     # Estimate cohort-time effects.
     ps_controls_final = ps_controls if ps_controls is not None else controls
@@ -1809,9 +2135,7 @@ def _lwdid_staggered(
         for e in cohort_time_effects
     ])
 
-    # Initialize aggregation results with default values.
-    # Initialize aggregation variables before conditional blocks.
-    # Required for consistent variable scope across all code paths.
+    # Initialize aggregation variables for consistent scope across all code paths.
     att_by_cohort = None
     att_overall = None
     se_overall = None
@@ -1898,10 +2222,10 @@ def _lwdid_staggered(
     elif estimator_for_df == 'ipwra':
         # IPWRA: intercept + D + K controls = 2 + K
         df_fallback = n_treated + n_control - 2 - n_controls
-    else:  # ipw, psm
-        # IPW/PSM: intercept + D = 2 (controls in PS model, not outcome)
+    else:
+        # IPW/PSM: df = n - 2 (controls only affect PS model, not outcome).
         df_fallback = n_treated + n_control - 2
-    df_fallback = max(1, df_fallback)  # Ensure at least 1 df for valid t-distribution
+    df_fallback = max(1, df_fallback)  # Ensure valid t-distribution quantiles.
 
     if aggregate_lower == 'overall' and overall_effect is not None:
         # For overall aggregation: use df from the overall regression
@@ -1915,11 +2239,13 @@ def _lwdid_staggered(
         if valid_df_resid:
             df_resid_val = int(np.median(valid_df_resid))
         else:
-            df_resid_val = df_fallback  # Use controls-aware fallback
+            # Use controls-aware fallback when no valid cohort effects exist.
+            df_resid_val = df_fallback
         if valid_df_inference:
             df_inference_val = int(np.median(valid_df_inference))
         else:
-            df_inference_val = df_fallback  # Use controls-aware fallback
+            # Use controls-aware fallback when no valid cohort effects exist.
+            df_inference_val = df_fallback
     elif len(cohort_time_effects) > 0:
         # For none or fallback: use median df across cohort-time regressions.
         # Use nanmedian to handle cases where some effects failed estimation.
@@ -1928,11 +2254,13 @@ def _lwdid_staggered(
         if valid_df_resid:
             df_resid_val = int(np.median(valid_df_resid))
         else:
-            df_resid_val = df_fallback  # Use controls-aware fallback
+            # Use controls-aware fallback when no valid effects exist.
+            df_resid_val = df_fallback
         if valid_df_inference:
             df_inference_val = int(np.median(valid_df_inference))
         else:
-            df_inference_val = df_fallback  # Use controls-aware fallback
+            # Use controls-aware fallback when no valid effects exist.
+            df_inference_val = df_fallback
     else:
         # Fallback to controls-aware formula when no effects available.
         df_resid_val = df_fallback
@@ -2010,6 +2338,87 @@ def _lwdid_staggered(
                 )
             att_cohort_time_fallback = float(np.average(valid_df['att'], weights=valid_df['n_treated']))
 
+    # =========================================================================
+    # Pre-treatment Dynamics Estimation (when include_pretreatment=True)
+    # =========================================================================
+    att_pre_treatment_df = None
+    parallel_trends_result = None
+    
+    if include_pretreatment:
+        from .staggered.transformations_pre import (
+            transform_staggered_demean_pre,
+            transform_staggered_detrend_pre,
+        )
+        from .staggered.estimation_pre import (
+            estimate_pre_treatment_effects,
+            pre_treatment_effects_to_dataframe,
+        )
+        from .staggered.parallel_trends import run_parallel_trends_test
+        
+        # Apply pre-treatment transformation
+        try:
+            if rolling_lower in ('demean', 'demeanq'):
+                data_pre_transformed = transform_staggered_demean_pre(
+                    data=data_transformed,
+                    y=y,
+                    ivar=ivar,
+                    tvar=tvar_str,
+                    gvar=gvar,
+                    never_treated_values=[0, np.inf],
+                )
+                pre_transform_type = 'demean'
+            else:  # detrend, detrendq
+                data_pre_transformed = transform_staggered_detrend_pre(
+                    data=data_transformed,
+                    y=y,
+                    ivar=ivar,
+                    tvar=tvar_str,
+                    gvar=gvar,
+                    never_treated_values=[0, np.inf],
+                )
+                pre_transform_type = 'detrend'
+            
+            # Estimate pre-treatment effects
+            pre_treatment_effects = estimate_pre_treatment_effects(
+                data_transformed=data_pre_transformed,
+                gvar=gvar,
+                ivar=ivar,
+                tvar=tvar_str,
+                controls=controls,
+                vce=vce,
+                cluster_var=cluster_var,
+                control_strategy=control_group_used,
+                never_treated_values=[0, np.inf],
+                alpha=pretreatment_alpha,
+                estimator=estimator_lower,
+                transform_type=pre_transform_type,
+                propensity_controls=ps_controls_final,
+                trim_threshold=trim_threshold,
+            )
+            
+            # Convert to DataFrame
+            att_pre_treatment_df = pre_treatment_effects_to_dataframe(pre_treatment_effects)
+            
+            # Run parallel trends test if requested
+            if pretreatment_test and len(pre_treatment_effects) > 0:
+                parallel_trends_result = run_parallel_trends_test(
+                    pre_treatment_effects=pre_treatment_effects,
+                    alpha=pretreatment_alpha,
+                    test_type='f',
+                    min_pre_periods=2,
+                )
+            
+            # Update data_transformed with pre-treatment columns for visualization
+            data_transformed = data_pre_transformed
+            
+        except Exception as e:
+            warnings.warn(
+                f"Pre-treatment dynamics estimation failed: {e}. "
+                f"Continuing without pre-treatment effects.",
+                UserWarning,
+                stacklevel=3
+            )
+
     results_dict = {
         'is_staggered': True,
         'cohorts': cohorts,
@@ -2078,6 +2487,10 @@ def _lwdid_staggered(
         'bse': None,
         'vcov': None,
         'resid': None,
+        # Pre-treatment dynamics
+        'att_pre_treatment': att_pre_treatment_df,
+        'parallel_trends_test': parallel_trends_result,
+        'include_pretreatment': include_pretreatment,
     }
 
     metadata = {

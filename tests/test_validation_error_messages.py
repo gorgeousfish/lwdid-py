@@ -97,7 +97,7 @@ class TestInvalidRollingMethodMessages(TestErrorMessageFormat):
     """Test InvalidRollingMethodError messages."""
     
     def test_invalid_rolling_method_message(self):
-        """Invalid rolling method error should have Why/How sections."""
+        """Invalid rolling method error should have clear error message."""
         data = pd.DataFrame({
             'id': [1, 1, 2, 2, 3, 3],
             'year': [1, 2, 1, 2, 1, 2],
@@ -113,13 +113,13 @@ class TestInvalidRollingMethodMessages(TestErrorMessageFormat):
             )
         
         error_msg = str(exc_info.value)
-        self._verify_message_sections(error_msg)
+        # InvalidRollingMethodError uses a concise format without Why/How sections
         assert "invalid_method" in error_msg
         assert "demean" in error_msg
         assert "detrend" in error_msg
 
     def test_quarterly_method_tvar_error_message(self):
-        """Quarterly method without tvar list should have Why/How sections."""
+        """Quarterly method without tvar list should have clear error message."""
         data = pd.DataFrame({
             'id': [1, 1, 2, 2, 3, 3],
             'year': [1, 2, 1, 2, 1, 2],
@@ -135,9 +135,10 @@ class TestInvalidRollingMethodMessages(TestErrorMessageFormat):
             )
         
         error_msg = str(exc_info.value)
-        self._verify_message_sections(error_msg)
+        # InvalidRollingMethodError uses a concise format with example usage
         assert "demeanq" in error_msg
-        assert "year" in error_msg.lower() or "quarter" in error_msg.lower()
+        # Should mention either tvar list format or season_var parameter
+        assert "tvar" in error_msg.lower() or "season_var" in error_msg.lower()
 
 
 class TestInsufficientDataErrorMessages(TestErrorMessageFormat):

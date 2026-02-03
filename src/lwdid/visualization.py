@@ -1,46 +1,70 @@
 """
-Visualization Module
+Visualization utilities for difference-in-differences analysis.
 
-Provides plotting functions for transformed outcomes.
+This module provides plotting functions for visualizing transformed outcomes
+in panel data difference-in-differences settings. The primary use case is
+comparing the trajectory of residualized outcomes between treated units
+(or their group average) and the control group mean across time periods.
+
+The visualization functions support both single treated unit analysis and
+aggregated treatment group comparisons. Plots display pre-treatment fit
+quality and post-intervention treatment effect gaps, with customizable
+appearance options.
+
+Notes
+-----
+Requires matplotlib >= 3.3 for plotting functionality. The module raises
+VisualizationError if matplotlib is not installed when plot generation
+is requested.
 """
 
-from typing import Dict, Optional, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
 from .exceptions import InvalidParameterError, VisualizationError
 
+if TYPE_CHECKING:
+    from typing import Any
+
 
 def _resolve_gid(
     data: pd.DataFrame,
     ivar_var: str,
     d_var: str,
-    gid: Union[str, int]
+    gid: str | int
 ) -> int:
     """
-    Resolve gid to unit identifier in data
-    
+    Resolve a user-provided unit identifier to the internal representation.
+
+    Maps user-specified unit identifiers to the internal numeric identifiers
+    used in the transformed data. Handles string-to-numeric conversions and
+    validates that the resolved identifier corresponds to a treated unit.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data
+        Panel data containing the unit identifier column.
     ivar_var : str
-        Unit identifier
+        Name of the unit identifier column.
     d_var : str
-        Treatment indicator
+        Name of the binary treatment indicator column (1 = treated).
     gid : str or int
-        Unit ID to resolve
-    
+        User-specified unit identifier to resolve.
+
     Returns
     -------
     int
-        Resolved unit ID
-    
+        Internal unit identifier corresponding to the input.
+
     Raises
     ------
     InvalidParameterError
-        If gid not found or not a treated unit
+        If the unit identifier is not found in the data or does not
+        correspond to a treated unit.
     """
     original_gid = gid
     mapping = data.attrs.get('id_mapping', None)
@@ -94,40 +118,65 @@ def prepare_plot_data(
     d_var: str,
     tindex_var: str,
     ivar_var: str,
-    gid: Optional[Union[str, int]],
+    gid: str | int | None,
     tpost1: int,
     Tmax: int,
-    period_labels: Dict[int, str],
-) -> dict:
+    period_labels: dict[int, str],
+) -> dict[str, Any]:
     """
-    Prepare plot data dictionary
-    
+    Prepare data structures for plotting transformed outcomes.
+
+    Computes control group means and treated unit (or group average) series
+    across all time periods. The output dictionary contains all necessary
+    data for generating comparative time series plots.
+
     Parameters
     ----------
     data : pd.DataFrame
-        Transformed panel data
+        Transformed panel data containing residualized outcomes.
     ydot_var : str
-        Residualized outcome
+        Name of the column containing the residualized outcome variable
+        (unit-specific mean or trend removed).
     d_var : str
-        Treatment indicator
+        Name of the binary treatment indicator column (1 = treated).
     tindex_var : str
-        Time index
+        Name of the time period index column.
     ivar_var : str
-        Unit identifier
-    gid : str or int, optional
-        Unit ID to plot (None for treated group average)
+        Name of the unit identifier column.
+    gid : str, int, or None
+        Unit identifier for a specific treated unit to plot. If None,
+        computes the average across all treated units.
     tpost1 : int
-        First post-treatment period
+        First post-treatment time period (intervention point).
     Tmax : int
-        Last period
-    period_labels : dict
-        Mapping tindex → period label
-    
+        Final time period in the panel.
+    period_labels : dict of {int: str}
+        Mapping from time index values to display labels for the x-axis.
+
     Returns
     -------
     dict
-        'time', 'control_mean', 'treated_series', 'intervention_point',
-        'treated_label', 'period_labels'
+        Dictionary containing:
+
+        - ``time`` : list of int
+            Time period indices from 1 to Tmax.
+        - ``control_mean`` : list of float
+            Control group mean of the residualized outcome for each period.
+        - ``treated_series`` : list of float
+            Treated unit or group average of the residualized outcome.
+        - ``intervention_point`` : int
+            First post-treatment period for the vertical intervention line.
+        - ``treated_label`` : str
+            Label for the treated series in the plot legend.
+        - ``period_labels`` : dict
+            Time index to label mapping for x-axis tick labels.
+
+    Raises
+    ------
+    VisualizationError
+        If required columns are missing from the data.
+    InvalidParameterError
+        If gid is specified but not found or not a treated unit.
     """
     required = {ydot_var, d_var, tindex_var, ivar_var}
     missing = required - set(data.columns)
@@ -171,23 +220,45 @@ def prepare_plot_data(
 
 
 def plot_results(
-    plot_data: dict,
-    graph_options: Optional[dict] = None,
+    plot_data: dict[str, Any],
+    graph_options: dict[str, Any] | None = None,
 ):
     """
-    Generate plot from prepared data
-    
+    Generate a time series plot comparing treated and control outcomes.
+
+    Creates a matplotlib figure displaying the residualized outcome
+    trajectories for treated units (or their average) and control group mean
+    across all time periods. A vertical line marks the intervention point.
+
     Parameters
     ----------
     plot_data : dict
-        Data from prepare_plot_data()
+        Data dictionary from :func:`prepare_plot_data` containing time
+        indices, outcome series, and labeling information.
     graph_options : dict, optional
-        'figsize', 'title', 'xlabel', 'ylabel', 'legend_loc', 'dpi', 'savefig'
-    
+        Customization options for the plot appearance:
+
+        - ``figsize`` : tuple of (width, height), default (10, 6)
+        - ``title`` : str or None, plot title
+        - ``xlabel`` : str or None, x-axis label
+        - ``ylabel`` : str, y-axis label, default 'Residualized Outcome'
+        - ``legend_loc`` : str, legend position, default 'best'
+        - ``dpi`` : int, figure resolution, default 100
+        - ``savefig`` : str or None, file path to save the figure
+
     Returns
     -------
-    matplotlib.Figure
-        Generated figure
+    matplotlib.figure.Figure
+        Generated matplotlib figure object.
+
+    Raises
+    ------
+    VisualizationError
+        If matplotlib is not installed.
+
+    See Also
+    --------
+    prepare_plot_data : Prepare the data dictionary for plotting.
     """
     try:
         import matplotlib.pyplot as plt

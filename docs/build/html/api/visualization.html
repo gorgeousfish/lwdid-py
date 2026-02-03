@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualization Module (visualization) &mdash; lwdid 0.1.0</title>
+  <title>Visualization Module (visualization) &mdash; lwdid 0.2.0</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -14,16 +14,17 @@
   
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/documentation_options.js?v=938c9ccc"></script>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="../_static/copybutton.js?v=f281be69"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Exceptions Module (exceptions)" href="exceptions.html" />
-    <link rel="prev" title="Randomization Module (randomization)" href="randomization.html" /> 
+    <link rel="prev" title="Randomization Inference Module" href="randomization.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -65,7 +66,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart.html#basic-example">Basic Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#simplest-usage">Simplest Usage</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#output">Output</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart.html#key-parameters">Key Parameters</a><ul>
@@ -73,7 +73,9 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart.html#common-options">Common Options</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#heteroskedasticity-robust-standard-errors">Heteroskedasticity-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#small-sample-exact-inference">Small-Sample Exact Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#large-sample-inference">Large-Sample Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#randomization-inference">Randomization Inference</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#adding-control-variables">Adding Control Variables</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#quarterly-data">Quarterly Data</a></li>
@@ -91,11 +93,17 @@
 <li class="toctree-l3"><a class="reference internal" href="../quickstart.html#key-requirements">Key Requirements</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../quickstart.html#staggered-adoption">Staggered Adoption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#staggered-results">Staggered Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quickstart.html#key-staggered-parameters">Key Staggered Parameters</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../quickstart.html#next-steps">Next Steps</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user_guide.html">User Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#scenario-selection-guide">Scenario Selection Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#quick-reference">Quick Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
@@ -106,8 +114,11 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#variance-estimation">Variance Estimation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#ols-homoskedastic">OLS (Homoskedastic)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc0-white-s-heteroskedasticity-consistent">HC0 (White’s Heteroskedasticity-Consistent)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc1-heteroskedasticity-robust">HC1 (Heteroskedasticity-Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc2-leverage-adjusted">HC2 (Leverage-Adjusted)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc3-small-sample-adjusted-robust">HC3 (Small-Sample Adjusted Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#hc4-high-leverage-adjusted">HC4 (High-Leverage Adjusted)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#cluster-robust">Cluster-Robust</a></li>
 </ul>
 </li>
@@ -143,12 +154,22 @@
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#troubleshooting">Troubleshooting</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#common-errors">Common Errors</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#performance-tips">Performance Tips</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#staggered-adoption-design">Staggered Adoption Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#id2">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#accessing-staggered-results">Accessing Staggered Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#control-group-strategies">Control Group Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#estimator-selection">Estimator Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#staggered-example">Staggered Example</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#further-reading">Further Reading</a></li>
@@ -186,6 +207,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../examples/index.html#creating-publication-tables">Creating Publication Tables</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#staggered-did-castle-law">Staggered DiD: Castle Law</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#castle-doctrine-analysis">Castle Doctrine Analysis</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../examples/index.html#complete-workflow-example">Complete Workflow Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../examples/index.html#end-to-end-analysis">End-to-End Analysis</a></li>
 </ul>
@@ -204,40 +229,39 @@
 <li class="toctree-l4"><a class="reference internal" href="core.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="results.html">LWDIDResults Class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="results.html#lwdid.LWDIDResults"><code class="docutils literal notranslate"><span class="pre">LWDIDResults</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="results.html">Results Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="results.html#attributes-reference">Attributes Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#methods-reference">Methods Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#usage-by-design-type">Usage by Design Type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#lwdidresults-class">LWDIDResults Class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="results.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="results.html#examples">Examples</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="results.html#accessing-core-estimates">Accessing Core Estimates</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#sample-information">Sample Information</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#period-specific-effects">Period-Specific Effects</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#randomization-inference-results">Randomization Inference Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#printing-summary">Printing Summary</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#visualization">Visualization</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#exporting-results">Exporting Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#working-with-results-programmatically">Working with Results Programmatically</a></li>
+<li class="toctree-l3"><a class="reference internal" href="staggered.html">Staggered DiD Module (staggered)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#key-concepts">Key Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#transformations">Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#control-groups">Control Groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#estimation">Estimation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#aggregation">Aggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#ipw-estimator">IPW Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#examples">Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="results.html#attributes-reference">Attributes Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="results.html#core-estimates">Core Estimates</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#id26">Sample Information</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#period-specific-results">Period-Specific Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="results.html#randomization-inference">Randomization Inference</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="results.html#methods-reference">Methods Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="results.html#see-also">See Also</a></li>
-<li class="toctree-l3"><a class="reference internal" href="transformations.html">Transformations Module (transformations)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.apply_rolling_transform"><code class="docutils literal notranslate"><span class="pre">apply_rolling_transform()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.detrend_unit"><code class="docutils literal notranslate"><span class="pre">detrend_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.demeanq_unit"><code class="docutils literal notranslate"><span class="pre">demeanq_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="transformations.html#lwdid.transformations.detrendq_unit"><code class="docutils literal notranslate"><span class="pre">detrendq_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="transformations.html#overview">Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="transformations.html#transformation-methods">Transformation Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="transformations.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transformations.html">Transformations Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#available-transformations">Available Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#id1">Available Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#unit-level-functions">Unit-Level Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#internal-functions">Internal Functions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="transformations.html#example-usage">Example Usage</a></li>
-<li class="toctree-l4"><a class="reference internal" href="transformations.html#technical-notes">Technical Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#transformation-selection-guide">Transformation Selection Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="transformations.html#staggered-adoption-transformations">Staggered Adoption Transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="transformations.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -251,6 +275,8 @@
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#implementation-details">Implementation Details</a></li>
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#technical-notes">Technical Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#large-sample-inference">Large-Sample Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="estimation.html#estimator-selection-for-large-samples">Estimator Selection for Large Samples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -258,23 +284,25 @@
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#best-practices">Best Practices</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="randomization.html">Randomization Module (randomization)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#lwdid.randomization.randomization_inference"><code class="docutils literal notranslate"><span class="pre">randomization_inference()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#overview">Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#how-randomization-inference-works">How Randomization Inference Works</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#ri-methods">RI Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#practical-considerations">Practical Considerations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#interpreting-ri-results">Interpreting RI Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#limitations">Limitations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="randomization.html#examples">Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="randomization.html">Randomization Inference Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#resampling-methods">Resampling Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#parameters">Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#returns">Returns</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="randomization.html#methodological-notes">Methodological Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="randomization.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -285,6 +313,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#plot-components">Plot Components</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#advanced-customization">Advanced Customization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#staggered-adoption-visualization">Staggered Adoption Visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#exporting-plots">Exporting Plots</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#plot-parameters-reference">Plot Parameters Reference</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#examples-gallery">Examples Gallery</a></li>
@@ -305,6 +334,8 @@
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.MissingRequiredColumnError"><code class="docutils literal notranslate"><span class="pre">MissingRequiredColumnError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.RandomizationError"><code class="docutils literal notranslate"><span class="pre">RandomizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-classes">Exception Classes</a></li>
@@ -342,10 +373,20 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#efficiency-considerations">Efficiency Considerations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../methodological_notes.html#monte-carlo-simulation-evidence">Monte Carlo Simulation Evidence</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#no-anticipation">No Anticipation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#parallel-trends">Parallel Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#common-treatment-timing">Common Treatment Timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#common-treatment-timing-common-timing-mode">Common Treatment Timing (Common Timing Mode)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
 </ul>
 </li>
@@ -364,6 +405,15 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#staggered-adoption">Staggered Adoption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#identification">Identification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#transformation">Transformation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#aggregation">Aggregation</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#references">References</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#further-reading">Further Reading</a></li>
@@ -372,10 +422,6 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../changelog.html#version-0-1-0">Version 0.1.0</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../contributing.html#how-to-contribute">How to Contribute</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../contributing.html#development-setup">Development Setup</a></li>
@@ -414,32 +460,86 @@
 <h1>Visualization Module (visualization)<a class="headerlink" href="#visualization-module-visualization" title="Link to this heading"></a></h1>
 <p>The visualization module provides plotting functions for visualizing
 difference-in-differences estimation results.</p>
-<p id="module-lwdid.visualization">Visualization module for the lwdid package.</p>
-<p>Provides plotting functions for transformed outcomes.</p>
+<p id="module-lwdid.visualization">Visualization utilities for difference-in-differences analysis.</p>
+<p>This module provides plotting functions for visualizing transformed outcomes
+in panel data difference-in-differences settings. The primary use case is
+comparing the trajectory of residualized outcomes between treated units
+(or their group average) and the control group mean across time periods.</p>
+<p>The visualization functions support both single treated unit analysis and
+aggregated treatment group comparisons. Plots display pre-treatment fit
+quality and post-intervention treatment effect gaps, with customizable
+appearance options.</p>
+<p class="rubric">Notes</p>
+<p>Requires matplotlib &gt;= 3.3 for plotting functionality. The module raises
+VisualizationError if matplotlib is not installed when plot generation
+is requested.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.visualization.prepare_plot_data">
 <span class="sig-prename descclassname"><span class="pre">lwdid.visualization.</span></span><span class="sig-name descname"><span class="pre">prepare_plot_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ydot_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tindex_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tpost1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Tmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period_labels</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/visualization.html#prepare_plot_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.visualization.prepare_plot_data" title="Link to this definition"></a></dt>
-<dd><p>Prepare plot data dictionary</p>
+<dd><p>Prepare data structures for plotting transformed outcomes.</p>
+<p>Computes control group means and treated unit (or group average) series
+across all time periods. The output dictionary contains all necessary
+data for generating comparative time series plots.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Transformed panel data</p></li>
-<li><p><strong>ydot_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Residualized outcome</p></li>
-<li><p><strong>d_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Treatment indicator</p></li>
-<li><p><strong>tindex_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Time index</p></li>
-<li><p><strong>ivar_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Unit identifier</p></li>
-<li><p><strong>gid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Unit ID to plot (None for treated group average)</p></li>
-<li><p><strong>tpost1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – First post-treatment period</p></li>
-<li><p><strong>Tmax</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Last period</p></li>
-<li><p><strong>period_labels</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Mapping tindex → period label</p></li>
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Transformed panel data containing residualized outcomes.</p></li>
+<li><p><strong>ydot_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the column containing the residualized outcome variable
+(unit-specific mean or trend removed).</p></li>
+<li><p><strong>d_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the binary treatment indicator column (1 = treated).</p></li>
+<li><p><strong>tindex_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the time period index column.</p></li>
+<li><p><strong>ivar_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Name of the unit identifier column.</p></li>
+<li><p><strong>gid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, or </em><em>None</em>) – Unit identifier for a specific treated unit to plot. If None,
+computes the average across all treated units.</p></li>
+<li><p><strong>tpost1</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – First post-treatment time period (intervention point).</p></li>
+<li><p><strong>Tmax</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Final time period in the panel.</p></li>
+<li><p><strong>period_labels</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em> of </em><em>{int: str}</em>) – Mapping from time index values to display labels for the x-axis.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>‘time’, ‘control_mean’, ‘treated_series’, ‘intervention_point’,
-‘treated_label’, ‘period_labels’</p>
+<dd class="field-even"><p><p>Dictionary containing:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">time</span></code><span class="classifier">list of int</span></dt><dd><p>Time period indices from 1 to Tmax.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">control_mean</span></code><span class="classifier">list of float</span></dt><dd><p>Control group mean of the residualized outcome for each period.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">treated_series</span></code><span class="classifier">list of float</span></dt><dd><p>Treated unit or group average of the residualized outcome.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">intervention_point</span></code><span class="classifier">int</span></dt><dd><p>First post-treatment period for the vertical intervention line.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">treated_label</span></code><span class="classifier">str</span></dt><dd><p>Label for the treated series in the plot legend.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">period_labels</span></code><span class="classifier">dict</span></dt><dd><p>Time index to label mapping for x-axis tick labels.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.VisualizationError" title="lwdid.exceptions.VisualizationError"><strong>VisualizationError</strong></a> – If required columns are missing from the data.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidParameterError" title="lwdid.exceptions.InvalidParameterError"><strong>InvalidParameterError</strong></a> – If gid is specified but not found or not a treated unit.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -447,21 +547,45 @@ difference-in-differences estimation results.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.visualization.plot_results">
 <span class="sig-prename descclassname"><span class="pre">lwdid.visualization.</span></span><span class="sig-name descname"><span class="pre">plot_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plot_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/visualization.html#plot_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.visualization.plot_results" title="Link to this definition"></a></dt>
-<dd><p>Generate plot from prepared data</p>
+<dd><p>Generate a time series plot comparing treated and control outcomes.</p>
+<p>Creates a matplotlib figure displaying the residualized outcome
+trajectories for treated units (or their average) and control group mean
+across all time periods. A vertical line marks the intervention point.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>plot_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Data from prepare_plot_data()</p></li>
-<li><p><strong>graph_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – ‘figsize’, ‘title’, ‘xlabel’, ‘ylabel’, ‘legend_loc’, ‘dpi’, ‘savefig’</p></li>
+<li><p><strong>plot_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Data dictionary from <a class="reference internal" href="#lwdid.visualization.prepare_plot_data" title="lwdid.visualization.prepare_plot_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">prepare_plot_data()</span></code></a> containing time
+indices, outcome series, and labeling information.</p></li>
+<li><p><strong>graph_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – <p>Customization options for the plot appearance:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">figsize</span></code> : tuple of (width, height), default (10, 6)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">title</span></code> : str or None, plot title</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xlabel</span></code> : str or None, x-axis label</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ylabel</span></code> : str, y-axis label, default ‘Residualized Outcome’</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">legend_loc</span></code> : str, legend position, default ‘best’</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dpi</span></code> : int, figure resolution, default 100</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">savefig</span></code> : str or None, file path to save the figure</p></li>
+</ul>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Generated figure</p>
+<dd class="field-even"><p>Generated matplotlib figure object.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>matplotlib.Figure</p>
+<dd class="field-odd"><p><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="(in Matplotlib v3.10.8)">matplotlib.figure.Figure</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.VisualizationError" title="lwdid.exceptions.VisualizationError"><strong>VisualizationError</strong></a> – If matplotlib is not installed.</p>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.visualization.prepare_plot_data" title="lwdid.visualization.prepare_plot_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_plot_data</span></code></a></dt><dd><p>Prepare the data dictionary for plotting.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
 <section id="overview">
@@ -476,29 +600,20 @@ transformed outcomes for treated and control groups over time.</p>
 <li><p>Customizable appearance (figure size, titles, labels, colors)</p></li>
 <li><p>Automatic handling of time indices and period labels</p></li>
 </ul>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>In version 0.1.0, <a class="reference internal" href="results.html#lwdid.LWDIDResults.plot" title="lwdid.LWDIDResults.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">lwdid.LWDIDResults.plot()</span></code></a> has the signature
+<p><strong>API Signature:</strong></p>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">lwdid.LWDIDResults.plot()</span></code> method accepts two arguments:
 <code class="docutils literal notranslate"><span class="pre">plot(gid=None,</span> <span class="pre">graph_options=None)</span></code>. Customization options such as
 figure size, title, axis labels, legend location, DPI, and output
 filename are passed via the <code class="docutils literal notranslate"><span class="pre">graph_options</span></code> dictionary (with keys
 like <code class="docutils literal notranslate"><span class="pre">'figsize'</span></code>, <code class="docutils literal notranslate"><span class="pre">'title'</span></code>, <code class="docutils literal notranslate"><span class="pre">'xlabel'</span></code>, <code class="docutils literal notranslate"><span class="pre">'ylabel'</span></code>,
-<code class="docutils literal notranslate"><span class="pre">'legend_loc'</span></code>, <code class="docutils literal notranslate"><span class="pre">'dpi'</span></code>, <code class="docutils literal notranslate"><span class="pre">'savefig'</span></code>). Examples in this
-document that show additional keyword arguments (for example,
-<code class="docutils literal notranslate"><span class="pre">figsize=...</span></code>, <code class="docutils literal notranslate"><span class="pre">title=...</span></code>, <code class="docutils literal notranslate"><span class="pre">xlabel=...</span></code>, <code class="docutils literal notranslate"><span class="pre">ylabel=...</span></code>,
-<code class="docutils literal notranslate"><span class="pre">ax=...</span></code>, or color/marker options) are conceptual and may require
-adaptation: in version 0.1.0 the only arguments accepted by
-<a class="reference internal" href="results.html#lwdid.LWDIDResults.plot" title="lwdid.LWDIDResults.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">lwdid.LWDIDResults.plot()</span></code></a> are <code class="docutils literal notranslate"><span class="pre">gid</span></code> and <code class="docutils literal notranslate"><span class="pre">graph_options</span></code>;
-options like figure size, labels, legend location, DPI, and output
-path must be supplied inside <code class="docutils literal notranslate"><span class="pre">graph_options</span></code>, while styling such as
-colors, marker sizes, line widths, or the use of custom Matplotlib
-axes should be applied directly to the Matplotlib figure/axes
-returned by <code class="docutils literal notranslate"><span class="pre">results.plot()</span></code>.</p>
-</div>
+<code class="docutils literal notranslate"><span class="pre">'legend_loc'</span></code>, <code class="docutils literal notranslate"><span class="pre">'dpi'</span></code>, <code class="docutils literal notranslate"><span class="pre">'savefig'</span></code>). For advanced styling
+(colors, marker sizes, line widths, or custom Matplotlib axes),
+apply changes directly to the Matplotlib figure/axes returned by
+<code class="docutils literal notranslate"><span class="pre">results.plot()</span></code>.</p>
 </section>
 <section id="plot-components">
 <h2>Plot Components<a class="headerlink" href="#plot-components" title="Link to this heading"></a></h2>
-<p>The standard plot produced by <a class="reference internal" href="results.html#lwdid.LWDIDResults.plot" title="lwdid.LWDIDResults.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">lwdid.LWDIDResults.plot()</span></code></a> includes:</p>
+<p>The standard plot produced by <code class="xref py py-meth docutils literal notranslate"><span class="pre">lwdid.LWDIDResults.plot()</span></code> includes:</p>
 <ol class="arabic simple">
 <li><p><strong>Residualized outcomes</strong> over time for treated and control groups</p></li>
 <li><p><strong>Treatment start indicator</strong> (vertical line separating pre/post periods)</p></li>
@@ -642,9 +757,9 @@ variables</p></li>
 </pre></div>
 </div>
 </section>
-<section id="event-study-plot">
-<h3>Event Study Plot<a class="headerlink" href="#event-study-plot" title="Link to this heading"></a></h3>
-<p>Create an event study plot with time relative to treatment:</p>
+<section id="event-study-plot-common-timing">
+<h3>Event Study Plot (Common Timing)<a class="headerlink" href="#event-study-plot-common-timing" title="Link to this heading"></a></h3>
+<p>Create an event study plot with time relative to treatment for common timing designs:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 <span class="c1"># Get period effects (drop the &#39;average&#39; row and convert tindex to numeric)</span>
@@ -687,6 +802,166 @@ variables</p></li>
 </div>
 </section>
 </section>
+<section id="staggered-adoption-visualization">
+<h2>Staggered Adoption Visualization<a class="headerlink" href="#staggered-adoption-visualization" title="Link to this heading"></a></h2>
+<p>For staggered adoption designs (where units are treated at different times),
+the <code class="docutils literal notranslate"><span class="pre">plot_event_study()</span></code> method provides specialized visualization of
+dynamic treatment effects across cohorts. This method aggregates cohort-time
+specific effects by event time (time relative to treatment) and produces
+publication-quality event study diagrams.</p>
+<section id="basic-event-study-staggered">
+<h3>Basic Event Study (Staggered)<a class="headerlink" href="#basic-event-study-staggered" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;castle.csv&#39;</span><span class="p">)</span>
+
+<span class="c1"># Estimate staggered effects</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;l_homicide&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">gvar</span><span class="o">=</span><span class="s1">&#39;effyear&#39;</span><span class="p">,</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s1">&#39;none&#39;</span>  <span class="c1"># Required for event study plot</span>
+<span class="p">)</span>
+
+<span class="c1"># Generate event study plot</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_event_study</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The event study plot displays:</p>
+<ul class="simple">
+<li><p><strong>X-axis</strong>: Event time (periods relative to treatment, where <span class="math notranslate nohighlight">\(e = r - g\)</span>)</p></li>
+<li><p><strong>Y-axis</strong>: Treatment effect estimates</p></li>
+<li><p><strong>Points</strong>: Average treatment effects at each event time</p></li>
+<li><p><strong>Error bars or shading</strong>: 95% confidence intervals</p></li>
+<li><p><strong>Reference line</strong>: Horizontal line at zero for visual assessment</p></li>
+</ul>
+</section>
+<section id="customized-event-study">
+<h3>Customized Event Study<a class="headerlink" href="#customized-event-study" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_event_study</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Castle Doctrine Effect on Homicide Rates&#39;</span><span class="p">,</span>
+    <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Effect on Log Homicide Rate&#39;</span><span class="p">,</span>
+    <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Years Relative to Adoption&#39;</span><span class="p">,</span>
+    <span class="n">include_pre_treatment</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">show_ci</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">ref_period</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>           <span class="c1"># Reference period (normalized to zero if specified)</span>
+    <span class="n">aggregation</span><span class="o">=</span><span class="s1">&#39;weighted&#39;</span>  <span class="c1"># Weight by cohort size</span>
+<span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;event_study.png&#39;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="event-study-parameters">
+<h3>Event Study Parameters<a class="headerlink" href="#event-study-parameters" title="Link to this heading"></a></h3>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">lwdid.LWDIDResults.plot_event_study()</span></code> method accepts the following
+parameters:</p>
+<p><strong>Display parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">title</span></code>: Plot title (str, optional)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xlabel</span></code>: X-axis label (str, default: <code class="docutils literal notranslate"><span class="pre">'Event</span> <span class="pre">Time'</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ylabel</span></code>: Y-axis label (str, default: <code class="docutils literal notranslate"><span class="pre">'Treatment</span> <span class="pre">Effect'</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">figsize</span></code>: Figure size tuple (default: <code class="docutils literal notranslate"><span class="pre">(10,</span> <span class="pre">6)</span></code>)</p></li>
+</ul>
+<p><strong>Data parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">include_pre_treatment</span></code>: Include pre-treatment periods (bool, default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ref_period</span></code>: Reference period for normalization (int, optional)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">aggregation</span></code>: Cross-cohort aggregation method (<code class="docutils literal notranslate"><span class="pre">'mean'</span></code> or <code class="docutils literal notranslate"><span class="pre">'weighted'</span></code>,
+default: <code class="docutils literal notranslate"><span class="pre">'weighted'</span></code>)</p></li>
+</ul>
+<p><strong>Visual parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">show_ci</span></code>: Display confidence interval shading (bool, default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ci_alpha</span></code>: Confidence interval shading opacity (float, default: <code class="docutils literal notranslate"><span class="pre">0.2</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">marker</span></code>: Marker style (str, default: <code class="docutils literal notranslate"><span class="pre">'o'</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linestyle</span></code>: Line style (str, default: <code class="docutils literal notranslate"><span class="pre">'-'</span></code>)</p></li>
+</ul>
+<p><strong>Output parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">return_data</span></code>: Also return the aggregated event study DataFrame
+(bool, default: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
+</ul>
+</section>
+<section id="returning-event-study-data">
+<h3>Returning Event Study Data<a class="headerlink" href="#returning-event-study-data" title="Link to this heading"></a></h3>
+<p>To access the underlying data used in the plot:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">event_df</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_event_study</span><span class="p">(</span><span class="n">return_data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># event_df contains columns:</span>
+<span class="c1"># - event_time: periods relative to treatment (e = r - g)</span>
+<span class="c1"># - att: average treatment effect at this event time</span>
+<span class="c1"># - se: standard error</span>
+<span class="c1"># - ci_lower, ci_upper: confidence interval bounds</span>
+<span class="c1"># - n_cohorts: number of cohorts contributing to this event time</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">event_df</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cohort-specific-event-studies">
+<h3>Cohort-Specific Event Studies<a class="headerlink" href="#cohort-specific-event-studies" title="Link to this heading"></a></h3>
+<p>For detailed analysis, cohort-specific effects can be visualized manually:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># Access cohort-time specific effects</span>
+<span class="n">gt_effects</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">att_by_cohort_time</span>
+
+<span class="c1"># Create event time variable</span>
+<span class="n">gt_effects</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gt_effects</span><span class="p">[</span><span class="s1">&#39;period&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">gt_effects</span><span class="p">[</span><span class="s1">&#39;cohort&#39;</span><span class="p">]</span>
+
+<span class="c1"># Plot by cohort</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">cohort</span> <span class="ow">in</span> <span class="n">gt_effects</span><span class="p">[</span><span class="s1">&#39;cohort&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+    <span class="n">cohort_data</span> <span class="o">=</span> <span class="n">gt_effects</span><span class="p">[</span><span class="n">gt_effects</span><span class="p">[</span><span class="s1">&#39;cohort&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">cohort</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cohort_data</span><span class="p">[</span><span class="s1">&#39;event_time&#39;</span><span class="p">],</span> <span class="n">cohort_data</span><span class="p">[</span><span class="s1">&#39;att&#39;</span><span class="p">],</span>
+            <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Cohort </span><span class="si">{</span><span class="n">cohort</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Event Time&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Treatment Effect&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Cohort-Specific Treatment Effects&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;Treatment Cohort&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="publication-ready-staggered-event-study">
+<h3>Publication-Ready Staggered Event Study<a class="headerlink" href="#publication-ready-staggered-event-study" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;seaborn-v0_8-whitegrid&#39;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_event_study</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Years Since Policy Adoption&#39;</span><span class="p">,</span>
+    <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Effect on Log Homicide Rate&#39;</span><span class="p">,</span>
+    <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+    <span class="n">show_ci</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">ci_alpha</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span>
+    <span class="n">include_pre_treatment</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Add reference line annotation</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Policy Adoption&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>
+            <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">),</span>
+            <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;figure_event_study.pdf&#39;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
 <section id="exporting-plots">
 <h2>Exporting Plots<a class="headerlink" href="#exporting-plots" title="Link to this heading"></a></h2>
 <section id="save-to-file">
@@ -719,9 +994,9 @@ variables</p></li>
 </section>
 <section id="plot-parameters-reference">
 <h2>Plot Parameters Reference<a class="headerlink" href="#plot-parameters-reference" title="Link to this heading"></a></h2>
-<p>In version 0.1.0, the high-level <a class="reference internal" href="results.html#lwdid.LWDIDResults.plot" title="lwdid.LWDIDResults.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">lwdid.LWDIDResults.plot()</span></code></a> method
-accepts two Python arguments, <code class="docutils literal notranslate"><span class="pre">gid</span></code> and <code class="docutils literal notranslate"><span class="pre">graph_options</span></code>. The
-plotting options supported via the <code class="docutils literal notranslate"><span class="pre">graph_options</span></code> dictionary are:</p>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">lwdid.LWDIDResults.plot()</span></code> method accepts two arguments:
+<code class="docutils literal notranslate"><span class="pre">gid</span></code> and <code class="docutils literal notranslate"><span class="pre">graph_options</span></code>. The plotting options supported via
+the <code class="docutils literal notranslate"><span class="pre">graph_options</span></code> dictionary are:</p>
 <p><strong>Figure parameters (graph_options keys):</strong></p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">'figsize'</span></code>: Tuple (width, height) in inches, default: <code class="docutils literal notranslate"><span class="pre">(10,</span> <span class="pre">6)</span></code></p></li>
@@ -739,11 +1014,9 @@ plotting options supported via the <code class="docutils literal notranslate"><s
 <li><p><code class="docutils literal notranslate"><span class="pre">'savefig'</span></code>: File path to save the figure (no file is saved if this
 key is omitted)</p></li>
 </ul>
-<p>Other styling options (for example, colors, marker sizes, line widths,
-or use of a pre-existing Matplotlib axes object) are not currently
-controlled via <code class="docutils literal notranslate"><span class="pre">plot()</span></code>/<code class="docutils literal notranslate"><span class="pre">graph_options</span></code> and should instead be
-applied directly to the Matplotlib figure and axes returned by
-<code class="docutils literal notranslate"><span class="pre">results.plot()</span></code>.</p>
+<p>Additional styling options (colors, marker sizes, line widths, or
+custom Matplotlib axes) should be applied directly to the Matplotlib
+figure and axes returned by <code class="docutils literal notranslate"><span class="pre">results.plot()</span></code>.</p>
 </section>
 <section id="examples-gallery">
 <h2>Examples Gallery<a class="headerlink" href="#examples-gallery" title="Link to this heading"></a></h2>
@@ -797,7 +1070,7 @@ applied directly to the Matplotlib figure and axes returned by
 <section id="see-also">
 <h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="results.html#lwdid.LWDIDResults" title="lwdid.LWDIDResults"><code class="xref py py-class docutils literal notranslate"><span class="pre">lwdid.LWDIDResults</span></code></a> - Results object with plot() method</p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">lwdid.LWDIDResults</span></code> - Results object with plot() method</p></li>
 <li><p><a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a> - Main estimation function</p></li>
 <li><p><a class="reference internal" href="../examples/index.html"><span class="doc">Examples</span></a> - Complete examples with visualizations</p></li>
 </ul>
@@ -808,7 +1081,7 @@ applied directly to the Matplotlib figure and axes returned by
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="randomization.html" class="btn btn-neutral float-left" title="Randomization Module (randomization)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="randomization.html" class="btn btn-neutral float-left" title="Randomization Inference Module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="exceptions.html" class="btn btn-neutral float-right" title="Exceptions Module (exceptions)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

@@ -1,7 +1,7 @@
 # LWDID Bug Fixes Report
 
 **Date**: 2026-01-22  
-**Version**: v0.1.0  
+**Version**: v0.2.0  
 **Bugs Fixed**: BUG-099, BUG-100, BUG-101 (validation), BUG-101 (caliper)
 
 ---

@@ -34,7 +34,7 @@ Panel Structure Validation
 
 - No duplicate (unit, time) observations
 - Time index forms a continuous sequence (no gaps)
-- Sufficient observations for estimation (N ≥ 3)
+- Sufficient observations for estimation (:math:`N \geq 3`)
 - At least one treated unit (d = 1) and one control unit (d = 0)
 
 **Why it matters:**
@@ -87,15 +87,16 @@ Pre-Treatment Period Validation
 **Checks performed:**
 
 - Each unit has sufficient pre-treatment periods for the chosen transformation:
+
   - ``demean``: at least 1 pre-treatment observation per unit
   - ``detrend``: at least 2 pre-treatment observations per unit
   - ``demeanq``: at least 1 pre-treatment observation per unit, and enough
     pre-period observations to estimate quarterly fixed effects
-    (number of pre-period observations ≥ number of distinct pre-period
+    (number of pre-period observations >= number of distinct pre-period
     quarters + 1)
   - ``detrendq``: at least 2 pre-treatment observations per unit, and enough
     pre-period observations to estimate a linear trend plus quarterly fixed
-    effects (number of pre-period observations ≥ 1 + number of distinct
+    effects (number of pre-period observations >= 1 + number of distinct
     pre-period quarters)
 
 **Why it matters:**
@@ -205,15 +206,261 @@ validate_and_prepare_data()
 
    print(metadata['N'], metadata['T'], metadata['K'])
 
- Quarterly helper checks
- ~~~~~~~~~~~~~~~~~~~~~~~
+Quarterly Helper Checks
+~~~~~~~~~~~~~~~~~~~~~~~
 
- For quarterly data, the module also provides helper functions such as
- ``validate_quarter_coverage`` that can be used in advanced workflows to
- pre-check seasonal coverage requirements for ``demeanq``/``detrendq``.
- In typical usage these helpers are called indirectly by
- :func:`lwdid.lwdid` via the transformation module rather than being
- used directly.
+For quarterly data, the module also provides helper functions such as
+``validate_quarter_coverage`` that can be used in advanced workflows to
+pre-check seasonal coverage requirements for ``demeanq``/``detrendq``.
+In typical usage these helpers are called indirectly by
+:func:`lwdid.lwdid` via the transformation module rather than being
+used directly.
+
+Never-Treated Unit Identification
+----------------------------------
+
+The ``is_never_treated()`` function provides a standardized way to identify
+never-treated units in staggered adoption designs. This function is the
+single source of truth for never-treated identification across all modules.
+
+is_never_treated() Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from lwdid.validation import is_never_treated
+   import numpy as np
+   import pandas as pd
+
+   # Check individual values
+   is_never_treated(0)        # True - zero indicates never-treated
+   is_never_treated(np.inf)   # True - infinity indicates never-treated
+   is_never_treated(np.nan)   # True - NaN indicates never-treated
+   is_never_treated(None)     # True - None indicates never-treated
+   is_never_treated(pd.NA)    # True - pandas NA indicates never-treated
+   is_never_treated(2005)     # False - positive integer is treatment cohort
+   is_never_treated(-np.inf)  # Raises InvalidStaggeredDataError
+
+**Valid Never-Treated Encodings:**
+
+The following values are recognized as never-treated:
+
+1. **Zero (0 or 0.0)**: Common encoding in Stata and other software
+2. **Positive infinity (np.inf)**: Represents "treated at infinity" (never)
+3. **NaN/NA/None**: Missing treatment time indicates never-treated
+4. **Near-zero values**: Values within floating-point tolerance (|x| < 1e-10)
+
+**Invalid Values:**
+
+- **Negative infinity (-np.inf)**: Raises ``InvalidStaggeredDataError``
+- **Negative numbers**: Should be caught by ``validate_staggered_data()``
+
+**Usage with DataFrames:**
+
+.. code-block:: python
+
+   import pandas as pd
+   import numpy as np
+   from lwdid.validation import is_never_treated
+
+   # Create sample data
+   data = pd.DataFrame({
+       'id': [1, 2, 3, 4, 5] * 3,
+       'year': [2000, 2001, 2002] * 5,
+       'y': np.random.randn(15),
+       'gvar': [0, np.inf, np.nan, 2001, 2002] * 3
+   })
+
+   # Identify never-treated units
+   unit_gvar = data.groupby('id')['gvar'].first()
+   nt_mask = unit_gvar.apply(is_never_treated)
+
+   print(f"Never-treated units: {nt_mask.sum()}")  # Output: 3
+   print(f"NT unit IDs: {unit_gvar[nt_mask].index.tolist()}")  # [1, 2, 3]
+
+**Cross-Module Consistency:**
+
+The ``is_never_treated()`` function is used consistently across all modules:
+
+- ``lwdid.validation``: Primary definition
+- ``lwdid.staggered.control_groups``: Control group selection
+- ``lwdid.staggered.aggregation``: Weight calculations
+- ``lwdid.staggered.randomization``: Randomization inference
+
+This ensures that never-treated identification is consistent throughout
+the estimation pipeline.
+
+Staggered Adoption Validation
+-----------------------------
+
+For staggered adoption designs (where units are treated at different times),
+additional validation checks are performed when the ``gvar`` parameter is
+specified instead of ``post``.
+
+Staggered-Specific Checks
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Checks performed:**
+
+- ``gvar`` column exists and is time-invariant within units
+- ``gvar`` values are valid:
+
+  - Positive integers indicate treatment cohorts (first treatment period)
+  - Values of 0, ``inf``, or ``NaN`` indicate never-treated units
+
+- At least one treatment cohort exists
+- At least one control unit exists (never-treated or not-yet-treated,
+  depending on the ``control_group`` strategy)
+- Each cohort has sufficient pre-treatment periods for the chosen
+  transformation (``demean`` requires :math:`g - 1 \geq 1`,
+  ``detrend`` requires :math:`g - 1 \geq 2`)
+
+**Why it matters:**
+
+- Time-varying ``gvar`` violates the staggered design assumption
+- Invalid ``gvar`` values prevent proper cohort identification
+- Insufficient pre-treatment periods make transformation impossible
+
+**Example errors (conceptual):**
+
+.. code-block:: text
+
+   InvalidStaggeredDataError indicating that 'gvar' varies within unit.
+   The first treatment period must be constant across all observations
+   for a given unit.
+
+.. code-block:: text
+
+   NoNeverTreatedError indicating that no never-treated units exist
+   when control_group='never_treated' is specified.
+
+Control Group Strategy Validation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The validation differs based on the chosen control group strategy:
+
+**never_treated:**
+
+- Requires at least one unit with ``gvar`` equal to 0, ``inf``, or ``NaN``
+- These units serve as controls for all cohort-time effect estimations
+- Required when using ``aggregate='cohort'`` or ``aggregate='overall'``
+
+**not_yet_treated:**
+
+- Uses never-treated units plus units not yet treated at each calendar time
+- More flexible but requires the no-anticipation assumption to hold
+- For cohort :math:`g` at time :math:`r`, valid controls include units with
+  first treatment period :math:`h > r`
+
+Staggered Data Usage
+~~~~~~~~~~~~~~~~~~~~
+
+For staggered designs, validation is performed internally by ``lwdid()``
+when the ``gvar`` parameter is provided:
+
+.. code-block:: python
+
+   from lwdid import lwdid
+   import pandas as pd
+
+   data = pd.read_csv('staggered_data.csv')
+
+   # gvar indicates first treatment period; 0 or NaN for never-treated
+   results = lwdid(
+       data=data,
+       y='outcome',
+       ivar='unit',
+       tvar='year',
+       gvar='first_treat_year',  # First treatment period column
+       rolling='demean',
+       control_group='not_yet_treated',
+       aggregate='overall'
+   )
+
+Error: Invalid Cohort Values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem (conceptual):**
+
+.. code-block:: text
+
+   InvalidStaggeredDataError indicating that 'gvar' contains invalid values.
+
+**Cause:** ``gvar`` contains values that cannot be interpreted as valid
+cohort indicators (e.g., negative numbers, non-numeric values other than
+``NaN``).
+
+**Solution:**
+
+.. code-block:: python
+
+   # Check gvar values
+   print(data['gvar'].unique())
+
+   # Ensure valid cohort values: positive integers for treated, 0/NaN for never-treated
+   # Convert never-treated indicator if needed
+   data['gvar'] = data['gvar'].replace({-1: 0, 'never': 0})
+
+   # Ensure numeric type
+   data['gvar'] = pd.to_numeric(data['gvar'], errors='coerce')
+
+Error: No Never-Treated Units
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem (conceptual):**
+
+.. code-block:: text
+
+   NoNeverTreatedError indicating that control_group='never_treated' requires
+   at least one never-treated unit, but none were found.
+
+**Cause:** All units are eventually treated, but ``control_group='never_treated'``
+was specified.
+
+**Solution:**
+
+.. code-block:: python
+
+   # Check for never-treated units
+   never_treated = data[data['gvar'].isin([0, np.inf]) | data['gvar'].isna()]
+   print(f"Never-treated units: {never_treated['unit'].nunique()}")
+
+   # Option 1: Switch to not_yet_treated control group
+   results = lwdid(..., control_group='not_yet_treated')
+
+   # Option 2: Use 'never_treated' only if such units exist
+   # Note: aggregate='cohort' and aggregate='overall' require never-treated units
+
+Error: Insufficient Pre-Treatment Periods for Cohort
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Problem (conceptual):**
+
+.. code-block:: text
+
+   InsufficientPrePeriodsError indicating that cohort g=2005 has insufficient
+   pre-treatment periods for detrend transformation (requires at least 2).
+
+**Cause:** Some cohorts are treated too early in the panel, leaving insufficient
+pre-treatment periods for the chosen transformation.
+
+**Solution:**
+
+.. code-block:: python
+
+   # Check pre-treatment periods by cohort
+   cohorts = data[data['gvar'] > 0]['gvar'].unique()
+   min_year = data['year'].min()
+
+   for g in sorted(cohorts):
+       pre_periods = g - min_year
+       print(f"Cohort {g}: {pre_periods} pre-treatment periods")
+
+   # Option 1: Use 'demean' instead of 'detrend' (requires only 1 pre-period)
+   results = lwdid(..., rolling='demean')
+
+   # Option 2: Exclude early cohorts
+   data = data[~data['gvar'].isin([cohorts_with_insufficient_pre_periods])]
 
 Common Validation Errors and Solutions
 ---------------------------------------
@@ -410,7 +657,7 @@ Before using ``lwdid()``, ensure:
 6. ☑ Control variables (if any) are time-invariant
 7. ☑ No missing values in required variables
 8. ☑ Sufficient pre-treatment periods for chosen transformation
-9. ☑ At least N ≥ 3 units
+9. ☑ At least :math:`N \geq 3` units
 
 See Also
 --------

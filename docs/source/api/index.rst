@@ -12,6 +12,7 @@ Core Modules
 
    core
    results
+   sensitivity
    staggered
    transformations
    estimation
@@ -25,9 +26,15 @@ Quick Index
 
 Main exported components:
 
-- :func:`lwdid.lwdid` - Main estimation function (common timing and staggered)
+- :func:`lwdid.lwdid` - Main estimation function supporting three scenarios:
+
+  - Small-sample common timing with exact t-based inference (Lee and Wooldridge, 2026)
+  - Large-sample common timing with robust standard errors (Lee and Wooldridge, 2025)
+  - Staggered adoption with cohort-time effects (Lee and Wooldridge, 2025)
+
 - :class:`lwdid.LWDIDResults` - Results container class
-- :mod:`lwdid.staggered` - Staggered DiD module (Lee & Wooldridge 2023)
+- :mod:`lwdid.sensitivity` - Sensitivity analysis module
+- :mod:`lwdid.staggered` - Staggered DiD module
 - :mod:`lwdid.exceptions` - Exception hierarchy
 
 See individual module pages for detailed documentation.

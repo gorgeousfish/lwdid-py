@@ -67,15 +67,21 @@ without affecting the final residuals, as centering is an affine transformation
 that preserves predicted values.
 """
 
+from __future__ import annotations
+
 import warnings
-from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
 from .exceptions import InsufficientPrePeriodsError
-from .validation import validate_quarter_diversity, validate_quarter_coverage
+from .validation import (
+    validate_quarter_diversity,
+    validate_quarter_coverage,
+    validate_season_diversity,
+    validate_season_coverage,
+)
 
 
 # Threshold for detecting degenerate time variance in OLS estimation.
@@ -132,42 +138,48 @@ def _compute_max_pre_tindex(
     return int(pre_tindex.max())
 
 
-def _validate_quarterly_transform_requirements(
+def _validate_seasonal_transform_requirements(
     data: pd.DataFrame,
     ivar: str,
     tindex: str,
     post: str,
-    quarter: str,
+    season_var: str,
     y: str,
     transform_type: str,
     min_global_pre_periods: int,
+    Q: int = 4,
 ) -> int:
     """
-    Validate data requirements for quarterly seasonal transformations.
+    Validate data requirements for seasonal transformations.
 
     Verifies that data satisfy the requirements for demeanq or detrendq
     transformations: sufficient global pre-treatment periods, adequate
-    per-unit observations for model estimation, and complete quarter
+    per-unit observations for model estimation, and complete seasonal
     coverage in the pre-treatment period.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data with unit, time, post indicator, and quarter columns.
+        Panel data with unit, time, post indicator, and seasonal columns.
     ivar : str
         Column name for unit identifier.
     tindex : str
         Column name for time index.
     post : str
         Column name for post-treatment indicator (0=pre, 1=post).
-    quarter : str
-        Column name for quarter variable (values in {1, 2, 3, 4}).
+    season_var : str
+        Column name for seasonal variable (values in {1, 2, ..., Q}).
     y : str
         Column name for outcome variable.
     transform_type : str
         Transformation type: 'demeanq' or 'detrendq'.
     min_global_pre_periods : int
         Minimum required unique pre-treatment periods.
+    Q : int, default 4
+        Number of seasonal periods per cycle. Common values:
+        - 4: Quarterly data (default)
+        - 12: Monthly data
+        - 52: Weekly data
 
     Returns
     -------
@@ -180,16 +192,16 @@ def _validate_quarterly_transform_requirements(
         If global pre-period count is below minimum, or if any unit has
         insufficient pre-period observations for reliable estimation.
     ValueError
-        If quarter column contains values outside {1, 2, 3, 4}.
+        If season_var column contains values outside {1, 2, ..., Q}.
 
     Notes
     -----
     Parameter count differs by transformation type:
 
-    - demeanq: :math:`Y \\sim 1 + \\text{quarter}` requires :math:`k = Q` parameters
-    - detrendq: :math:`Y \\sim 1 + t + \\text{quarter}` requires :math:`k = Q + 1`
+    - demeanq: :math:`Y \\sim 1 + \\text{season}` requires :math:`k = Q` parameters
+    - detrendq: :math:`Y \\sim 1 + t + \\text{season}` requires :math:`k = Q + 1`
 
-    where Q is the number of distinct quarters in the unit's pre-period.
+    where Q is the number of distinct seasons in the unit's pre-period.
     Reliable estimation requires :math:`n \\geq k + 1` to ensure at least
     one residual degree of freedom.
     """
@@ -197,27 +209,28 @@ def _validate_quarterly_transform_requirements(
     n_pre_periods = pre_data[tindex].nunique()
     K = _compute_max_pre_tindex(data, post, tindex, transform_type)
 
-    # Validate quarter values are in the expected range {1, 2, 3, 4}.
+    # Validate season values are in the expected range {1, 2, ..., Q}.
     # Non-standard values would create incorrect dummy variables in the model.
-    quarter_values = data[quarter].dropna().unique()
-    valid_quarters = {1, 2, 3, 4}
+    season_values = data[season_var].dropna().unique()
+    valid_seasons = set(range(1, Q + 1))
 
     # Handle both integer and float representations (e.g., 1.0, 2.0).
     try:
-        quarter_int_values = {int(q) for q in quarter_values if q == int(q)}
-        invalid_values = set(quarter_values) - {float(q) for q in quarter_int_values}
-        out_of_range = quarter_int_values - valid_quarters
+        season_int_values = {int(s) for s in season_values if s == int(s)}
+        invalid_values = set(season_values) - {float(s) for s in season_int_values}
+        out_of_range = season_int_values - valid_seasons
     except (ValueError, TypeError):
-        invalid_values = set(quarter_values)
+        invalid_values = set(season_values)
         out_of_range = set()
     
     if invalid_values or out_of_range:
-        all_invalid = invalid_values | {float(q) for q in out_of_range}
+        all_invalid = invalid_values | {float(s) for s in out_of_range}
+        freq_label = {4: 'quarters', 12: 'months', 52: 'weeks'}.get(Q, f'seasons (1-{Q})')
         raise ValueError(
-            f"Quarter column '{quarter}' contains invalid values: {sorted(all_invalid)}. "
-            f"Expected integer values in {{1, 2, 3, 4}} representing calendar quarters.\n\n"
-            f"If your quarter values use a different encoding (e.g., 0-3 or 'Q1'-'Q4'), "
-            f"please recode them to 1-4 before calling lwdid()."
+            f"Seasonal column '{season_var}' contains invalid values: {sorted(all_invalid)}. "
+            f"Expected integer values in {{1, 2, ..., {Q}}} representing {freq_label}.\n\n"
+            f"If your seasonal values use a different encoding (e.g., 0-{Q-1}), "
+            f"please recode them to 1-{Q} before calling lwdid()."
         )
     
     if n_pre_periods < min_global_pre_periods:
@@ -245,33 +258,51 @@ def _validate_quarterly_transform_requirements(
         
         # Build valid_mask to match OLS estimation (missing='drop').
         if transform_type == 'demeanq':
-            valid_mask = unit_pre[y].notna() & unit_pre[quarter].notna()
+            valid_mask = unit_pre[y].notna() & unit_pre[season_var].notna()
         else:
-            valid_mask = unit_pre[y].notna() & unit_pre[tindex].notna() & unit_pre[quarter].notna()
+            valid_mask = unit_pre[y].notna() & unit_pre[tindex].notna() & unit_pre[season_var].notna()
         
         n_valid = valid_mask.sum()
-        n_unique_quarters = unit_pre.loc[valid_mask, quarter].nunique() if n_valid > 0 else 0
-        n_params = n_unique_quarters + param_offset
+        n_unique_seasons = unit_pre.loc[valid_mask, season_var].nunique() if n_valid > 0 else 0
+        n_params = n_unique_seasons + param_offset
         min_required = n_params + 1  # Require at least df = 1
         
         if unit_pre_count < min_required:
+            freq_label = {4: 'quarter', 12: 'month', 52: 'week'}.get(Q, 'season')
             model_desc = (
-                f"y ~ 1 + i.quarter with k = {n_unique_quarters} parameters "
-                f"(1 constant + {n_unique_quarters-1} quarter dummies)"
+                f"y ~ 1 + i.{freq_label} with k = {n_unique_seasons} parameters "
+                f"(1 constant + {n_unique_seasons-1} {freq_label} dummies)"
                 if transform_type == 'demeanq' else
-                f"y ~ 1 + tindex + i.quarter with k = 1 + 1 + ({n_unique_quarters}-1) = {n_params} parameters"
+                f"y ~ 1 + tindex + i.{freq_label} with k = 1 + 1 + ({n_unique_seasons}-1) = {n_params} parameters"
             )
             raise InsufficientPrePeriodsError(
                 f"Unit {unit_id} has {unit_pre_count} pre-period observation(s) "
-                f"with {n_unique_quarters} distinct quarter(s). "
+                f"with {n_unique_seasons} distinct {freq_label}(s). "
                 f"rolling('{transform_type}') requires at least {min_required} observations "
                 f"to ensure df = n - k ≥ 1 for reliable statistical inference. "
                 f"The {transform_type} method estimates a model {model_desc}."
             )
     
-    validate_quarter_coverage(data, ivar, quarter, post)
+    validate_season_coverage(data, ivar, season_var, post, Q)
     
     return K
+
+
+# Backward compatibility alias
+def _validate_quarterly_transform_requirements(
+    data: pd.DataFrame,
+    ivar: str,
+    tindex: str,
+    post: str,
+    quarter: str,
+    y: str,
+    transform_type: str,
+    min_global_pre_periods: int,
+) -> int:
+    """Backward compatibility wrapper for _validate_seasonal_transform_requirements."""
+    return _validate_seasonal_transform_requirements(
+        data, ivar, tindex, post, quarter, y, transform_type, min_global_pre_periods, Q=4
+    )
 
 
 def apply_rolling_transform(
@@ -282,7 +313,10 @@ def apply_rolling_transform(
     post: str,
     rolling: str,
     tpost1: int,
-    quarter: Optional[str] = None,
+    quarter: str | None = None,
+    season_var: str | None = None,
+    Q: int = 4,
+    exclude_pre_periods: int = 0,
 ) -> pd.DataFrame:
     """
     Apply unit-specific transformation to panel data.
@@ -314,7 +348,22 @@ def apply_rolling_transform(
         regression sample (firstpost=True for observations at tindex==tpost1).
     quarter : str, optional
         Column name of quarter indicator (values in {1, 2, 3, 4}).
-        Required for quarterly methods (demeanq, detrendq).
+        Required for quarterly methods (demeanq, detrendq) when Q=4.
+        Deprecated: use season_var instead for non-quarterly data.
+    season_var : str, optional
+        Column name of seasonal indicator variable. Values should be integers
+        from 1 to Q. This is the preferred parameter for seasonal methods.
+        If both quarter and season_var are provided, season_var takes precedence.
+    Q : int, default 4
+        Number of seasonal periods per cycle. Common values:
+        - 4: Quarterly data (default)
+        - 12: Monthly data
+        - 52: Weekly data
+    exclude_pre_periods : int, default 0
+        Number of pre-treatment periods to exclude immediately before treatment.
+        Used to address potential anticipation effects. When > 0, the last
+        ``exclude_pre_periods`` pre-treatment periods are excluded from the
+        sample used for estimating transformation parameters.
 
     Returns
     -------
@@ -331,7 +380,7 @@ def apply_rolling_transform(
         If any unit has insufficient pre-treatment observations for the
         chosen transformation method.
     ValueError
-        If rolling method is invalid or quarterly method lacks quarter column.
+        If rolling method is invalid or seasonal method lacks season_var/quarter.
 
     See Also
     --------
@@ -339,69 +388,135 @@ def apply_rolling_transform(
     _detrend_transform : Unit-specific detrending implementation.
     demeanq_unit : Seasonal demeaning for a single unit.
     detrendq_unit : Seasonal detrending for a single unit.
+
+    Examples
+    --------
+    Quarterly data (Q=4):
+
+    >>> data = apply_rolling_transform(data, 'y', 'id', 't', 'post', 'demeanq',
+    ...                                tpost1=5, season_var='quarter', Q=4)
+
+    Monthly data (Q=12):
+
+    >>> data = apply_rolling_transform(data, 'y', 'id', 't', 'post', 'demeanq',
+    ...                                tpost1=13, season_var='month', Q=12)
     """
     data = data.copy()
     
+    # Handle exclude_pre_periods: create modified post indicator that excludes
+    # the specified number of pre-treatment periods immediately before treatment.
+    # These excluded periods will not be used for estimating transformation parameters.
+    if exclude_pre_periods > 0:
+        # Create a working copy of post indicator
+        data['_post_for_transform'] = data[post].copy()
+        
+        # For each unit, mark the last `exclude_pre_periods` pre-treatment periods
+        # as post=1 so they are excluded from transformation parameter estimation.
+        for unit_id in data[ivar].unique():
+            unit_mask = data[ivar] == unit_id
+            unit_data = data.loc[unit_mask]
+            
+            # Get pre-treatment periods for this unit, sorted by time
+            pre_mask = unit_data[post] == 0
+            pre_times = unit_data.loc[pre_mask, tindex].sort_values()
+            
+            if len(pre_times) > exclude_pre_periods:
+                # Mark the last `exclude_pre_periods` pre-treatment periods as excluded
+                times_to_exclude = pre_times.iloc[-exclude_pre_periods:]
+                exclude_mask = unit_mask & data[tindex].isin(times_to_exclude)
+                data.loc[exclude_mask, '_post_for_transform'] = 1
+            # If not enough pre-periods, we don't exclude any (will be caught by
+            # insufficient pre-periods check in transformation functions)
+        
+        # Use the modified post indicator for transformation
+        post_for_transform = '_post_for_transform'
+    else:
+        post_for_transform = post
+    
+    # Resolve season_var: prefer season_var over quarter for backward compatibility
+    effective_season_var = season_var if season_var is not None else quarter
+    
     if rolling == 'demean':
-        data = _demean_transform(data, y, ivar, post)
+        data = _demean_transform(data, y, ivar, post_for_transform)
     elif rolling == 'detrend':
-        data = _detrend_transform(data, y, ivar, tindex, post)
+        data = _detrend_transform(data, y, ivar, tindex, post_for_transform)
     elif rolling == 'demeanq':
-        if quarter is None:
+        if effective_season_var is None:
+            freq_label = {4: 'quarter', 12: 'month', 52: 'week'}.get(Q, 'season')
             raise ValueError(
-                "rolling='demeanq' requires the 'quarter' parameter. "
-                "Please specify the column name containing quarter values (1-4).\n\n"
-                "Example: lwdid(..., rolling='demeanq', quarter='qtr')"
+                f"rolling='demeanq' requires the 'season_var' (or 'quarter') parameter. "
+                f"Please specify the column name containing {freq_label} values (1-{Q}).\n\n"
+                f"Example: lwdid(..., rolling='demeanq', season_var='{freq_label}', Q={Q})"
             )
 
-        # Seasonal dummy coding requires standard quarter values for proper identification.
-        quarter_values = data[quarter].dropna().unique()
-        valid_quarters = {1, 2, 3, 4}
-        invalid_values = set(quarter_values) - valid_quarters
-        if invalid_values:
+        # Validate seasonal values are in the expected range {1, 2, ..., Q}.
+        season_values = data[effective_season_var].dropna().unique()
+        valid_seasons = set(range(1, Q + 1))
+        
+        # Handle both integer and float representations
+        try:
+            season_int_values = {int(s) for s in season_values if pd.notna(s) and s == int(s)}
+            invalid_values = set()
+            for s in season_values:
+                if pd.notna(s):
+                    try:
+                        if s != int(s):
+                            invalid_values.add(s)
+                    except (ValueError, TypeError):
+                        invalid_values.add(s)
+            out_of_range = season_int_values - valid_seasons
+        except (ValueError, TypeError):
+            invalid_values = set(season_values)
+            out_of_range = set()
+        
+        if invalid_values or out_of_range:
+            all_invalid = invalid_values | {float(s) for s in out_of_range}
+            freq_label = {4: 'quarters', 12: 'months', 52: 'weeks'}.get(Q, f'seasons')
             raise ValueError(
-                f"Quarter column '{quarter}' contains invalid values: {sorted(invalid_values)}. "
-                f"Expected values in {{1, 2, 3, 4}}.\n\n"
-                f"If your quarter column uses different encoding (e.g., 0-3 or 'Q1'-'Q4'), "
-                f"please recode it to 1-4 before calling lwdid()."
+                f"Seasonal column '{effective_season_var}' contains invalid values: {sorted(all_invalid)}. "
+                f"Expected values in {{1, 2, ..., {Q}}} for {freq_label}.\n\n"
+                f"If your seasonal column uses different encoding (e.g., 0-{Q-1}), "
+                f"please recode it to 1-{Q} before calling lwdid()."
             )
 
-        _validate_quarterly_transform_requirements(
-            data, ivar, tindex, post, quarter, y,
-            transform_type='demeanq', min_global_pre_periods=1
+        _validate_seasonal_transform_requirements(
+            data, ivar, tindex, post_for_transform, effective_season_var, y,
+            transform_type='demeanq', min_global_pre_periods=1, Q=Q
         )
 
         data['ydot'] = np.nan
         for unit_id in data[ivar].unique():
             unit_mask = (data[ivar] == unit_id)
             unit_data = data[unit_mask].copy()
-            _, ydot = demeanq_unit(unit_data, y, quarter, post)
+            _, ydot = demeanq_unit(unit_data, y, effective_season_var, post_for_transform, Q=Q)
             data.loc[unit_mask, 'ydot'] = ydot
 
     elif rolling == 'detrendq':
-        if quarter is None:
+        if effective_season_var is None:
+            freq_label = {4: 'quarter', 12: 'month', 52: 'week'}.get(Q, 'season')
             raise ValueError(
-                "rolling='detrendq' requires the 'quarter' parameter. "
-                "Please specify the column name containing quarter values (1-4).\n\n"
-                "Example: lwdid(..., rolling='detrendq', quarter='qtr')"
+                f"rolling='detrendq' requires the 'season_var' (or 'quarter') parameter. "
+                f"Please specify the column name containing {freq_label} values (1-{Q}).\n\n"
+                f"Example: lwdid(..., rolling='detrendq', season_var='{freq_label}', Q={Q})"
             )
 
-        _validate_quarterly_transform_requirements(
-            data, ivar, tindex, post, quarter, y,
-            transform_type='detrendq', min_global_pre_periods=2
+        _validate_seasonal_transform_requirements(
+            data, ivar, tindex, post_for_transform, effective_season_var, y,
+            transform_type='detrendq', min_global_pre_periods=2, Q=Q
         )
 
         data['ydot'] = np.nan
         for unit_id in data[ivar].unique():
             unit_mask = (data[ivar] == unit_id)
             unit_data = data[unit_mask].copy()
-            _, ydot = detrendq_unit(unit_data, y, tindex, quarter, post)
+            _, ydot = detrendq_unit(unit_data, y, tindex, effective_season_var, post_for_transform, Q=Q)
             data.loc[unit_mask, 'ydot'] = ydot
 
     else:
         raise ValueError(f"Invalid rolling method: {rolling}")
 
     # Post-treatment average aggregates period-specific effects into a single ATT.
+    # Note: Use original post indicator, not post_for_transform, for post-treatment average.
     post_data = data[data[post] == 1]
     ydot_postavg_map = post_data.groupby(ivar)['ydot'].mean()
     data['ydot_postavg'] = data[ivar].map(ydot_postavg_map)
@@ -412,6 +527,10 @@ def apply_rolling_transform(
         (data[tindex] == tpost1) &
         data['ydot_postavg'].notna()
     )
+
+    # Clean up temporary column if created
+    if '_post_for_transform' in data.columns:
+        data = data.drop(columns=['_post_for_transform'])
 
     return data
 
@@ -488,7 +607,7 @@ def _demean_transform(
 
 def detrend_unit(
     unit_data: pd.DataFrame, y: str, tindex: str, post: str
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Remove unit-specific linear time trend for a single unit.
 
@@ -537,6 +656,9 @@ def detrend_unit(
     n_obs = len(unit_data)
 
     # Slope estimation requires variation in time; identical values make X'X singular.
+    # Using ddof=0 (population variance) for numerical stability check rather than
+    # statistical inference. This provides a stricter check for small samples and
+    # directly measures the actual variation in the time index values.
     t_variance = unit_pre[tindex].var(ddof=0)
     if t_variance < VARIANCE_THRESHOLD:
         warnings.warn(
@@ -590,11 +712,12 @@ def detrend_unit(
 def demeanq_unit(
     unit_data: pd.DataFrame,
     y: str,
-    quarter: str,
-    post: str
-) -> Tuple[np.ndarray, np.ndarray]:
+    season_var: str,
+    post: str,
+    Q: int = 4,
+) -> tuple[np.ndarray, np.ndarray]:
     """
-    Remove unit-specific mean with quarterly seasonal fixed effects.
+    Remove unit-specific mean with seasonal fixed effects.
 
     Estimates a seasonal mean model using pre-treatment observations:
 
@@ -602,7 +725,7 @@ def demeanq_unit(
 
         Y_{it} = \\mu + \\sum_{q=2}^{Q} \\gamma_q D_q + \\varepsilon_{it}
 
-    where :math:`D_q` are quarter dummies. The smallest observed quarter serves
+    where :math:`D_q` are seasonal dummies. The smallest observed season serves
     as the reference category for identification.
 
     Parameters
@@ -611,10 +734,17 @@ def demeanq_unit(
         Data for a single unit containing all time periods.
     y : str
         Column name of outcome variable.
-    quarter : str
-        Column name of quarter indicator (values in {1, 2, 3, 4}).
+    season_var : str
+        Column name of seasonal indicator variable. Values should be integers
+        from 1 to Q representing seasonal periods (e.g., quarters 1-4, months
+        1-12, or weeks 1-52).
     post : str
         Column name of binary post-treatment indicator (0=pre, 1=post).
+    Q : int, default 4
+        Number of seasonal periods per cycle. Common values:
+        - 4: Quarterly data (default)
+        - 12: Monthly data
+        - 52: Weekly data
 
     Returns
     -------
@@ -627,39 +757,53 @@ def demeanq_unit(
 
     Notes
     -----
-    Using observed quarters rather than all four quarters as categories
-    prevents rank-deficient design matrices when some quarters are absent
+    Using observed seasons rather than all Q seasons as categories
+    prevents rank-deficient design matrices when some seasons are absent
     from pre-treatment data.
+
+    The minimum required pre-treatment observations is Q + 1 to ensure
+    at least one residual degree of freedom for OLS estimation.
 
     See Also
     --------
     detrendq_unit : Combines seasonal adjustment with linear trend removal.
+
+    Examples
+    --------
+    Quarterly data (Q=4):
+
+    >>> yhat, ydot = demeanq_unit(unit_data, 'y', 'quarter', 'post', Q=4)
+
+    Monthly data (Q=12):
+
+    >>> yhat, ydot = demeanq_unit(unit_data, 'y', 'month', 'post', Q=12)
     """
     unit_pre = unit_data[unit_data[post] == 0].copy()
     n_obs = len(unit_data)
 
     # OLS requires n > k for positive residual degrees of freedom.
-    valid_mask = unit_pre[y].notna() & unit_pre[quarter].notna()
+    valid_mask = unit_pre[y].notna() & unit_pre[season_var].notna()
     n_valid = valid_mask.sum()
-    n_quarters = unit_pre.loc[valid_mask, quarter].nunique() if n_valid > 0 else 0
-    n_params = n_quarters  # intercept + (n_quarters - 1) dummies
+    n_seasons = unit_pre.loc[valid_mask, season_var].nunique() if n_valid > 0 else 0
+    n_params = n_seasons  # intercept + (n_seasons - 1) dummies
 
     if n_valid <= n_params:
         warnings.warn(
             f"Insufficient valid pre-treatment observations for OLS seasonal demeaning: "
-            f"found {n_valid} valid observations, require at least {n_params + 1} "
-            f"(more than number of parameters). Returning NaN.",
+            f"found {n_valid} valid observations with {n_seasons} distinct season(s), "
+            f"require at least {n_params + 1} (more than {n_params} parameters). "
+            f"Returning NaN.",
             UserWarning, stacklevel=2
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
-    # Restrict dummy coding to observed quarters to avoid rank deficiency.
+    # Restrict dummy coding to observed seasons to avoid rank deficiency.
     valid_pre = unit_pre[valid_mask]
-    observed_quarters_pre = sorted(valid_pre[quarter].unique())
-    q_categorical = pd.Categorical(unit_pre[quarter], categories=observed_quarters_pre)
-    q_dummies_pre = pd.get_dummies(q_categorical, drop_first=True, prefix='q', dtype=float)
+    observed_seasons_pre = sorted(valid_pre[season_var].unique())
+    s_categorical = pd.Categorical(unit_pre[season_var], categories=observed_seasons_pre)
+    s_dummies_pre = pd.get_dummies(s_categorical, drop_first=True, prefix='s', dtype=float)
 
-    X_pre = sm.add_constant(q_dummies_pre.values)
+    X_pre = sm.add_constant(s_dummies_pre.values)
     y_pre = unit_pre[y].values
     model = sm.OLS(y_pre, X_pre, missing='drop').fit()
 
@@ -674,21 +818,21 @@ def demeanq_unit(
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
     # Prediction design matrix must match estimation design matrix structure.
-    q_categorical_all = pd.Categorical(unit_data[quarter], categories=observed_quarters_pre)
-    q_dummies_all = pd.get_dummies(q_categorical_all, drop_first=True, prefix='q', dtype=float)
+    s_categorical_all = pd.Categorical(unit_data[season_var], categories=observed_seasons_pre)
+    s_dummies_all = pd.get_dummies(s_categorical_all, drop_first=True, prefix='s', dtype=float)
     
-    # Handle quarter mismatch between pre and post periods:
-    # - Post-period new quarters get zero coefficients (extrapolation from model).
-    # - Post-period missing quarters require column alignment.
-    missing_cols = set(q_dummies_pre.columns) - set(q_dummies_all.columns)
+    # Handle season mismatch between pre and post periods:
+    # - Post-period new seasons get zero coefficients (extrapolation from model).
+    # - Post-period missing seasons require column alignment.
+    missing_cols = set(s_dummies_pre.columns) - set(s_dummies_all.columns)
     for col in missing_cols:
-        q_dummies_all[col] = 0.0
-    extra_cols = set(q_dummies_all.columns) - set(q_dummies_pre.columns)
+        s_dummies_all[col] = 0.0
+    extra_cols = set(s_dummies_all.columns) - set(s_dummies_pre.columns)
     if extra_cols:
-        q_dummies_all = q_dummies_all.drop(columns=list(extra_cols))
-    q_dummies_all = q_dummies_all[q_dummies_pre.columns]
+        s_dummies_all = s_dummies_all.drop(columns=list(extra_cols))
+    s_dummies_all = s_dummies_all[s_dummies_pre.columns]
 
-    X_all = sm.add_constant(q_dummies_all.values)
+    X_all = sm.add_constant(s_dummies_all.values)
     yhat_all = model.predict(X_all)
     ydot = unit_data[y].values - yhat_all
 
@@ -699,11 +843,12 @@ def detrendq_unit(
     unit_data: pd.DataFrame,
     y: str,
     tindex: str,
-    quarter: str,
-    post: str
-) -> Tuple[np.ndarray, np.ndarray]:
+    season_var: str,
+    post: str,
+    Q: int = 4,
+) -> tuple[np.ndarray, np.ndarray]:
     """
-    Remove unit-specific linear trend with quarterly seasonal fixed effects.
+    Remove unit-specific linear trend with seasonal fixed effects.
 
     Estimates a combined trend and seasonal model using pre-treatment data:
 
@@ -711,7 +856,7 @@ def detrendq_unit(
 
         Y_{it} = \\alpha + \\beta t + \\sum_{q=2}^{Q} \\gamma_q D_q + \\varepsilon_{it}
 
-    The smallest observed quarter serves as the reference category. Time is
+    The smallest observed season serves as the reference category. Time is
     centered at its pre-treatment mean for numerical stability.
 
     Parameters
@@ -722,10 +867,17 @@ def detrendq_unit(
         Column name of outcome variable.
     tindex : str
         Column name of time index.
-    quarter : str
-        Column name of quarter indicator (values in {1, 2, 3, 4}).
+    season_var : str
+        Column name of seasonal indicator variable. Values should be integers
+        from 1 to Q representing seasonal periods (e.g., quarters 1-4, months
+        1-12, or weeks 1-52).
     post : str
         Column name of binary post-treatment indicator (0=pre, 1=post).
+    Q : int, default 4
+        Number of seasonal periods per cycle. Common values:
+        - 4: Quarterly data (default)
+        - 12: Monthly data
+        - 52: Weekly data
 
     Returns
     -------
@@ -738,19 +890,36 @@ def detrendq_unit(
     Notes
     -----
     This transformation combines trend removal and seasonal adjustment,
-    accounting for both unit-specific growth patterns and quarterly cycles.
+    accounting for both unit-specific growth patterns and seasonal cycles.
     Time centering reduces the condition number of the design matrix without
     affecting predicted values.
+
+    The minimum required pre-treatment observations is Q + 2 to ensure
+    at least one residual degree of freedom for OLS estimation (intercept +
+    slope + Q-1 seasonal dummies = Q+1 parameters).
 
     See Also
     --------
     demeanq_unit : Seasonal adjustment without trend removal.
     detrend_unit : Linear trend removal without seasonal adjustment.
+
+    Examples
+    --------
+    Quarterly data (Q=4):
+
+    >>> yhat, ydot = detrendq_unit(unit_data, 'y', 'tindex', 'quarter', 'post', Q=4)
+
+    Monthly data (Q=12):
+
+    >>> yhat, ydot = detrendq_unit(unit_data, 'y', 'tindex', 'month', 'post', Q=12)
     """
     unit_pre = unit_data[unit_data[post] == 0].copy()
     n_obs = len(unit_data)
 
     # Slope estimation requires variation in time; identical values make X'X singular.
+    # Using ddof=0 (population variance) for numerical stability check rather than
+    # statistical inference. This provides a stricter check for small samples and
+    # directly measures the actual variation in the time index values.
     t_variance = unit_pre[tindex].var(ddof=0)
     if t_variance < VARIANCE_THRESHOLD:
         warnings.warn(
@@ -761,16 +930,17 @@ def detrendq_unit(
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
     # OLS requires n > k for positive residual degrees of freedom.
-    valid_mask = unit_pre[y].notna() & unit_pre[tindex].notna() & unit_pre[quarter].notna()
+    valid_mask = unit_pre[y].notna() & unit_pre[tindex].notna() & unit_pre[season_var].notna()
     n_valid = valid_mask.sum()
-    n_quarters = unit_pre.loc[valid_mask, quarter].nunique() if n_valid > 0 else 0
-    n_params = 1 + n_quarters  # intercept + slope + (n_quarters - 1) dummies
+    n_seasons = unit_pre.loc[valid_mask, season_var].nunique() if n_valid > 0 else 0
+    n_params = 1 + n_seasons  # intercept + slope + (n_seasons - 1) dummies
 
     if n_valid <= n_params:
         warnings.warn(
             f"Insufficient valid pre-treatment observations for OLS seasonal detrending: "
-            f"found {n_valid} valid observations, require at least {n_params + 1} "
-            f"(more than {n_params} parameters to ensure df >= 1). Returning NaN.",
+            f"found {n_valid} valid observations with {n_seasons} distinct season(s), "
+            f"require at least {n_params + 1} (more than {n_params} parameters to ensure "
+            f"df >= 1). Returning NaN.",
             UserWarning, stacklevel=2
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
@@ -780,17 +950,17 @@ def detrendq_unit(
     t_mean = unit_pre[tindex].mean()
     t_centered_pre = unit_pre[tindex] - t_mean
 
-    # Restrict dummy coding to observed quarters to avoid rank deficiency.
-    # Unobserved quarters would create all-zero columns in the design matrix.
+    # Restrict dummy coding to observed seasons to avoid rank deficiency.
+    # Unobserved seasons would create all-zero columns in the design matrix.
     valid_pre = unit_pre[valid_mask]
-    observed_quarters_pre = sorted(valid_pre[quarter].unique())
-    q_categorical = pd.Categorical(unit_pre[quarter], categories=observed_quarters_pre)
-    q_dummies_pre = pd.get_dummies(q_categorical, drop_first=True, prefix='q', dtype=float)
+    observed_seasons_pre = sorted(valid_pre[season_var].unique())
+    s_categorical = pd.Categorical(unit_pre[season_var], categories=observed_seasons_pre)
+    s_dummies_pre = pd.get_dummies(s_categorical, drop_first=True, prefix='s', dtype=float)
 
     X_pre = np.column_stack([
         np.ones(len(unit_pre)),
         t_centered_pre.values,
-        q_dummies_pre.values
+        s_dummies_pre.values
     ])
     y_pre = unit_pre[y].values
     model = sm.OLS(y_pre, X_pre, missing='drop').fit()
@@ -810,24 +980,24 @@ def detrendq_unit(
     t_centered_all = unit_data[tindex] - t_mean
 
     # Prediction design matrix must match estimation design matrix structure.
-    q_categorical_all = pd.Categorical(unit_data[quarter], categories=observed_quarters_pre)
-    q_dummies_all = pd.get_dummies(q_categorical_all, drop_first=True, prefix='q', dtype=float)
+    s_categorical_all = pd.Categorical(unit_data[season_var], categories=observed_seasons_pre)
+    s_dummies_all = pd.get_dummies(s_categorical_all, drop_first=True, prefix='s', dtype=float)
     
-    # Handle quarter mismatch between pre and post periods:
-    # - Post-period new quarters get zero coefficients (extrapolation from model).
-    # - Post-period missing quarters require column alignment.
-    missing_cols = set(q_dummies_pre.columns) - set(q_dummies_all.columns)
+    # Handle season mismatch between pre and post periods:
+    # - Post-period new seasons get zero coefficients (extrapolation from model).
+    # - Post-period missing seasons require column alignment.
+    missing_cols = set(s_dummies_pre.columns) - set(s_dummies_all.columns)
     for col in missing_cols:
-        q_dummies_all[col] = 0.0
-    extra_cols = set(q_dummies_all.columns) - set(q_dummies_pre.columns)
+        s_dummies_all[col] = 0.0
+    extra_cols = set(s_dummies_all.columns) - set(s_dummies_pre.columns)
     if extra_cols:
-        q_dummies_all = q_dummies_all.drop(columns=list(extra_cols))
-    q_dummies_all = q_dummies_all[q_dummies_pre.columns]
+        s_dummies_all = s_dummies_all.drop(columns=list(extra_cols))
+    s_dummies_all = s_dummies_all[s_dummies_pre.columns]
 
     X_all = np.column_stack([
         np.ones(len(unit_data)),
         t_centered_all.values,
-        q_dummies_all.values
+        s_dummies_all.values
     ])
     yhat_all = model.predict(X_all)
     ydot = unit_data[y].values - yhat_all

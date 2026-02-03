@@ -1,10 +1,14 @@
 """
-Doubly robust estimators for average treatment effect on the treated.
+Treatment effect estimators for difference-in-differences settings.
 
-This module provides inverse probability weighted regression adjustment (IPWRA)
-and propensity score matching (PSM) estimators for ATT estimation in
-difference-in-differences settings. These estimators offer robustness to model
-misspecification and handle covariate imbalance between treated and control groups.
+This module provides inverse probability weighting (IPW), inverse probability
+weighted regression adjustment (IPWRA), and propensity score matching (PSM)
+estimators for ATT estimation. These estimators handle covariate imbalance
+between treated and control groups through propensity score methods.
+
+The IPW estimator reweights control observations to match the covariate
+distribution of treated units, providing consistent ATT estimates when the
+propensity score model is correctly specified.
 
 The IPWRA estimator combines propensity score weighting with outcome regression
 to achieve double robustness: consistency requires correct specification of
@@ -14,16 +18,16 @@ is uncertainty about functional form assumptions.
 
 The PSM estimator uses nearest-neighbor matching on estimated propensity scores,
 with options for caliper constraints, replacement, and multiple matches per
-treated unit. Standard errors use either the Abadie-Imbens heteroskedasticity-
-robust formula or bootstrap resampling.
+treated unit. Standard errors use either a heteroskedasticity-robust formula
+or bootstrap resampling.
 
 Notes
 -----
-Both estimators take transformed outcome variables (after unit-specific
+All estimators take transformed outcome variables (after unit-specific
 demeaning or detrending) as inputs and return ATT estimates for specific
 cohort-time pairs in staggered adoption designs. The propensity score model
-uses logistic regression without regularization to match standard software
-implementations.
+uses logistic regression without regularization for unbiased coefficient
+estimates.
 """
 
 from __future__ import annotations
@@ -37,10 +41,14 @@ import pandas as pd
 import scipy.stats as stats
 
 
+# ============================================================================
+# IPW (Inverse Probability Weighting) Estimator
+# ============================================================================
+
 @dataclass
 class IPWResult:
     """
-    Inverse Probability Weighting estimation result container.
+    Result container for inverse probability weighting ATT estimation.
 
     Attributes
     ----------
@@ -92,10 +100,14 @@ class IPWResult:
     diagnostics: dict | None = None
 
 
+# ============================================================================
+# IPWRA (Doubly Robust) Estimator
+# ============================================================================
+
 @dataclass
 class IPWRAResult:
     """
-    Doubly robust IPWRA estimation result container.
+    Result container for doubly robust IPWRA ATT estimation.
 
     Attributes
     ----------
@@ -171,6 +183,10 @@ def estimate_ipw(
     trim_threshold : float, default=0.01
         Propensity score trimming threshold. Observations with propensity
         scores outside [trim_threshold, 1-trim_threshold] are excluded.
+    alpha : float, default=0.05
+        Significance level for confidence intervals.
+    vce : str, optional
+        Variance estimator type ('robust', 'hc0', 'hc1', 'hc2', 'hc3').
     return_diagnostics : bool, default=False
         Whether to return additional diagnostic information.
     gvar_col : str, optional
@@ -181,15 +197,17 @@ def estimate_ipw(
         Cohort value (for staggered designs).
     period_r : int, optional
         Period value (for staggered designs).
-    alpha : float, default=0.05
-        Significance level for confidence intervals.
-    vce : str, optional
-        Variance estimator type ('robust', 'hc0', 'hc1', 'hc2', 'hc3').
 
     Returns
     -------
     IPWResult
         Estimation results including ATT, standard error, and diagnostics.
+
+    Raises
+    ------
+    ValueError
+        If no propensity controls are specified, no treated or control units
+        exist, or all observations are trimmed.
 
     Notes
     -----
@@ -201,6 +219,19 @@ def estimate_ipw(
                            - \\frac{1}{N_1} \\sum_{i:D_i=0} \\frac{\\hat{p}(X_i)}{1-\\hat{p}(X_i)} Y_i
 
     where :math:`\\hat{p}(X_i)` is the estimated propensity score.
+
+    **Inference Distribution**
+
+    This implementation uses the normal distribution for inference (p-values
+    and confidence intervals).
+
+    Design rationale:
+
+    1. IPW is based on asymptotic theory (influence function approach), which
+       yields asymptotically normal estimators.
+    2. This ensures consistency with IPWRA and PSM estimators in this package.
+    3. For OLS-based estimators with small samples, t-distribution inference
+       is appropriate; however, IPW relies on asymptotic normality.
     """
     # Validate inputs
     if not propensity_controls:
@@ -250,7 +281,7 @@ def estimate_ipw(
     if n_control_valid == 0:
         raise ValueError("No control units remain after trimming.")
 
-    # Compute IPW weights for control units: w = p / (1-p)
+    # IPW weights w = p/(1-p) reweight controls to match treated covariate distribution
     weights = np.zeros(len(y_valid))
     weights[control_valid] = ps_valid[control_valid] / (1 - ps_valid[control_valid])
 
@@ -264,8 +295,7 @@ def estimate_ipw(
     y_control_weighted = np.sum(weights[control_valid] * y_valid[control_valid]) / n_treated_valid
     att = y_treated_mean - y_control_weighted
 
-    # Compute standard error using influence function approach
-    # Influence function for IPW ATT estimator
+    # Influence function approach provides asymptotically valid variance estimation
     psi = np.zeros(len(y_valid))
 
     # For treated: psi_i = (Y_i - tau) / N_1
@@ -279,26 +309,26 @@ def estimate_ipw(
     var_att = np.sum(psi**2)
     se = np.sqrt(var_att)
 
-    # Degrees of freedom
-    n_params = len(propensity_controls) + 1  # PS model parameters
-    df_resid = n_treated_valid + n_control_valid - n_params - 1
+    # Degrees of freedom: kept for backward compatibility but not used for inference.
+    # IPW uses normal distribution based on asymptotic theory.
+    df_resid = n_treated_valid + n_control_valid - 2
     df_resid = max(1, df_resid)
     df_inference = df_resid
 
-    # t-statistic and p-value
+    # z-statistic and p-value using normal distribution (asymptotic inference)
     if se > 0:
-        t_stat = att / se
-        pvalue = 2 * stats.t.sf(abs(t_stat), df_inference)
+        t_stat = att / se  # Keep variable name for backward compatibility
+        pvalue = 2 * (1 - stats.norm.cdf(abs(t_stat)))
     else:
         t_stat = np.nan
         pvalue = np.nan
 
-    # Confidence interval
-    t_crit = stats.t.ppf(1 - alpha / 2, df_inference)
-    ci_lower = att - t_crit * se
-    ci_upper = att + t_crit * se
+    # Confidence interval using normal distribution (asymptotic inference)
+    z_crit = stats.norm.ppf(1 - alpha / 2)
+    ci_lower = att - z_crit * se
+    ci_upper = att + z_crit * se
 
-    # Compute coefficient of variation for weights
+    # CV of weights diagnoses overlap violations; high CV indicates extreme weights
     weights_control = weights[control_valid]
     if len(weights_control) > 1:
         weights_mean = np.mean(weights_control)
@@ -463,9 +493,15 @@ def estimate_ipwra(
         data_clean, d, propensity_controls, trim_threshold
     )
     
-    # Estimate outcome model on control units
+    # Compute ATT weights for WLS outcome model estimation.
+    # IPWRA uses WLS with w_i = 1 for treated units and w_i = p(X)/(1-p(X)) for
+    # controls. This reweights the control sample to match the treated covariate
+    # distribution, ensuring the outcome model targets the ATT estimand.
+    att_weights = np.where(D == 1, 1.0, pscores / (1 - pscores))
+    
+    # Estimate outcome model on control units using WLS with ATT weights
     m0_hat, outcome_coef = estimate_outcome_model(
-        data_clean, y, d, controls
+        data_clean, y, d, controls, sample_weights=att_weights
     )
     
     # Compute IPWRA-ATT estimator
@@ -552,7 +588,7 @@ def estimate_propensity_score(
     d: str,
     controls: list[str],
     trim_threshold: float = 0.01,
-) -> Tuple[np.ndarray, dict[str, float]]:
+) -> tuple[np.ndarray, dict[str, float]]:
     """
     Estimate propensity scores using logistic regression.
 
@@ -594,7 +630,7 @@ def estimate_propensity_score(
     X_std[X_std == 0] = 1  # Prevent division by zero
     X_scaled = (X - X_mean) / X_std
     
-    # Fit logit model without regularization
+    # No regularization ensures unbiased coefficient estimates
     try:
         model = LogisticRegression(
             penalty=None,
@@ -609,7 +645,7 @@ def estimate_propensity_score(
     # Predict propensity scores
     pscores = model.predict_proba(X_scaled)[:, 1]
     
-    # Trim extreme values
+    # Trimming prevents extreme IPW weights that inflate variance
     pscores = np.clip(pscores, trim_threshold, 1 - trim_threshold)
     
     # Transform coefficients back to original scale
@@ -631,12 +667,14 @@ def estimate_outcome_model(
     y: str,
     d: str,
     controls: list[str],
-) -> Tuple[np.ndarray, dict[str, float]]:
+    sample_weights: np.ndarray | None = None,
+) -> tuple[np.ndarray, dict[str, float]]:
     """
     Estimate the outcome regression model on control units.
 
     Fits a linear regression E(Y|X, D=0) using control observations only,
-    then generates predicted values for all units.
+    then generates predicted values for all units. Optionally uses weighted
+    least squares (WLS) when sample_weights are provided.
 
     Parameters
     ----------
@@ -648,6 +686,12 @@ def estimate_outcome_model(
         Treatment indicator column name.
     controls : list[str]
         Covariate column names for the outcome model.
+    sample_weights : np.ndarray, optional
+        Weights for weighted least squares estimation. If provided, must have
+        the same length as the data. Only weights for control units (D=0) are
+        used in fitting. For IPWRA with ATT targeting, weights should be
+        w_i = p(X_i) / (1 - p(X_i)) to reweight controls to the treated
+        covariate distribution.
 
     Returns
     -------
@@ -661,6 +705,18 @@ def estimate_outcome_model(
     ------
     ValueError
         If the design matrix is singular and cannot be inverted.
+
+    Notes
+    -----
+    When sample_weights are provided, the outcome model is estimated using WLS:
+    
+    .. math::
+    
+        \\hat{\\beta} = (X'WX)^{-1} X'WY
+    
+    where W is the diagonal weight matrix. For IPWRA with ATT targeting, the
+    weights for control units should be w_i = p(X_i) / (1 - p(X_i)), which
+    reweights the control sample to match the treated covariate distribution.
     """
     D = data[d].values.astype(float)
     Y = data[y].values.astype(float)
@@ -674,12 +730,33 @@ def estimate_outcome_model(
     # Add intercept term
     X_control_const = np.column_stack([np.ones(len(X_control)), X_control])
     
-    # OLS estimation: beta = (X'X)^{-1} X'Y
-    try:
-        XtX_inv = np.linalg.inv(X_control_const.T @ X_control_const)
-        beta = XtX_inv @ (X_control_const.T @ Y_control)
-    except np.linalg.LinAlgError:
-        raise ValueError("Outcome model design matrix is singular; cannot estimate coefficients.")
+    if sample_weights is not None:
+        # Weighted Least Squares (WLS) estimation
+        # Extract weights for control units only
+        w_control = sample_weights[control_mask]
+        
+        # Ensure weights are positive
+        w_control = np.maximum(w_control, 1e-10)
+        
+        # WLS: beta = (X'WX)^{-1} X'WY
+        # For efficiency, use sqrt(W) formulation: beta = (X̃'X̃)^{-1} X̃'Ỹ
+        # where X̃ = sqrt(W) @ X, Ỹ = sqrt(W) @ Y
+        sqrt_w = np.sqrt(w_control)
+        X_weighted = X_control_const * sqrt_w[:, np.newaxis]
+        Y_weighted = Y_control * sqrt_w
+        
+        try:
+            XtWX_inv = np.linalg.inv(X_weighted.T @ X_weighted)
+            beta = XtWX_inv @ (X_weighted.T @ Y_weighted)
+        except np.linalg.LinAlgError:
+            raise ValueError("Weighted outcome model design matrix is singular; cannot estimate coefficients.")
+    else:
+        # Standard OLS estimation: beta = (X'X)^{-1} X'Y
+        try:
+            XtX_inv = np.linalg.inv(X_control_const.T @ X_control_const)
+            beta = XtX_inv @ (X_control_const.T @ Y_control)
+        except np.linalg.LinAlgError:
+            raise ValueError("Outcome model design matrix is singular; cannot estimate coefficients.")
     
     # Generate predictions for all units
     X_all_const = np.column_stack([np.ones(len(X)), X])
@@ -845,11 +922,15 @@ def compute_ipwra_se_bootstrap(
             pscores_boot, _ = estimate_propensity_score(
                 data_boot, d, propensity_controls, trim_threshold
             )
+            
+            # Compute ATT weights for WLS (same as main estimation)
+            D_boot = data_boot[d].values.astype(float)
+            att_weights_boot = np.where(D_boot == 1, 1.0, pscores_boot / (1 - pscores_boot))
+            
             m0_boot, _ = estimate_outcome_model(
-                data_boot, y, d, controls
+                data_boot, y, d, controls, sample_weights=att_weights_boot
             )
             
-            D_boot = data_boot[d].values.astype(float)
             Y_boot = data_boot[y].values.astype(float)
             
             treat_mask = D_boot == 1
@@ -896,14 +977,14 @@ def compute_ipwra_se_bootstrap(
 @dataclass
 class PSMResult:
     """
-    Propensity score matching estimation result container.
+    Result container for propensity score matching ATT estimation.
 
     Attributes
     ----------
     att : float
         ATT point estimate from nearest neighbor matching.
     se : float
-        Standard error (Abadie-Imbens or bootstrap).
+        Standard error (heteroskedasticity-robust or bootstrap).
     ci_lower : float
         Lower bound of confidence interval.
     ci_upper : float
@@ -1003,8 +1084,8 @@ def estimate_psm(
     trim_threshold : float, default=0.01
         Propensity score trimming threshold.
     se_method : str, default='abadie_imbens'
-        Standard error method: 'abadie_imbens' for heteroskedasticity-robust
-        SE or 'bootstrap' for nonparametric bootstrap.
+        Standard error method: 'abadie_imbens' uses heteroskedasticity-robust
+        variance estimation, 'bootstrap' uses nonparametric bootstrap.
     n_bootstrap : int, default=200
         Number of bootstrap replications when se_method='bootstrap'.
     seed : int, optional
@@ -1240,7 +1321,7 @@ def _nearest_neighbor_match(
     n_neighbors: int,
     with_replacement: bool,
     caliper: float | None,
-) -> Tuple[list[list[int]], np.ndarray, int]:
+) -> tuple[list[list[int]], np.ndarray, int]:
     """
     Perform nearest neighbor propensity score matching.
 

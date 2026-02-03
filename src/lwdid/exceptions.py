@@ -1,7 +1,12 @@
 """
-Exception Classes Module
+Exception hierarchy for the lwdid package.
 
-Defines exception hierarchy for the lwdid package.
+Provides a structured exception hierarchy for difference-in-differences
+estimation. All exceptions inherit from LWDIDError, enabling unified
+error handling across the package.
+
+The hierarchy covers parameter validation, data insufficiency, time series
+requirements, randomization inference, visualization, and staggered designs.
 """
 
 
@@ -10,13 +15,7 @@ class LWDIDError(Exception):
     Base exception class for all lwdid package errors.
 
     All custom exceptions in the lwdid package inherit from this class,
-    allowing users to catch any lwdid-specific error with:
-
-        try:
-            results = lwdid(...)
-        except LWDIDError as e:
-            # Handle any lwdid error
-            print(f"lwdid error: {e}")
+    providing a common base for unified error handling.
     """
     pass
 
@@ -44,17 +43,13 @@ class InvalidRollingMethodError(InvalidParameterError):
     """
     Exception raised when the rolling parameter has an invalid value.
 
-    The rolling parameter must be one of: 'demean', 'detrend', 'demeanq', 'detrendq'.
-    This exception is raised during input validation if an unsupported method is specified.
-
-    Examples
-    --------
-    >>> lwdid(data, ..., rolling='invalid_method')  # doctest: +SKIP
-    InvalidRollingMethodError: rolling must be one of ['demean', 'detrend', 'demeanq', 'detrendq']
+    The rolling parameter must be one of: 'demean', 'detrend', 'demeanq', or
+    'detrendq'. This exception is raised during input validation when an
+    unsupported transformation method is specified.
 
     See Also
     --------
-    lwdid.validation._validate_rolling_parameter : Function that performs this validation.
+    InvalidParameterError : Parent class for parameter validation errors.
     """
     pass
 
@@ -63,20 +58,61 @@ class InvalidVCETypeError(InvalidParameterError):
     """
     Exception raised when the vce parameter has an invalid value.
 
-    The vce parameter must be one of: None, 'robust', 'hc1', 'hc3', 'cluster'.
-    This exception is raised during estimation if an unsupported variance
-    estimator type is specified.
-
-    Examples
-    --------
-    >>> lwdid(data, ..., vce='invalid_vce')  # doctest: +SKIP
-    InvalidVCETypeError: vce must be one of [None, 'robust', 'hc1', 'hc3', 'cluster']
+    The vce (variance-covariance estimator) parameter must be one of: None,
+    'robust', 'hc1', 'hc3', or 'cluster'. This exception is raised during
+    estimation when an unsupported variance estimator type is specified.
 
     See Also
     --------
-    lwdid.estimation.estimate_att : Function that validates vce parameter.
+    InvalidParameterError : Parent class for parameter validation errors.
     """
     pass
+
+
+class UnbalancedPanelError(LWDIDError):
+    """
+    Exception raised when balanced panel is required but data is unbalanced.
+    
+    This exception is raised when ``balanced_panel='error'`` is specified
+    and the panel data contains units with different numbers of observations.
+    
+    Attributes
+    ----------
+    min_obs : int
+        Minimum observations per unit in the panel.
+    max_obs : int
+        Maximum observations per unit in the panel.
+    n_incomplete_units : int
+        Number of units with fewer than max_obs observations.
+    
+    Notes
+    -----
+    From Lee & Wooldridge (2025) Section 4.4:
+    
+        "Selection may depend on unobserved time-invariant heterogeneity,
+        but cannot systematically depend on Y_it(∞) shocks."
+    
+    Unbalanced panels are acceptable under this assumption, but users may
+    want to enforce balanced panels for sensitivity analysis or when the
+    selection mechanism assumption is questionable.
+    
+    See Also
+    --------
+    LWDIDError : Base exception class.
+    diagnose_selection_mechanism : Diagnostic tools for selection bias.
+    """
+    
+    def __init__(
+        self,
+        message: str,
+        min_obs: int,
+        max_obs: int,
+        n_incomplete_units: int,
+    ):
+        super().__init__(message)
+        self.min_obs = min_obs
+        self.max_obs = max_obs
+        self.n_incomplete_units = n_incomplete_units
 
 
 class InsufficientDataError(LWDIDError):
@@ -100,11 +136,9 @@ class NoTreatedUnitsError(InsufficientDataError):
     """
     Exception raised when there are no treated units in the data.
 
-    This occurs when all units have treatment indicator d=0. At least one
-    treated unit (d=1) is required for difference-in-differences estimation.
-
-    Trigger condition: N_treated = 0 (no units with d=1 over the panel or in
-    the main regression sample).
+    Raised when all units have treatment indicator d=0 in the panel or
+    regression sample. At least one treated unit (d=1) is required for
+    difference-in-differences estimation.
     """
     pass
 
@@ -113,11 +147,9 @@ class NoControlUnitsError(InsufficientDataError):
     """
     Exception raised when there are no control units in the data.
 
-    This occurs when all units have treatment indicator d=1. At least one
-    control unit (d=0) is required for difference-in-differences estimation.
-
-    Trigger condition: N_control = 0 (no units with d=0 over the panel or in
-    the main regression sample).
+    Raised when all units have treatment indicator d=1 in the panel or
+    regression sample. At least one control unit (d=0) is required for
+    difference-in-differences estimation.
     """
     pass
 
@@ -148,23 +180,64 @@ class InsufficientPrePeriodsError(InsufficientDataError):
       1 plus the number of distinct pre-period quarters, ``n_pre >= (1 + #quarters_pre)``,
       to avoid rank deficiency when estimating a linear trend with quarterly effects.
 
+    This exception is also raised in staggered adoption designs when
+    ``exclude_pre_periods`` is specified and the remaining pre-treatment
+    periods are insufficient for the chosen transformation method.
+
+    Attributes
+    ----------
+    cohort : int or None
+        The treatment cohort identifier that triggered the error.
+        Only set in staggered adoption mode.
+    available : int or None
+        Number of pre-treatment periods remaining after exclusion.
+        Only set when exclude_pre_periods is used.
+    required : int or None
+        Minimum number of pre-treatment periods required by the
+        transformation method (1 for demean, 2 for detrend, etc.).
+    excluded : int or None
+        Number of periods excluded via exclude_pre_periods parameter.
+
     See Also
     --------
     lwdid.transformations.apply_rolling_transform : Applies rolling
         transformations and enforces pre-period requirements.
+
+    Notes
+    -----
+    From Lee & Wooldridge (2025) Section 6:
+
+        "When the no-anticipation assumption may be violated, one can
+        leave one or more periods prior to the intervention time out
+        of the pre-treatment window used for transformation."
+
+    For cohort g with ``exclude_pre_periods=k``, the pre-treatment window
+    becomes {T_min, ..., g-1-k} instead of {T_min, ..., g-1}.
     """
-    pass
+
+    def __init__(
+        self,
+        message: str,
+        cohort: int | None = None,
+        available: int | None = None,
+        required: int | None = None,
+        excluded: int | None = None,
+    ):
+        super().__init__(message)
+        self.cohort = cohort
+        self.available = available
+        self.required = required
+        self.excluded = excluded
 
 
 class InsufficientQuarterDiversityError(InsufficientDataError):
     """
     Exception raised when quarterly data requirements are not met.
 
-    In the current ``lwdid()`` workflow this exception is raised for
-    quarterly methods (``demeanq``/``detrendq``) when **quarter coverage is
-    insufficient**: post-treatment periods contain quarter(s) that do not appear
-    in the pre-treatment period for a given unit, so seasonal effects for those
-    quarters cannot be estimated from pre-treatment data.
+    Raised for quarterly transformation methods (``demeanq``/``detrendq``) when
+    quarter coverage is insufficient: post-treatment periods contain quarters
+    that do not appear in the pre-treatment period for a given unit, preventing
+    estimation of seasonal effects for those quarters.
 
     See Also
     --------
@@ -180,25 +253,22 @@ class TimeDiscontinuityError(LWDIDError):
     This exception is raised in two scenarios:
 
     1. **Time index discontinuity**:
-       The time index (tindex) has gaps, meaning there are missing periods in
-       the sequence.
-
-       Example: If the data contains years 2000, 2001, and 2003 but is missing
-       2002, this creates a gap that violates the continuity assumption.
+       The time index has gaps, meaning there are missing periods in the
+       sequence. A continuous time index is required for valid transformation
+       and estimation.
 
     2. **Post variable non-monotonicity**:
        The post-treatment indicator is not monotone non-decreasing in time,
-       suggesting that the policy was reversed or suspended.
+       suggesting that the policy was reversed or suspended. The method assumes
+       absorbing treatment states.
 
-       Example: If post=0 in period 1, post=1 in period 2, and post=0 again in
-       period 3, this indicates policy reversal which is not supported by the method.
-
-    Both scenarios violate the assumptions of the Lee and Wooldridge (2025) method
-    and will cause estimation to fail or produce incorrect results.
+    Both scenarios violate the assumptions required for valid difference-in-
+    differences estimation and will cause estimation to fail or produce
+    incorrect results.
 
     See Also
     --------
-    lwdid.validation._validate_time_continuity : Function that performs these checks.
+    LWDIDError : Base exception class.
     """
     pass
 
@@ -216,14 +286,9 @@ class MissingRequiredColumnError(LWDIDError):
     - post: Post-treatment indicator
     - controls: Control variables (if specified)
 
-    Examples
-    --------
-    >>> lwdid(data, y='outcome', d='treated', ...)  # doctest: +SKIP
-    MissingRequiredColumnError: Required column 'outcome' not found in data
-
     See Also
     --------
-    lwdid.validation._validate_required_columns : Function that performs this check.
+    LWDIDError : Base exception class.
     """
     pass
 
@@ -232,23 +297,14 @@ class RandomizationError(LWDIDError):
     """
     Exception raised when randomization inference (RI) fails.
 
-    Trigger conditions include:
-
-    - rireps <= 0 (invalid number of replications)
-    - firstpost_df missing required columns (``ydot_postavg``, ``d_`` (treatment indicator))
-    - Sample too small (N < 3, insufficient for resampling)
-    - Invalid ri_method
-    - Number of valid RI replications too small relative to rireps
-      (insufficient valid draws for reliable inference)
-
-    Examples
-    --------
-    >>> lwdid(data, ..., ri=True, rireps=0)  # doctest: +SKIP
-    RandomizationError: rireps must be positive, got 0
+    Common causes include invalid number of replications (rireps <= 0),
+    missing required columns in input data, sample size too small for
+    resampling (N < 3), invalid ri_method specification, or insufficient
+    valid draws for reliable inference.
 
     See Also
     --------
-    lwdid.randomization.randomization_inference : Function that performs RI.
+    LWDIDError : Base exception class.
     """
     pass
 
@@ -257,20 +313,13 @@ class VisualizationError(LWDIDError):
     """
     Exception raised for visualization-related errors.
 
-    Trigger conditions include:
-
-    - Plot data missing required columns (for example, ``ydot``, ``d_`` (treatment indicator), ``tindex``)
-    - Missing plotting backend (matplotlib not installed)
-
-    Examples
-    --------
-    >>> results.plot()  # in an environment without matplotlib installed  # doctest: +SKIP
-    VisualizationError: Install required dependencies: matplotlib>=3.3.
+    Common causes include plot data missing required columns (such as
+    transformed outcome, treatment indicator, or time index) or missing
+    plotting backend (matplotlib not installed).
 
     See Also
     --------
-    lwdid.visualization.plot_results : Function that generates plots.
-    lwdid.results.LWDIDResults.plot : Method that calls plot_results.
+    LWDIDError : Base exception class.
     """
     pass
 
@@ -282,71 +331,117 @@ class VisualizationError(LWDIDError):
 class InvalidStaggeredDataError(LWDIDError):
     """
     Exception raised when staggered data validation fails.
-    
+
     This exception is raised in the following scenarios:
-    
+
     1. **Invalid gvar values**:
        - Negative values in gvar column
        - String values instead of numeric types
        - Values that cannot be interpreted as treatment cohort or never-treated
-       
+
     2. **No valid cohorts**:
        - All units are never-treated (no treated cohorts to estimate effects for)
        - All gvar values are NaN/0/inf with no positive integers
-       
+
     3. **Inconsistent gvar within unit**:
        - Same unit has different gvar values across time periods
        (gvar should be time-invariant within unit)
-    
+
     Valid gvar values:
+
     - Positive integer: Treatment cohort (first treatment period)
     - 0: Never treated
     - np.inf: Never treated
     - NaN/None: Never treated
-    
-    Examples
-    --------
-    >>> data['gvar'] = [-1, 2005, 2006]  # Negative value
-    >>> lwdid(data, y='y', ivar='id', tvar='year', gvar='gvar')  # doctest: +SKIP
-    InvalidStaggeredDataError: gvar column contains negative values: [-1]
-    
-    >>> data['gvar'] = ['never', '2005', '2006']  # String values
-    >>> lwdid(data, y='y', ivar='id', tvar='year', gvar='gvar')  # doctest: +SKIP
-    InvalidStaggeredDataError: gvar column must be numeric, got object
-    
+
     See Also
     --------
-    lwdid.validation.validate_staggered_data : Function that performs validation.
+    LWDIDError : Base exception class.
+    NoNeverTreatedError : Raised when never-treated units are required but absent.
     """
     pass
 
 
 class NoNeverTreatedError(InsufficientDataError):
     """
-    Exception raised when cohort/overall effect estimation requires never-treated
-    units but none exist in the data.
-    
+    Exception raised when never-treated units are required but absent.
+
     This exception is raised when:
+
     - aggregate='cohort' is specified but no never-treated units exist
     - aggregate='overall' is specified but no never-treated units exist
-    
-    The Lee & Wooldridge (2023, 2025) method requires never-treated units as
-    control group for cohort and overall effect aggregation because:
-    - Different cohorts use different pre-treatment periods for transformation
-    - Only never-treated units can serve as a consistent reference across cohorts
-    
-    For (g,r)-specific effects, not-yet-treated units can be used as controls,
-    so this exception is not raised for aggregate='none'.
-    
-    Examples
-    --------
-    >>> # All units are eventually treated
-    >>> data['gvar'] = [2005, 2005, 2006, 2006]  # No 0/inf/NaN
-    >>> lwdid(data, ..., gvar='gvar', aggregate='overall')  # doctest: +SKIP
-    NoNeverTreatedError: Cannot estimate overall effect without never-treated units.
-    
+
+    Never-treated units are required as control group for cohort and overall
+    effect aggregation because different cohorts use different pre-treatment
+    periods for transformation, and only never-treated units can serve as a
+    consistent reference across cohorts.
+
+    For (g,r)-specific effects, not-yet-treated units can serve as controls,
+    so this exception is not raised when aggregate='none'.
+
     See Also
     --------
-    lwdid.staggered.aggregation : Aggregation functions requiring NT control.
+    InsufficientDataError : Parent class for data insufficiency errors.
+    InvalidStaggeredDataError : Raised for other staggered data validation failures.
+    """
+    pass
+
+
+# =============================================================================
+# Repeated Cross-Section Aggregation Exceptions
+# =============================================================================
+
+class AggregationError(LWDIDError):
+    """
+    Base exception class for aggregation-related errors.
+
+    This is the parent class for all exceptions related to repeated
+    cross-sectional data aggregation. Specific subclasses indicate
+    the exact nature of the aggregation failure.
+
+    See Also
+    --------
+    InvalidAggregationError : Raised when aggregation constraints are violated.
+    InsufficientCellSizeError : Raised when all cells are below minimum size.
+    """
+    pass
+
+
+class InvalidAggregationError(AggregationError):
+    """
+    Exception raised when aggregation constraints are violated.
+
+    This exception is raised in the following scenarios:
+
+    1. **Treatment varies within cell**:
+       Treatment status is not constant within a (unit, period) cell,
+       violating the assumption that treatment is assigned at the
+       aggregation unit level.
+
+    2. **gvar varies within unit**:
+       Treatment timing (gvar) is not constant within a unit across
+       all periods, violating the time-invariance assumption.
+
+    3. **Duplicate column names**:
+       Aggregation would result in duplicate column names in the output.
+
+    See Also
+    --------
+    AggregationError : Parent class for aggregation errors.
+    """
+    pass
+
+
+class InsufficientCellSizeError(AggregationError):
+    """
+    Exception raised when all cells are below minimum size threshold.
+
+    This exception is raised when the min_cell_size parameter is specified
+    and all (unit, period) cells have fewer observations than the threshold,
+    resulting in an empty output panel.
+
+    See Also
+    --------
+    AggregationError : Parent class for aggregation errors.
     """
     pass

@@ -2,7 +2,7 @@ Staggered DiD Module (staggered)
 ================================
 
 The staggered module implements difference-in-differences estimation for settings
-with staggered treatment adoption, based on Lee and Wooldridge (2023, 2025).
+with staggered treatment adoption, based on Lee and Wooldridge (2025).
 
 Overview
 --------
@@ -21,19 +21,44 @@ Key Concepts
 
 Cohort (g)
     The period when a unit first receives treatment. Units that are never treated
-    have gvar=0 or gvar=NaN.
+    have gvar=0 or gvar=NaN (internally mapped to :math:`\infty`).
 
 (g, r) Effect
-    The treatment effect for cohort g at calendar time r, where r >= g.
+    The treatment effect :math:`\tau_{gr}` for cohort :math:`g` at calendar time
+    :math:`r`, where :math:`r \geq g`. This is the ATT for units first treated
+    in period :math:`g`, evaluated at time :math:`r`.
 
 Control Group Strategies
-    - ``never_treated``: Only units that are never treated (required for aggregation)
-    - ``not_yet_treated``: Units not yet treated at time r (gvar > r)
+    Lee and Wooldridge (2025, Section 4.1) establishes that under no anticipation
+    and conditional parallel trends, both never-treated and not-yet-treated units
+    provide valid counterfactuals:
+
+    - ``never_treated``: Only units with :math:`D_\infty = 1` (never treated during
+      observation).
+      Required when using ``aggregate='cohort'`` or ``aggregate='overall'``.
+    - ``not_yet_treated``: Never-treated plus cohorts h > r (units first treated
+      after period r). Uses more control observations, potentially improving
+      efficiency.
+
+    The theoretical justification (Theorem 4.1 in the paper) shows that the cohort
+    assignments are unconfounded with respect to the transformed potential outcome
+    conditional on covariates.
 
 Aggregation Levels
-    - ``none``: Returns all (g, r)-specific effects
-    - ``cohort``: Averages effects within each cohort
-    - ``overall``: Single weighted average across all cohorts
+    - ``none``: Returns all :math:`(g, r)`-specific effects
+    - ``cohort``: Averages effects within each cohort:
+      :math:`\tau_g = \frac{1}{T-g+1} \sum_{r=g}^{T} \tau_{gr}`
+    - ``overall``: Cohort-share weighted average:
+      :math:`\tau_\omega = \sum_g \omega_g \tau_g` where
+      :math:`\omega_g = N_g/N_{treat}`
+
+All Units Eventually Treated
+    When no units remain untreated through period :math:`T` (no never-treated
+    group), treatment effects are defined relative to :math:`Y_t(T)` instead of
+    :math:`Y_t(\infty)`. Effects can be estimated for cohorts
+    :math:`g \in \{S, \ldots, T-1\}`; the final cohort (:math:`g = T`) serves as
+    the control for all earlier cohorts in period :math:`T`. See
+    :doc:`../methodological_notes` for theoretical details.
 
 Transformations
 ---------------
@@ -52,6 +77,7 @@ Control Groups
 .. autoclass:: lwdid.staggered.ControlGroupStrategy
    :members:
    :undoc-members:
+   :no-index:
 
 .. autofunction:: lwdid.staggered.get_valid_control_units
 
@@ -70,6 +96,7 @@ Estimation
 
 .. autoclass:: lwdid.staggered.CohortTimeEffect
    :members:
+   :no-index:
 
 .. autofunction:: lwdid.staggered.estimate_cohort_time_effects
 
@@ -82,23 +109,48 @@ Aggregation
 
 .. autoclass:: lwdid.staggered.CohortEffect
    :members:
+   :no-index:
 
 .. autoclass:: lwdid.staggered.OverallEffect
    :members:
+   :no-index:
+
+.. autoclass:: lwdid.staggered.EventTimeEffect
+   :members:
+   :no-index:
 
 .. autofunction:: lwdid.staggered.aggregate_to_cohort
 
 .. autofunction:: lwdid.staggered.aggregate_to_overall
 
+.. autofunction:: lwdid.staggered.aggregate_to_event_time
+
 .. autofunction:: lwdid.staggered.construct_aggregated_outcome
 
 .. autofunction:: lwdid.staggered.cohort_effects_to_dataframe
 
+IPW Estimator
+-------------
+
+Inverse probability weighting estimates treatment effects by weighting observations
+based on their propensity scores.
+
+.. autoclass:: lwdid.staggered.IPWResult
+   :members:
+   :no-index:
+
+.. autofunction:: lwdid.staggered.estimate_ipw
+
 IPWRA Estimator
 ---------------
 
+The doubly robust IPWRA estimator combines regression adjustment and inverse
+probability weighting, providing consistent estimates when either the outcome
+model or the propensity score model is correctly specified.
+
 .. autoclass:: lwdid.staggered.IPWRAResult
    :members:
+   :no-index:
 
 .. autofunction:: lwdid.staggered.estimate_ipwra
 
@@ -111,6 +163,7 @@ PSM Estimator
 
 .. autoclass:: lwdid.staggered.PSMResult
    :members:
+   :no-index:
 
 .. autofunction:: lwdid.staggered.estimate_psm
 
@@ -119,12 +172,50 @@ Randomization Inference
 
 .. autoclass:: lwdid.staggered.StaggeredRIResult
    :members:
+   :no-index:
 
 .. autofunction:: lwdid.staggered.randomization_inference_staggered
 
 .. autofunction:: lwdid.staggered.ri_overall_effect
 
 .. autofunction:: lwdid.staggered.ri_cohort_effect
+
+Pre-treatment Dynamics
+----------------------
+
+The pre-treatment dynamics module implements estimation and testing for
+pre-treatment periods, following Lee & Wooldridge (2025) Appendix D.
+
+Pre-treatment Transformations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: lwdid.staggered.transform_staggered_demean_pre
+
+.. autofunction:: lwdid.staggered.transform_staggered_detrend_pre
+
+.. autofunction:: lwdid.staggered.get_pre_treatment_periods_for_cohort
+
+Pre-treatment Estimation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: lwdid.staggered.PreTreatmentEffect
+   :members:
+   :no-index:
+
+.. autofunction:: lwdid.staggered.estimate_pre_treatment_effects
+
+.. autofunction:: lwdid.staggered.pre_treatment_effects_to_dataframe
+
+Parallel Trends Testing
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: lwdid.staggered.ParallelTrendsTestResult
+   :members:
+   :no-index:
+
+.. autofunction:: lwdid.staggered.run_parallel_trends_test
+
+.. autofunction:: lwdid.staggered.summarize_parallel_trends_test
 
 Examples
 --------
@@ -223,6 +314,85 @@ Event Study Plot
    )
    fig.savefig('event_study.png', dpi=300)
 
+Event Time Aggregation (WATT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from lwdid.staggered import aggregate_to_event_time
+   
+   # Get all cohort-time specific effects
+   results = lwdid(
+       data=data,
+       y='lhomicide',
+       ivar='sid',
+       tvar='year',
+       gvar='gvar',
+       aggregate='none',
+   )
+   
+   # Aggregate to event time using WATT (Weighted ATT)
+   # WATT(r) = Σ w(g,r) × ATT(g, g+r) where w(g,r) = N_g / Σ N_g'
+   watt_effects = aggregate_to_event_time(
+       cohort_time_effects=results.att_by_cohort_time,
+       cohort_sizes=results.cohort_sizes,
+       alpha=0.05,
+       df_strategy='conservative',  # Use min(df) across cohorts
+   )
+   
+   # Access event-time aggregated effects
+   for e in watt_effects:
+       print(f"Event time {e.event_time}: WATT={e.att:.4f}, SE={e.se:.4f}, "
+             f"CI=[{e.ci_lower:.4f}, {e.ci_upper:.4f}], p={e.pvalue:.4f}")
+   
+   # Or use plot_event_study with weighted aggregation
+   fig, ax = results.plot_event_study(
+       aggregation='weighted',  # Use WATT aggregation
+       title='Event Study with WATT Aggregation',
+   )
+
+Pre-treatment Dynamics and Parallel Trends Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Estimate with pre-treatment dynamics for parallel trends assessment
+   results = lwdid(
+       data=data,
+       y='lhomicide',
+       ivar='sid',
+       tvar='year',
+       gvar='gvar',
+       rolling='demean',
+       aggregate='cohort',
+       include_pretreatment=True,    # Enable pre-treatment estimation
+       pretreatment_test=True,       # Run parallel trends test
+       pretreatment_alpha=0.05,      # Significance level
+   )
+   
+   # View summary with pre-treatment results
+   print(results.summary())
+   
+   # Access pre-treatment ATT estimates
+   print(results.att_pre_treatment)
+   # Columns: cohort, period, event_time, att, se, ci_lower, ci_upper,
+   #          t_stat, pvalue, n_treated, n_control, is_anchor, rolling_window_size
+   
+   # Access parallel trends test results
+   pt = results.parallel_trends_test
+   print(f"Joint F-stat: {pt.joint_f_stat:.4f}")
+   print(f"P-value: {pt.joint_pvalue:.4f}")
+   print(f"Reject H0: {pt.reject_null}")
+   
+   # Plot event study with pre-treatment effects
+   fig, ax = results.plot_event_study(
+       include_pre_treatment=True,
+       title='Event Study with Pre-treatment Effects',
+       pre_treatment_color='gray',
+       post_treatment_color='blue',
+   )
+   fig.savefig('event_study_pretreatment.png', dpi=300)
+
 Low-Level API Usage
 ~~~~~~~~~~~~~~~~~~~
 
@@ -274,4 +444,5 @@ See Also
 
 - :func:`lwdid.lwdid` - Main estimation function with staggered support
 - :doc:`../user_guide` - Comprehensive usage guide
-- :doc:`../examples/castle_law` - Castle Law analysis example
+- :doc:`../methodological_notes` - Theoretical foundations
+- :doc:`../examples/index` - Examples including Castle Law analysis

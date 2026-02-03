@@ -1,32 +1,38 @@
-# lwdid: Difference-in-Differences Estimator for Small Cross-Sectional Samples
+# lwdid: Lee-Wooldridge Difference-in-Differences with Rolling Transformations
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)
 
-Python implementation of the Lee and Wooldridge (2025) difference-in-differences estimator for panel data with small cross-sectional sample sizes.
+Python implementation of the Lee and Wooldridge difference-in-differences methods for panel data, supporting both small cross-sectional sample sizes with exact inference and large-sample settings with asymptotic inference.
 
 ## Overview
 
-This package implements the methodology described in Lee and Wooldridge (2025), providing valid inference for difference-in-differences estimation when the number of treated or control units is small.
+This package implements the Lee and Wooldridge transformation-based approach for difference-in-differences estimation, covering three methodological scenarios:
 
-**Reference**: Lee, S. J., and Wooldridge, J. M. (2025). Simple Approaches to Inference with Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes. *Available at [SSRN 5325686](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5325686)*.
+- **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based inference under classical linear model assumptions when the number of cross-sectional units is small.
+- **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic inference with heteroskedasticity-robust standard errors for moderate to large samples.
+- **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific effect estimation with flexible control group strategies for settings where treatment timing varies.
+
+**References**:
+
+Lee, S. J., and Wooldridge, J. M. (2026). Simple Approaches to Inference with Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes. *Available at [SSRN 5325686](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5325686)*.
+
+Lee, S. J., and Wooldridge, J. M. (2025). A Simple Transformation Approach to Difference-in-Differences Estimation for Panel Data. *Available at [SSRN 4516518](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4516518)*.
 
 **Authors**: Xuanyu Cai, Wenli Xu
 
 ### Key Features
 
-The package provides inference for small cross-sectional samples by transforming panel data into cross-sectional regressions:
+The package transforms panel data into cross-sectional regressions, enabling various treatment effects estimators:
 
-- **Common timing and staggered adoption**: Supports both settings where all units begin treatment simultaneously and settings with staggered treatment rollout
-- Designed for settings with small numbers of treated or control units
-- Exact t-based inference available under classical linear model assumptions (normality and homoskedasticity)
-- Works best with large time dimensions, where the central limit theorem across time supports normality
-- Serial correlation handled through unit-specific transformations
-- Unit-specific linear trends and seasonal patterns
-- Heteroskedasticity-robust inference (HC1/HC3) for moderate sample sizes
-- Randomization inference for finite-sample validity without distributional assumptions
-- **Staggered DiD**: Cohort-specific and overall effect estimation based on Lee and Wooldridge (2023)
+- **Three methodological scenarios**: Small-sample exact inference, large-sample asymptotic inference, and staggered adoption
+- **Multiple variance estimators**: Homoskedastic OLS, HC0-HC4 robust, and cluster-robust standard errors
+- **Multiple estimators**: Regression adjustment (RA), inverse probability weighting (IPW), doubly robust (IPWRA), and propensity score matching (PSM)
+- **Unit-specific transformations**: Serial correlation handled through demeaning or detrending
+- **Seasonal patterns**: Support for quarterly data with seasonal fixed effects
+- **Randomization inference**: Bootstrap and permutation-based procedures for finite-sample validity
+- **Staggered DiD**: Cohort-time specific effect estimation based on Lee and Wooldridge (2025)
 
 ### Transformation Methods
 
@@ -223,7 +229,7 @@ results.plot_event_study(title='Castle Doctrine Effect')
 
 ### Validation
 
-The implementation has been validated for numerical accuracy and consistency with the methodology described in Lee and Wooldridge (2025).
+The implementation has been validated for numerical accuracy and consistency with the methodology described in Lee and Wooldridge (2025, 2026).
 
 ## Requirements
 
@@ -344,7 +350,7 @@ lwdid(data, y, d, ivar, tvar, post, rolling, **options)
 - **Staggered adoption** (use `gvar` parameter):
   - Provide `gvar`: column with first treatment period (0 or NaN = never treated)
   - Do not provide `d` or `post` (they will be ignored)
-  - See Lee and Wooldridge 2023, Section 7
+  - See Lee and Wooldridge (2025) for methodological details
 - **Time variable format**:
   - Annual data: Single numeric column (e.g., `tvar='year'`)
   - Quarterly data: Two numeric columns (e.g., `tvar=['year', 'quarter']`)

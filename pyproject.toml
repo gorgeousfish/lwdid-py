@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lwdid"
-version = "0.1.0"
-description = "Lee & Wooldridge Difference-in-Differences estimator for small cross-sectional sample sizes"
+version = "0.2.0"
+description = "Lee & Wooldridge Difference-in-Differences with rolling transformations for panel data"
 authors = [
     {name = "Xuanyu Cai", email = "F23090105414@cityu.edu.mo"},
     {name = "Wenli Xu", email = "wlxu@cityu.edu.mo"}

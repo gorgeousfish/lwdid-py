@@ -23,24 +23,17 @@ transformed outcomes for treated and control groups over time.
 - Customizable appearance (figure size, titles, labels, colors)
 - Automatic handling of time indices and period labels
 
-.. note::
+**API Signature:**
 
-   In version 0.1.0, :meth:`lwdid.LWDIDResults.plot` has the signature
-   ``plot(gid=None, graph_options=None)``. Customization options such as
-   figure size, title, axis labels, legend location, DPI, and output
-   filename are passed via the ``graph_options`` dictionary (with keys
-   like ``'figsize'``, ``'title'``, ``'xlabel'``, ``'ylabel'``,
-   ``'legend_loc'``, ``'dpi'``, ``'savefig'``). Examples in this
-   document that show additional keyword arguments (for example,
-   ``figsize=...``, ``title=...``, ``xlabel=...``, ``ylabel=...``,
-   ``ax=...``, or color/marker options) are conceptual and may require
-   adaptation: in version 0.1.0 the only arguments accepted by
-   :meth:`lwdid.LWDIDResults.plot` are ``gid`` and ``graph_options``;
-   options like figure size, labels, legend location, DPI, and output
-   path must be supplied inside ``graph_options``, while styling such as
-   colors, marker sizes, line widths, or the use of custom Matplotlib
-   axes should be applied directly to the Matplotlib figure/axes
-   returned by ``results.plot()``.
+The :meth:`lwdid.LWDIDResults.plot` method accepts two arguments:
+``plot(gid=None, graph_options=None)``. Customization options such as
+figure size, title, axis labels, legend location, DPI, and output
+filename are passed via the ``graph_options`` dictionary (with keys
+like ``'figsize'``, ``'title'``, ``'xlabel'``, ``'ylabel'``,
+``'legend_loc'``, ``'dpi'``, ``'savefig'``). For advanced styling
+(colors, marker sizes, line widths, or custom Matplotlib axes),
+apply changes directly to the Matplotlib figure/axes returned by
+``results.plot()``.
 
 Plot Components
 ---------------
@@ -198,10 +191,10 @@ Highlight pre-treatment effects to assess parallel trends:
    ax.legend()
    plt.show()
 
-Event Study Plot
-~~~~~~~~~~~~~~~~
+Event Study Plot (Common Timing)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Create an event study plot with time relative to treatment:
+Create an event study plot with time relative to treatment for common timing designs:
 
 .. code-block:: python
 
@@ -244,6 +237,175 @@ Create an event study plot with time relative to treatment:
    plt.tight_layout()
    plt.show()
 
+Staggered Adoption Visualization
+--------------------------------
+
+For staggered adoption designs (where units are treated at different times),
+the ``plot_event_study()`` method provides specialized visualization of
+dynamic treatment effects across cohorts. This method aggregates cohort-time
+specific effects by event time (time relative to treatment) and produces
+publication-quality event study diagrams.
+
+Basic Event Study (Staggered)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from lwdid import lwdid
+   import pandas as pd
+
+   data = pd.read_csv('castle.csv')
+
+   # Estimate staggered effects
+   results = lwdid(
+       data,
+       y='l_homicide',
+       ivar='state',
+       tvar='year',
+       gvar='effyear',
+       rolling='demean',
+       aggregate='none'  # Required for event study plot
+   )
+
+   # Generate event study plot
+   fig, ax = results.plot_event_study()
+
+The event study plot displays:
+
+- **X-axis**: Event time (periods relative to treatment, where :math:`e = r - g`)
+- **Y-axis**: Treatment effect estimates
+- **Points**: Average treatment effects at each event time
+- **Error bars or shading**: 95% confidence intervals
+- **Reference line**: Horizontal line at zero for visual assessment
+
+Customized Event Study
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   fig, ax = results.plot_event_study(
+       title='Castle Doctrine Effect on Homicide Rates',
+       ylabel='Effect on Log Homicide Rate',
+       xlabel='Years Relative to Adoption',
+       include_pre_treatment=True,
+       show_ci=True,
+       ref_period=0,           # Reference period (normalized to zero if specified)
+       aggregation='weighted'  # Weight by cohort size
+   )
+
+   fig.savefig('event_study.png', dpi=300, bbox_inches='tight')
+
+Event Study Parameters
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The :meth:`lwdid.LWDIDResults.plot_event_study` method accepts the following
+parameters:
+
+**Display parameters:**
+
+- ``title``: Plot title (str, optional)
+- ``xlabel``: X-axis label (str, default: ``'Event Time'``)
+- ``ylabel``: Y-axis label (str, default: ``'Treatment Effect'``)
+- ``figsize``: Figure size tuple (default: ``(10, 6)``)
+
+**Data parameters:**
+
+- ``include_pre_treatment``: Include pre-treatment periods (bool, default: ``True``)
+- ``ref_period``: Reference period for normalization (int, optional)
+- ``aggregation``: Cross-cohort aggregation method (``'mean'`` or ``'weighted'``,
+  default: ``'weighted'``)
+
+**Visual parameters:**
+
+- ``show_ci``: Display confidence interval shading (bool, default: ``True``)
+- ``ci_alpha``: Confidence interval shading opacity (float, default: ``0.2``)
+- ``marker``: Marker style (str, default: ``'o'``)
+- ``linestyle``: Line style (str, default: ``'-'``)
+
+**Output parameters:**
+
+- ``return_data``: Also return the aggregated event study DataFrame
+  (bool, default: ``False``)
+
+Returning Event Study Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To access the underlying data used in the plot:
+
+.. code-block:: python
+
+   fig, ax, event_df = results.plot_event_study(return_data=True)
+
+   # event_df contains columns:
+   # - event_time: periods relative to treatment (e = r - g)
+   # - att: average treatment effect at this event time
+   # - se: standard error
+   # - ci_lower, ci_upper: confidence interval bounds
+   # - n_cohorts: number of cohorts contributing to this event time
+
+   print(event_df)
+
+Cohort-Specific Event Studies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For detailed analysis, cohort-specific effects can be visualized manually:
+
+.. code-block:: python
+
+   import matplotlib.pyplot as plt
+
+   # Access cohort-time specific effects
+   gt_effects = results.att_by_cohort_time
+
+   # Create event time variable
+   gt_effects['event_time'] = gt_effects['period'] - gt_effects['cohort']
+
+   # Plot by cohort
+   fig, ax = plt.subplots(figsize=(12, 6))
+
+   for cohort in gt_effects['cohort'].unique():
+       cohort_data = gt_effects[gt_effects['cohort'] == cohort]
+       ax.plot(cohort_data['event_time'], cohort_data['att'],
+               marker='o', label=f'Cohort {cohort}', alpha=0.7)
+
+   ax.axhline(0, color='black', linestyle='--', alpha=0.5)
+   ax.axvline(-0.5, color='gray', linestyle='--', alpha=0.3)
+   ax.set_xlabel('Event Time')
+   ax.set_ylabel('Treatment Effect')
+   ax.set_title('Cohort-Specific Treatment Effects')
+   ax.legend(title='Treatment Cohort')
+   ax.grid(alpha=0.3)
+
+   plt.tight_layout()
+   plt.show()
+
+Publication-Ready Staggered Event Study
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   import matplotlib.pyplot as plt
+
+   plt.style.use('seaborn-v0_8-whitegrid')
+
+   fig, ax = results.plot_event_study(
+       title='',
+       xlabel='Years Since Policy Adoption',
+       ylabel='Effect on Log Homicide Rate',
+       figsize=(8, 5),
+       show_ci=True,
+       ci_alpha=0.15,
+       include_pre_treatment=True
+   )
+
+   # Add reference line annotation
+   ax.annotate('Policy Adoption', xy=(0, 0), xytext=(0.5, 0.05),
+               arrowprops=dict(arrowstyle='->', color='gray'),
+               fontsize=10, color='gray')
+
+   plt.tight_layout()
+   plt.savefig('figure_event_study.pdf', bbox_inches='tight')
+
 Exporting Plots
 ---------------
 
@@ -279,9 +441,9 @@ High-Resolution for Publication
 Plot Parameters Reference
 -------------------------
 
-In version 0.1.0, the high-level :meth:`lwdid.LWDIDResults.plot` method
-accepts two Python arguments, ``gid`` and ``graph_options``. The
-plotting options supported via the ``graph_options`` dictionary are:
+The :meth:`lwdid.LWDIDResults.plot` method accepts two arguments:
+``gid`` and ``graph_options``. The plotting options supported via
+the ``graph_options`` dictionary are:
 
 **Figure parameters (graph_options keys):**
 
@@ -300,11 +462,9 @@ plotting options supported via the ``graph_options`` dictionary are:
 - ``'savefig'``: File path to save the figure (no file is saved if this
   key is omitted)
 
-Other styling options (for example, colors, marker sizes, line widths,
-or use of a pre-existing Matplotlib axes object) are not currently
-controlled via ``plot()``/``graph_options`` and should instead be
-applied directly to the Matplotlib figure and axes returned by
-``results.plot()``.
+Additional styling options (colors, marker sizes, line widths, or
+custom Matplotlib axes) should be applied directly to the Matplotlib
+figure and axes returned by ``results.plot()``.
 
 Examples Gallery
 ----------------

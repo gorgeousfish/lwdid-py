@@ -3,23 +3,35 @@ Difference-in-differences estimation with unit-specific transformations.
 
 This package implements difference-in-differences (DiD) methods using
 unit-specific transformations that convert panel data into cross-sectional
-form. The approach supports both common timing and staggered adoption designs,
-with inference methods appropriate for small, moderate, and large samples.
+form, based on Lee and Wooldridge's rolling transformation methodology.
 
-The core methodology removes pre-treatment unit-specific patterns (means or
-linear trends) before applying standard treatment effect estimators. This
-transformation-based approach enables exact t-based inference for small
-samples, heteroskedasticity-robust inference for moderate samples, and
-propensity score-based methods for large samples.
+Supported Scenarios
+-------------------
+Three methodological scenarios are supported:
+
+1. **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based
+   inference under classical linear model (CLM) assumptions when the number
+   of cross-sectional units is small. Uses homoskedastic standard errors
+   with t-distribution critical values.
+
+2. **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic
+   inference with heteroskedasticity-robust standard errors for moderate to
+   large samples. Supports HC0-HC4 variance estimators and cluster-robust
+   standard errors.
+
+3. **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific
+   effect estimation with flexible control group strategies (never-treated
+   or not-yet-treated) for settings where treatment timing varies across
+   units.
 
 Transformation Methods
 ----------------------
 Four unit-specific transformation methods remove pre-treatment patterns:
 
-- ``demean`` : Unit-specific demeaning (subtracts pre-treatment mean)
-- ``detrend`` : Unit-specific linear detrending (removes linear trend)
-- ``demeanq`` : Quarterly demeaning with seasonal fixed effects
-- ``detrendq`` : Quarterly detrending with seasonal effects and trends
+- ``demean`` : Unit-specific demeaning (subtracts pre-treatment mean).
+- ``detrend`` : Unit-specific linear detrending (removes linear trend).
+- ``demeanq`` : Quarterly demeaning with seasonal fixed effects.
+- ``detrendq`` : Quarterly detrending with seasonal effects and trends.
 
 Staggered adoption designs support only ``demean`` and ``detrend``.
 
@@ -40,81 +52,36 @@ Variance Estimation
 -------------------
 Flexible standard error computation methods:
 
-- Homoskedastic : Exact t-based inference under normality assumption
-- Heteroskedasticity-robust : HC0 through HC4 estimators
-- Cluster-robust : For within-group correlation structures
+- Homoskedastic : Exact t-based inference under normality assumption.
+- Heteroskedasticity-robust : HC0 through HC4 estimators.
+- Cluster-robust : For within-group correlation structures.
 
 Design Support
 --------------
-- Common timing : All treated units begin treatment simultaneously
+- Common timing : All treated units begin treatment simultaneously.
 - Staggered adoption : Treatment timing varies across cohorts with flexible
-  control group selection (never-treated or not-yet-treated)
+  control group selection (never-treated or not-yet-treated).
 
 Main Components
 ---------------
-lwdid : callable
-    Primary estimation function accepting panel data and returning treatment
-    effect estimates with standard errors and inference statistics.
-
-LWDIDResults : class
-    Results container with ``summary()``, ``plot()``, and export methods
-    for presenting and saving estimation outputs.
-
-validate_staggered_data : callable
-    Comprehensive data validation for staggered adoption designs.
-
-is_never_treated : callable
-    Utility for determining control group membership.
-
-LWDIDError : exception
-    Base exception class with specialized subclasses for data validation,
-    parameter validation, and estimation failures.
-
-Examples
---------
-Common timing design:
-
->>> import pandas as pd
->>> from lwdid import lwdid
->>> # Assuming panel_data is a DataFrame with required columns
->>> results = lwdid(
-...     data=panel_data,
-...     y='outcome',
-...     d='treated',
-...     ivar='unit_id',
-...     tvar='year',
-...     post='post_treatment',
-...     rolling='demean',
-... )
->>> print(results.summary())  # doctest: +SKIP
-
-Staggered adoption design:
-
->>> results = lwdid(
-...     data=panel_data,
-...     y='outcome',
-...     ivar='unit_id',
-...     tvar='year',
-...     gvar='first_treat_year',
-...     rolling='demean',
-...     estimator='ra',
-...     aggregate='overall',
-... )
->>> print(results.summary())  # doctest: +SKIP
+- lwdid : Primary estimation function accepting panel data.
+- LWDIDResults : Results container with summary and export methods.
+- validate_staggered_data : Validation for staggered adoption designs.
+- is_never_treated : Utility for determining control group membership.
+- LWDIDError : Base exception class for the package.
 
 Notes
 -----
-The transformation-based approach removes pre-treatment unit-specific
-heterogeneity before estimation. For common timing designs, this enables
-exact inference even with small numbers of treated or control units (as
-few as one treated unit with two controls). For staggered designs,
-cohort-time specific effects are estimated and aggregated using
-cohort-share or observation-share weighting schemes.
+The transformation approach converts the panel data difference-in-differences
+problem into a cross-sectional treatment effects estimation problem. Under
+no anticipation and parallel trends assumptions, standard treatment effect
+estimators (RA, IPW, IPWRA, PSM) can be applied to the transformed outcomes.
 
-See Also
---------
-lwdid : Main estimation function with full parameter documentation.
-LWDIDResults : Results container with output methods.
+For staggered adoption, the transformation is applied separately for each
+treatment cohort, using cohort-specific pre-treatment periods.
+
+Requires Python >= 3.8.
+Dependencies: numpy >= 1.20, pandas >= 1.3, scipy >= 1.7, statsmodels >= 0.13.
 """
 
 try:
@@ -126,12 +93,13 @@ except ImportError:
         import pkg_resources
         __version__ = pkg_resources.get_distribution("lwdid").version
     except Exception:
-        __version__ = "0.1.0"  # Fallback if package not installed
+        __version__ = "0.2.0"  # Fallback if package not installed
 
 from .core import lwdid
 from .results import LWDIDResults
 from .staggered.control_groups import ControlGroupStrategy
 from .exceptions import (
+    # Core exceptions
     InsufficientDataError,
     InsufficientPrePeriodsError,
     InsufficientQuarterDiversityError,
@@ -146,9 +114,68 @@ from .exceptions import (
     NoTreatedUnitsError,
     RandomizationError,
     TimeDiscontinuityError,
+    UnbalancedPanelError,
     VisualizationError,
+    # Aggregation exceptions
+    AggregationError,
+    InvalidAggregationError,
+    InsufficientCellSizeError,
 )
-from .validation import is_never_treated, validate_staggered_data
+from .validation import is_never_treated, validate_staggered_data, detect_frequency
+from .preprocessing import aggregate_to_panel, AggregationResult, CellStatistics
+from .selection_diagnostics import (
+    diagnose_selection_mechanism,
+    get_unit_missing_stats,
+    plot_missing_pattern,
+    MissingPattern,
+    SelectionRisk,
+    SelectionDiagnostics,
+    BalanceStatistics,
+    AttritionAnalysis,
+    UnitMissingStats,
+    SelectionTestResult,
+)
+from .trend_diagnostics import (
+    test_parallel_trends,
+    diagnose_heterogeneous_trends,
+    recommend_transformation,
+    plot_cohort_trends,
+    TrendTestMethod,
+    TransformationMethod,
+    RecommendationConfidence,
+    PreTrendEstimate,
+    CohortTrendEstimate,
+    TrendDifference,
+    ParallelTrendsTestResult as TrendParallelTrendsTestResult,
+    HeterogeneousTrendsDiagnostics,
+    TransformationRecommendation,
+)
+from .sensitivity import (
+    robustness_pre_periods,
+    sensitivity_no_anticipation,
+    sensitivity_analysis,
+    plot_sensitivity,
+    RobustnessLevel,
+    AnticipationDetectionMethod,
+    SpecificationResult,
+    PrePeriodRobustnessResult,
+    AnticipationEstimate,
+    NoAnticipationSensitivityResult,
+    ComprehensiveSensitivityResult,
+)
+from .clustering_diagnostics import (
+    diagnose_clustering,
+    recommend_clustering_level,
+    check_clustering_consistency,
+    ClusteringLevel,
+    ClusteringWarningLevel,
+    ClusterVarStats,
+    ClusteringDiagnostics,
+    ClusteringRecommendation,
+    ClusteringConsistencyResult,
+    WildClusterBootstrapResult,
+)
+from .inference.wild_bootstrap import wild_cluster_bootstrap
 
 __all__ = [
     # Package metadata
@@ -161,6 +188,22 @@ __all__ = [
     # Validation utilities
     'is_never_treated',
     'validate_staggered_data',
+    'detect_frequency',
+    # Preprocessing / Aggregation
+    'aggregate_to_panel',
+    'AggregationResult',
+    'CellStatistics',
+    # Selection diagnostics
+    'diagnose_selection_mechanism',
+    'get_unit_missing_stats',
+    'plot_missing_pattern',
+    'MissingPattern',
+    'SelectionRisk',
+    'SelectionDiagnostics',
+    'BalanceStatistics',
+    'AttritionAnalysis',
+    'UnitMissingStats',
+    'SelectionTestResult',
     # Exception hierarchy
     'LWDIDError',
     'InvalidParameterError',
@@ -176,5 +219,48 @@ __all__ = [
     'TimeDiscontinuityError',
     'MissingRequiredColumnError',
     'RandomizationError',
+    'UnbalancedPanelError',
     'VisualizationError',
+    # Aggregation exceptions
+    'AggregationError',
+    'InvalidAggregationError',
+    'InsufficientCellSizeError',
+    # Trend diagnostics (Assumption CHT)
+    'test_parallel_trends',
+    'diagnose_heterogeneous_trends',
+    'recommend_transformation',
+    'plot_cohort_trends',
+    'TrendTestMethod',
+    'TransformationMethod',
+    'RecommendationConfidence',
+    'PreTrendEstimate',
+    'CohortTrendEstimate',
+    'TrendDifference',
+    'TrendParallelTrendsTestResult',
+    'HeterogeneousTrendsDiagnostics',
+    'TransformationRecommendation',
+    # Sensitivity analysis (Section 8.1)
+    'robustness_pre_periods',
+    'sensitivity_no_anticipation',
+    'sensitivity_analysis',
+    'plot_sensitivity',
+    'RobustnessLevel',
+    'AnticipationDetectionMethod',
+    'SpecificationResult',
+    'PrePeriodRobustnessResult',
+    'AnticipationEstimate',
+    'NoAnticipationSensitivityResult',
+    'ComprehensiveSensitivityResult',
+    # Clustering diagnostics (Section 8.2)
+    'diagnose_clustering',
+    'recommend_clustering_level',
+    'check_clustering_consistency',
+    'wild_cluster_bootstrap',
+    'ClusteringLevel',
+    'ClusteringWarningLevel',
+    'ClusterVarStats',
+    'ClusteringDiagnostics',
+    'ClusteringRecommendation',
+    'ClusteringConsistencyResult',
+    'WildClusterBootstrapResult',
 ]

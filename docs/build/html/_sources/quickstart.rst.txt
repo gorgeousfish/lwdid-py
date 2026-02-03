@@ -2,7 +2,11 @@ Quick Start
 ===========
 
 This guide demonstrates basic usage of the lwdid package for difference-in-differences
-estimation with small cross-sectional samples.
+estimation with rolling transformations. The package supports three scenarios:
+
+- **Common timing (small sample)**: Exact t-based inference under CLM assumptions
+- **Common timing (large sample)**: Asymptotic inference with robust standard errors
+- **Staggered adoption**: Units treated at different times
 
 Basic Example
 -------------
@@ -32,46 +36,6 @@ Simplest Usage
    # View results
    print(results.summary())
 
-Output
-~~~~~~
-
-.. code-block:: text
-
-   ================================================================================
-                             lwdid Results
-   ================================================================================
-   Transformation: demean
-   Variance Type: OLS (Homoskedastic)
-   Dependent Variable: lcigsale
-
-   Number of observations: 39
-   Number of treated units: 1
-   Number of control units: 38
-   Pre-treatment periods: 19 (K=19)
-   Post-treatment periods: 20 to end (tpost1=20)
-
-   --------------------------------------------------------------------------------
-   Average Treatment Effect on the Treated
-   --------------------------------------------------------------------------------
-   ATT:           -0.4222
-   Std. Err.:      0.1208  (ols)
-   t-stat:          -3.49
-   P>|t|:           0.001
-   df:                 37
-   [95% Conf. Interval]:   -0.6669    -0.1774
-   ================================================================================
-
-   === Period-by-period post-treatment effects ===
-    period tindex      beta       se  ci_lower  ci_upper     tstat     pval  N
-   average      - -0.422175 0.120800 -0.666938 -0.177412 -3.494837 0.001249 39
-      1989     20 -0.168195 0.095788 -0.362280  0.025890 -1.755906 0.087380 39
-      1990     21 -0.187484 0.111675 -0.413759  0.038792 -1.678829 0.101613 39
-      1991     22 -0.302473 0.116699 -0.538927 -0.066018 -2.591908 0.013584 39
-      1992     23 -0.310131 0.128026 -0.569536 -0.050727 -2.422417 0.020432 39
-   ... (8 more periods)
-
-   Use results.att_by_period to view all period-specific estimates
-
 Key Parameters
 --------------
 
@@ -86,36 +50,74 @@ Required Parameters
 - ``post``: Post-treatment indicator column name (1=post-treatment, 0=pre-treatment)
 - ``rolling``: Transformation method, options:
 
-  - ``'demean'``: Standard DiD (unit fixed effects) — requires T₀ ≥ 1
-  - ``'detrend'``: DiD with unit-specific linear trends — requires T₀ ≥ 2
-  - ``'demeanq'``: Quarterly data with seasonal effects — requires T₀ ≥ 1
-  - ``'detrendq'``: Quarterly data with trends and seasonal effects — requires T₀ ≥ 2
+  - ``'demean'``: Standard DiD (unit fixed effects) — requires :math:`T_0 \geq 1`
+  - ``'detrend'``: DiD with unit-specific linear trends — requires :math:`T_0 \geq 2`
+  - ``'demeanq'``: Quarterly data with seasonal effects — requires :math:`T_0 \geq 1`
+  - ``'detrendq'``: Quarterly data with trends and seasonal effects — requires :math:`T_0 \geq 2`
 
 .. note::
 
    **Pre-treatment period requirements**:
 
-   - ``demean/demeanq``: Requires at least 1 pre-treatment period (T₀ ≥ 1)
-   - ``detrend/detrendq``: Requires at least 2 pre-treatment periods (T₀ ≥ 2)
+   - ``demean/demeanq``: Requires at least 1 pre-treatment period (:math:`T_0 \geq 1`)
+   - ``detrend/detrendq``: Requires at least 2 pre-treatment periods (:math:`T_0 \geq 2`)
 
    The ``detrend`` method estimates unit-specific linear trends using pre-treatment
-   data via regression yᵢₜ = Aᵢ + Bᵢ·t + εᵢₜ, which requires at least 2 observations
-   to identify both intercept and slope. This is a transformation step as described
-   in Lee and Wooldridge (2025) Procedure 3.1; statistical inference is conducted in
-   the subsequent cross-sectional regression.
+   data via regression :math:`Y_{it} = A_i + B_i t + \varepsilon_{it}`, which
+   requires at least 2 observations to identify both intercept and slope. This is
+   a transformation step as described in Lee and Wooldridge (2026, Procedure 3.1);
+   statistical inference is conducted in the subsequent cross-sectional regression.
 
 Common Options
 --------------
 
-Heteroskedasticity-Robust Standard Errors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Small-Sample Exact Inference
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For settings with small numbers of treated or control units, exact t-based inference
+is available under classical linear model assumptions:
 
 .. code-block:: python
 
    results = lwdid(
        data, 'lcigsale', 'd', 'state', 'year', 'post', 'detrend',
-       vce='hc3'  # Use HC3 robust standard errors
+       vce=None  # Default: exact inference under CLM assumptions
    )
+
+Large-Sample Inference
+~~~~~~~~~~~~~~~~~~~~~~
+
+For large cross-sectional samples, heteroskedasticity-robust standard errors
+provide valid asymptotic inference:
+
+.. code-block:: python
+
+   results = lwdid(
+       data, 'lcigsale', 'd', 'state', 'year', 'post', 'detrend',
+       vce='hc3'  # HC3 robust standard errors for large samples
+   )
+
+Doubly Robust Estimation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The IPWRA estimator combines regression adjustment with propensity score weighting,
+providing consistent estimates when either the outcome model or propensity score
+model is correctly specified:
+
+.. code-block:: python
+
+   results = lwdid(
+       data, 'outcome', 'd', 'unit', 'year', 'post', 'demean',
+       estimator='ipwra',
+       controls=['x1', 'x2'],
+       vce='hc3'
+   )
+
+.. note::
+
+   IPWRA is particularly recommended for large-sample settings (N >= 50) where
+   functional form assumptions are uncertain. See :doc:`user_guide` for detailed
+   estimator selection guidelines.
 
 Randomization Inference
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -225,11 +227,12 @@ Data must be in **long format** (one row per observation):
 
 .. note::
 
-   **Important**: The ``d`` column must be a time-invariant treatment group indicator (Dᵢ):
+   **Important**: The ``d`` column must be a time-invariant treatment group indicator (:math:`D_i`):
 
    - ``d = 1`` indicates the unit belongs to the treatment group (constant across all periods)
    - ``d = 0`` indicates the unit belongs to the control group (constant across all periods)
-   - ``d`` must NOT vary over time. Do not pass a time-varying treatment indicator Wᵢₜ = Dᵢ × postₜ as the ``d`` parameter
+   - ``d`` must NOT vary over time. Do not pass a time-varying treatment indicator
+     :math:`W_{it} = D_i \times post_t` as the ``d`` parameter
 
 Key Requirements
 ~~~~~~~~~~~~~~~~
@@ -250,9 +253,64 @@ Key Requirements
    (``post`` switches from 0 to 1), they remain in it for all subsequent periods
    (no policy reversals)
 
+Staggered Adoption
+------------------
+
+When units are treated at different times, use the ``gvar`` parameter:
+
+.. code-block:: python
+
+   import pandas as pd
+   from lwdid import lwdid
+
+   # Load staggered adoption data
+   data = pd.read_csv('castle.csv')
+
+   # Estimate with staggered design
+   results = lwdid(
+       data,
+       y='l_homicide',           # outcome variable
+       ivar='state',             # unit identifier
+       tvar='year',              # time variable
+       gvar='effyear',           # first treatment period (use inf for never-treated)
+       rolling='demean',         # transformation method
+       aggregate='overall',      # aggregate to overall effect
+       control_group='not_yet_treated',  # control group strategy
+   )
+
+   # View results
+   print(results.summary())
+
+   # Event study visualization
+   fig, ax = results.plot_event_study()
+
+Staggered Results
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Overall weighted effect
+   results.att_overall       # ATT estimate
+   results.se_overall        # Standard error
+
+   # Cohort-specific effects
+   results.att_by_cohort     # DataFrame with cohort-level effects
+
+   # Cohort-time specific effects
+   results.att_by_cohort_time  # DataFrame with (g,r)-specific effects
+
+Key Staggered Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``gvar``: Column indicating first treatment period (use inf or NaN for never-treated)
+- ``aggregate``: ``'none'``, ``'cohort'``, or ``'overall'``
+- ``control_group``: ``'not_yet_treated'`` or ``'never_treated'``
+- ``estimator``: ``'ra'``, ``'ipw'``, ``'ipwra'``, or ``'psm'``
+
 Next Steps
 ----------
 
-- See :doc:`user_guide` for detailed usage
+- See :doc:`user_guide` for detailed usage including staggered designs
 - Browse :doc:`examples/index` for complete examples
 - Read :doc:`api/index` for API details
+- Read :doc:`api/staggered` for staggered module details

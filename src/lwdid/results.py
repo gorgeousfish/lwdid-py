@@ -2,32 +2,52 @@
 Result container for difference-in-differences estimation outputs.
 
 This module provides the LWDIDResults class for encapsulating estimation
-outputs from both common timing and staggered adoption DiD designs. The
-container stores point estimates, standard errors, confidence intervals,
-and supports multiple export formats for reproducible research.
+outputs from Lee and Wooldridge's DiD methodology, supporting three scenarios:
 
-Key features include:
+1. **Small-sample common timing** (Lee and Wooldridge, 2026): Results include
+   exact t-based inference statistics under classical linear model assumptions.
 
-- Immutable core attributes via properties for result integrity
-- Multiple summary formats (text, LaTeX, Excel, CSV)
-- Event study visualization for staggered designs
-- Period-specific effects for common timing designs
+2. **Large-sample common timing** (Lee and Wooldridge, 2025): Results include
+   asymptotic inference with heteroskedasticity-robust standard errors.
+
+3. **Staggered adoption** (Lee and Wooldridge, 2025): Results include
+   cohort-time specific effects, cohort-level aggregations, and overall
+   weighted effects with flexible control group strategies.
+
+The class implements immutable core attributes via properties to ensure
+result integrity, provides multiple summary formats (text, LaTeX, Excel,
+CSV), supports event study visualization for staggered designs, and
+includes period-specific effects for common timing designs.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import pandas as pd
+
+if TYPE_CHECKING:
+    import matplotlib.axes
+    from lwdid.staggered.parallel_trends import ParallelTrendsTestResult
 
 
 class LWDIDResults:
     """
     Container for difference-in-differences estimation results.
 
-    Stores all estimation outputs from the lwdid() function and provides
-    methods for displaying, visualizing, and exporting results. All core
-    attributes are read-only properties to ensure result integrity.
+    Stores all estimation outputs from the lwdid() function implementing
+    Lee and Wooldridge's rolling transformation methodology. Supports three
+    scenarios:
 
-    Supports both common timing and staggered adoption DiD designs.
+    1. **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based
+       inference under classical linear model assumptions.
+
+    2. **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic
+       inference with heteroskedasticity-robust standard errors.
+
+    3. **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific
+       effects with flexible control group strategies.
+
+    All core attributes are read-only properties to ensure result integrity.
+    Provides methods for displaying, visualizing, and exporting results.
 
     Attributes
     ----------
@@ -134,7 +154,7 @@ class LWDIDResults:
         Aggregation level ('none', 'cohort', 'overall').
         Only available when is_staggered=True.
     estimator : str or None
-        Estimation method ('ra', 'ipwra', 'psm').
+        Estimation method ('ra', 'ipw', 'ipwra', 'psm').
         Only available when is_staggered=True.
 
     Methods
@@ -223,6 +243,11 @@ class LWDIDResults:
         self._ri_valid: Optional[int] = None
         self._ri_failed: Optional[int] = None
         self._data: Optional[pd.DataFrame] = None
+        
+        # === Pre-treatment dynamics attributes ===
+        self._att_pre_treatment: Optional[pd.DataFrame] = results_dict.get('att_pre_treatment', None)
+        self._parallel_trends_test: Optional['ParallelTrendsTestResult'] = results_dict.get('parallel_trends_test', None)
+        self._include_pretreatment: bool = results_dict.get('include_pretreatment', False)
         
         # === Staggered-specific attributes ===
         self._is_staggered: bool = results_dict.get('is_staggered', False)
@@ -551,6 +576,50 @@ class LWDIDResults:
     def n_never_treated(self) -> Optional[int]:
         """Number of never-treated units."""
         return self._n_never_treated
+
+    # === Pre-treatment Dynamics Properties ===
+
+    @property
+    def att_pre_treatment(self) -> Optional[pd.DataFrame]:
+        """
+        Pre-treatment ATT estimates (returns copy).
+        
+        DataFrame with columns: cohort, period, event_time, att, se,
+        ci_lower, ci_upper, t_stat, pvalue, n_treated, n_control,
+        is_anchor, rolling_window_size.
+        
+        Only available when include_pretreatment=True was specified
+        during estimation.
+        """
+        if self._att_pre_treatment is None:
+            return None
+        return self._att_pre_treatment.copy()
+
+    @att_pre_treatment.setter
+    def att_pre_treatment(self, value: Optional[pd.DataFrame]) -> None:
+        self._att_pre_treatment = value
+
+    @property
+    def parallel_trends_test(self) -> Optional['ParallelTrendsTestResult']:
+        """
+        Parallel trends test results.
+        
+        Contains individual t-tests for each pre-treatment period and
+        joint F-test for H0: all pre-treatment ATT = 0.
+        
+        Only available when include_pretreatment=True and
+        pretreatment_test=True were specified during estimation.
+        """
+        return self._parallel_trends_test
+
+    @parallel_trends_test.setter
+    def parallel_trends_test(self, value: Optional['ParallelTrendsTestResult']) -> None:
+        self._parallel_trends_test = value
+
+    @property
+    def include_pretreatment(self) -> bool:
+        """Whether pre-treatment dynamics were computed."""
+        return self._include_pretreatment
     
     def summary(self) -> str:
         """
@@ -764,6 +833,72 @@ class LWDIDResults:
         if self.att_by_cohort_time is not None:
             output.append("Use results.att_by_cohort_time for (g,r)-specific effects")
         output.append("Use results.plot_event_study() for Event Study visualization")
+        
+        # === Pre-treatment Dynamics (shown when include_pretreatment=True) ===
+        if self.include_pretreatment and self.att_pre_treatment is not None:
+            output.append(sub_line)
+            output.append("")
+            output.append("Pre-treatment Dynamics")
+            output.append("-" * 40)
+            
+            # Parallel trends test results
+            if self.parallel_trends_test is not None:
+                pt = self.parallel_trends_test
+                output.append("")
+                output.append("Parallel Trends Test (H0: all pre-treatment ATT = 0):")
+                output.append(f"  F-statistic:  {pt.joint_f_stat:.4f}")
+                output.append(f"  P-value:      {pt.joint_pvalue:.4f}")
+                output.append(f"  DF (num, den): ({pt.joint_df1}, {pt.joint_df2})")
+                output.append(f"  Reject H0:    {'Yes' if pt.reject_null else 'No'} (α={pt.alpha:.2f})")
+                output.append("")
+            
+            # Pre-treatment ATT summary
+            pre_df = self.att_pre_treatment
+            non_anchor = pre_df[~pre_df['is_anchor']]
+            
+            if len(non_anchor) > 0:
+                output.append("Pre-treatment ATT Estimates:")
+                header = (
+                    f"  {'e':>4}  {'ATT':>10}  {'SE':>8}  {'t-stat':>7}  "
+                    f"{'P>|t|':>6}  {'[95% CI]':>20}  {'Anchor':>6}"
+                )
+                output.append(header)
+                
+                # Sort by event_time descending (anchor first, then earlier periods)
+                for _, row in pre_df.sort_values('event_time', ascending=False).iterrows():
+                    e = int(row['event_time'])
+                    att = row['att']
+                    se = row['se']
+                    t_stat = row['t_stat']
+                    pval = row['pvalue']
+                    ci_l = row['ci_lower']
+                    ci_u = row['ci_upper']
+                    is_anchor = row['is_anchor']
+                    
+                    anchor_str = "  *" if is_anchor else ""
+                    
+                    if is_anchor:
+                        # Anchor point: show as reference
+                        ci_str = "[  0.0000,   0.0000]"
+                        line = (
+                            f"  {e:>4}  {att:>10.4f}  {se:>8.4f}  {'---':>7}  "
+                            f"{'---':>6}  {ci_str:>20}{anchor_str}"
+                        )
+                    else:
+                        ci_str = f"[{ci_l:>8.4f}, {ci_u:>8.4f}]"
+                        line = (
+                            f"  {e:>4}  {att:>10.4f}  {se:>8.4f}  {t_stat:>7.2f}  "
+                            f"{pval:>6.3f}  {ci_str:>20}{anchor_str}"
+                        )
+                    output.append(line)
+                
+                output.append("")
+                output.append("  * Anchor point (e=-1): ATT=0 by construction")
+            
+            output.append("")
+            output.append("Use results.att_pre_treatment for full pre-treatment effects DataFrame")
+            output.append("Use results.plot_event_study(include_pre_treatment=True) for visualization")
+        
         output.append(sep_line)
         
         return "\n".join(output)
@@ -771,16 +906,17 @@ class LWDIDResults:
     def __repr__(self) -> str:
         """Return a concise string representation of the results object."""
         if self.is_staggered:
+            pre_info = ", pre_treatment=True" if self.include_pretreatment else ""
             if self.att_overall is not None:
                 return (
                     f"LWDIDResults(staggered=True, att_overall={self.att_overall:.4f}, "
                     f"se={self.se_overall:.4f}, cohorts={len(self.cohorts)}, "
-                    f"N_treated={self.n_treated}, N_control={self.n_control})"
+                    f"N_treated={self.n_treated}, N_control={self.n_control}{pre_info})"
                 )
             else:
                 return (
                     f"LWDIDResults(staggered=True, cohorts={len(self.cohorts)}, "
-                    f"aggregate='{self.aggregate}', N_treated={self.n_treated})"
+                    f"aggregate='{self.aggregate}', N_treated={self.n_treated}{pre_info})"
                 )
         else:
             return (
@@ -876,6 +1012,8 @@ class LWDIDResults:
         show_ci: bool = True,
         aggregation: str = 'mean',
         include_pre_treatment: bool = True,
+        alpha: float = 0.05,
+        df_strategy: str = 'conservative',
         title: Optional[str] = None,
         xlabel: Optional[str] = None,
         ylabel: Optional[str] = None,
@@ -898,13 +1036,20 @@ class LWDIDResults:
             Reference period for normalization (event time). Default is 0
             (first treatment period). If None, no normalization is performed.
         show_ci : bool, optional
-            Whether to display 95% confidence interval shading. Default True.
+            Whether to display confidence interval shading. Default True.
         aggregation : {'mean', 'weighted'}, optional
             Cross-cohort aggregation method. 'mean' computes simple average
             with SE = sqrt(sum(se^2))/n. 'weighted' uses cohort weights with
             SE = sqrt(sum(w^2 * se^2)). Default 'mean'.
         include_pre_treatment : bool, optional
             Whether to include pre-treatment periods (e < 0). Default True.
+        alpha : float, optional
+            Significance level for confidence intervals. Default 0.05 (95% CI).
+        df_strategy : {'conservative', 'weighted', 'fallback'}, optional
+            Strategy for selecting degrees of freedom for t-distribution:
+            - 'conservative': min(df_g) across cohorts (default)
+            - 'weighted': weighted average of df_g
+            - 'fallback': n_cohorts - 1
         title : str, optional
             Plot title. Default 'Event Study: Dynamic Treatment Effects'.
         xlabel : str, optional
@@ -940,6 +1085,12 @@ class LWDIDResults:
             If called on non-staggered results or if att_by_cohort_time is
             empty or None.
 
+        Notes
+        -----
+        Confidence intervals use t-distribution rather than normal distribution,
+        following Lee & Wooldridge (2025) recommendation for proper inference.
+        The degrees of freedom are selected based on df_strategy parameter.
+
         See Also
         --------
         plot : Residualized outcomes plot for common timing designs.
@@ -965,47 +1116,123 @@ class LWDIDResults:
         if 'event_time' not in df.columns:
             df['event_time'] = df['period'] - df['cohort']
         
-        # Filter pre-treatment if needed
+        # Add source column to distinguish post-treatment effects
+        df['_source'] = 'post_treatment'
+        
+        # Merge pre-treatment effects if available and requested
+        has_pre_treatment_data = (
+            include_pre_treatment and 
+            self.include_pretreatment and 
+            self.att_pre_treatment is not None and 
+            len(self.att_pre_treatment) > 0
+        )
+        
+        if has_pre_treatment_data:
+            pre_df = self.att_pre_treatment.copy()
+            pre_df['_source'] = 'pre_treatment'
+            
+            # Ensure consistent columns for merging
+            common_cols = ['cohort', 'period', 'event_time', 'att', 'se', 
+                          'ci_lower', 'ci_upper', 't_stat', 'pvalue', 
+                          'n_treated', 'n_control', '_source']
+            
+            # Add is_anchor column if not present in post-treatment
+            if 'is_anchor' not in df.columns:
+                df['is_anchor'] = False
+            if 'is_anchor' in pre_df.columns:
+                common_cols.append('is_anchor')
+            
+            # Select only common columns that exist in both DataFrames
+            df_cols = [c for c in common_cols if c in df.columns]
+            pre_cols = [c for c in common_cols if c in pre_df.columns]
+            
+            # Combine pre and post treatment effects
+            df = pd.concat([
+                df[df_cols],
+                pre_df[pre_cols]
+            ], ignore_index=True)
+        
+        # Filter pre-treatment if needed (only from post-treatment data)
         if not include_pre_treatment:
             df = df[df['event_time'] >= 0]
         
-        if aggregation == 'weighted' and self.cohort_weights:
-            # Weighted aggregation
-            df['weight'] = df['cohort'].map(self.cohort_weights).fillna(0)
+        if aggregation == 'weighted' and self.cohort_sizes:
+            # Weighted aggregation using aggregate_to_event_time for proper t-distribution CI
+            from lwdid.staggered.aggregation import aggregate_to_event_time, event_time_effects_to_dataframe
             
-            def weighted_agg(x):
-                if x['weight'].sum() > 0:
-                    att = np.average(x['att'], weights=x['weight'])
-                    # Weighted SE: √(Σ ω² × se²), weights normalized
-                    weights_norm = x['weight'] / x['weight'].sum()
-                    se = np.sqrt(np.sum((weights_norm ** 2) * (x['se'] ** 2)))
-                else:
-                    att = x['att'].mean()
-                    se = np.sqrt((x['se'] ** 2).mean())
-                return pd.Series({'att': att, 'se': se, 'n_cohorts': len(x)})
+            # Use actual cohort_sizes for proper weight computation
+            cohort_sizes = self.cohort_sizes
             
-            event_df = df.groupby('event_time').apply(
-                weighted_agg, **_groupby_apply_kwargs
-            ).reset_index()
+            try:
+                watt_effects = aggregate_to_event_time(
+                    cohort_time_effects=df,
+                    cohort_sizes=cohort_sizes,
+                    alpha=alpha,
+                    df_strategy=df_strategy,
+                    verbose=False,
+                )
+                event_df = event_time_effects_to_dataframe(watt_effects)
+            except (ValueError, KeyError) as e:
+                # Fallback to simple weighted aggregation if aggregate_to_event_time fails
+                warnings.warn(
+                    f"aggregate_to_event_time failed ({e}), using fallback weighted aggregation",
+                    UserWarning
+                )
+                df['weight'] = df['cohort'].map(self.cohort_weights).fillna(0)
+                
+                def weighted_agg(x):
+                    if x['weight'].sum() > 0:
+                        att = np.average(x['att'], weights=x['weight'])
+                        weights_norm = x['weight'] / x['weight'].sum()
+                        se = np.sqrt(np.sum((weights_norm ** 2) * (x['se'] ** 2)))
+                    else:
+                        att = x['att'].mean()
+                        se = np.sqrt((x['se'] ** 2).mean())
+                    return pd.Series({'att': att, 'se': se, 'n_cohorts': len(x)})
+                
+                event_df = df.groupby('event_time').apply(
+                    weighted_agg, **_groupby_apply_kwargs
+                ).reset_index()
+                # Use t-distribution for CI with fallback df
+                from scipy.stats import t as t_dist
+                df_inference = max(1, len(event_df) - 1)
+                t_crit = t_dist.ppf(1 - alpha / 2, df_inference)
+                event_df['ci_lower'] = event_df['att'] - t_crit * event_df['se']
+                event_df['ci_upper'] = event_df['att'] + t_crit * event_df['se']
+                event_df['df_inference'] = df_inference
         else:
-            # Simple average
+            # Simple average aggregation
+            from scipy.stats import t as t_dist
+            
             def simple_agg(x):
                 att = x['att'].mean()
                 # SE aggregation: for independent estimates, variance of mean = Var(ΣX/n) = ΣVar(X)/n²
                 # Therefore SE = √(Σse²) / n
                 n = len(x)
                 se = np.sqrt((x['se'] ** 2).sum()) / n
-                return pd.Series({'att': att, 'se': se, 'n_cohorts': n})
+                # Get df_inference: use min across cohorts (conservative)
+                if 'df_inference' in x.columns:
+                    valid_dfs = x['df_inference'].dropna()
+                    df_inf = int(valid_dfs.min()) if len(valid_dfs) > 0 else max(1, n - 1)
+                else:
+                    df_inf = max(1, n - 1)
+                return pd.Series({'att': att, 'se': se, 'n_cohorts': n, 'df_inference': df_inf})
             
             event_df = df.groupby('event_time').apply(
                 simple_agg, **_groupby_apply_kwargs
             ).reset_index()
+            
+            # Calculate CI using t-distribution (NOT fixed z=1.96)
+            event_df['ci_lower'] = event_df.apply(
+                lambda row: row['att'] - t_dist.ppf(1 - alpha / 2, row['df_inference']) * row['se'],
+                axis=1
+            )
+            event_df['ci_upper'] = event_df.apply(
+                lambda row: row['att'] + t_dist.ppf(1 - alpha / 2, row['df_inference']) * row['se'],
+                axis=1
+            )
         
         event_df = event_df.sort_values('event_time')
-        
-        # Calculate confidence intervals
-        event_df['ci_lower'] = event_df['att'] - 1.96 * event_df['se']
-        event_df['ci_upper'] = event_df['att'] + 1.96 * event_df['se']
         
         # Normalize to reference period
         if ref_period is not None:
@@ -1029,23 +1256,95 @@ class LWDIDResults:
         else:
             fig = ax.get_figure()
         
+        # Get colors from kwargs or use defaults
+        pre_treatment_color = kwargs.get('pre_treatment_color', 'gray')
+        post_treatment_color = kwargs.get('post_treatment_color', 'blue')
+        anchor_line = kwargs.get('anchor_line', True)
+        
         # Reference lines
         ax.axhline(y=0, color='gray', linestyle='--', alpha=0.5, linewidth=1)
         ax.axvline(x=-0.5, color='red', linestyle='--', alpha=0.7, linewidth=1.5, 
                    label='Treatment Start')
         
+        # Add anchor point line at e=-1 if pre-treatment data is shown
+        if has_pre_treatment_data and anchor_line:
+            ax.axvline(x=-1, color='darkgray', linestyle=':', alpha=0.5, linewidth=1,
+                       label='Anchor Point (e=-1)')
+        
+        # Separate pre and post treatment for different styling
+        pre_mask = event_df['event_time'] < 0
+        post_mask = event_df['event_time'] >= 0
+        
+        pre_events = event_df[pre_mask].copy()
+        post_events = event_df[post_mask].copy()
+        
         # Confidence interval shading
         if show_ci:
-            ax.fill_between(
-                event_df['event_time'],
-                event_df['ci_lower'],
-                event_df['ci_upper'],
-                alpha=0.2, color='blue', label='95% CI'
-            )
+            ci_level = int((1 - alpha) * 100)
+            
+            # Post-treatment CI (blue)
+            if len(post_events) > 0:
+                ax.fill_between(
+                    post_events['event_time'],
+                    post_events['ci_lower'],
+                    post_events['ci_upper'],
+                    alpha=0.2, color=post_treatment_color, label=f'{ci_level}% CI (Post)'
+                )
+            
+            # Pre-treatment CI (gray) - only if we have pre-treatment data
+            if len(pre_events) > 0 and has_pre_treatment_data:
+                ax.fill_between(
+                    pre_events['event_time'],
+                    pre_events['ci_lower'],
+                    pre_events['ci_upper'],
+                    alpha=0.15, color=pre_treatment_color, label=f'{ci_level}% CI (Pre)'
+                )
         
-        # Point estimates
-        ax.scatter(event_df['event_time'], event_df['att'], color='blue', s=60, zorder=5)
-        ax.plot(event_df['event_time'], event_df['att'], color='blue', alpha=0.7, linewidth=1.5)
+        # Point estimates - post-treatment (blue)
+        if len(post_events) > 0:
+            ax.scatter(post_events['event_time'], post_events['att'], 
+                      color=post_treatment_color, s=60, zorder=5, label='Post-treatment')
+            ax.plot(post_events['event_time'], post_events['att'], 
+                   color=post_treatment_color, alpha=0.7, linewidth=1.5)
+        
+        # Point estimates - pre-treatment (gray)
+        if len(pre_events) > 0:
+            # Mark anchor point differently
+            anchor_mask = pre_events.get('is_anchor', pd.Series([False] * len(pre_events)))
+            if anchor_mask.any():
+                anchor_events = pre_events[anchor_mask]
+                non_anchor_events = pre_events[~anchor_mask]
+                
+                # Non-anchor pre-treatment points
+                if len(non_anchor_events) > 0:
+                    ax.scatter(non_anchor_events['event_time'], non_anchor_events['att'],
+                              color=pre_treatment_color, s=60, zorder=5, 
+                              marker='o', label='Pre-treatment')
+                    ax.plot(non_anchor_events['event_time'], non_anchor_events['att'],
+                           color=pre_treatment_color, alpha=0.7, linewidth=1.5, linestyle='--')
+                
+                # Anchor point (diamond marker)
+                if len(anchor_events) > 0:
+                    ax.scatter(anchor_events['event_time'], anchor_events['att'],
+                              color=pre_treatment_color, s=100, zorder=6,
+                              marker='D', edgecolors='black', linewidths=1,
+                              label='Anchor (e=-1)')
+            else:
+                # No anchor info, plot all pre-treatment the same
+                ax.scatter(pre_events['event_time'], pre_events['att'],
+                          color=pre_treatment_color, s=60, zorder=5,
+                          marker='o', label='Pre-treatment')
+                ax.plot(pre_events['event_time'], pre_events['att'],
+                       color=pre_treatment_color, alpha=0.7, linewidth=1.5, linestyle='--')
+        
+        # Connect pre and post treatment with a line if both exist
+        if len(pre_events) > 0 and len(post_events) > 0:
+            # Get the last pre-treatment and first post-treatment points
+            last_pre = pre_events.loc[pre_events['event_time'].idxmax()]
+            first_post = post_events.loc[post_events['event_time'].idxmin()]
+            ax.plot([last_pre['event_time'], first_post['event_time']],
+                   [last_pre['att'], first_post['att']],
+                   color='gray', alpha=0.4, linewidth=1, linestyle=':')
         
         # Labels and title
         ax.set_xlabel(xlabel or 'Event Time (Periods Since Treatment)', fontsize=11)

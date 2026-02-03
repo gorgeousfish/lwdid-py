@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite both the software and the paper."
 type: software
 title: "lwdid: Difference-in-Differences Estimator for Small Cross-Sectional Samples"
-version: 0.1.0
+version: 0.2.0
 date-released: 2025-11-25
 authors:
   - family-names: Cai

@@ -13,12 +13,13 @@ indicators and controls, time continuity, and treatment/control group adequacy.
 
 Notes
 -----
-Reserved column names created internally (d_, post_, tindex, tq, ydot,
-ydot_postavg, firstpost) should not exist in input data to avoid conflicts.
+Reserved column names created internally (``d_``, ``post_``, ``tindex``, ``tq``, ``ydot``,
+``ydot_postavg``, ``firstpost``) should not exist in input data to avoid conflicts.
 """
 
+from __future__ import annotations
+
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -40,11 +41,12 @@ def validate_and_prepare_data(
     y: str,
     d: str,
     ivar: str,
-    tvar: Union[str, List[str]],
+    tvar: str | list[str],
     post: str,
     rolling: str,
-    controls: Optional[List[str]] = None,
-) -> Tuple[pd.DataFrame, Dict]:
+    controls: list[str] | None = None,
+    season_var: str | None = None,
+) -> tuple[pd.DataFrame, dict]:
     """
     Validate input data and execute data preparation pipeline (Steps 0-6).
 
@@ -70,8 +72,8 @@ def validate_and_prepare_data(
 
     4. **Data preparation**:
        - String ID conversion to numeric codes
-       - Time index creation (tindex)
-       - Binary treatment/post indicator creation (d_, post_)
+       - Time index creation (``tindex``)
+       - Binary treatment/post indicator creation (``d_``, ``post_``)
        - Missing value handling
 
     5. **Time structure validation**:
@@ -109,6 +111,12 @@ def validate_and_prepare_data(
     controls : list of str, optional
         Control variable column names. Must be numeric and time-invariant.
         Default: None (no controls).
+    season_var : str, optional
+        Column name of seasonal indicator variable for seasonal transformations
+        (demeanq, detrendq). Values should be integers from 1 to Q representing
+        seasonal periods (e.g., quarters 1-4, months 1-12, or weeks 1-52).
+        If provided, allows demeanq/detrendq to work with a single tvar column.
+        Default: None (uses tvar[1] for legacy quarterly data format).
 
     Returns
     -------
@@ -116,7 +124,7 @@ def validate_and_prepare_data(
         Cleaned and prepared data with the following modifications:
 
         - Original columns preserved
-        - New columns added: tindex, d_, post_ (and tq for quarterly data)
+        - New columns added: ``tindex``, ``d_``, ``post_`` (and ``tq`` for quarterly data)
         - String IDs converted to numeric codes (if applicable)
         - Missing values handled (rows with NaN in y, d, post, ivar, or time
           variables are dropped; missing values in control variables are
@@ -126,8 +134,8 @@ def validate_and_prepare_data(
         Metadata dictionary containing:
 
         - 'N': Total number of units
-        - 'N_treated': Number of treated units (d_=1)
-        - 'N_control': Number of control units (d_=0)
+        - 'N_treated': Number of treated units (``d_`` = 1)
+        - 'N_control': Number of control units (``d_`` = 0)
         - 'T': Total number of time periods
         - 'K': Number of pre-treatment periods
         - 'tpost1': First post-treatment period index
@@ -156,9 +164,9 @@ def validate_and_prepare_data(
     -----
     Reserved column names that cannot exist in input data:
 
-    - ``d_`` : Binary treatment indicator (created internally)
-    - ``post_`` : Binary post indicator (created internally)
-    - ``tindex`` : Time index (created internally)
+    - ``d_``: Binary treatment indicator (created internally)
+    - ``post_``: Binary post indicator (created internally)
+    - ``tindex``: Time index (created internally)
     - ``tq`` : Quarter index (created internally for quarterly data)
     - ``ydot`` : Residualized outcome (created in transformation)
     - ``ydot_postavg`` : Post-period average of ydot (created in transformation)
@@ -170,42 +178,29 @@ def validate_and_prepare_data(
     _validate_time_continuity : Validates time series continuity.
     validate_quarter_coverage : Validates quarter coverage for quarterly methods.
     """
-    # DataFrame type check
     if not isinstance(data, pd.DataFrame):
         raise TypeError(
             f"Input data must be a pandas DataFrame. Got: {type(data).__name__}"
         )
 
-    # Check for conflicts with internal column names
+    # Reserved names would be silently overwritten, causing data loss.
     _validate_no_reserved_columns(data)
 
-    # Required columns validation
     _validate_required_columns(data, y, d, ivar, tvar, post, controls)
-
-    # Outcome variable data type validation
     _validate_outcome_dtype(data, y)
-
-    # Control variables data type validation
     _validate_controls_dtype(data, controls)
-
-    # Treatment indicator time-invariance validation
     _validate_treatment_time_invariance(data, d, ivar)
-
-    # Control variables time-invariance validation
     _validate_time_invariant_controls(data, ivar, controls)
+    rolling = _validate_rolling_parameter(rolling, tvar, season_var)
 
-    # Rolling parameter validation (case-insensitive)
-    rolling = _validate_rolling_parameter(rolling, tvar)
-    
     data_work, id_mapping = _convert_string_id(data, ivar)
-    
-    # Binarize treatment and post indicators
+
+    # Convert to binary (0/1) for consistent downstream processing.
     d_numeric = pd.to_numeric(data_work[d], errors='coerce')
     post_numeric = pd.to_numeric(data_work[post], errors='coerce')
     data_work['d_'] = (d_numeric != 0).where(d_numeric.notna()).astype('Int64')
     data_work['post_'] = (post_numeric != 0).where(post_numeric.notna()).astype('Int64')
-    
-    # Drop observations with missing values in required variables
+
     required_vars = [y, ivar, 'post_', 'd_']
 
     if isinstance(tvar, str):
@@ -213,7 +208,7 @@ def validate_and_prepare_data(
     else:
         required_vars.extend(tvar)
 
-    # Controls handled at estimation stage (after N₁, N₀ known)
+    # Controls validated at estimation stage when sample sizes are known.
     n_before = len(data_work)
     data_work = data_work.dropna(subset=required_vars, how='any').copy()
     n_after = len(data_work)
@@ -380,9 +375,9 @@ def _validate_required_columns(
     y: str,
     d: str,
     ivar: str,
-    tvar: Union[str, List[str]],
+    tvar: str | list[str],
     post: str,
-    controls: Optional[List[str]],
+    controls: list[str] | None,
 ) -> None:
     """
     Validate that all required columns exist in the input data.
@@ -409,20 +404,16 @@ def _validate_required_columns(
     MissingRequiredColumnError
         If any required column is not found in data.
     """
-    # Core variables
     required_cols = [y, d, ivar, post]
 
-    # Time variables
     if isinstance(tvar, str):
         required_cols.append(tvar)
     else:
         required_cols.extend(tvar)
 
-    # Control variables
     if controls:
         required_cols.extend(controls)
 
-    # Check for missing columns
     missing_cols = [col for col in required_cols if col not in data.columns]
 
     if missing_cols:
@@ -490,7 +481,7 @@ def _validate_outcome_dtype(
 
 def _validate_controls_dtype(
     data: pd.DataFrame,
-    controls: Optional[List[str]],
+    controls: list[str] | None,
 ) -> None:
     """
     Validate that all control variables are numeric.
@@ -597,7 +588,7 @@ def _validate_treatment_time_invariance(
 def _validate_time_invariant_controls(
     data: pd.DataFrame,
     ivar: str,
-    controls: Optional[List[str]],
+    controls: list[str] | None,
 ) -> None:
     """
     Validate control variables are time-invariant within each unit.
@@ -657,7 +648,11 @@ def _validate_time_invariant_controls(
         )
 
 
-def _validate_rolling_parameter(rolling: str, tvar: Union[str, List[str]]) -> str:
+def _validate_rolling_parameter(
+    rolling: str,
+    tvar: str | list[str],
+    season_var: str | None = None,
+) -> str:
     """
     Validate the rolling transformation parameter.
 
@@ -667,8 +662,12 @@ def _validate_rolling_parameter(rolling: str, tvar: Union[str, List[str]]) -> st
         Transformation method name. Case-insensitive. Must be one of:
         'demean', 'detrend', 'demeanq', 'detrendq'.
     tvar : str or list of str
-        Time variable column name(s). Quarterly methods require a list
-        of two elements [year, quarter].
+        Time variable column name(s). Quarterly methods require either:
+        - A list of two elements [year, quarter] (legacy format), or
+        - A single time variable with season_var specified separately.
+    season_var : str, optional
+        Column name for seasonal indicator. If provided, allows demeanq/detrendq
+        to work with a single tvar column.
 
     Returns
     -------
@@ -679,7 +678,7 @@ def _validate_rolling_parameter(rolling: str, tvar: Union[str, List[str]]) -> st
     ------
     InvalidRollingMethodError
         If rolling is not a valid method name, or if quarterly method
-        is specified without proper tvar format.
+        is specified without proper tvar format or season_var.
     """
     rolling_lower = rolling.lower()
 
@@ -691,11 +690,18 @@ def _validate_rolling_parameter(rolling: str, tvar: Union[str, List[str]]) -> st
             f"Got: '{rolling}'"
         )
 
+    # For seasonal methods, require either tvar=[year, quarter] or season_var
     if rolling_lower in ['demeanq', 'detrendq']:
-        if isinstance(tvar, str) or not hasattr(tvar, '__len__') or len(tvar) != 2:
+        has_tvar_list = isinstance(tvar, (list, tuple)) and len(tvar) == 2
+        has_season_var = season_var is not None
+        
+        if not has_tvar_list and not has_season_var:
             raise InvalidRollingMethodError(
-                f"rolling('{rolling_lower}') requires tvar(year quarter). "
-                f"Got: {tvar}"
+                f"rolling('{rolling_lower}') requires either:\n"
+                f"  1. tvar=[year_col, quarter_col] (legacy format), or\n"
+                f"  2. season_var parameter specifying the seasonal column.\n\n"
+                f"Example with season_var:\n"
+                f"  lwdid(..., rolling='{rolling_lower}', season_var='quarter', Q=4)"
             )
 
     return rolling_lower
@@ -703,7 +709,7 @@ def _validate_rolling_parameter(rolling: str, tvar: Union[str, List[str]]) -> st
 
 def _convert_string_id(
     data: pd.DataFrame, ivar: str
-) -> Tuple[pd.DataFrame, Optional[Dict]]:
+) -> tuple[pd.DataFrame, dict | None]:
     """
     Convert string unit identifiers to numeric codes.
 
@@ -744,8 +750,8 @@ def _convert_string_id(
 
 
 def _create_time_index(
-    data: pd.DataFrame, tvar: Union[str, List[str]]
-) -> Tuple[pd.DataFrame, bool]:
+    data: pd.DataFrame, tvar: str | list[str]
+) -> tuple[pd.DataFrame, bool]:
     """
     Create a sequential time index column starting from 1.
 
@@ -855,7 +861,7 @@ def _create_time_index(
     return data, is_quarterly
 
 
-def _validate_time_continuity(data: pd.DataFrame) -> Tuple[int, int, int]:
+def _validate_time_continuity(data: pd.DataFrame) -> tuple[int, int, int]:
     """
     Validate time continuity and extract time structure parameters.
 
@@ -959,6 +965,144 @@ def _validate_time_continuity(data: pd.DataFrame) -> Tuple[int, int, int]:
     return K, tpost1, T
 
 
+def validate_season_diversity(
+    data: pd.DataFrame,
+    ivar: str,
+    season_var: str,
+    post: str,
+    Q: int = 4,
+) -> None:
+    """
+    Validate seasonal diversity and coverage for seasonal effects identification.
+
+    Ensures each unit has at least two distinct seasons in the pre-treatment
+    period (required to identify seasonal effects) and that all post-period
+    seasons also appear in the pre-period.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Panel data in long format.
+    ivar : str
+        Unit identifier column name.
+    season_var : str
+        Seasonal variable column name (values should be 1 to Q).
+    post : str
+        Post-treatment indicator column name.
+    Q : int, default 4
+        Number of seasonal periods per cycle. Common values:
+        - 4: Quarterly data (default)
+        - 12: Monthly data
+        - 52: Weekly data
+
+    Raises
+    ------
+    InsufficientQuarterDiversityError
+        If any unit has fewer than 2 distinct seasons in pre-period, or
+        if any post-period season does not appear in the pre-period.
+
+    See Also
+    --------
+    validate_season_coverage : Validates only seasonal coverage.
+    """
+    freq_label = {4: 'quarter', 12: 'month', 52: 'week'}.get(Q, 'season')
+    
+    for unit_id in data[ivar].unique():
+        unit_pre_mask = (data[ivar] == unit_id) & (data[post] == 0)
+        unit_post_mask = (data[ivar] == unit_id) & (data[post] == 1)
+        unit_pre_data = data[unit_pre_mask]
+        unit_post_data = data[unit_post_mask]
+
+        unique_seasons = unit_pre_data[season_var].nunique()
+
+        if unique_seasons < 2:
+            found_seasons = sorted(unit_pre_data[season_var].unique())
+            raise InsufficientQuarterDiversityError(
+                f"Unit {unit_id} has only {unique_seasons} {freq_label}(s) in pre-period. "
+                f"demeanq/detrendq requires ≥2 different {freq_label}s per unit to identify seasonal effects. "
+                f"Found {freq_label}s: {found_seasons}"
+            )
+
+        pre_seasons = set(unit_pre_data[season_var].unique())
+        post_seasons = set(unit_post_data[season_var].unique())
+
+        uncovered_seasons = post_seasons - pre_seasons
+
+        if uncovered_seasons:
+            raise InsufficientQuarterDiversityError(
+                f"Unit {unit_id}: Post-treatment period contains {freq_label}(s) {sorted(uncovered_seasons)} "
+                f"that do not appear in the pre-treatment period. "
+                f"demeanq/detrendq cannot estimate seasonal effects for {freq_label}s not observed in pre-period. "
+                f"Pre-period {freq_label}s: {sorted(pre_seasons)}, Post-period {freq_label}s: {sorted(post_seasons)}. "
+                f"Please ensure each unit's pre-treatment period covers all {freq_label}s that appear in post-treatment, "
+                f"or use demean/detrend methods instead."
+            )
+
+
+def validate_season_coverage(
+    data: pd.DataFrame,
+    ivar: str,
+    season_var: str,
+    post: str,
+    Q: int = 4,
+) -> None:
+    """
+    Validate that post-period seasons appear in pre-period for each unit.
+
+    Seasonal transformation methods assume seasonal effects are constant
+    over time. Each post-period season must appear in the pre-period to
+    identify its seasonal coefficient.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Panel data in long format.
+    ivar : str
+        Unit identifier column name.
+    season_var : str
+        Seasonal variable column name (values should be 1 to Q).
+    post : str
+        Post-treatment indicator column name.
+    Q : int, default 4
+        Number of seasonal periods per cycle. Common values:
+        - 4: Quarterly data (default)
+        - 12: Monthly data
+        - 52: Weekly data
+
+    Raises
+    ------
+    InsufficientQuarterDiversityError
+        If any unit has a post-period season that does not appear in its
+        pre-period data.
+
+    See Also
+    --------
+    validate_season_diversity : Also validates minimum seasonal diversity.
+    """
+    freq_label = {4: 'quarter', 12: 'month', 52: 'week'}.get(Q, 'season')
+    
+    for unit_id in data[ivar].unique():
+        unit_pre_mask = (data[ivar] == unit_id) & (data[post] == 0)
+        unit_post_mask = (data[ivar] == unit_id) & (data[post] == 1)
+        unit_pre_data = data[unit_pre_mask]
+        unit_post_data = data[unit_post_mask]
+
+        pre_seasons = set(unit_pre_data[season_var].unique())
+        post_seasons = set(unit_post_data[season_var].unique())
+
+        uncovered_seasons = post_seasons - pre_seasons
+
+        if uncovered_seasons:
+            raise InsufficientQuarterDiversityError(
+                f"Unit {unit_id}: Post-treatment period contains {freq_label}(s) {sorted(uncovered_seasons)} "
+                f"that do not appear in the pre-treatment period. "
+                f"demeanq/detrendq cannot estimate seasonal effects for {freq_label}s not observed in pre-period. "
+                f"Pre-period {freq_label}s: {sorted(pre_seasons)}, Post-period {freq_label}s: {sorted(post_seasons)}. "
+                f"Please ensure each unit's pre-treatment period covers all {freq_label}s that appear in post-treatment, "
+                f"or use demean/detrend methods instead."
+            )
+
+
 def validate_quarter_diversity(
     data: pd.DataFrame,
     ivar: str,
@@ -992,37 +1136,12 @@ def validate_quarter_diversity(
     See Also
     --------
     validate_quarter_coverage : Validates only quarter coverage.
+    
+    Notes
+    -----
+    This is a backward-compatible wrapper for validate_season_diversity with Q=4.
     """
-    for unit_id in data[ivar].unique():
-        unit_pre_mask = (data[ivar] == unit_id) & (data[post] == 0)
-        unit_post_mask = (data[ivar] == unit_id) & (data[post] == 1)
-        unit_pre_data = data[unit_pre_mask]
-        unit_post_data = data[unit_post_mask]
-
-        unique_quarters = unit_pre_data[quarter].nunique()
-
-        if unique_quarters < 2:
-            found_quarters = sorted(unit_pre_data[quarter].unique())
-            raise InsufficientQuarterDiversityError(
-                f"Unit {unit_id} has only {unique_quarters} quarter(s) in pre-period. "
-                f"demeanq/detrendq requires ≥2 different quarters per unit to identify seasonal effects. "
-                f"Found quarters: {found_quarters}"
-            )
-
-        pre_quarters = set(unit_pre_data[quarter].unique())
-        post_quarters = set(unit_post_data[quarter].unique())
-
-        uncovered_quarters = post_quarters - pre_quarters
-
-        if uncovered_quarters:
-            raise InsufficientQuarterDiversityError(
-                f"Unit {unit_id}: Post-treatment period contains quarter(s) {sorted(uncovered_quarters)} "
-                f"that do not appear in the pre-treatment period. "
-                f"demeanq/detrendq cannot estimate seasonal effects for quarters not observed in pre-period. "
-                f"Pre-period quarters: {sorted(pre_quarters)}, Post-period quarters: {sorted(post_quarters)}. "
-                f"Please ensure each unit's pre-treatment period covers all quarters that appear in post-treatment, "
-                f"or use demean/detrend methods instead."
-            )
+    validate_season_diversity(data, ivar, quarter, post, Q=4)
 
 
 def validate_quarter_coverage(
@@ -1058,27 +1177,12 @@ def validate_quarter_coverage(
     See Also
     --------
     validate_quarter_diversity : Also validates minimum quarter diversity.
+    
+    Notes
+    -----
+    This is a backward-compatible wrapper for validate_season_coverage with Q=4.
     """
-    for unit_id in data[ivar].unique():
-        unit_pre_mask = (data[ivar] == unit_id) & (data[post] == 0)
-        unit_post_mask = (data[ivar] == unit_id) & (data[post] == 1)
-        unit_pre_data = data[unit_pre_mask]
-        unit_post_data = data[unit_post_mask]
-
-        pre_quarters = set(unit_pre_data[quarter].unique())
-        post_quarters = set(unit_post_data[quarter].unique())
-
-        uncovered_quarters = post_quarters - pre_quarters
-
-        if uncovered_quarters:
-            raise InsufficientQuarterDiversityError(
-                f"Unit {unit_id}: Post-treatment period contains quarter(s) {sorted(uncovered_quarters)} "
-                f"that do not appear in the pre-treatment period. "
-                f"demeanq/detrendq cannot estimate seasonal effects for quarters not observed in pre-period. "
-                f"Pre-period quarters: {sorted(pre_quarters)}, Post-period quarters: {sorted(post_quarters)}. "
-                f"Please ensure each unit's pre-treatment period covers all quarters that appear in post-treatment, "
-                f"or use demean/detrend methods instead."
-            )
+    validate_season_coverage(data, ivar, quarter, post, Q=4)
 
 
 # =============================================================================
@@ -1120,7 +1224,7 @@ def get_cohort_mask(unit_gvar: pd.Series, g: int) -> pd.Series:
     return (unit_gvar - g).abs() < COHORT_FLOAT_TOLERANCE
 
 
-def is_never_treated(gvar_value: Union[int, float]) -> bool:
+def is_never_treated(gvar_value: int | float) -> bool:
     """
     Determine if a unit is never treated based on its gvar value.
 
@@ -1138,13 +1242,19 @@ def is_never_treated(gvar_value: Union[int, float]) -> bool:
     bool
         True if the unit is never treated, False otherwise.
 
+    Raises
+    ------
+    InvalidStaggeredDataError
+        If gvar_value is negative infinity (-np.inf), which is not a valid
+        gvar value.
+
     Notes
     -----
     A unit is considered never treated if its gvar value is:
 
     - NaN or None (missing value)
     - 0 (explicitly coded as never treated)
-    - np.inf (infinity, explicitly coded as never treated)
+    - np.inf (positive infinity, explicitly coded as never treated)
 
     Positive integers indicate the first treatment period (cohort membership).
     Negative values are invalid and should be caught by validate_staggered_data().
@@ -1152,24 +1262,127 @@ def is_never_treated(gvar_value: Union[int, float]) -> bool:
     See Also
     --------
     validate_staggered_data : Validates staggered DiD data structure.
+
+    Examples
+    --------
+    >>> is_never_treated(0)
+    True
+    >>> is_never_treated(np.inf)
+    True
+    >>> is_never_treated(np.nan)
+    True
+    >>> is_never_treated(2005)
+    False
     """
+    from .exceptions import InvalidStaggeredDataError
+    
+    # Check NaN/None first
     if pd.isna(gvar_value):
         return True
-    if gvar_value == 0:
-        return True
+    
+    # Check infinity - positive inf is never-treated, negative inf is invalid
     if np.isinf(gvar_value):
+        if gvar_value < 0:
+            raise InvalidStaggeredDataError(
+                f"Negative infinity ({gvar_value}) is not a valid gvar value.\n\n"
+                f"Valid gvar values:\n"
+                f"  - Positive integers: Treatment cohort (first treatment period)\n"
+                f"  - 0: Never-treated unit\n"
+                f"  - np.inf: Never-treated unit\n"
+                f"  - NaN/None: Never-treated unit\n\n"
+                f"How to fix:\n"
+                f"  1. Replace negative infinity with 0, np.inf, or NaN\n"
+                f"  2. Or remove rows with invalid gvar values"
+            )
+        return True  # Positive infinity
+    
+    # Check zero (including near-zero for floating point tolerance)
+    if abs(gvar_value) < 1e-10:
         return True
+    
+    # Positive values indicate treatment cohort
     return False
+
+
+def _compute_method_usability(
+    data: pd.DataFrame,
+    ivar: str,
+    tvar: str,
+    gvar: str,
+) -> tuple[float, float]:
+    """
+    Compute percentage of treated units usable for demeaning and detrending.
+    
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Panel data in long format.
+    ivar : str
+        Unit identifier column name.
+    tvar : str
+        Time variable column name.
+    gvar : str
+        Cohort variable column name.
+    
+    Returns
+    -------
+    tuple[float, float]
+        - Percentage of treated units usable for demeaning (≥1 pre-treatment period)
+        - Percentage of treated units usable for detrending (≥2 pre-treatment periods)
+    
+    Notes
+    -----
+    From Lee & Wooldridge (2025) Section 4.4:
+    
+        "For treatment cohort g in period r, the transformed outcome can only
+        be used if there are enough observed data in the periods t < g to
+        compute an average (one period) or a linear trend (two periods)."
+    """
+    # Get unit-level gvar
+    unit_gvar = data.drop_duplicates(subset=[ivar]).set_index(ivar)[gvar]
+    
+    # Count treated units and those below thresholds
+    n_treated = 0
+    n_below_demean = 0
+    n_below_detrend = 0
+    
+    for unit_id in data[ivar].unique():
+        g = unit_gvar.get(unit_id)
+        
+        # Skip never-treated units
+        if is_never_treated(g):
+            continue
+        
+        n_treated += 1
+        
+        # Count pre-treatment observations
+        unit_data = data[data[ivar] == unit_id]
+        n_pre = len(unit_data[unit_data[tvar] < g])
+        
+        if n_pre < 1:
+            n_below_demean += 1
+        if n_pre < 2:
+            n_below_detrend += 1
+    
+    # Calculate usability percentages
+    if n_treated > 0:
+        pct_demean = 100.0 * (1 - n_below_demean / n_treated)
+        pct_detrend = 100.0 * (1 - n_below_detrend / n_treated)
+    else:
+        pct_demean = 100.0
+        pct_detrend = 100.0
+    
+    return pct_demean, pct_detrend
 
 
 def validate_staggered_data(
     data: pd.DataFrame,
     gvar: str,
     ivar: str,
-    tvar: Union[str, List[str]],
+    tvar: str | list[str],
     y: str,
-    controls: Optional[List[str]] = None,
-) -> Dict:
+    controls: list[str] | None = None,
+) -> dict:
     """
     Validate staggered DiD data and extract cohort structure.
 
@@ -1226,18 +1439,15 @@ def validate_staggered_data(
     validate_and_prepare_data : Validation for common timing designs.
     """
     from .exceptions import InvalidStaggeredDataError, MissingRequiredColumnError
-    
-    # Check DataFrame type
+
     if not isinstance(data, pd.DataFrame):
         raise TypeError(f"data must be a pandas DataFrame, got {type(data).__name__}")
-    
+
     if len(data) == 0:
         raise InvalidStaggeredDataError("Input data is empty")
-    
-    # Check required columns exist
+
     required_cols = {gvar: 'gvar', ivar: 'ivar', y: 'y'}
-    
-    # Handle tvar (can be string or list)
+
     if isinstance(tvar, str):
         required_cols[tvar] = 'tvar'
         tvar_cols = [tvar]
@@ -1245,33 +1455,29 @@ def validate_staggered_data(
         for t in tvar:
             required_cols[t] = 'tvar'
         tvar_cols = list(tvar)
-    
+
     missing_cols = [col for col in required_cols.keys() if col not in data.columns]
     if missing_cols:
         raise MissingRequiredColumnError(
             f"Required columns not found in data: {missing_cols}. "
             f"Available columns: {list(data.columns)}"
         )
-    
-    # Check controls if specified
+
     if controls:
         missing_controls = [c for c in controls if c not in data.columns]
         if missing_controls:
             raise MissingRequiredColumnError(
                 f"Control variable columns not found: {missing_controls}"
             )
-    
-    # Validate gvar column data type
+
     if not pd.api.types.is_numeric_dtype(data[gvar]):
         raise InvalidStaggeredDataError(
             f"gvar column '{gvar}' must be numeric, got {data[gvar].dtype}. "
             f"Please convert string values to numeric (e.g., 'never' -> 0, '2005' -> 2005)."
         )
-    
-    # Get unit-level gvar (should be time-invariant)
+
     unit_gvar = data.groupby(ivar)[gvar].first()
-    
-    # Check gvar is time-invariant within each unit
+
     gvar_nunique = data.groupby(ivar)[gvar].nunique()
     inconsistent_units = gvar_nunique[gvar_nunique > 1].index.tolist()
     if inconsistent_units:
@@ -1280,8 +1486,7 @@ def validate_staggered_data(
             f"Units with varying gvar values: {inconsistent_units[:5]}"
             f"{'...' if len(inconsistent_units) > 5 else ''}"
         )
-    
-    # Check for negative values (invalid)
+
     non_na_gvar = unit_gvar.dropna()
     negative_gvar = non_na_gvar[non_na_gvar < 0]
     if len(negative_gvar) > 0:
@@ -1290,49 +1495,43 @@ def validate_staggered_data(
             f"gvar column contains negative values, which are not valid: {neg_values}. "
             f"Valid values: positive integer (cohort), 0 (never treated), inf (never treated), NaN (never treated)."
         )
-    
-    # Identify never-treated units using vectorized operation
+
     never_treated_mask = unit_gvar.apply(is_never_treated)
     n_never_treated = int(never_treated_mask.sum())
-    
-    # Identify cohorts (positive gvar values, excluding NT values)
+
     treated_mask = ~never_treated_mask
     treated_gvar = unit_gvar[treated_mask]
-    
+
     if len(treated_gvar) == 0:
         raise InvalidStaggeredDataError(
             "No treatment cohorts found in data. All units appear to be never-treated. "
             f"Found gvar values: {sorted(unit_gvar.dropna().unique().tolist()[:10])}"
         )
-    
+
     cohorts = sorted([int(g) for g in treated_gvar.unique() if pd.notna(g) and g > 0 and not np.isinf(g)])
-    
+
     if len(cohorts) == 0:
         raise InvalidStaggeredDataError(
             "No valid treatment cohorts found. Treatment cohorts must be positive integers. "
             f"Found gvar values: {sorted(unit_gvar.dropna().unique().tolist()[:10])}"
         )
-    
-    # Cohort sizes
+
     cohort_sizes = {}
     for g in cohorts:
         cohort_sizes[g] = int((unit_gvar == g).sum())
-    
+
     n_treated = sum(cohort_sizes.values())
-    
-    # Get time range
+
     if len(tvar_cols) == 1:
         T_min = int(data[tvar_cols[0]].min())
         T_max = int(data[tvar_cols[0]].max())
     else:
-        # For quarterly data, use year as primary
         T_min = int(data[tvar_cols[0]].min())
         T_max = int(data[tvar_cols[0]].max())
-    
-    # Generate warnings
+
     warning_list = []
-    
-    # Warn if no never-treated units (important for aggregate estimation)
+
+    # Never-treated units required for cohort/overall aggregation across cohorts.
     if n_never_treated == 0:
         warning_list.append(
             "No never-treated units found in data. "
@@ -1340,41 +1539,58 @@ def validate_staggered_data(
             "Cohort effects (τ_g) and overall effects (τ_ω) cannot be estimated. "
             "Use aggregate='none' to estimate (g,r)-specific effects only."
         )
-    
-    # Warn if cohorts are outside tvar range
+
     cohorts_outside = [g for g in cohorts if g < T_min or g > T_max]
     if cohorts_outside:
         warning_list.append(
             f"Some cohorts are outside the observed time range [{T_min}, {T_max}]: {cohorts_outside}. "
             f"This may indicate data issues."
         )
-    
-    # Warn if earliest cohort has no pre-treatment period
+
     min_cohort = min(cohorts)
     if min_cohort <= T_min:
         warning_list.append(
             f"Earliest cohort ({min_cohort}) has no pre-treatment period. "
             f"Data starts at T_min={T_min}. Demeaning/detrending transformation may be unreliable for this cohort."
         )
-    
-    # Warn if very few never-treated units
+
     if n_never_treated == 1:
         warning_list.append(
             f"Only 1 never-treated unit found. "
             f"Inference for cohort and overall effects may be unreliable with very few NT units."
         )
-    
-    # Check for unbalanced panel
+
     panel_counts = data.groupby(ivar)[tvar_cols[0]].count()
     if panel_counts.nunique() > 1:
         min_obs = int(panel_counts.min())
         max_obs = int(panel_counts.max())
-        warning_list.append(
-            f"Unbalanced panel detected: observation counts range from {min_obs} to {max_obs}. "
-            f"Missing periods will be handled automatically."
+        
+        # Compute method usability percentages for treated units
+        pct_demean, pct_detrend = _compute_method_usability(
+            data, ivar, tvar_cols[0], gvar
         )
-    
-    # Check for missing values in outcome variable
+        
+        warning_list.append(
+            f"Unbalanced panel detected: observation counts range from {min_obs} to {max_obs}.\n\n"
+            f"SELECTION MECHANISM ASSUMPTION (Lee & Wooldridge 2025, Section 4.4):\n"
+            f"  Selection (missing data) may depend on unobserved time-invariant heterogeneity,\n"
+            f"  but cannot systematically depend on Y_it(∞) shocks.\n\n"
+            f"This is analogous to the standard fixed effects assumption. The method remains\n"
+            f"valid if missingness is related to:\n"
+            f"  ✓ Unit-specific fixed characteristics (e.g., firm size, location)\n"
+            f"  ✓ Time-invariant unobservables (e.g., management quality)\n\n"
+            f"The method may be biased if missingness is related to:\n"
+            f"  ✗ Time-varying outcome shocks (e.g., units drop out after negative shocks)\n"
+            f"  ✗ Anticipation of treatment effects\n\n"
+            f"DIAGNOSTICS:\n"
+            f"  - Units usable for demean: {pct_demean:.1f}% (require ≥1 pre-treatment period)\n"
+            f"  - Units usable for detrend: {pct_detrend:.1f}% (require ≥2 pre-treatment periods)\n\n"
+            f"RECOMMENDATIONS:\n"
+            f"  1. Run `diagnose_selection_mechanism()` for detailed diagnostics\n"
+            f"  2. Consider using `rolling='detrend'` for additional robustness\n"
+            f"  3. Compare results with balanced subsample as sensitivity check"
+        )
+
     n_missing_y = data[y].isna().sum()
     if n_missing_y > 0:
         pct_missing = n_missing_y / len(data) * 100
@@ -1396,3 +1612,300 @@ def validate_staggered_data(
         'N_obs': len(data),
         'warnings': warning_list,
     }
+
+
+def detect_frequency(
+    data: pd.DataFrame,
+    tvar: str,
+    ivar: str | None = None,
+) -> dict:
+    """
+    Detect data frequency (quarterly, monthly, weekly) from time variable.
+
+    Analyzes the time variable to determine the most likely data frequency.
+    Uses multiple heuristics including time interval analysis and observations
+    per year counting.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Panel data containing the time variable.
+    tvar : str
+        Column name of the time variable. Can be:
+        - Integer time index (e.g., 1, 2, 3, ...)
+        - Year values (e.g., 2020, 2021, ...)
+        - Datetime values
+    ivar : str, optional
+        Column name of the unit identifier. If provided, frequency detection
+        is performed per-unit and aggregated for more robust estimation.
+
+    Returns
+    -------
+    dict
+        Detection results with keys:
+
+        - ``frequency`` : str or None
+            Detected frequency: 'quarterly', 'monthly', 'weekly', 'annual',
+            or None if detection failed.
+        - ``Q`` : int or None
+            Corresponding Q value: 4 (quarterly), 12 (monthly), 52 (weekly),
+            1 (annual), or None if detection failed.
+        - ``confidence`` : float
+            Confidence score in [0, 1] indicating detection reliability.
+            Higher values indicate more consistent patterns.
+        - ``method`` : str
+            Detection method used: 'interval', 'obs_per_year', or 'heuristic'.
+        - ``details`` : dict
+            Additional diagnostic information including:
+            - ``median_interval``: Median time interval between observations
+            - ``obs_per_year``: Average observations per year (if applicable)
+            - ``n_units_analyzed``: Number of units used in detection
+
+    Notes
+    -----
+    Detection heuristics:
+
+    1. **Interval-based**: Analyzes median time interval between consecutive
+       observations. Works best with datetime or continuous time indices.
+
+    2. **Observations per year**: Counts average observations per calendar
+       year. Works best with year-based time variables.
+
+    3. **Value range**: Examines the range of time values to infer frequency.
+
+    The function returns ``frequency=None`` when:
+    - Time variable has insufficient variation
+    - Multiple frequencies are equally likely
+    - Data pattern is irregular or ambiguous
+
+    Examples
+    --------
+    >>> result = detect_frequency(data, tvar='time', ivar='id')
+    >>> if result['frequency'] is not None:
+    ...     print(f"Detected: {result['frequency']} (Q={result['Q']})")
+    ...     print(f"Confidence: {result['confidence']:.2f}")
+    ... else:
+    ...     print("Could not detect frequency automatically")
+
+    See Also
+    --------
+    lwdid : Main estimation function with ``auto_detect_frequency`` parameter.
+    """
+    result = {
+        'frequency': None,
+        'Q': None,
+        'confidence': 0.0,
+        'method': None,
+        'details': {},
+    }
+
+    if tvar not in data.columns:
+        warnings.warn(
+            f"Time variable '{tvar}' not found in data. Cannot detect frequency.",
+            UserWarning,
+            stacklevel=2
+        )
+        return result
+
+    time_values = data[tvar].dropna()
+    if len(time_values) < 2:
+        warnings.warn(
+            "Insufficient time values for frequency detection (need at least 2).",
+            UserWarning,
+            stacklevel=2
+        )
+        return result
+
+    # Check if time variable is datetime
+    is_datetime = pd.api.types.is_datetime64_any_dtype(time_values)
+
+    if is_datetime:
+        # Datetime-based detection using time intervals
+        return _detect_frequency_datetime(data, tvar, ivar)
+    else:
+        # Numeric time variable detection
+        return _detect_frequency_numeric(data, tvar, ivar)
+
+
+def _detect_frequency_datetime(
+    data: pd.DataFrame,
+    tvar: str,
+    ivar: str | None,
+) -> dict:
+    """
+    Detect frequency from datetime time variable.
+
+    Uses time interval analysis to determine data frequency.
+    """
+    result = {
+        'frequency': None,
+        'Q': None,
+        'confidence': 0.0,
+        'method': 'interval',
+        'details': {},
+    }
+
+    if ivar is not None and ivar in data.columns:
+        # Per-unit interval analysis
+        intervals = []
+        n_units = 0
+        for unit_id, unit_data in data.groupby(ivar):
+            unit_times = unit_data[tvar].dropna().sort_values()
+            if len(unit_times) >= 2:
+                unit_intervals = unit_times.diff().dropna()
+                intervals.extend(unit_intervals.dt.days.tolist())
+                n_units += 1
+        result['details']['n_units_analyzed'] = n_units
+    else:
+        # Global interval analysis
+        sorted_times = data[tvar].dropna().sort_values()
+        intervals = sorted_times.diff().dropna().dt.days.tolist()
+        result['details']['n_units_analyzed'] = 1
+
+    if not intervals:
+        return result
+
+    median_interval = np.median(intervals)
+    result['details']['median_interval'] = median_interval
+
+    # Frequency detection based on median interval (in days)
+    # Weekly: ~7 days, Monthly: ~30 days, Quarterly: ~91 days, Annual: ~365 days
+    freq_thresholds = [
+        (7, 3, 'weekly', 52),
+        (30, 10, 'monthly', 12),
+        (91, 20, 'quarterly', 4),
+        (365, 60, 'annual', 1),
+    ]
+
+    best_match = None
+    best_distance = float('inf')
+
+    for expected, tolerance, freq_name, q_val in freq_thresholds:
+        distance = abs(median_interval - expected)
+        if distance < tolerance and distance < best_distance:
+            best_distance = distance
+            best_match = (freq_name, q_val, 1.0 - distance / tolerance)
+
+    if best_match:
+        result['frequency'] = best_match[0]
+        result['Q'] = best_match[1]
+        result['confidence'] = min(1.0, best_match[2])
+
+    return result
+
+
+def _detect_frequency_numeric(
+    data: pd.DataFrame,
+    tvar: str,
+    ivar: str | None,
+) -> dict:
+    """
+    Detect frequency from numeric time variable.
+
+    Uses observations per year and value range analysis.
+    """
+    result = {
+        'frequency': None,
+        'Q': None,
+        'confidence': 0.0,
+        'method': 'heuristic',
+        'details': {},
+    }
+
+    time_values = data[tvar].dropna()
+    t_min = time_values.min()
+    t_max = time_values.max()
+    t_range = t_max - t_min
+
+    result['details']['t_min'] = t_min
+    result['details']['t_max'] = t_max
+    result['details']['t_range'] = t_range
+
+    # Check if values look like years (e.g., 2000-2025)
+    looks_like_years = 1900 <= t_min <= 2100 and 1900 <= t_max <= 2100
+
+    if looks_like_years and t_range > 0:
+        # Count observations per year
+        if ivar is not None and ivar in data.columns:
+            obs_per_year_list = []
+            n_units = 0
+            for unit_id, unit_data in data.groupby(ivar):
+                unit_times = unit_data[tvar].dropna()
+                if len(unit_times) >= 2:
+                    unit_years = unit_times.apply(lambda x: int(x))
+                    year_counts = unit_years.value_counts()
+                    if len(year_counts) > 0:
+                        obs_per_year_list.append(year_counts.median())
+                        n_units += 1
+            result['details']['n_units_analyzed'] = n_units
+            if obs_per_year_list:
+                obs_per_year = np.median(obs_per_year_list)
+            else:
+                obs_per_year = None
+        else:
+            year_values = time_values.apply(lambda x: int(x))
+            year_counts = year_values.value_counts()
+            obs_per_year = year_counts.median() if len(year_counts) > 0 else None
+            result['details']['n_units_analyzed'] = 1
+
+        if obs_per_year is not None:
+            result['details']['obs_per_year'] = obs_per_year
+            result['method'] = 'obs_per_year'
+
+            # Frequency detection based on observations per year
+            freq_mapping = [
+                (1, 0.5, 'annual', 1),
+                (4, 1.5, 'quarterly', 4),
+                (12, 3, 'monthly', 12),
+                (52, 10, 'weekly', 52),
+            ]
+
+            best_match = None
+            best_distance = float('inf')
+
+            for expected, tolerance, freq_name, q_val in freq_mapping:
+                distance = abs(obs_per_year - expected)
+                if distance < tolerance and distance < best_distance:
+                    best_distance = distance
+                    best_match = (freq_name, q_val, 1.0 - distance / tolerance)
+
+            if best_match:
+                result['frequency'] = best_match[0]
+                result['Q'] = best_match[1]
+                result['confidence'] = min(1.0, best_match[2])
+
+    else:
+        # Non-year numeric time index: use interval analysis
+        if ivar is not None and ivar in data.columns:
+            intervals = []
+            n_units = 0
+            for unit_id, unit_data in data.groupby(ivar):
+                unit_times = unit_data[tvar].dropna().sort_values()
+                if len(unit_times) >= 2:
+                    unit_intervals = unit_times.diff().dropna().tolist()
+                    intervals.extend(unit_intervals)
+                    n_units += 1
+            result['details']['n_units_analyzed'] = n_units
+        else:
+            sorted_times = time_values.sort_values()
+            intervals = sorted_times.diff().dropna().tolist()
+            result['details']['n_units_analyzed'] = 1
+
+        if intervals:
+            median_interval = np.median(intervals)
+            result['details']['median_interval'] = median_interval
+            result['method'] = 'interval'
+
+            # For integer time indices, interval of 1 is most common
+            # Cannot reliably determine frequency without additional context
+            if median_interval == 1:
+                # Ambiguous: could be any frequency with consecutive indexing
+                result['confidence'] = 0.3
+                warnings.warn(
+                    "Time variable appears to be a consecutive integer index. "
+                    "Cannot reliably detect frequency. Please specify Q explicitly.",
+                    UserWarning,
+                    stacklevel=3
+                )
+
+    return result

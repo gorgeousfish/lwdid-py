@@ -26,6 +26,7 @@ from lwdid.staggered.aggregation import (
     OverallEffect,
     cohort_effects_to_dataframe,
 )
+from lwdid.exceptions import NoNeverTreatedError
 
 
 # =============================================================================
@@ -160,7 +161,7 @@ class TestAggregateToCohortBasic:
         
         transformed = transform_staggered_demean(data, 'y', 'id', 'year', 'gvar')
         
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(NoNeverTreatedError) as excinfo:
             aggregate_to_cohort(
                 transformed, 
                 gvar='gvar', 
@@ -172,7 +173,7 @@ class TestAggregateToCohortBasic:
             )
         
         error_msg = str(excinfo.value).lower()
-        assert "never treated" in error_msg
+        assert "never-treated" in error_msg
 
 
 class TestAggregateToOverallBasic:
@@ -229,7 +230,7 @@ class TestAggregateToOverallBasic:
         
         transformed = transform_staggered_demean(data, 'y', 'id', 'year', 'gvar')
         
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(NoNeverTreatedError) as excinfo:
             aggregate_to_overall(
                 transformed, 
                 gvar='gvar', 
@@ -239,7 +240,7 @@ class TestAggregateToOverallBasic:
             )
         
         error_msg = str(excinfo.value).lower()
-        assert "never treated" in error_msg
+        assert "never-treated" in error_msg
 
 
 # =============================================================================
@@ -412,7 +413,7 @@ class TestEdgeCases:
         
         transformed = transform_staggered_demean(data, 'y', 'id', 'year', 'gvar')
         
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(NoNeverTreatedError) as excinfo:
             aggregate_to_cohort(
                 transformed, 
                 gvar='gvar', 
@@ -423,7 +424,7 @@ class TestEdgeCases:
                 never_treated_values=[0]
             )
         
-        assert "never treated" in str(excinfo.value).lower()
+        assert "never-treated" in str(excinfo.value).lower()
     
     def test_all_eventually_treated_overall_error(self):
         """All Eventually Treated: overall effect should error."""
@@ -436,7 +437,7 @@ class TestEdgeCases:
         
         transformed = transform_staggered_demean(data, 'y', 'id', 'year', 'gvar')
         
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(NoNeverTreatedError) as excinfo:
             aggregate_to_overall(
                 transformed, 
                 gvar='gvar', 
@@ -445,7 +446,7 @@ class TestEdgeCases:
                 never_treated_values=[0]
             )
         
-        assert "never treated" in str(excinfo.value).lower()
+        assert "never-treated" in str(excinfo.value).lower()
 
 
 # =============================================================================

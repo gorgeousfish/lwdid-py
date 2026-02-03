@@ -21,7 +21,7 @@ This classic example estimates the effect of California's Proposition 99
 
 - 39 states (1 treated: California, 38 controls)
 - 31 years (1970-2000)
-- Treatment starts in 1989 (post = 1 for years ≥ 1989)
+- Treatment starts in 1989 (post = 1 for years :math:`\geq` 1989)
 
 **Code:**
 
@@ -50,11 +50,6 @@ This classic example estimates the effect of California's Proposition 99
 
    # Export
    results.to_excel('california_smoking_results.xlsx')
-
-**Expected output:**
-
-- ATT ≈ -0.42 (California's cigarette sales decreased by ~42% relative to controls)
-- Statistically significant at conventional levels
 
 Robustness Checks
 ~~~~~~~~~~~~~~~~~
@@ -133,6 +128,149 @@ Estimating the effect of a policy change on quarterly retail sales.
 **Note:** For quarterly data, always use ``demeanq`` or ``detrendq`` to account
 for seasonal patterns.
 
+Monthly Data
+------------
+
+Monthly Sales with Seasonal Adjustment (Q=12)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Estimating treatment effects on monthly data with 12-month seasonal patterns.
+
+**Data structure:**
+
+- 100 stores (20 treated, 80 controls)
+- 36 months (3 years)
+- Treatment starts in month 25
+
+**Code:**
+
+.. code-block:: python
+
+   import pandas as pd
+   import numpy as np
+   from lwdid import lwdid
+
+   # Create example monthly data
+   np.random.seed(42)
+   n_units = 100
+   n_periods = 36
+   n_treated = 20
+   treatment_start = 25
+
+   # Generate panel data
+   data_m = pd.DataFrame({
+       'store': np.repeat(range(n_units), n_periods),
+       't': np.tile(range(1, n_periods + 1), n_units),
+   })
+
+   # Add month indicator (1-12)
+   data_m['month'] = ((data_m['t'] - 1) % 12) + 1
+
+   # Treatment assignment
+   data_m['treated'] = (data_m['store'] < n_treated).astype(int)
+   data_m['post'] = (data_m['t'] >= treatment_start).astype(int)
+
+   # Generate outcome with seasonal pattern
+   seasonal_effect = 10 * np.sin(2 * np.pi * data_m['month'] / 12)
+   unit_fe = data_m['store'] * 0.5
+   treatment_effect = 5.0 * data_m['treated'] * data_m['post']
+   data_m['sales'] = 100 + unit_fe + seasonal_effect + treatment_effect + np.random.normal(0, 2, len(data_m))
+
+   # Estimate with monthly seasonal adjustment (Q=12)
+   results = lwdid(
+       data_m,
+       y='sales',
+       d='treated',
+       ivar='store',
+       tvar='t',                 # Single time index
+       post='post',
+       rolling='demeanq',        # Seasonal demeaning
+       Q=12,                     # 12 seasons per year
+       season_var='month',       # Month indicator (1-12)
+       vce='hc3'
+   )
+
+   print(f"ATT: {results.att:.4f} (SE: {results.se_att:.4f})")
+   print(f"True effect: 5.0")
+
+**Note:** For monthly data, use ``Q=12`` and provide a ``season_var`` column
+containing month indicators (1-12).
+
+Weekly Data
+-----------
+
+Weekly Sales with Seasonal Adjustment (Q=52)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Estimating treatment effects on weekly data with 52-week seasonal patterns.
+
+**Data structure:**
+
+- 50 stores (10 treated, 40 controls)
+- 104 weeks (2 years)
+- Treatment starts in week 79
+
+**Code:**
+
+.. code-block:: python
+
+   import pandas as pd
+   import numpy as np
+   from lwdid import lwdid
+
+   # Create example weekly data
+   np.random.seed(123)
+   n_units = 50
+   n_periods = 104  # 2 years of weekly data
+   n_treated = 10
+   treatment_start = 79  # Start of year 2
+
+   # Generate panel data
+   data_w = pd.DataFrame({
+       'store': np.repeat(range(n_units), n_periods),
+       't': np.tile(range(1, n_periods + 1), n_units),
+   })
+
+   # Add week-of-year indicator (1-52)
+   data_w['week'] = ((data_w['t'] - 1) % 52) + 1
+
+   # Treatment assignment
+   data_w['treated'] = (data_w['store'] < n_treated).astype(int)
+   data_w['post'] = (data_w['t'] >= treatment_start).astype(int)
+
+   # Generate outcome with weekly seasonal pattern
+   # Strong holiday effects in weeks 51-52 and summer dip in weeks 25-35
+   seasonal_effect = (
+       5 * np.sin(2 * np.pi * data_w['week'] / 52) +
+       10 * ((data_w['week'] >= 51) | (data_w['week'] <= 2)).astype(float) -
+       3 * ((data_w['week'] >= 25) & (data_w['week'] <= 35)).astype(float)
+   )
+   unit_fe = data_w['store'] * 0.3
+   treatment_effect = 8.0 * data_w['treated'] * data_w['post']
+   data_w['sales'] = 200 + unit_fe + seasonal_effect + treatment_effect + np.random.normal(0, 3, len(data_w))
+
+   # Estimate with weekly seasonal adjustment (Q=52)
+   results = lwdid(
+       data_w,
+       y='sales',
+       d='treated',
+       ivar='store',
+       tvar='t',                 # Single time index
+       post='post',
+       rolling='demeanq',        # Seasonal demeaning
+       Q=52,                     # 52 seasons per year
+       season_var='week',        # Week indicator (1-52)
+       vce='hc3'
+   )
+
+   print(f"ATT: {results.att:.4f} (SE: {results.se_att:.4f})")
+   print(f"True effect: 8.0")
+
+**Note:** For weekly data, use ``Q=52`` and provide a ``season_var`` column
+containing week-of-year indicators (1-52). Weekly data requires substantial
+pre-treatment periods (at least 53 observations per unit for demeanq, 54 for
+detrendq) to estimate all 51 seasonal dummy coefficients.
+
 Control Variables
 -----------------
 
@@ -200,8 +338,9 @@ When units are nested within clusters (e.g., schools within districts):
    print(f"Number of clusters: {results.n_clusters}")
    print(f"Cluster-robust df: {results.df_inference}")
 
-**Note:** Cluster-robust standard errors use df = G - 1, where G is the
-number of clusters. Need at least G ≥ 10 for reliable inference.
+**Note:** Cluster-robust standard errors use :math:`df = G - 1`, where :math:`G`
+is the number of clusters. Need at least :math:`G \geq 10` for reliable
+inference.
 
 Randomization Inference
 -----------------------
@@ -461,12 +600,6 @@ the Castle Doctrine data from Cheng and Hoekstra (2013). States adopted
    print(f"Overall ATT: {results.att_overall:.4f}")
    print(f"SE: {results.se_overall:.4f}")
    print(f"95% CI: [{results.ci_overall_lower:.4f}, {results.ci_overall_upper:.4f}]")
-
-**Expected output:**
-
-- ATT ≈ 0.092 (9.2% increase in homicide rate)
-- SE ≈ 0.061
-- Not statistically significant at 5% level
 
 **Cohort-Specific Effects:**
 

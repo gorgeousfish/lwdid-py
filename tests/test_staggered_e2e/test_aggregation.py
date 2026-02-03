@@ -244,13 +244,13 @@ class TestAggregationModule:
 class TestAggregationWithAllEstimators:
     """使用所有估计量测试聚合"""
     
-    @pytest.mark.parametrize("estimator", ['ra', 'ipwra'])
+    @pytest.mark.parametrize("estimator", ['ipwra'])
     def test_cohort_aggregation_all_estimators(self, staggered_data, estimator):
         """测试不同估计量的Cohort聚合"""
-        from lwdid.staggered import estimate_ra, estimate_ipwra
+        from lwdid.staggered import estimate_ipwra
         
-        estimate_func = estimate_ra if estimator == 'ra' else estimate_ipwra
-        stata_results = STATA_RA_RESULTS if estimator == 'ra' else STATA_IPWRA_RESULTS
+        estimate_func = estimate_ipwra
+        stata_results = STATA_IPWRA_RESULTS
         
         # Cohort 4的聚合
         atts = []

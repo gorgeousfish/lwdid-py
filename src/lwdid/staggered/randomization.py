@@ -20,11 +20,14 @@ reference group across permutations. When testing cohort-specific or (g, r)-
 specific effects, the target cohort must be present after each permutation.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import List, Literal, Optional
+from typing import Literal
 import warnings
 
 import numpy as np
+from numpy.typing import NDArray
 import pandas as pd
 
 from ..exceptions import RandomizationError
@@ -53,8 +56,9 @@ class StaggeredRIResult:
         Number of replications that failed due to estimation errors.
     observed_stat : float
         Observed ATT estimate being tested.
-    permutation_stats : ndarray
-        Array of ATT statistics from valid replications.
+    permutation_stats : NDArray[np.float64]
+        Array of ATT statistics from valid replications, excluding NaN
+        values from failed replications.
 
     See Also
     --------
@@ -69,7 +73,7 @@ class StaggeredRIResult:
     ri_valid: int
     ri_failed: int
     observed_stat: float
-    permutation_stats: np.ndarray
+    permutation_stats: NDArray[np.float64]
 
     def __repr__(self) -> str:
         """Return a concise string representation of the result."""
@@ -85,18 +89,18 @@ def randomization_inference_staggered(
     ivar: str,
     tvar: str,
     y: str,
-    cohorts: List[int],
+    cohorts: list[int],
     observed_att: float,
     target: Literal['overall', 'cohort', 'cohort_time'] = 'overall',
-    target_cohort: Optional[int] = None,
-    target_period: Optional[int] = None,
+    target_cohort: int | None = None,
+    target_period: int | None = None,
     ri_method: Literal['permutation', 'bootstrap'] = 'permutation',
     rireps: int = 1000,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     rolling: str = 'demean',
-    controls: Optional[List[str]] = None,
-    vce: Optional[str] = None,
-    cluster_var: Optional[str] = None,
+    controls: list[str] | None = None,
+    vce: str | None = None,
+    cluster_var: str | None = None,
     n_never_treated: int = 0,
 ) -> StaggeredRIResult:
     """
@@ -203,9 +207,9 @@ def randomization_inference_staggered(
     A minimum of 50 valid replications (or 10% of rireps, whichever is larger)
     is required to ensure reliable p-value computation.
     """
-    # -------------------------------------------------------------------------
+    # =========================================================================
     # Input Validation
-    # -------------------------------------------------------------------------
+    # =========================================================================
     if rireps <= 0:
         raise RandomizationError("rireps must be positive")
 
@@ -221,7 +225,7 @@ def randomization_inference_staggered(
         raise RandomizationError("ri_method must be 'permutation' or 'bootstrap'")
 
     # Overall effect requires never-treated units as consistent reference group
-    # across all permutations; without them, the control group varies arbitrarily
+    # across all permutations; without them, the control group varies arbitrarily.
     if target == 'overall' and n_never_treated == 0:
         raise RandomizationError(
             "RI for overall effect requires never treated units. "
@@ -234,19 +238,19 @@ def randomization_inference_staggered(
             f"rolling must be 'demean' or 'detrend', got '{rolling}'"
         )
 
-    # Seed ensures reproducibility of permutation sequence across runs
+    # Seed ensures reproducibility of permutation sequence across runs.
     rng = np.random.default_rng(seed)
     
-    # Cohort is time-invariant within unit; extract once for efficient permutation
+    # Cohort assignment is time-invariant; extract once per unit for efficiency.
     unit_gvar = data.groupby(ivar)[gvar].first()
     unit_ids = unit_gvar.index.tolist()
     n_units = len(unit_ids)
 
-    # Permutation distribution requires sufficient units for meaningful inference
+    # Permutation distribution requires sufficient units for meaningful inference.
     if n_units < 4:
         raise RandomizationError(f"Too few units for RI: N={n_units}")
 
-    # Deferred imports to avoid circular dependencies between submodules
+    # Deferred imports to avoid circular dependencies between submodules.
     from .transformations import transform_staggered_demean, transform_staggered_detrend
     from .estimation import estimate_cohort_time_effects
     from .aggregation import aggregate_to_cohort, aggregate_to_overall, get_cohorts
@@ -262,18 +266,19 @@ def randomization_inference_staggered(
     # =========================================================================
     # Resampling Loop
     # =========================================================================
-    # NaN indicates invalid replication for later filtering
+    # Pre-fill with NaN to distinguish failed replications from valid zeros;
+    # NaN entries are excluded when computing the empirical p-value.
     perm_stats = np.empty(rireps, dtype=float)
     perm_stats.fill(np.nan)
 
     for rep in range(rireps):
         try:
             if ri_method == 'permutation':
-                # Without-replacement shuffle preserves marginal cohort distribution
+                # Without-replacement shuffle preserves marginal cohort distribution.
                 perm_idx = rng.permutation(n_units)
                 perm_gvar = unit_gvar.values[perm_idx]
             else:
-                # With-replacement bootstrap allows cohort frequency variation
+                # With-replacement bootstrap allows cohort frequency variation.
                 boot_idx = rng.integers(0, n_units, size=n_units)
                 perm_gvar = unit_gvar.values[boot_idx]
 
@@ -305,7 +310,7 @@ def randomization_inference_staggered(
             elif target == 'cohort':
                 try:
                     perm_cohorts = get_cohorts(data_transformed, gvar, ivar)
-                    # Permutation may reassign all units away from target cohort
+                    # Permutation may reassign all units away from target cohort.
                     if target_cohort not in perm_cohorts:
                         perm_stats[rep] = np.nan
                         continue
@@ -346,7 +351,7 @@ def randomization_inference_staggered(
                     perm_stats[rep] = np.nan
 
         except Exception:
-            # Catch-all for unexpected failures; NaN exclusion handles these
+            # Catch-all for unexpected failures; NaN exclusion handles these.
             perm_stats[rep] = np.nan
     
     # =========================================================================
@@ -356,7 +361,7 @@ def randomization_inference_staggered(
     n_valid = len(valid_stats)
     n_failed = rireps - n_valid
 
-    # Insufficient valid replications yield unreliable p-value estimates
+    # Insufficient valid replications yield unreliable p-value estimates.
     min_valid = max(50, int(0.1 * rireps))
     if n_valid < min_valid:
         raise RandomizationError(
@@ -365,10 +370,10 @@ def randomization_inference_staggered(
             f"Consider increasing rireps or checking data quality."
         )
 
-    # Two-sided p-value under sharp null hypothesis of no treatment effect
+    # Two-sided p-value under sharp null hypothesis of no treatment effect.
     p_value = float((np.abs(valid_stats) >= abs(observed_att)).mean())
 
-    # High failure rate may indicate data quality issues or model misspecification
+    # High failure rate may indicate data quality issues or model misspecification.
     if n_failed / rireps > 0.1:
         warnings.warn(
             f"Staggered RI: {n_failed}/{rireps} replications failed "
@@ -398,9 +403,9 @@ def ri_overall_effect(
     rolling: str = 'demean',
     ri_method: str = 'permutation',
     rireps: int = 1000,
-    seed: Optional[int] = None,
-    vce: Optional[str] = None,
-    cluster_var: Optional[str] = None,
+    seed: int | None = None,
+    vce: str | None = None,
+    cluster_var: str | None = None,
 ) -> StaggeredRIResult:
     """
     Perform randomization inference for the overall weighted ATT.
@@ -447,16 +452,13 @@ def ri_overall_effect(
     ri_cohort_effect : Inference for cohort-specific effects.
     """
     from .transformations import get_cohorts
+    from ..validation import is_never_treated
 
     unit_gvar = data.groupby(ivar)[gvar].first()
     cohorts = get_cohorts(data, gvar, ivar)
 
-    # Never-treated units: NaN, zero, or infinite gvar values
-    nt_mask = (
-        unit_gvar.isna() |
-        (unit_gvar == 0) |
-        np.isinf(unit_gvar.astype(float))
-    )
+    # Identify never-treated units using the single source of truth function.
+    nt_mask = unit_gvar.apply(is_never_treated)
     n_nt = int(nt_mask.sum())
 
     return randomization_inference_staggered(
@@ -489,9 +491,9 @@ def ri_cohort_effect(
     rolling: str = 'demean',
     ri_method: str = 'permutation',
     rireps: int = 1000,
-    seed: Optional[int] = None,
-    vce: Optional[str] = None,
-    cluster_var: Optional[str] = None,
+    seed: int | None = None,
+    vce: str | None = None,
+    cluster_var: str | None = None,
 ) -> StaggeredRIResult:
     """
     Perform randomization inference for a cohort-specific ATT.
@@ -541,16 +543,13 @@ def ri_cohort_effect(
     ri_overall_effect : Inference for overall weighted effect.
     """
     from .transformations import get_cohorts
+    from ..validation import is_never_treated
 
     unit_gvar = data.groupby(ivar)[gvar].first()
     cohorts = get_cohorts(data, gvar, ivar)
 
-    # Never-treated units: NaN, zero, or infinite gvar values
-    nt_mask = (
-        unit_gvar.isna() |
-        (unit_gvar == 0) |
-        np.isinf(unit_gvar.astype(float))
-    )
+    # Identify never-treated units using the single source of truth function.
+    nt_mask = unit_gvar.apply(is_never_treated)
     n_nt = int(nt_mask.sum())
 
     return randomization_inference_staggered(

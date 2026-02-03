@@ -2,45 +2,57 @@
 Aggregation of cohort-time ATT estimates to summary parameters.
 
 This module aggregates (g, r)-specific treatment effect estimates into
-cohort-level and overall summary parameters via cross-sectional OLS regression.
+cohort-level, overall, and event-time summary parameters.
 
-Aggregation Levels
-------------------
-Cohort Effect (τ_g)
-    Time-averaged ATT for cohort g across post-treatment periods R_g:
+Three aggregation levels are supported:
 
-        Ȳ_ig = α + τ_g · D_ig + ε_ig
+- **Cohort Effect**: Time-averaged ATT for each cohort g across post-treatment
+  periods, estimated via regression of time-averaged transformed outcomes on
+  cohort membership indicators with never-treated controls.
 
-    where Ȳ_ig = (1/|R_g|) Σ_{r∈R_g} ẏ_{irg} averages the transformed outcome
-    over periods R_g = {g, g+1, ..., T}, and D_ig indicates cohort membership.
+- **Overall Effect**: Cohort-size-weighted average ATT across all cohorts,
+  estimated via regression on ever-treated indicators with cohort weights
+  proportional to cohort sizes.
 
-Overall Effect (τ_ω)
-    Cohort-size-weighted average treatment effect:
+- **Event-Time Effect (WATT)**: Weighted ATT aggregated by event time (relative
+  time since treatment). Weights are proportional to cohort sizes, and
+  t-distribution is used for proper inference with finite samples.
 
-        Ȳ_i = α + τ_ω · D_i + ε_i
+Key Classes
+-----------
+CohortEffect
+    Cohort-specific time-averaged treatment effect estimate.
+OverallEffect
+    Overall cohort-size-weighted treatment effect estimate.
+EventTimeEffect
+    Event-time aggregated treatment effect estimate (WATT).
 
-    where D_i indicates ever-treated status. The aggregated outcome Ȳ_i is
-    constructed differently by treatment status:
+Key Functions
+-------------
+aggregate_to_cohort
+    Aggregate period-specific effects to cohort-level effects.
+aggregate_to_overall
+    Estimate overall cohort-size-weighted treatment effect.
+aggregate_to_event_time
+    Aggregate cohort-time ATT estimates to event-time weighted ATT (WATT).
 
-    - Treated units: Ȳ_i = Ȳ_ig (own cohort's time-averaged transformation)
-    - Never-treated units: Ȳ_i = Σ_g ω_g · Ȳ_ig (cohort-weighted mixture)
-
-    with cohort weights ω_g = N_g / Σ_h N_h proportional to cohort sizes.
-
-Control Group Requirement
--------------------------
-Both aggregation levels require never-treated units as controls. Each cohort g
-uses a different pre-treatment reference period {T_min, ..., g-1} for the
+Notes
+-----
+Both cohort and overall aggregation levels require never-treated units as
+controls. Each cohort uses a different pre-treatment reference period for
 outcome transformation, so only never-treated units provide a consistent
-counterfactual baseline across cohorts. When no never-treated units exist,
-use aggregate='none' to estimate (g, r)-specific effects with not-yet-treated
-controls instead.
+counterfactual baseline. When no never-treated units exist, use aggregate='none'
+to estimate (g, r)-specific effects with not-yet-treated controls.
+
+Event-time aggregation (WATT) uses t-distribution for confidence intervals
+and p-values, which provides proper inference with finite samples.
 """
+
+from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
 from math import fsum
-from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -83,38 +95,34 @@ class CohortEffect:
     """
     Cohort-specific time-averaged treatment effect estimate.
 
-    Stores τ̂_g, the ATT for cohort g averaged over post-treatment periods
-    r ∈ {g, g+1, ..., T}, estimated via cross-sectional OLS regression on
-    time-averaged transformed outcomes with never-treated controls.
-
     Attributes
     ----------
     cohort : int
-        Treatment cohort identifier g (first treatment period).
+        Treatment cohort identifier (first treatment period).
     att : float
-        Point estimate τ̂_g.
+        Point estimate of the cohort-level ATT.
     se : float
-        Standard error of τ̂_g.
+        Standard error of the ATT estimate.
     ci_lower : float
         Lower bound of the confidence interval.
     ci_upper : float
         Upper bound of the confidence interval.
     t_stat : float
-        t-statistic for H₀: τ_g = 0.
+        t-statistic for the null hypothesis of zero effect.
     pvalue : float
         Two-sided p-value.
     n_periods : int
-        Number of post-treatment periods in the average.
+        Number of post-treatment periods included in the average.
     n_units : int
-        Number of treated units in cohort g.
+        Number of treated units in this cohort.
     n_control : int
         Number of never-treated control units.
     df_resid : int
         Residual degrees of freedom from the aggregation regression.
-        Equals n - 2 for the simple regression Ȳ_ig = α + τ_g·D_ig + ε_ig.
     df_inference : int
-        Degrees of freedom used for inference. Equals df_resid for
-        homoskedastic/HC variance, or G-1 for cluster-robust variance.
+        Degrees of freedom used for inference (equals df_resid for
+        homoskedastic/HC variance, or number of clusters minus one for
+        cluster-robust variance).
     """
     cohort: int
     att: float
@@ -135,37 +143,32 @@ class OverallEffect:
     """
     Overall cohort-size-weighted treatment effect estimate.
 
-    Stores τ̂_ω, the weighted average ATT across all treated cohorts with
-    weights ω_g = N_g / Σ_h N_h proportional to cohort sizes, estimated via
-    cross-sectional OLS regression on aggregated transformed outcomes with
-    never-treated controls.
-
     Attributes
     ----------
     att : float
-        Point estimate τ̂_ω.
+        Point estimate of the overall weighted ATT.
     se : float
-        Standard error of τ̂_ω.
+        Standard error of the ATT estimate.
     ci_lower : float
         Lower bound of the confidence interval.
     ci_upper : float
         Upper bound of the confidence interval.
     t_stat : float
-        t-statistic for H₀: τ_ω = 0.
+        t-statistic for the null hypothesis of zero effect.
     pvalue : float
         Two-sided p-value.
-    cohort_weights : Dict[int, float]
-        Cohort weight mapping {g: ω_g} where Σ_g ω_g = 1.
+    cohort_weights : dict[int, float]
+        Mapping from cohort identifiers to weights (weights sum to one).
     n_treated : int
         Total number of ever-treated units.
     n_control : int
         Number of never-treated control units.
     df_resid : int
-        Residual degrees of freedom from the overall aggregation regression.
-        Equals n - 2 for the simple regression Ȳ_i = α + τ_ω·D_i + ε_i.
+        Residual degrees of freedom from the aggregation regression.
     df_inference : int
-        Degrees of freedom used for inference. Equals df_resid for
-        homoskedastic/HC variance, or G-1 for cluster-robust variance.
+        Degrees of freedom used for inference (equals df_resid for
+        homoskedastic/HC variance, or number of clusters minus one for
+        cluster-robust variance).
     """
     att: float
     se: float
@@ -173,23 +176,76 @@ class OverallEffect:
     ci_upper: float
     t_stat: float
     pvalue: float
-    cohort_weights: Dict[int, float]
+    cohort_weights: dict[int, float]
     n_treated: int
     n_control: int
     df_resid: int = 0
     df_inference: int = 0
 
 
+@dataclass
+class EventTimeEffect:
+    """
+    Event-time aggregated treatment effect estimate (WATT).
+
+    Represents the weighted average treatment effect at event time r, computed
+    as WATT(r) = Σ_{g∈G_r} w(g,r) · ATT(g, g+r), where weights are proportional
+    to cohort sizes.
+
+    Attributes
+    ----------
+    event_time : int
+        Relative time since treatment (r = period - cohort). Negative values
+        indicate pre-treatment periods, positive values indicate post-treatment.
+    att : float
+        Point estimate of the weighted ATT at this event time.
+    se : float
+        Standard error: SE(WATT(r)) = sqrt(Σ [w(g,r)]² × [SE(ATT)]²).
+    ci_lower : float
+        Lower bound of confidence interval using t-distribution.
+    ci_upper : float
+        Upper bound of confidence interval using t-distribution.
+    t_stat : float
+        t-statistic: WATT(r) / SE(WATT(r)).
+    pvalue : float
+        Two-sided p-value from t-distribution.
+    df_inference : int
+        Degrees of freedom for t-distribution inference.
+        Uses min(df_g) across contributing cohorts as conservative choice.
+    n_cohorts : int
+        Number of cohorts contributing to this event time estimate.
+    cohort_contributions : dict[int, float]
+        Mapping from cohort g to its weighted contribution w(g,r) × ATT(g, g+r).
+    weight_sum : float
+        Sum of normalized weights (should equal 1.0 for validation).
+    alpha : float
+        Significance level used for confidence interval (default 0.05).
+    """
+    event_time: int
+    att: float
+    se: float
+    ci_lower: float
+    ci_upper: float
+    t_stat: float
+    pvalue: float
+    df_inference: int
+    n_cohorts: int
+    cohort_contributions: dict[int, float]
+    weight_sum: float
+    alpha: float = 0.05
+
+
 def _compute_cohort_aggregated_variable(
     data: pd.DataFrame,
     ivar: str,
-    ydot_cols: List[str],
+    ydot_cols: list[str],
 ) -> pd.Series:
     """
     Compute unit-level time-averaged transformed outcome.
 
-    Averages period-specific transformed outcomes into a single unit-level
-    variable: Ȳ_ig = (1/|R_g|) Σ_{r∈R_g} ẏ_{irg}.
+    For each unit, averages the transformed outcome values across all
+    specified columns, handling the sparse structure where each row
+    typically has only one non-NaN value corresponding to its cohort.
 
     Parameters
     ----------
@@ -198,19 +254,30 @@ def _compute_cohort_aggregated_variable(
     ivar : str
         Unit identifier column name.
     ydot_cols : list of str
-        Period-specific transformation column names to average
-        (e.g., 'ydot_g2005_r2005', 'ydot_g2005_r2006').
+        Transformation column names to average.
 
     Returns
     -------
     pd.Series
-        Unit-level aggregated outcome Ȳ_ig indexed by unit ID; NaN for units
-        with no valid observations.
+        Unit-level aggregated outcome indexed by unit ID.
 
     Raises
     ------
     ValueError
-        If ydot_cols is empty or contains missing columns.
+        If ydot_cols is empty or contains columns not present in data.
+
+    Warns
+    -----
+    UserWarning
+        If rows contain multiple non-NaN values (unexpected for correctly
+        transformed data) or if units are excluded due to missing data.
+
+    Notes
+    -----
+    The transformed data structure places each (cohort, period) outcome
+    in a separate column. For treated units, only their own cohort's
+    column contains non-NaN values. This function aggregates across
+    time periods within a unit.
     """
     if not ydot_cols:
         raise ValueError("No transformation columns provided for aggregation")
@@ -219,15 +286,15 @@ def _compute_cohort_aggregated_variable(
     if missing_cols:
         raise ValueError(f"Missing transformation columns: {missing_cols}")
 
-    # Use pd.isna() for compatibility with pandas nullable types (pd.NA)
-    # np.isnan() may raise TypeError for pd.NA values in object arrays
+    # Each row should have at most one non-NaN value since each (g,r) pair
+    # produces a separate column. Multiple non-NaN values indicate either
+    # data corruption or incorrect column selection, warranting a warning.
     ydot_df = data[ydot_cols]
     non_nan_count = (~ydot_df.isna()).sum(axis=1).values
     multi_value_rows = non_nan_count > 1
 
     if np.any(multi_value_rows):
         n_problematic = int(np.sum(multi_value_rows))
-        # stacklevel=3: _compute_cohort_aggregated_variable (2) -> caller function (3)
         warnings.warn(
             f"{n_problematic} rows have multiple non-NaN transformed values. "
             f"Using mean for aggregation.",
@@ -251,7 +318,6 @@ def _compute_cohort_aggregated_variable(
     n_valid = Y_bar.notna().sum()
     n_total = len(Y_bar)
     if n_valid < n_total:
-        # stacklevel=3: _compute_cohort_aggregated_variable (2) -> caller function (3)
         warnings.warn(
             f"Aggregation: {n_total - n_valid} units excluded due to missing data.",
             UserWarning,
@@ -269,8 +335,9 @@ def _get_unit_level_gvar(
     """
     Extract unit-level cohort assignment from panel data.
 
-    The cohort variable (first treatment period) is time-invariant within
-    each unit; this extracts one observation per unit.
+    Deduplicates panel data to unit level by taking the first observed
+    cohort value for each unit. Cohort assignment is time-invariant by
+    construction, so any observation suffices.
 
     Parameters
     ----------
@@ -284,7 +351,13 @@ def _get_unit_level_gvar(
     Returns
     -------
     pd.Series
-        Unit-level gvar values indexed by unit ID.
+        Unit-level cohort values indexed by unit ID.
+
+    Notes
+    -----
+    Uses groupby().first() rather than drop_duplicates() for efficiency
+    with large panels. The result is used for constructing treatment
+    indicators and identifying never-treated units.
     """
     return data.groupby(ivar)[gvar].first()
 
@@ -293,18 +366,23 @@ def _identify_nt_mask(unit_gvar: pd.Series) -> pd.Series:
     """
     Create boolean mask identifying never-treated units.
 
-    A unit is never-treated if its gvar is 0, NaN, or +∞. Delegates to the
-    canonical `is_never_treated()` function for consistent identification.
+    Applies the package's never-treated detection logic to each unit's
+    cohort value, recognizing NaN, 0, and positive infinity as indicators
+    of never-treated status.
 
     Parameters
     ----------
     unit_gvar : pd.Series
-        Unit-level gvar values indexed by unit ID.
+        Unit-level cohort values indexed by unit ID.
 
     Returns
     -------
     pd.Series
         Boolean mask indexed by unit ID; True indicates never-treated.
+
+    See Also
+    --------
+    is_never_treated : Underlying detection function for individual values.
     """
     return unit_gvar.apply(is_never_treated)
 
@@ -313,13 +391,13 @@ def _add_cluster_to_reg_data(
     reg_data: pd.DataFrame,
     original_data: pd.DataFrame,
     ivar: str,
-    cluster_var: Optional[str],
+    cluster_var: str | None,
 ) -> pd.DataFrame:
     """
     Merge cluster identifiers into unit-level regression data.
 
-    Extracts cluster assignments from the original panel and joins them to
-    the regression data. Warns for missing cluster values or few clusters.
+    Extracts cluster assignments from panel data and maps them to the
+    unit-level regression dataset for cluster-robust variance estimation.
 
     Parameters
     ----------
@@ -330,17 +408,29 @@ def _add_cluster_to_reg_data(
     ivar : str
         Unit identifier column name.
     cluster_var : str or None
-        Cluster variable column name; if None, returns reg_data unchanged.
+        Cluster variable column name. If None, returns reg_data unchanged.
 
     Returns
     -------
     pd.DataFrame
-        Copy of reg_data with '_cluster' column added if cluster_var specified.
+        Copy of regression data with '_cluster' column added.
 
     Raises
     ------
     ValueError
-        If cluster_var not found in original_data.
+        If cluster_var is not found in original_data columns.
+
+    Warns
+    -----
+    UserWarning
+        If units have missing cluster values or if the number of clusters
+        is below the recommended threshold for reliable inference.
+
+    Notes
+    -----
+    Cluster-robust standard errors require sufficient clusters (typically
+    20 or more) for asymptotic validity. Small cluster counts may produce
+    unreliable inference even with many observations.
     """
     if cluster_var is None:
         return reg_data
@@ -365,7 +455,6 @@ def _add_cluster_to_reg_data(
         units_in_cluster = set(unit_cluster.index)
         n_unmapped = len(units_in_reg - units_in_cluster)
         
-        # stacklevel=3: _add_cluster_to_reg_data (2) -> caller function (3)
         warning_parts = [f"{n_missing_cluster} units have missing cluster values."]
         if n_original_na > 0:
             warning_parts.append(f"  - {n_original_na} unit(s) have NaN in original cluster column")
@@ -381,7 +470,6 @@ def _add_cluster_to_reg_data(
 
     n_clusters = reg_data['_cluster'].nunique()
     if n_clusters < 20:
-        # stacklevel=3: _add_cluster_to_reg_data (2) -> caller function (3)
         warnings.warn(
             f"Number of clusters ({n_clusters}) is small, clustered standard errors may be unreliable. "
             f"At least 20 clusters are recommended.",
@@ -397,25 +485,21 @@ def aggregate_to_cohort(
     gvar: str,
     ivar: str,
     tvar: str,
-    cohorts: List[int],
+    cohorts: list[int],
     T_max: int,
     transform_type: str = 'demean',
-    vce: Optional[str] = None,
-    cluster_var: Optional[str] = None,
+    vce: str | None = None,
+    cluster_var: str | None = None,
     alpha: float = 0.05,
-    controls: Optional[List[str]] = None,
-    never_treated_values: Optional[List] = None,
-) -> List[CohortEffect]:
+    controls: list[str] | None = None,
+    never_treated_values: list | None = None,
+) -> list[CohortEffect]:
     """
     Aggregate period-specific effects to cohort-level effects.
 
-    For each cohort g, estimates τ_g via cross-sectional OLS:
-
-        Ȳ_ig = α + τ_g · D_ig + X_i'γ + D_ig·(X_i - X̄₁)'δ + ε_ig
-
-    where Ȳ_ig = (1/|R_g|) Σ_{r∈R_g} ẏ_{irg} is the time-averaged transformed
-    outcome, D_ig indicates cohort g membership, and X_i are time-invariant
-    controls centered at treated mean.
+    For each cohort, estimates the time-averaged ATT via cross-sectional OLS
+    regression of time-averaged transformed outcomes on cohort membership
+    indicators with never-treated controls.
 
     Parameters
     ----------
@@ -431,39 +515,30 @@ def aggregate_to_cohort(
     cohorts : list of int
         Treatment cohorts to estimate.
     T_max : int
-        Maximum time period (determines R_g = {g, ..., T_max}).
+        Maximum time period.
     transform_type : {'demean', 'detrend'}, default='demean'
-        Transformation type; determines column prefix ('ydot' or 'ycheck').
+        Transformation type determining column prefix.
     vce : {None, 'robust', 'hc0', 'hc1', 'hc2', 'hc3', 'hc4', 'cluster'}, optional
-        Variance-covariance estimator. See `run_ols_regression()`.
+        Variance-covariance estimator.
     cluster_var : str, optional
-        Cluster variable for cluster-robust standard errors. Required when
-        vce='cluster'.
+        Cluster variable for cluster-robust standard errors.
     alpha : float, default=0.05
         Significance level for confidence intervals.
     controls : list of str, optional
-        Time-invariant control variables to include in the regression.
-        Controls are only used when both treated and control groups satisfy
-        n > k + 1, where k is the number of control variables.
+        Time-invariant control variables to include.
     never_treated_values : list, optional
-        Deprecated. This parameter is accepted for backward compatibility but
-        is ignored. Never-treated units are automatically detected via the
-        is_never_treated() function which identifies gvar values of 0, NaN,
-        or +inf as never-treated.
+        Deprecated and ignored. Never-treated units are detected automatically.
 
     Returns
     -------
     list of CohortEffect
-        Cohort effect estimates sorted by cohort. Cohorts with insufficient
-        data are skipped with warnings.
+        Cohort effect estimates sorted by cohort.
 
     Raises
     ------
     NoNeverTreatedError
         If no never-treated control units exist.
     """
-    # Accept never_treated_values for backward compatibility but ignore it.
-    # Never-treated detection is automatic via is_never_treated().
     if never_treated_values is not None:
         warnings.warn(
             "The 'never_treated_values' parameter is deprecated and ignored. "
@@ -489,7 +564,6 @@ def aggregate_to_cohort(
                      if f'{prefix}_g{int(g)}_r{r}' in data_transformed.columns]
 
         if not ydot_cols:
-            # stacklevel=4: aggregate_to_cohort (2) -> internal caller (3) -> user code (4)
             warnings.warn(
                 f"Cohort {g}: No valid transformation columns, skipping",
                 stacklevel=4
@@ -501,14 +575,15 @@ def aggregate_to_cohort(
                 data_transformed, ivar, ydot_cols
             )
         except (ValueError, KeyError, IndexError) as e:
-            # stacklevel=4: aggregate_to_cohort (2) -> internal caller (3) -> user code (4)
             warnings.warn(
                 f"Cohort {g}: Aggregated variable calculation failed - {e}",
                 stacklevel=4
             )
             continue
 
-        # Build regression sample (cohort g + never-treated only)
+        # Restrict to cohort g and never-treated units. Not-yet-treated units
+        # are excluded because each cohort uses different pre-treatment periods,
+        # so only never-treated units provide consistent counterfactual baselines.
         cohort_mask = get_cohort_mask(unit_gvar, g)
         sample_mask = cohort_mask | nt_mask
         sample_units = sample_mask[sample_mask].index
@@ -525,8 +600,7 @@ def aggregate_to_cohort(
                 if ctrl in unit_controls.columns:
                     reg_data[ctrl] = unit_controls[ctrl].reindex(sample_units)
 
-        # Drop observations with missing values in outcome or control variables
-        # This matches Stata's regress behavior which automatically drops missing values
+        # Drop observations with missing values to ensure complete cases for regression.
         dropna_cols = ['Y_bar_ig'] + (controls if controls else [])
         reg_data = reg_data.dropna(subset=dropna_cols)
 
@@ -535,7 +609,6 @@ def aggregate_to_cohort(
         n_total = len(reg_data)
 
         if n_total < 2 or n_treat < 1 or n_control < 1:
-            # stacklevel=4: aggregate_to_cohort (2) -> internal caller (3) -> user code (4)
             warnings.warn(
                 f"Cohort {g}: Insufficient sample size (total={n_total}, treat={n_treat}, control={n_control})",
                 stacklevel=4
@@ -543,7 +616,6 @@ def aggregate_to_cohort(
             continue
 
         if n_total == 2:
-            # stacklevel=4: aggregate_to_cohort (2) -> internal caller (3) -> user code (4)
             warnings.warn(
                 f"Cohort {g}: Sample size is only 2 units, "
                 f"standard errors may be unreliable",
@@ -576,7 +648,6 @@ def aggregate_to_cohort(
                 alpha=alpha,
             )
         except (ValueError, np.linalg.LinAlgError) as e:
-            # stacklevel=4: aggregate_to_cohort (2) -> internal caller (3) -> user code (4)
             warnings.warn(
                 f"Cohort {g}: Regression estimation failed - {e}",
                 stacklevel=4
@@ -614,7 +685,6 @@ def aggregate_to_cohort(
     n_successful = len(results)
     
     if n_successful == 0:
-        # stacklevel=4: aggregate_to_cohort (2) -> internal caller (3) -> user code (4)
         warnings.warn(
             f"All cohort effect estimations failed ({n_requested} cohorts attempted).\n"
             f"Possible causes:\n"
@@ -627,7 +697,6 @@ def aggregate_to_cohort(
         )
     elif n_successful < n_requested:
         failed_cohorts = set(cohorts) - {r.cohort for r in results}
-        # stacklevel=4: aggregate_to_cohort (2) -> internal caller (3) -> user code (4)
         warnings.warn(
             f"Some cohort effect estimations failed: {n_successful}/{n_requested} succeeded.\n"
             f"Failed cohorts: {sorted(failed_cohorts)}",
@@ -643,28 +712,18 @@ def construct_aggregated_outcome(
     gvar: str,
     ivar: str,
     tvar: str,
-    weights: Dict[int, float],
-    cohorts: List[int],
+    weights: dict[int, float],
+    cohorts: list[int],
     T_max: int,
     transform_type: str = 'demean',
-    never_treated_values: Optional[List] = None,
+    never_treated_values: list | None = None,
 ) -> pd.Series:
     """
     Construct aggregated outcome variable for overall effect estimation.
 
-    Computes Ȳ_i with treatment-status-specific construction:
-
-    - Treated units (cohort g): Ȳ_i = Ȳ_ig (own cohort's time-averaged
-      transformation)
-    - Never-treated units: Ȳ_i = Σ_g ω_g · Ȳ_ig (cohort-weighted mixture)
-    
-    Raises
-    ------
-    ValueError
-        If cohorts list is empty.
-
-    The cohort-weighted construction for never-treated units ensures the
-    counterfactual reflects the same weighting scheme as treated units.
+    Computes unit-level aggregated outcomes with treatment-status-specific
+    construction: treated units use their own cohort's time-averaged
+    transformation, while never-treated units use a cohort-weighted mixture.
 
     Parameters
     ----------
@@ -675,35 +734,28 @@ def construct_aggregated_outcome(
     ivar : str
         Unit identifier column name.
     tvar : str
-        Time variable column name. Used to validate consistency between
-        the provided T_max parameter and the actual data range.
-    weights : Dict[int, float]
-        Cohort weights {g: ω_g}; must sum to 1 and keys must match cohorts.
+        Time variable column name.
+    weights : dict[int, float]
+        Cohort weights (must sum to one, keys must match cohorts).
     cohorts : list of int
         Treatment cohorts to include.
     T_max : int
         Maximum time period.
     transform_type : {'demean', 'detrend'}, default='demean'
-        Transformation type; determines column prefix.
+        Transformation type determining column prefix.
     never_treated_values : list, optional
-        Deprecated. This parameter is accepted for backward compatibility but
-        is ignored. Never-treated units are automatically detected via the
-        is_never_treated() function which identifies gvar values of 0, NaN,
-        or +inf as never-treated.
+        Deprecated and ignored. Never-treated units are detected automatically.
 
     Returns
     -------
     pd.Series
-        Aggregated outcome Ȳ_i indexed by unit ID; NaN for units where
-        aggregation cannot be computed.
+        Aggregated outcome indexed by unit ID.
 
     Raises
     ------
     ValueError
         If cohorts list is empty or weights keys do not match cohorts.
     """
-    # Accept never_treated_values for backward compatibility but ignore it.
-    # Never-treated detection is automatic via is_never_treated().
     if never_treated_values is not None:
         warnings.warn(
             "The 'never_treated_values' parameter is deprecated and ignored. "
@@ -713,7 +765,7 @@ def construct_aggregated_outcome(
             stacklevel=2
         )
 
-    # Validate that cohorts list is not empty.
+    # Validate inputs.
     if not cohorts:
         raise ValueError(
             "cohorts list cannot be empty.\n"
@@ -754,8 +806,6 @@ def construct_aggregated_outcome(
     # Use fsum for numerically stable weight summation.
     weights_sum = fsum(weights.values())
     if not np.isclose(weights_sum, 1.0, atol=WEIGHT_SUM_TOLERANCE):
-        # stacklevel=5: construct_aggregated_outcome (2) -> aggregate_to_overall (3) ->
-        #              internal caller (4) -> user code (5)
         warnings.warn(
             f"Cohort weights sum to {weights_sum:.10f}, expected 1.0. "
             f"This may indicate incorrect weight calculation.",
@@ -823,8 +873,6 @@ def construct_aggregated_outcome(
                     continue
                     
                 Y_bar_ig = cohort_Y_bar[g][unit_id]
-                # Use pd.isna() for compatibility with pandas nullable types (pd.NA)
-                # np.isnan() may raise TypeError for pd.NA values
                 if pd.isna(Y_bar_ig):
                     missing_cohorts.append(g)
                     continue
@@ -836,9 +884,10 @@ def construct_aggregated_outcome(
             weighted_sum = fsum(weighted_products) if weighted_products else 0.0
             valid_weights = fsum(weight_values) if weight_values else 0.0
             
-            # Normalize weights when some cohorts are missing.
-            # Use WEIGHT_SUM_TOLERANCE (1e-6) for weight sum comparisons to accommodate
-            # cumulative floating-point rounding errors from multiple weight additions.
+            # Renormalize weights when some cohorts have missing data. This ensures
+            # the weighted average reflects only available cohorts rather than being
+            # biased downward by treating missing cohorts as zeros. The tolerance
+            # threshold distinguishes genuine partial data from complete missingness.
             if valid_weights > WEIGHT_SUM_TOLERANCE:
                 # Normalize: Y_bar = weighted_sum / valid_weights
                 normalized_value = weighted_sum / valid_weights
@@ -873,8 +922,6 @@ def construct_aggregated_outcome(
         example_str = ", ".join(examples)
         if n_non_int > 3:
             example_str += f" ... and {n_non_int - 3} more"
-        # stacklevel=5: construct_aggregated_outcome (2) -> aggregate_to_overall (3) ->
-        #              internal caller (4) -> user code (5)
         warnings.warn(
             f"{n_non_int} unit(s) have non-integer gvar values and were skipped from aggregation. "
             f"Examples: {example_str}",
@@ -993,22 +1040,18 @@ def aggregate_to_overall(
     ivar: str,
     tvar: str,
     transform_type: str = 'demean',
-    vce: Optional[str] = None,
-    cluster_var: Optional[str] = None,
+    vce: str | None = None,
+    cluster_var: str | None = None,
     alpha: float = 0.05,
-    controls: Optional[List[str]] = None,
-    never_treated_values: Optional[List] = None,
+    controls: list[str] | None = None,
+    never_treated_values: list | None = None,
 ) -> OverallEffect:
     """
     Estimate overall cohort-size-weighted treatment effect.
 
-    Estimates τ_ω via cross-sectional OLS:
-
-        Ȳ_i = α + τ_ω · D_i + X_i'γ + D_i·(X_i - X̄₁)'δ + ε_i
-
-    where D_i indicates ever-treated status, Ȳ_i is the aggregated outcome
-    with cohort weights ω_g = N_g / Σ_h N_h proportional to cohort sizes, and
-    X_i are time-invariant controls centered at treated mean.
+    Estimates the weighted average ATT across all treated cohorts via
+    cross-sectional OLS regression on aggregated transformed outcomes with
+    cohort weights proportional to cohort sizes and never-treated controls.
 
     Parameters
     ----------
@@ -1022,29 +1065,22 @@ def aggregate_to_overall(
     tvar : str
         Time variable column name.
     transform_type : {'demean', 'detrend'}, default='demean'
-        Transformation type; determines column prefix.
+        Transformation type determining column prefix.
     vce : {None, 'robust', 'hc0', 'hc1', 'hc2', 'hc3', 'hc4', 'cluster'}, optional
-        Variance-covariance estimator. See `run_ols_regression()`.
+        Variance-covariance estimator.
     cluster_var : str, optional
-        Cluster variable for cluster-robust standard errors. Required when
-        vce='cluster'.
+        Cluster variable for cluster-robust standard errors.
     alpha : float, default=0.05
         Significance level for confidence intervals.
     controls : list of str, optional
-        Time-invariant control variables to include in the regression.
-        Controls are only used when both treated and control groups satisfy
-        n > k + 1, where k is the number of control variables.
+        Time-invariant control variables to include.
     never_treated_values : list, optional
-        Deprecated. This parameter is accepted for backward compatibility but
-        is ignored. Never-treated units are automatically detected via the
-        is_never_treated() function which identifies gvar values of 0, NaN,
-        or +inf as never-treated.
+        Deprecated and ignored. Never-treated units are detected automatically.
 
     Returns
     -------
     OverallEffect
-        Overall effect estimate with point estimate, standard error,
-        confidence interval, test statistics, cohort weights, and sample sizes.
+        Overall effect estimate with inference statistics and cohort weights.
 
     Raises
     ------
@@ -1053,8 +1089,6 @@ def aggregate_to_overall(
     ValueError
         If sample size insufficient or no valid cohorts exist.
     """
-    # Accept never_treated_values for backward compatibility but ignore it.
-    # Never-treated detection is automatic via is_never_treated().
     if never_treated_values is not None:
         warnings.warn(
             "The 'never_treated_values' parameter is deprecated and ignored. "
@@ -1079,7 +1113,6 @@ def aggregate_to_overall(
 
     zero_cohorts = [g for g, n in cohort_sizes.items() if n == 0]
     if zero_cohorts:
-        # stacklevel=4: aggregate_to_overall (2) -> internal caller (3) -> user code (4)
         warnings.warn(
             f"Cohorts with 0 units detected and excluded: {sorted(zero_cohorts)}. "
             f"This may indicate data filtering issues.",
@@ -1127,8 +1160,7 @@ def aggregate_to_overall(
             if ctrl in unit_controls.columns:
                 reg_data[ctrl] = unit_controls[ctrl].reindex(unit_gvar.index)
 
-    # Drop observations with missing values in outcome or control variables
-    # This matches Stata's regress behavior which automatically drops missing values
+    # Drop observations with missing values to ensure complete cases for regression.
     dropna_cols = ['Y_bar'] + (controls if controls else [])
     reg_data = reg_data.dropna(subset=dropna_cols)
 
@@ -1171,7 +1203,6 @@ def aggregate_to_overall(
         )
 
     if n_total == 2:
-        # stacklevel=4: aggregate_to_overall (2) -> internal caller (3) -> user code (4)
         warnings.warn(
             "Sample size is only 2 units, standard errors may be unreliable",
             UserWarning,
@@ -1227,31 +1258,25 @@ def aggregate_to_overall(
     )
 
 
-def cohort_effects_to_dataframe(results: List[CohortEffect]) -> pd.DataFrame:
+def cohort_effects_to_dataframe(results: list[CohortEffect]) -> pd.DataFrame:
     """
     Convert CohortEffect objects to a pandas DataFrame.
 
     Parameters
     ----------
     results : list of CohortEffect
-        Cohort effect estimates from `aggregate_to_cohort()`.
+        Cohort effect estimates from aggregate_to_cohort.
 
     Returns
     -------
     pd.DataFrame
-        Tabular representation with columns: cohort, att, se, ci_lower,
-        ci_upper, t_stat, pvalue, n_periods, n_units, n_control, df_resid,
-        df_inference. Returns an empty DataFrame with expected schema if
-        results is empty.
+        Tabular representation with one row per cohort.
 
     Raises
     ------
     TypeError
-        If results is None (programming error). Pass empty list [] for
-        no cohort effects.
+        If results is None.
     """
-    # Validate input type: None indicates programming error
-    # Empty list is valid and returns empty DataFrame with correct schema
     if results is None:
         raise TypeError(
             "results cannot be None. Expected a list of CohortEffect objects. "
@@ -1259,8 +1284,7 @@ def cohort_effects_to_dataframe(results: List[CohortEffect]) -> pd.DataFrame:
         )
 
     if len(results) == 0:
-        # Specify dtypes for empty DataFrame to match non-empty case.
-        # Without explicit dtypes, all columns default to object type.
+        # Return empty DataFrame with correct dtypes.
         return pd.DataFrame({
             'cohort': pd.Series(dtype='int64'),
             'att': pd.Series(dtype='float64'),
@@ -1292,4 +1316,497 @@ def cohort_effects_to_dataframe(results: List[CohortEffect]) -> pd.DataFrame:
             'df_inference': r.df_inference,
         }
         for r in results
+    ])
+
+
+def _compute_event_time_weights(
+    cohort_sizes: dict[int, int],
+    available_cohorts: list[int],
+) -> dict[int, float]:
+    """
+    Compute normalized weights for available cohorts at a given event time.
+
+    Computes cohort-size-proportional weights: w(g,r) = N_g / Σ_{g'∈G_r} N_{g'},
+    where N_g is the number of treated units in cohort g.
+
+    Parameters
+    ----------
+    cohort_sizes : dict[int, int]
+        Mapping from cohort identifier to number of treated units.
+    available_cohorts : list[int]
+        Cohorts with valid ATT estimates at this event time.
+
+    Returns
+    -------
+    dict[int, float]
+        Mapping from cohort to normalized weight.
+
+    Raises
+    ------
+    ValueError
+        If available_cohorts is empty or total size is zero.
+
+    Notes
+    -----
+    Uses math.fsum for numerically stable summation.
+    """
+    if not available_cohorts:
+        raise ValueError("available_cohorts cannot be empty")
+
+    # Get sizes for available cohorts only
+    sizes = [cohort_sizes.get(g, 0) for g in available_cohorts]
+    total_size = fsum(sizes)
+
+    if total_size <= 0:
+        raise ValueError(
+            f"Total cohort size is {total_size}, cannot compute weights. "
+            f"Available cohorts: {available_cohorts}, sizes: {sizes}"
+        )
+
+    weights = {g: cohort_sizes.get(g, 0) / total_size for g in available_cohorts}
+    return weights
+
+
+def _validate_weight_sum(
+    weights: dict[int, float],
+    tolerance: float = WEIGHT_SUM_TOLERANCE,
+) -> tuple[bool, float]:
+    """
+    Validate that weights sum to 1.0 within tolerance.
+
+    Parameters
+    ----------
+    weights : dict[int, float]
+        Mapping from cohort to weight.
+    tolerance : float, default=1e-6
+        Acceptable deviation from 1.0.
+
+    Returns
+    -------
+    tuple[bool, float]
+        (is_valid, actual_sum) where is_valid indicates if sum is within tolerance.
+    """
+    weight_sum = fsum(weights.values())
+    is_valid = abs(weight_sum - 1.0) <= tolerance
+    return is_valid, weight_sum
+
+
+def _select_degrees_of_freedom(
+    cohort_dfs: dict[int, int | None],
+    weights: dict[int, float],
+    strategy: str,
+    n_cohorts: int,
+) -> int:
+    """
+    Select degrees of freedom for t-distribution inference.
+
+    Parameters
+    ----------
+    cohort_dfs : dict[int, int | None]
+        Mapping from cohort to degrees of freedom. None indicates unavailable.
+    weights : dict[int, float]
+        Cohort weights for weighted average strategy.
+    strategy : {'conservative', 'weighted', 'fallback'}
+        Selection strategy:
+        - 'conservative': min(df_g) across cohorts (most conservative)
+        - 'weighted': weighted average of df_g
+        - 'fallback': n_cohorts - 1 (ignores individual df)
+    n_cohorts : int
+        Number of contributing cohorts.
+
+    Returns
+    -------
+    int
+        Selected degrees of freedom (minimum 1).
+
+    Raises
+    ------
+    ValueError
+        If strategy is invalid.
+    """
+    valid_strategies = {'conservative', 'weighted', 'fallback'}
+    if strategy not in valid_strategies:
+        raise ValueError(
+            f"Invalid df_strategy '{strategy}'. Must be one of {valid_strategies}"
+        )
+
+    # Filter to valid (non-None, positive) df values
+    valid_dfs = {g: df for g, df in cohort_dfs.items() if df is not None and df > 0}
+
+    if not valid_dfs:
+        # No valid df available, use fallback
+        return max(1, n_cohorts - 1)
+
+    if strategy == 'fallback':
+        return max(1, n_cohorts - 1)
+
+    if strategy == 'conservative':
+        return max(1, min(valid_dfs.values()))
+
+    if strategy == 'weighted':
+        # Weighted average of df values
+        weighted_sum = fsum(weights.get(g, 0) * df for g, df in valid_dfs.items())
+        # Renormalize weights to valid cohorts only
+        valid_weight_sum = fsum(weights.get(g, 0) for g in valid_dfs.keys())
+        if valid_weight_sum > 0:
+            weighted_df = weighted_sum / valid_weight_sum
+            return max(1, int(round(weighted_df)))
+        else:
+            return max(1, n_cohorts - 1)
+
+    # Should not reach here
+    return max(1, n_cohorts - 1)
+
+
+def aggregate_to_event_time(
+    cohort_time_effects: pd.DataFrame | list,
+    cohort_sizes: dict[int, int],
+    alpha: float = 0.05,
+    event_time_range: tuple[int, int] | None = None,
+    df_strategy: str = 'conservative',
+    verbose: bool = False,
+) -> list[EventTimeEffect]:
+    """
+    Aggregate cohort-time ATT estimates to event-time weighted ATT (WATT).
+
+    Computes WATT(r) = Σ_{g∈G_r} w(g,r) · ATT(g, g+r), where weights are
+    proportional to cohort sizes. Uses t-distribution for proper inference.
+
+    Parameters
+    ----------
+    cohort_time_effects : pd.DataFrame or list
+        Cohort-time specific ATT estimates. DataFrame must contain columns:
+        'cohort', 'period', 'att', 'se'. Optional: 'df_inference'.
+        If list, must contain objects with these attributes.
+    cohort_sizes : dict[int, int]
+        Mapping from cohort identifier to number of treated units in that cohort.
+        Used to compute weights w(g,r) = N_g / Σ N_g'.
+    alpha : float, default=0.05
+        Significance level for confidence intervals.
+    event_time_range : tuple[int, int] or None, optional
+        If provided, only compute WATT for event times in [min, max].
+        If None, compute for all available event times.
+    df_strategy : {'conservative', 'weighted', 'fallback'}, default='conservative'
+        Strategy for selecting degrees of freedom:
+        - 'conservative': min(df_g) across contributing cohorts
+        - 'weighted': weighted average of df_g
+        - 'fallback': n_cohorts - 1 (ignores individual df)
+    verbose : bool, default=False
+        If True, log diagnostic information about aggregation.
+
+    Returns
+    -------
+    list[EventTimeEffect]
+        Event-time aggregated effects sorted by event_time.
+
+    Raises
+    ------
+    ValueError
+        If cohort_time_effects is empty or cohort_sizes contains invalid values.
+
+    Warns
+    -----
+    UserWarning
+        If weight sum deviates from 1.0, if cohorts are excluded due to
+        missing data, or if df information is unavailable.
+
+    Notes
+    -----
+    The standard error formula assumes independence across cohorts:
+    SE(WATT(r)) = sqrt(Σ [w(g,r)]² × [SE(ATT)]²)
+
+    Confidence intervals use t-distribution rather than normal distribution,
+    which provides proper inference for small samples.
+    """
+    from scipy.stats import t as t_dist
+
+    # Convert to DataFrame if needed
+    if isinstance(cohort_time_effects, list):
+        if len(cohort_time_effects) == 0:
+            raise ValueError("cohort_time_effects cannot be empty")
+        # Convert list of objects to DataFrame
+        df = pd.DataFrame([
+            {
+                'cohort': getattr(e, 'cohort', None),
+                'period': getattr(e, 'period', None),
+                'att': getattr(e, 'att', None),
+                'se': getattr(e, 'se', None),
+                'df_inference': getattr(e, 'df_inference', None),
+            }
+            for e in cohort_time_effects
+        ])
+    else:
+        df = cohort_time_effects.copy()
+
+    if df.empty:
+        raise ValueError("cohort_time_effects cannot be empty")
+
+    # Validate required columns
+    required_cols = ['cohort', 'period', 'att', 'se']
+    missing_cols = [c for c in required_cols if c not in df.columns]
+    if missing_cols:
+        raise ValueError(f"Missing required columns: {missing_cols}")
+
+    # Validate cohort_sizes
+    if not cohort_sizes:
+        raise ValueError("cohort_sizes cannot be empty")
+
+    invalid_sizes = {g: n for g, n in cohort_sizes.items() if n <= 0}
+    if invalid_sizes:
+        raise ValueError(
+            f"cohort_sizes contains invalid (non-positive) values: {invalid_sizes}"
+        )
+
+    # Compute event_time if not present
+    if 'event_time' not in df.columns:
+        df['event_time'] = df['period'] - df['cohort']
+
+    # Filter by event_time_range if specified
+    if event_time_range is not None:
+        min_e, max_e = event_time_range
+        df = df[(df['event_time'] >= min_e) & (df['event_time'] <= max_e)]
+        if df.empty:
+            warnings.warn(
+                f"No effects found in event_time_range [{min_e}, {max_e}]",
+                UserWarning,
+                stacklevel=2
+            )
+            return []
+
+    # Group by event_time
+    event_times = sorted(df['event_time'].unique())
+    results = []
+
+    for r in event_times:
+        event_df = df[df['event_time'] == r].copy()
+
+        # Filter out rows with invalid ATT or SE
+        valid_mask = event_df['att'].notna() & event_df['se'].notna()
+        invalid_count = (~valid_mask).sum()
+        if invalid_count > 0:
+            excluded_cohorts = event_df.loc[~valid_mask, 'cohort'].tolist()
+            if verbose:
+                warnings.warn(
+                    f"Event time {r}: {invalid_count} cohort(s) excluded due to "
+                    f"missing ATT/SE: {excluded_cohorts}",
+                    UserWarning,
+                    stacklevel=2
+                )
+            event_df = event_df[valid_mask]
+
+        if event_df.empty:
+            # All cohorts invalid for this event time
+            if verbose:
+                warnings.warn(
+                    f"Event time {r}: All cohorts have invalid data, returning NaN",
+                    UserWarning,
+                    stacklevel=2
+                )
+            results.append(EventTimeEffect(
+                event_time=int(r),
+                att=np.nan,
+                se=np.nan,
+                ci_lower=np.nan,
+                ci_upper=np.nan,
+                t_stat=np.nan,
+                pvalue=np.nan,
+                df_inference=0,
+                n_cohorts=0,
+                cohort_contributions={},
+                weight_sum=0.0,
+                alpha=alpha,
+            ))
+            continue
+
+        # Get available cohorts for this event time
+        available_cohorts = event_df['cohort'].astype(int).tolist()
+        n_cohorts = len(available_cohorts)
+
+        # Compute weights
+        try:
+            weights = _compute_event_time_weights(cohort_sizes, available_cohorts)
+        except ValueError as e:
+            warnings.warn(
+                f"Event time {r}: Weight computation failed - {e}",
+                UserWarning,
+                stacklevel=2
+            )
+            results.append(EventTimeEffect(
+                event_time=int(r),
+                att=np.nan,
+                se=np.nan,
+                ci_lower=np.nan,
+                ci_upper=np.nan,
+                t_stat=np.nan,
+                pvalue=np.nan,
+                df_inference=0,
+                n_cohorts=n_cohorts,
+                cohort_contributions={},
+                weight_sum=0.0,
+                alpha=alpha,
+            ))
+            continue
+
+        # Validate weight sum
+        is_valid, weight_sum = _validate_weight_sum(weights)
+        if not is_valid:
+            warnings.warn(
+                f"Event time {r}: Weight sum {weight_sum:.10f} deviates from 1.0",
+                UserWarning,
+                stacklevel=2
+            )
+
+        # Compute WATT(r) = Σ w(g,r) × ATT(g, g+r)
+        cohort_contributions = {}
+        weighted_att_terms = []
+        weighted_var_terms = []
+
+        for _, row in event_df.iterrows():
+            g = int(row['cohort'])
+            att_g = row['att']
+            se_g = row['se']
+            w_g = weights.get(g, 0)
+
+            contribution = w_g * att_g
+            cohort_contributions[g] = contribution
+            weighted_att_terms.append(contribution)
+            weighted_var_terms.append((w_g ** 2) * (se_g ** 2))
+
+        # Use fsum for numerical stability
+        watt = fsum(weighted_att_terms)
+        variance = fsum(weighted_var_terms)
+        se_watt = np.sqrt(variance) if variance > 0 else 0.0
+
+        # Get df for each cohort
+        cohort_dfs = {}
+        if 'df_inference' in event_df.columns:
+            for _, row in event_df.iterrows():
+                g = int(row['cohort'])
+                df_val = row.get('df_inference', None)
+                if pd.notna(df_val):
+                    cohort_dfs[g] = int(df_val)
+                else:
+                    cohort_dfs[g] = None
+        else:
+            # No df information available
+            cohort_dfs = {g: None for g in available_cohorts}
+
+        # Select df for inference
+        df_inference = _select_degrees_of_freedom(
+            cohort_dfs, weights, df_strategy, n_cohorts
+        )
+
+        if verbose and not cohort_dfs:
+            warnings.warn(
+                f"Event time {r}: No df_inference available, using fallback df={df_inference}",
+                UserWarning,
+                stacklevel=2
+            )
+
+        # Compute t-statistic
+        if se_watt > 0:
+            t_stat = watt / se_watt
+        else:
+            t_stat = np.inf if watt > 0 else (-np.inf if watt < 0 else np.nan)
+
+        # Compute p-value using t-distribution
+        if np.isfinite(t_stat) and df_inference > 0:
+            pvalue = 2 * (1 - t_dist.cdf(abs(t_stat), df_inference))
+        else:
+            pvalue = 0.0 if np.isinf(t_stat) else np.nan
+
+        # Compute CI using t-distribution
+        if df_inference > 0:
+            t_crit = t_dist.ppf(1 - alpha / 2, df_inference)
+        else:
+            # Fallback to z=1.96 if df is invalid (should not happen)
+            t_crit = 1.96
+            warnings.warn(
+                f"Event time {r}: Invalid df_inference={df_inference}, using z=1.96",
+                UserWarning,
+                stacklevel=2
+            )
+
+        ci_lower = watt - t_crit * se_watt
+        ci_upper = watt + t_crit * se_watt
+
+        results.append(EventTimeEffect(
+            event_time=int(r),
+            att=watt,
+            se=se_watt,
+            ci_lower=ci_lower,
+            ci_upper=ci_upper,
+            t_stat=t_stat,
+            pvalue=pvalue,
+            df_inference=df_inference,
+            n_cohorts=n_cohorts,
+            cohort_contributions=cohort_contributions,
+            weight_sum=weight_sum,
+            alpha=alpha,
+        ))
+
+    # Sort by event_time
+    results.sort(key=lambda x: x.event_time)
+
+    if verbose:
+        n_event_times = len(results)
+        n_valid = sum(1 for e in results if not np.isnan(e.att))
+        print(f"aggregate_to_event_time: {n_valid}/{n_event_times} event times computed")
+
+    return results
+
+
+def event_time_effects_to_dataframe(results: list[EventTimeEffect]) -> pd.DataFrame:
+    """
+    Convert EventTimeEffect objects to a pandas DataFrame.
+
+    Parameters
+    ----------
+    results : list[EventTimeEffect]
+        Event-time effect estimates from aggregate_to_event_time.
+
+    Returns
+    -------
+    pd.DataFrame
+        Tabular representation with one row per event time.
+
+    Raises
+    ------
+    TypeError
+        If results is None.
+    """
+    if results is None:
+        raise TypeError(
+            "results cannot be None. Expected a list of EventTimeEffect objects. "
+            "If no event-time effects were estimated, pass an empty list []."
+        )
+
+    if len(results) == 0:
+        return pd.DataFrame({
+            'event_time': pd.Series(dtype='int64'),
+            'att': pd.Series(dtype='float64'),
+            'se': pd.Series(dtype='float64'),
+            'ci_lower': pd.Series(dtype='float64'),
+            'ci_upper': pd.Series(dtype='float64'),
+            't_stat': pd.Series(dtype='float64'),
+            'pvalue': pd.Series(dtype='float64'),
+            'df_inference': pd.Series(dtype='int64'),
+            'n_cohorts': pd.Series(dtype='int64'),
+            'weight_sum': pd.Series(dtype='float64'),
+        })
+
+    return pd.DataFrame([
+        {
+            'event_time': e.event_time,
+            'att': e.att,
+            'se': e.se,
+            'ci_lower': e.ci_lower,
+            'ci_upper': e.ci_upper,
+            't_stat': e.t_stat,
+            'pvalue': e.pvalue,
+            'df_inference': e.df_inference,
+            'n_cohorts': e.n_cohorts,
+            'weight_sum': e.weight_sum,
+        }
+        for e in results
     ])

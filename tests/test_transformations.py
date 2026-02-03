@@ -372,7 +372,7 @@ class TestQuarterlyTransforms:
         """Test detrendq transformation on data with linear trend and seasonality.
 
         Data structure:
-        - N=2 units, T=9 periods (5 pre-periods + 4 post-periods)
+        - N=2 units, T=10 periods (6 pre-periods + 4 post-periods)
         - Unit 1: y = 5 + 0.5*t + seasonal effects
         - Unit 2: y = 3 + 0.3*t + seasonal effects
 
@@ -381,28 +381,31 @@ class TestQuarterlyTransforms:
         2. Removes these effects from all periods
         3. Pre-period residuals should be small (good fit)
 
-        Note: detrendq requires at least 5 pre-period observations to ensure
-        sufficient degrees of freedom after estimating intercept, trend, and
-        3 quarterly dummy coefficients.
+        Note: detrendq requires at least 6 pre-period observations to ensure
+        df = n - k >= 1 after estimating intercept (1), trend (1), and
+        quarterly dummy coefficients (3), totaling k=5 parameters.
         """
-        # Construct data with trend + seasonality (5 pre-periods for detrendq)
+        # Construct data with trend + seasonality (6 pre-periods for detrendq)
+        # detrendq estimates 5 parameters: intercept + trend + 3 quarter dummies
+        # Requires n >= k + 1 = 6 pre-period observations for df >= 1
         data = pd.DataFrame({
-            'id': [1,1,1,1,1,1,1,1,1, 2,2,2,2,2,2,2,2,2],
-            'year': [1,1,1,1,1,2,2,2,2, 1,1,1,1,1,2,2,2,2],
-            'quarter': [1,2,3,4,1,2,3,4,1, 1,2,3,4,1,2,3,4,1],
-            'tindex': [1,2,3,4,5,6,7,8,9, 1,2,3,4,5,6,7,8,9],
+            'id': [1,1,1,1,1,1,1,1,1,1, 2,2,2,2,2,2,2,2,2,2],
+            'year': [1,1,1,1,1,1,2,2,2,2, 1,1,1,1,1,1,2,2,2,2],
+            'quarter': [1,2,3,4,1,2,3,4,1,2, 1,2,3,4,1,2,3,4,1,2],
+            'tindex': [1,2,3,4,5,6,7,8,9,10, 1,2,3,4,5,6,7,8,9,10],
             # Unit 1: base=5, trend=0.5*t, seasonal=[0, 1, 0.5, 1.5]
-            'y': [5.0, 6.5, 6.5, 7.5, 7.5, 9.0, 9.0, 10.0, 10.5,
+            # y = 5 + 0.5*t + seasonal[q], seasonal = [0, 1, 0.5, 1.5] for q=1,2,3,4
+            'y': [5.5, 7.0, 7.0, 8.5, 7.5, 9.0, 9.0, 10.5, 10.0, 11.5,
                   # Unit 2: base=3, trend=0.3*t, seasonal=[0, 1, 0.5, 1.5]
-                  3.0, 4.3, 4.4, 5.2, 4.5, 5.8, 5.9, 6.7, 7.0],
-            'd_': [1,1,1,1,1,1,1,1,1, 0,0,0,0,0,0,0,0,0],
-            'post_': [0,0,0,0,0,1,1,1,1, 0,0,0,0,0,1,1,1,1],
+                  3.3, 4.6, 4.4, 5.7, 4.5, 5.8, 5.6, 6.9, 6.0, 7.3],
+            'd_': [1,1,1,1,1,1,1,1,1,1, 0,0,0,0,0,0,0,0,0,0],
+            'post_': [0,0,0,0,0,0,1,1,1,1, 0,0,0,0,0,0,1,1,1,1],
         })
         
-        # Apply detrendq transformation (tpost1=6 because first post-period is at t=6)
+        # Apply detrendq transformation (tpost1=7 because first post-period is at t=7)
         data_transformed = apply_rolling_transform(
             data=data, y='y', ivar='id', tindex='tindex', post='post_',
-            rolling='detrendq', tpost1=6, quarter='quarter'
+            rolling='detrendq', tpost1=7, quarter='quarter'
         )
 
         # Verify required columns are present

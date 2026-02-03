@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>lwdid.estimation &mdash; lwdid 0.1.0</title>
+  <title>lwdid.estimation &mdash; lwdid 0.2.0</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -13,7 +13,7 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../../_static/documentation_options.js?v=938c9ccc"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,7 +62,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quick Start</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#basic-example">Basic Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#simplest-usage">Simplest Usage</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#output">Output</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#key-parameters">Key Parameters</a><ul>
@@ -70,7 +69,9 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#common-options">Common Options</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#heteroskedasticity-robust-standard-errors">Heteroskedasticity-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#small-sample-exact-inference">Small-Sample Exact Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#large-sample-inference">Large-Sample Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#randomization-inference">Randomization Inference</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#adding-control-variables">Adding Control Variables</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#quarterly-data">Quarterly Data</a></li>
@@ -88,11 +89,17 @@
 <li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#key-requirements">Key Requirements</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#staggered-adoption">Staggered Adoption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#staggered-results">Staggered Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../quickstart.html#key-staggered-parameters">Key Staggered Parameters</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../quickstart.html#next-steps">Next Steps</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#scenario-selection-guide">Scenario Selection Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#quick-reference">Quick Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
@@ -103,8 +110,11 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#variance-estimation">Variance Estimation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#ols-homoskedastic">OLS (Homoskedastic)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#hc0-white-s-heteroskedasticity-consistent">HC0 (White’s Heteroskedasticity-Consistent)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#hc1-heteroskedasticity-robust">HC1 (Heteroskedasticity-Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#hc2-leverage-adjusted">HC2 (Leverage-Adjusted)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#hc3-small-sample-adjusted-robust">HC3 (Small-Sample Adjusted Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#hc4-high-leverage-adjusted">HC4 (High-Leverage Adjusted)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#cluster-robust">Cluster-Robust</a></li>
 </ul>
 </li>
@@ -140,12 +150,22 @@
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#troubleshooting">Troubleshooting</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#common-errors">Common Errors</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#performance-tips">Performance Tips</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#staggered-adoption-design">Staggered Adoption Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#id2">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#accessing-staggered-results">Accessing Staggered Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#control-group-strategies">Control Group Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#estimator-selection">Estimator Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#staggered-example">Staggered Example</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#further-reading">Further Reading</a></li>
@@ -183,6 +203,10 @@
 <li class="toctree-l3"><a class="reference internal" href="../../examples/index.html#creating-publication-tables">Creating Publication Tables</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/index.html#staggered-did-castle-law">Staggered DiD: Castle Law</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../examples/index.html#castle-doctrine-analysis">Castle Doctrine Analysis</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/index.html#complete-workflow-example">Complete Workflow Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../examples/index.html#end-to-end-analysis">End-to-End Analysis</a></li>
 </ul>
@@ -201,40 +225,39 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/core.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/results.html">LWDIDResults Class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#lwdid.LWDIDResults"><code class="docutils literal notranslate"><span class="pre">LWDIDResults</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/results.html">Results Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#attributes-reference">Attributes Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#methods-reference">Methods Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#usage-by-design-type">Usage by Design Type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#lwdidresults-class">LWDIDResults Class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/results.html#examples">Examples</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#accessing-core-estimates">Accessing Core Estimates</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#sample-information">Sample Information</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#period-specific-effects">Period-Specific Effects</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#randomization-inference-results">Randomization Inference Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#printing-summary">Printing Summary</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#visualization">Visualization</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#exporting-results">Exporting Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#working-with-results-programmatically">Working with Results Programmatically</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/staggered.html">Staggered DiD Module (staggered)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#key-concepts">Key Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#transformations">Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#control-groups">Control Groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#estimation">Estimation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#aggregation">Aggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#ipw-estimator">IPW Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#examples">Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/results.html#attributes-reference">Attributes Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#core-estimates">Core Estimates</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#id26">Sample Information</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#period-specific-results">Period-Specific Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/results.html#randomization-inference">Randomization Inference</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/results.html#methods-reference">Methods Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/results.html#see-also">See Also</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/transformations.html">Transformations Module (transformations)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#lwdid.transformations.apply_rolling_transform"><code class="docutils literal notranslate"><span class="pre">apply_rolling_transform()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#lwdid.transformations.detrend_unit"><code class="docutils literal notranslate"><span class="pre">detrend_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#lwdid.transformations.demeanq_unit"><code class="docutils literal notranslate"><span class="pre">demeanq_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#lwdid.transformations.detrendq_unit"><code class="docutils literal notranslate"><span class="pre">detrendq_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#overview">Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#transformation-methods">Transformation Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/transformations.html">Transformations Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#available-transformations">Available Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#id1">Available Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#unit-level-functions">Unit-Level Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#internal-functions">Internal Functions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#example-usage">Example Usage</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#technical-notes">Technical Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#transformation-selection-guide">Transformation Selection Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#staggered-adoption-transformations">Staggered Adoption Transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/transformations.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -248,6 +271,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/estimation.html#implementation-details">Implementation Details</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/estimation.html#technical-notes">Technical Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/estimation.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/estimation.html#large-sample-inference">Large-Sample Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/estimation.html#estimator-selection-for-large-samples">Estimator Selection for Large Samples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/estimation.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -255,23 +280,25 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#best-practices">Best Practices</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/randomization.html">Randomization Module (randomization)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#lwdid.randomization.randomization_inference"><code class="docutils literal notranslate"><span class="pre">randomization_inference()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#overview">Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#how-randomization-inference-works">How Randomization Inference Works</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#ri-methods">RI Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#practical-considerations">Practical Considerations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#interpreting-ri-results">Interpreting RI Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#limitations">Limitations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#examples">Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/randomization.html">Randomization Inference Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#resampling-methods">Resampling Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#parameters">Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#returns">Returns</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#methodological-notes">Methodological Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/randomization.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -282,6 +309,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/visualization.html#plot-components">Plot Components</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/visualization.html#basic-usage">Basic Usage</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/visualization.html#advanced-customization">Advanced Customization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/visualization.html#staggered-adoption-visualization">Staggered Adoption Visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/visualization.html#exporting-plots">Exporting Plots</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/visualization.html#plot-parameters-reference">Plot Parameters Reference</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/visualization.html#examples-gallery">Examples Gallery</a></li>
@@ -302,6 +330,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.MissingRequiredColumnError"><code class="docutils literal notranslate"><span class="pre">MissingRequiredColumnError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.RandomizationError"><code class="docutils literal notranslate"><span class="pre">RandomizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#exception-classes">Exception Classes</a></li>
@@ -339,10 +369,20 @@
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#efficiency-considerations">Efficiency Considerations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../methodological_notes.html#monte-carlo-simulation-evidence">Monte Carlo Simulation Evidence</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#no-anticipation">No Anticipation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#parallel-trends">Parallel Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#common-treatment-timing">Common Treatment Timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#common-treatment-timing-common-timing-mode">Common Treatment Timing (Common Timing Mode)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
 </ul>
 </li>
@@ -361,6 +401,15 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#staggered-adoption">Staggered Adoption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#identification">Identification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#transformation">Transformation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#aggregation">Aggregation</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#references">References</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#further-reading">Further Reading</a></li>
@@ -369,10 +418,6 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../changelog.html#version-0-1-0">Version 0.1.0</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../contributing.html#how-to-contribute">How to Contribute</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../contributing.html#development-setup">Development Setup</a></li>
@@ -408,14 +453,45 @@
              
   <h1>Source code for lwdid.estimation</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Estimation module for the Lee and Wooldridge (2025) DiD estimator.</span>
+<span class="sd">Cross-sectional OLS estimation for difference-in-differences analysis.</span>
 
-<span class="sd">Implements cross-sectional OLS regressions for the Lee and Wooldridge (2025)</span>
-<span class="sd">difference-in-differences estimator.</span>
+<span class="sd">This module implements OLS regression on transformed outcome variables for</span>
+<span class="sd">estimating average treatment effects on the treated (ATT) in common timing</span>
+<span class="sd">difference-in-differences designs. After unit-specific time-series</span>
+<span class="sd">transformations remove pre-treatment patterns, the estimation problem</span>
+<span class="sd">reduces to standard cross-sectional regression.</span>
+
+<span class="sd">The module provides three main functions:</span>
+
+<span class="sd">- ``prepare_controls`` : Constructs centered controls and interaction terms</span>
+<span class="sd">  for regression adjustment.</span>
+<span class="sd">- ``estimate_att`` : Estimates the ATT using cross-sectional OLS on the</span>
+<span class="sd">  first post-treatment period.</span>
+<span class="sd">- ``estimate_period_effects`` : Estimates period-specific ATTs via</span>
+<span class="sd">  independent cross-sectional regressions for each post-treatment period.</span>
+
+<span class="sd">Supported variance-covariance estimators include homoskedastic OLS,</span>
+<span class="sd">heteroskedasticity-robust (HC1, HC3), and cluster-robust standard errors.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">The transformation-based approach converts the panel data DiD problem into</span>
+<span class="sd">a cross-sectional treatment effects problem. Under no anticipation and</span>
+<span class="sd">parallel trends assumptions, the ATT is identified as the coefficient on</span>
+<span class="sd">the treatment indicator in OLS regression of the transformed outcome.</span>
+
+<span class="sd">For small samples, homoskedastic standard errors with t-distribution</span>
+<span class="sd">critical values provide exact inference under normality. HC3 standard</span>
+<span class="sd">errors offer improved finite-sample performance over HC1 when sample sizes</span>
+<span class="sd">are moderate but asymptotic theory may not apply.</span>
+
+<span class="sd">Cluster-robust inference uses G-1 degrees of freedom (where G is the number</span>
+<span class="sd">of clusters) rather than the residual degrees of freedom, which provides</span>
+<span class="sd">more conservative inference when the number of clusters is small.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -431,47 +507,87 @@
     <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">d</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">ivar</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">controls</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">controls</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">N_treated</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">N_control</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">data_sample</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">data_sample</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Construct centered controls and interactions following Section 2.2</span>
+<span class="sd">    Construct centered controls and interactions for regression adjustment.</span>
 
-<span class="sd">    Checks N₁ &gt; K+1 and N₀ &gt; K+1 conditions. If satisfied, computes X̄₁</span>
-<span class="sd">    (treated-group mean), centered controls (X - X̄₁), and interactions</span>
-<span class="sd">    D·(X - X̄₁) for the full regression as in equation (2.18).</span>
+<span class="sd">    Verifies that sample sizes satisfy N_treated &gt; K+1 and N_control &gt; K+1,</span>
+<span class="sd">    where K is the number of control variables. If conditions are met,</span>
+<span class="sd">    computes the mean of control variables for the treated group, centers</span>
+<span class="sd">    the controls by subtracting these means, and creates interaction terms</span>
+<span class="sd">    between the treatment indicator and the centered controls.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : pd.DataFrame</span>
-<span class="sd">        Transformed panel data (N×T rows).</span>
+<span class="sd">        Transformed panel data containing control variables and treatment</span>
+<span class="sd">        indicators.</span>
 <span class="sd">    d : str</span>
-<span class="sd">        Treatment indicator column name.</span>
+<span class="sd">        Name of the treatment indicator column.</span>
 <span class="sd">    ivar : str</span>
-<span class="sd">        Unit identifier column name.</span>
-<span class="sd">    controls : list of str</span>
-<span class="sd">        Control variable names (time-invariant, numeric).</span>
+<span class="sd">        Name of the unit identifier column.</span>
+<span class="sd">    controls : list[str]</span>
+<span class="sd">        List of control variable names. Must be numeric and time-invariant.</span>
 <span class="sd">    N_treated : int</span>
-<span class="sd">        Number of treated units in regression sample.</span>
+<span class="sd">        Number of treated units in the regression sample.</span>
 <span class="sd">    N_control : int</span>
-<span class="sd">        Number of control units in regression sample.</span>
-<span class="sd">    data_sample : pd.DataFrame, optional</span>
-<span class="sd">        Regression sample for computing X̄₁ (firstpost cross-section).</span>
-<span class="sd">    </span>
+<span class="sd">        Number of control units in the regression sample.</span>
+<span class="sd">    data_sample : pd.DataFrame | None, optional</span>
+<span class="sd">        Specific sample to use for computing means (e.g., first-post-treatment</span>
+<span class="sd">        cross-section). If None, uses the full ``data`` filtered by treatment</span>
+<span class="sd">        status.</span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    dict</span>
-<span class="sd">        &#39;include&#39; (bool), &#39;X_centered&#39; (DataFrame), &#39;interactions&#39; (DataFrame),</span>
-<span class="sd">        &#39;X_mean_treated&#39; (dict), &#39;RHS_varnames&#39; (list).</span>
+<span class="sd">    dict[str, Any]</span>
+<span class="sd">        A dictionary containing:</span>
+
+<span class="sd">        - &#39;include&#39; : bool</span>
+<span class="sd">            Whether controls can be included in regression.</span>
+<span class="sd">        - &#39;X_centered&#39; : pd.DataFrame or None</span>
+<span class="sd">            Centered control variables (X - X_mean_treated).</span>
+<span class="sd">        - &#39;interactions&#39; : pd.DataFrame or None</span>
+<span class="sd">            Interaction terms (D * X_centered).</span>
+<span class="sd">        - &#39;X_mean_treated&#39; : dict</span>
+<span class="sd">            Means of controls for the treated group.</span>
+<span class="sd">        - &#39;RHS_varnames&#39; : list of str</span>
+<span class="sd">            Names of all right-hand side control variables.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    estimate_att : Uses prepared controls for ATT estimation.</span>
+<span class="sd">    estimate_period_effects : Uses prepared controls for period-specific ATTs.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Centering controls at the treated-group mean ensures that the coefficient</span>
+<span class="sd">    on the treatment indicator directly estimates the ATT at the mean covariate</span>
+<span class="sd">    values of the treated group. The regression model is:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\hat{Y}_i = \\alpha + \\tau D_i + X_i \\beta +</span>
+<span class="sd">        D_i (X_i - \\bar{X}_1) \\delta + U_i</span>
+
+<span class="sd">    where :math:`\\bar{X}_1 = N_1^{-1} \\sum_{i: D_i=1} X_i` is the</span>
+<span class="sd">    treated-group mean of covariates.</span>
+
+<span class="sd">    The sample size conditions (N_treated &gt; K+1 and N_control &gt; K+1) ensure</span>
+<span class="sd">    that both treated and control subsamples have sufficient degrees of</span>
+<span class="sd">    freedom for separate slope estimation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">K_ctrl</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">controls</span><span class="p">)</span>
     <span class="n">nk</span> <span class="o">=</span> <span class="n">K_ctrl</span> <span class="o">+</span> <span class="mi">1</span>
     
+    <span class="c1"># Check sample size conditions to ensure sufficient df for separate slopes.</span>
     <span class="k">if</span> <span class="n">N_treated</span> <span class="o">&gt;</span> <span class="n">nk</span> <span class="ow">and</span> <span class="n">N_control</span> <span class="o">&gt;</span> <span class="n">nk</span><span class="p">:</span>
-        <span class="c1"># Compute treated-group means X̄₁ = (1/N₁) Σ_{i:D_i=1} X_i</span>
-        <span class="c1"># Use unit-weighted mean (not row-weighted) since X is time-invariant</span>
+        <span class="c1"># Compute unit-weighted treated-group mean (not row-weighted).</span>
+        <span class="c1"># Using groupby().first() avoids double-counting units with multiple</span>
+        <span class="c1"># time periods in the sample, since X is time-invariant by assumption.</span>
         <span class="n">X_mean_treated</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">controls</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">data_sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -489,13 +605,15 @@
                     <span class="o">.</span><span class="n">mean</span><span class="p">()</span>
                 <span class="p">)</span>
         
-        <span class="c1"># Center controls: X - X̄₁</span>
+        <span class="c1"># Center controls at treated-group mean so the treatment coefficient</span>
+        <span class="c1"># directly estimates ATT evaluated at mean X of treated units.</span>
         <span class="n">X_centered</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
             <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">_c&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">-</span> <span class="n">X_mean_treated</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">controls</span>
         <span class="p">})</span>
         
-        <span class="c1"># Construct interactions: D·(X - X̄₁)</span>
+        <span class="c1"># Interaction terms allow heterogeneous treatment effects across X.</span>
+        <span class="c1"># D * (X - X_bar_1) captures how the treatment effect varies with X.</span>
         <span class="n">interactions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
             <span class="sa">f</span><span class="s1">&#39;d_</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">_c&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">*</span> <span class="n">X_centered</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">_c&#39;</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">controls</span>
@@ -505,9 +623,9 @@
         
         <span class="k">return</span> <span class="p">{</span>
             <span class="s1">&#39;include&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s1">&#39;X_centered&#39;</span><span class="p">:</span> <span class="n">X_centered</span><span class="p">,</span>  <span class="c1"># DataFrame; columns: &#39;{x}_c&#39;</span>
-            <span class="s1">&#39;interactions&#39;</span><span class="p">:</span> <span class="n">interactions</span><span class="p">,</span>  <span class="c1"># DataFrame; columns: &#39;d_{x}_c&#39;</span>
-            <span class="s1">&#39;X_mean_treated&#39;</span><span class="p">:</span> <span class="n">X_mean_treated</span><span class="p">,</span>  <span class="c1"># dict: {variable_name: X̄₁ value}</span>
+            <span class="s1">&#39;X_centered&#39;</span><span class="p">:</span> <span class="n">X_centered</span><span class="p">,</span>
+            <span class="s1">&#39;interactions&#39;</span><span class="p">:</span> <span class="n">interactions</span><span class="p">,</span>
+            <span class="s1">&#39;X_mean_treated&#39;</span><span class="p">:</span> <span class="n">X_mean_treated</span><span class="p">,</span>
             <span class="s1">&#39;RHS_varnames&#39;</span><span class="p">:</span> <span class="n">RHS_varnames</span>
         <span class="p">}</span>
     <span class="k">else</span><span class="p">:</span>
@@ -538,50 +656,137 @@
     <span class="n">y_transformed</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">d</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">ivar</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">controls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">],</span>
-    <span class="n">vce</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">cluster_var</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">controls</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">vce</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cluster_var</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sample_filter</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Estimate ATT via cross-sectional OLS regression</span>
-<span class="sd">    </span>
-<span class="sd">    Runs OLS on the firstpost cross-section using transformed outcome ydot_postavg</span>
-<span class="sd">    as dependent variable. Implements equation (2.13) or (2.18) with controls.</span>
-<span class="sd">    Supports homoskedastic, HC1/HC3, and cluster-robust standard errors.</span>
-<span class="sd">    </span>
+<span class="sd">    Estimate Average Treatment Effect on the Treated (ATT) via cross-sectional OLS.</span>
+
+<span class="sd">    Performs an OLS regression on the specified cross-section (typically the</span>
+<span class="sd">    first post-treatment period) using the transformed outcome variable.</span>
+<span class="sd">    Supports homoskedastic, heteroskedasticity-robust (HC1, HC3), and</span>
+<span class="sd">    cluster-robust standard errors.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : pd.DataFrame</span>
-<span class="sd">        Transformed panel data with ydot_postavg column.</span>
+<span class="sd">        Transformed panel data containing the dependent variable and</span>
+<span class="sd">        regressors.</span>
 <span class="sd">    y_transformed : str</span>
-<span class="sd">        Dependent variable (typically &#39;ydot_postavg&#39;).</span>
+<span class="sd">        Name of the transformed dependent variable (e.g., &#39;ydot_postavg&#39;).</span>
 <span class="sd">    d : str</span>
-<span class="sd">        Treatment indicator (typically &#39;d_&#39;).</span>
+<span class="sd">        Name of the treatment indicator column (typically ``d_``).</span>
 <span class="sd">    ivar : str</span>
-<span class="sd">        Unit identifier.</span>
-<span class="sd">    controls : list of str or None</span>
-<span class="sd">        Time-invariant controls. Included if N₁ &gt; K+1 and N₀ &gt; K+1.</span>
-<span class="sd">    vce : {None, &#39;robust&#39;, &#39;hc1&#39;, &#39;hc3&#39;, &#39;cluster&#39;}, optional</span>
-<span class="sd">        Variance estimator (None=homoskedastic, &#39;hc3&#39;=HC3, &#39;cluster&#39;=clustered).</span>
-<span class="sd">    cluster_var : str or None</span>
-<span class="sd">        Clustering variable (required for vce=&#39;cluster&#39;).</span>
+<span class="sd">        Name of the unit identifier column.</span>
+<span class="sd">    controls : list[str] | None</span>
+<span class="sd">        List of time-invariant control variables. Controls are included only</span>
+<span class="sd">        if sample size conditions (N_1 &gt; K+1 and N_0 &gt; K+1) are met.</span>
+<span class="sd">    vce : str | None</span>
+<span class="sd">        Type of variance-covariance estimator:</span>
+
+<span class="sd">        - None : Homoskedastic standard errors (OLS).</span>
+<span class="sd">        - &#39;robust&#39; or &#39;hc1&#39; : Heteroskedasticity-robust (HC1).</span>
+<span class="sd">        - &#39;hc3&#39; : Heteroskedasticity-robust (HC3), better for small samples.</span>
+<span class="sd">        - &#39;cluster&#39; : Cluster-robust. Requires ``cluster_var``.</span>
+<span class="sd">    cluster_var : str | None</span>
+<span class="sd">        Name of the variable to use for clustering. Required if</span>
+<span class="sd">        ``vce=&#39;cluster&#39;``.</span>
 <span class="sd">    sample_filter : pd.Series</span>
-<span class="sd">        Boolean indicating regression sample (firstpost).</span>
-<span class="sd">    </span>
+<span class="sd">        Boolean mask indicating the regression sample (e.g., first</span>
+<span class="sd">        post-treatment period).</span>
+<span class="sd">    alpha : float, default=0.05</span>
+<span class="sd">        Significance level for confidence intervals (0.05 gives 95% CI).</span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    dict</span>
-<span class="sd">        &#39;att&#39;, &#39;se_att&#39;, &#39;t_stat&#39;, &#39;pvalue&#39;, &#39;ci_lower&#39;, &#39;ci_upper&#39;, &#39;params&#39;,</span>
-<span class="sd">        &#39;bse&#39;, &#39;vcov&#39;, &#39;resid&#39;, &#39;nobs&#39;, &#39;df_resid&#39;, &#39;df_inference&#39;, &#39;vce_type&#39;,</span>
-<span class="sd">        &#39;cluster_var&#39;, &#39;n_clusters&#39;, &#39;controls_used&#39;, &#39;controls&#39;, &#39;controls_spec&#39;,</span>
-<span class="sd">        &#39;n_treated_sample&#39;, &#39;n_control_sample&#39;.</span>
-<span class="sd">    </span>
+<span class="sd">    dict[str, Any]</span>
+<span class="sd">        A dictionary containing estimation results:</span>
+
+<span class="sd">        - &#39;att&#39; : float</span>
+<span class="sd">            Estimated ATT.</span>
+<span class="sd">        - &#39;se_att&#39; : float</span>
+<span class="sd">            Standard error of the ATT.</span>
+<span class="sd">        - &#39;t_stat&#39; : float</span>
+<span class="sd">            t-statistic for H0: ATT = 0.</span>
+<span class="sd">        - &#39;pvalue&#39; : float</span>
+<span class="sd">            Two-sided p-value.</span>
+<span class="sd">        - &#39;ci_lower&#39;, &#39;ci_upper&#39; : float</span>
+<span class="sd">            Confidence interval bounds.</span>
+<span class="sd">        - &#39;params&#39; : pd.Series</span>
+<span class="sd">            All regression coefficients.</span>
+<span class="sd">        - &#39;bse&#39; : pd.Series</span>
+<span class="sd">            Standard errors of all coefficients.</span>
+<span class="sd">        - &#39;vcov&#39; : pd.DataFrame</span>
+<span class="sd">            Variance-covariance matrix.</span>
+<span class="sd">        - &#39;resid&#39; : np.ndarray</span>
+<span class="sd">            Residuals.</span>
+<span class="sd">        - &#39;nobs&#39; : int</span>
+<span class="sd">            Number of observations.</span>
+<span class="sd">        - &#39;df_resid&#39; : int</span>
+<span class="sd">            Residual degrees of freedom.</span>
+<span class="sd">        - &#39;df_inference&#39; : int</span>
+<span class="sd">            Degrees of freedom used for inference.</span>
+<span class="sd">        - &#39;vce_type&#39; : str</span>
+<span class="sd">            Type of VCE used.</span>
+<span class="sd">        - &#39;cluster_var&#39; : str or None</span>
+<span class="sd">            Clustering variable if used.</span>
+<span class="sd">        - &#39;n_clusters&#39; : int or None</span>
+<span class="sd">            Number of clusters if clustered.</span>
+<span class="sd">        - &#39;controls_used&#39; : bool</span>
+<span class="sd">            Whether controls were included.</span>
+<span class="sd">        - &#39;controls&#39; : list of str</span>
+<span class="sd">            Controls used in regression.</span>
+<span class="sd">        - &#39;controls_spec&#39; : dict</span>
+<span class="sd">            Details of control preparation.</span>
+<span class="sd">        - &#39;n_treated_sample&#39;, &#39;n_control_sample&#39; : int</span>
+<span class="sd">            Sample sizes by treatment status.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    InsufficientDataError</span>
+<span class="sd">        If sample size is less than 3, or if no treated or control units</span>
+<span class="sd">        exist in the regression sample.</span>
+<span class="sd">    InvalidParameterError</span>
+<span class="sd">        If cluster_var is missing when vce=&#39;cluster&#39;, or if cluster variable</span>
+<span class="sd">        is not nested within units.</span>
+<span class="sd">    InvalidVCETypeError</span>
+<span class="sd">        If an unrecognized vce type is specified.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    prepare_controls : Prepares centered controls for regression adjustment.</span>
+<span class="sd">    estimate_period_effects : Estimates period-specific ATTs.</span>
+
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    Confidence intervals use t-distribution with df = df_resid (non-clustered)</span>
-<span class="sd">    or G-1 (clustered). See equations (2.10), (2.19) for exact inference under</span>
-<span class="sd">    normality.</span>
+<span class="sd">    The ATT is estimated as the coefficient on the treatment indicator D in</span>
+<span class="sd">    the OLS regression:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\hat{Y}_i = \\alpha + \\tau D_i + X_i \\beta +</span>
+<span class="sd">        D_i (X_i - \\bar{X}_1) \\delta + U_i</span>
+
+<span class="sd">    Confidence intervals use t-distribution critical values:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        CI = \\hat{\\tau} \\pm t_{df, 1-\\alpha/2} \\cdot SE(\\hat{\\tau})</span>
+
+<span class="sd">    Degrees of freedom selection:</span>
+
+<span class="sd">    - For non-clustered standard errors: df = n - k (residual df).</span>
+<span class="sd">    - For cluster-robust standard errors: df = G - 1, where G is the number</span>
+<span class="sd">      of clusters. This provides more conservative inference when the number</span>
+<span class="sd">      of clusters is small.</span>
+
+<span class="sd">    Under homoskedasticity and normality, the t-statistic has an exact</span>
+<span class="sd">    t-distribution, enabling valid inference even with small samples. HC3</span>
+<span class="sd">    is recommended over HC1 for moderate sample sizes as it provides better</span>
+<span class="sd">    finite-sample performance.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">data_sample</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">sample_filter</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
@@ -745,7 +950,7 @@
         <span class="k">if</span> <span class="n">n_clusters</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Cluster-robust inference with only </span><span class="si">{</span><span class="n">n_clusters</span><span class="si">}</span><span class="s2"> clusters may be unreliable. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Cameron &amp; Miller (2015) recommend ≥20-30 clusters.&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Statistical literature typically recommends &gt;= 20-30 clusters for reliable inference.&quot;</span><span class="p">,</span>
                 <span class="ne">UserWarning</span><span class="p">,</span>
                 <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span>
             <span class="p">)</span>
@@ -755,7 +960,9 @@
                 <span class="sa">f</span><span class="s2">&quot;Cluster variable &#39;</span><span class="si">{</span><span class="n">cluster_var</span><span class="si">}</span><span class="s2">&#39; contains missing values.&quot;</span>
             <span class="p">)</span>
 
-        <span class="c1"># Verify cluster is nested within units (each unit belongs to one cluster)</span>
+        <span class="c1"># Verify cluster is nested within units (each unit belongs to one cluster).</span>
+        <span class="c1"># Cluster-robust SE assumes independence across clusters; if a unit</span>
+        <span class="c1"># belongs to multiple clusters, this assumption is violated.</span>
         <span class="n">ivar_cluster_map</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">ivar</span><span class="p">)[</span><span class="n">cluster_var</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">ivar_cluster_map</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="n">violating_units</span> <span class="o">=</span> <span class="n">ivar_cluster_map</span><span class="p">[</span><span class="n">ivar_cluster_map</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
@@ -786,9 +993,12 @@
             <span class="sa">f</span><span class="s2">&quot;Must be one of: None, &#39;robust&#39;, &#39;hc1&#39;, &#39;hc3&#39;, &#39;cluster&#39;&quot;</span>
         <span class="p">)</span>
     
+    <span class="c1"># Extract parameter estimates as numpy arrays for consistent indexing.</span>
+    <span class="c1"># statsmodels may return Series or ndarray depending on input format.</span>
     <span class="n">params_vals</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="s1">&#39;values&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">results</span><span class="o">.</span><span class="n">params</span>
     <span class="n">bse_vals</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">bse</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">bse</span><span class="p">,</span> <span class="s1">&#39;values&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">results</span><span class="o">.</span><span class="n">bse</span>
     
+    <span class="c1"># Require at least 2 parameters: intercept (index 0) and treatment (index 1).</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">params_vals</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">InsufficientDataError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Insufficient variation in treatment indicator (d_) in firstpost cross-section. &quot;</span>
@@ -799,9 +1009,12 @@
             <span class="sa">f</span><span class="s2">&quot;first post-treatment period.&quot;</span>
         <span class="p">)</span>
     
+    <span class="c1"># ATT is the coefficient on the treatment indicator (index 1).</span>
+    <span class="c1"># Index 0 is the intercept; indices 2+ are control variables if included.</span>
     <span class="n">att</span> <span class="o">=</span> <span class="n">params_vals</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">se_att</span> <span class="o">=</span> <span class="n">bse_vals</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
+    <span class="c1"># Warn about near-zero SE which indicates potential numerical issues.</span>
     <span class="k">if</span> <span class="n">se_att</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Standard error is extremely small (SE=</span><span class="si">{</span><span class="n">se_att</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">). &quot;</span>
@@ -813,7 +1026,11 @@
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span>
         <span class="p">)</span>
 
-    <span class="c1"># Degrees of freedom: G-1 for clustered, df_resid otherwise</span>
+    <span class="c1"># Degrees of freedom for t-distribution inference.</span>
+    <span class="c1"># For clustered SE, use G-1 (number of clusters minus 1) for more</span>
+    <span class="c1"># conservative inference with few clusters. This accounts for the</span>
+    <span class="c1"># fact that cluster-robust SE estimation effectively estimates G</span>
+    <span class="c1"># cluster-level quantities, reducing effective degrees of freedom.</span>
     <span class="k">if</span> <span class="n">vce</span> <span class="o">==</span> <span class="s1">&#39;cluster&#39;</span><span class="p">:</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">G</span> <span class="o">-</span> <span class="mi">1</span>
     <span class="k">else</span><span class="p">:</span>
@@ -821,10 +1038,14 @@
 
     <span class="n">t_stat</span> <span class="o">=</span> <span class="n">att</span> <span class="o">/</span> <span class="n">se_att</span>
 
+    <span class="c1"># Two-sided p-value using the t-distribution CDF.</span>
+    <span class="c1"># Multiply by 2 for two-sided test under H0: ATT = 0.</span>
     <span class="n">pvalue</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="n">t_stat</span><span class="p">),</span> <span class="n">df</span><span class="p">)</span>
 
-    <span class="c1"># 95% CI using t critical value (exact under normality, eq 2.10, 2.19)</span>
-    <span class="n">t_crit</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">0.975</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>
+    <span class="c1"># Confidence interval using t critical value.</span>
+    <span class="c1"># Under homoskedasticity and normality, this provides exact coverage.</span>
+    <span class="c1"># With HC/cluster SE, coverage is asymptotically valid.</span>
+    <span class="n">t_crit</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>
     <span class="n">ci_lower</span> <span class="o">=</span> <span class="n">att</span> <span class="o">-</span> <span class="n">t_crit</span> <span class="o">*</span> <span class="n">se_att</span>
     <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">att</span> <span class="o">+</span> <span class="n">t_crit</span> <span class="o">*</span> <span class="n">se_att</span>
     
@@ -866,45 +1087,95 @@
     <span class="n">tindex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">tpost1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">Tmax</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">controls_spec</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span>
-    <span class="n">vce</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">cluster_var</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">period_labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">controls_spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">vce</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cluster_var</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">period_labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Estimate period-specific ATTs via independent cross-sectional regressions</span>
-<span class="sd">    </span>
-<span class="sd">    Runs separate OLS for each t ∈ {tpost1, ..., Tmax} using residualized</span>
-<span class="sd">    outcome ydot, implementing equation (2.20) or its analog with controls.</span>
-<span class="sd">    </span>
+<span class="sd">    Estimate period-specific ATTs via independent cross-sectional regressions.</span>
+
+<span class="sd">    Iterates through post-treatment periods and estimates the treatment effect</span>
+<span class="sd">    for each period using the residualized outcome variable. Each period is</span>
+<span class="sd">    estimated via a separate OLS regression, enabling examination of treatment</span>
+<span class="sd">    effect dynamics over time.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : pd.DataFrame</span>
-<span class="sd">        Transformed panel data with &#39;ydot&#39; column.</span>
+<span class="sd">        Transformed panel data containing the outcome variable.</span>
 <span class="sd">    ydot : str</span>
-<span class="sd">        Residualized outcome (typically &#39;ydot&#39;).</span>
+<span class="sd">        Name of the residualized outcome variable.</span>
 <span class="sd">    d : str</span>
-<span class="sd">        Treatment indicator.</span>
+<span class="sd">        Name of the treatment indicator column.</span>
 <span class="sd">    tindex : str</span>
-<span class="sd">        Time index.</span>
+<span class="sd">        Name of the time index column.</span>
 <span class="sd">    tpost1 : int</span>
-<span class="sd">        First post-treatment period.</span>
+<span class="sd">        First post-treatment period index.</span>
 <span class="sd">    Tmax : int</span>
-<span class="sd">        Last period.</span>
-<span class="sd">    controls_spec : dict or None</span>
-<span class="sd">        Control specification from prepare_controls().</span>
-<span class="sd">    vce : {None, &#39;robust&#39;, &#39;hc1&#39;, &#39;hc3&#39;, &#39;cluster&#39;}, optional</span>
-<span class="sd">        Variance estimator.</span>
-<span class="sd">    cluster_var : str or None</span>
-<span class="sd">        Clustering variable.</span>
-<span class="sd">    period_labels : dict</span>
-<span class="sd">        Mapping tindex → period label.</span>
-<span class="sd">    </span>
+<span class="sd">        Last period index.</span>
+<span class="sd">    controls_spec : dict[str, Any] | None</span>
+<span class="sd">        Control variable specification dictionary returned by</span>
+<span class="sd">        ``prepare_controls``. If None or if &#39;include&#39; is False, regression</span>
+<span class="sd">        includes only the treatment indicator.</span>
+<span class="sd">    vce : str | None</span>
+<span class="sd">        Type of variance-covariance estimator. Same options as</span>
+<span class="sd">        ``estimate_att``: None (homoskedastic), &#39;robust&#39;/&#39;hc1&#39;, &#39;hc3&#39;,</span>
+<span class="sd">        or &#39;cluster&#39;.</span>
+<span class="sd">    cluster_var : str | None</span>
+<span class="sd">        Name of the clustering variable. Required if ``vce=&#39;cluster&#39;``.</span>
+<span class="sd">    period_labels : dict[int, str]</span>
+<span class="sd">        Mapping from time index to human-readable period labels for output.</span>
+<span class="sd">    alpha : float, default=0.05</span>
+<span class="sd">        Significance level for confidence intervals.</span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    pd.DataFrame</span>
-<span class="sd">        Columns: &#39;period&#39;, &#39;tindex&#39;, &#39;beta&#39;, &#39;se&#39;, &#39;ci_lower&#39;, &#39;ci_upper&#39;,</span>
-<span class="sd">        &#39;tstat&#39;, &#39;pval&#39;, &#39;N&#39;.</span>
+<span class="sd">        A DataFrame with one row per post-treatment period. Columns:</span>
+
+<span class="sd">        - &#39;period&#39; : str</span>
+<span class="sd">            Human-readable period label.</span>
+<span class="sd">        - &#39;tindex&#39; : int</span>
+<span class="sd">            Time index value.</span>
+<span class="sd">        - &#39;beta&#39; : float</span>
+<span class="sd">            Estimated ATT for the period.</span>
+<span class="sd">        - &#39;se&#39; : float</span>
+<span class="sd">            Standard error.</span>
+<span class="sd">        - &#39;ci_lower&#39;, &#39;ci_upper&#39; : float</span>
+<span class="sd">            Confidence interval bounds.</span>
+<span class="sd">        - &#39;tstat&#39; : float</span>
+<span class="sd">            t-statistic for H0: ATT = 0.</span>
+<span class="sd">        - &#39;pval&#39; : float</span>
+<span class="sd">            Two-sided p-value.</span>
+<span class="sd">        - &#39;N&#39; : int</span>
+<span class="sd">            Number of observations in the period.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    estimate_att : Estimates average ATT across post-treatment periods.</span>
+<span class="sd">    prepare_controls : Prepares control specification for regression.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Each period is estimated independently via cross-sectional OLS:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\dot{Y}_{it} = \\alpha_t + \\tau_t D_i + X_i \\beta_t +</span>
+<span class="sd">        D_i (X_i - \\bar{X}_1) \\delta_t + U_{it}</span>
+
+<span class="sd">    where :math:`\\dot{Y}_{it}` is the transformed outcome and</span>
+<span class="sd">    :math:`\\tau_t` is the period-specific ATT.</span>
+
+<span class="sd">    The estimators are consistent under no anticipation and parallel trends.</span>
+<span class="sd">    Period-specific estimates allow examination of treatment effect dynamics,</span>
+<span class="sd">    which is useful for detecting delayed effects or effect decay over time.</span>
+
+<span class="sd">    Periods with insufficient variation in the treatment indicator (all</span>
+<span class="sd">    treated or all control) produce NaN estimates with a warning. This can</span>
+<span class="sd">    occur due to panel attrition or unbalanced designs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">results_list</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -990,6 +1261,8 @@
                 <span class="n">ci_lower</span> <span class="o">=</span> <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
                 <span class="n">N_t</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">model_t</span><span class="o">.</span><span class="n">nobs</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Select degrees of freedom based on variance estimator.</span>
+                <span class="c1"># Cluster-robust uses G-1 for conservative inference.</span>
                 <span class="k">if</span> <span class="n">vce</span> <span class="o">==</span> <span class="s1">&#39;cluster&#39;</span><span class="p">:</span>
                     <span class="n">n_clusters_t</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">cluster_groups_t</span><span class="p">))</span>
                     <span class="n">df_t</span> <span class="o">=</span> <span class="n">n_clusters_t</span> <span class="o">-</span> <span class="mi">1</span>
@@ -997,10 +1270,12 @@
                     <span class="n">df_t</span> <span class="o">=</span> <span class="n">model_t</span><span class="o">.</span><span class="n">df_resid</span>
 
                 <span class="n">t_stat</span> <span class="o">=</span> <span class="n">beta_t</span> <span class="o">/</span> <span class="n">se_t</span>
+                <span class="c1"># Two-sided p-value for H0: tau_t = 0.</span>
                 <span class="n">p_val</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="o">-</span><span class="nb">abs</span><span class="p">(</span><span class="n">t_stat</span><span class="p">),</span> <span class="n">df_t</span><span class="p">)</span>
                 <span class="n">N_t</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">model_t</span><span class="o">.</span><span class="n">nobs</span><span class="p">)</span>
 
-                <span class="n">t_crit_t</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mf">0.975</span><span class="p">,</span> <span class="n">df_t</span><span class="p">)</span>
+                <span class="c1"># Confidence interval with t critical value.</span>
+                <span class="n">t_crit_t</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">df_t</span><span class="p">)</span>
                 <span class="n">ci_lower</span> <span class="o">=</span> <span class="n">beta_t</span> <span class="o">-</span> <span class="n">t_crit_t</span> <span class="o">*</span> <span class="n">se_t</span>
                 <span class="n">ci_upper</span> <span class="o">=</span> <span class="n">beta_t</span> <span class="o">+</span> <span class="n">t_crit_t</span> <span class="o">*</span> <span class="n">se_t</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>User Guide &mdash; lwdid 0.1.0</title>
+  <title>User Guide &mdash; lwdid 0.2.0</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -14,11 +14,12 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/documentation_options.js?v=938c9ccc"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="_static/copybutton.js?v=f281be69"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -65,7 +66,6 @@
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#basic-example">Basic Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="quickstart.html#simplest-usage">Simplest Usage</a></li>
-<li class="toctree-l3"><a class="reference internal" href="quickstart.html#output">Output</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#key-parameters">Key Parameters</a><ul>
@@ -73,7 +73,9 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#common-options">Common Options</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="quickstart.html#heteroskedasticity-robust-standard-errors">Heteroskedasticity-Robust Standard Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#small-sample-exact-inference">Small-Sample Exact Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#large-sample-inference">Large-Sample Inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="quickstart.html#randomization-inference">Randomization Inference</a></li>
 <li class="toctree-l3"><a class="reference internal" href="quickstart.html#adding-control-variables">Adding Control Variables</a></li>
 <li class="toctree-l3"><a class="reference internal" href="quickstart.html#quarterly-data">Quarterly Data</a></li>
@@ -91,11 +93,17 @@
 <li class="toctree-l3"><a class="reference internal" href="quickstart.html#key-requirements">Key Requirements</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#staggered-adoption">Staggered Adoption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#staggered-results">Staggered Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quickstart.html#key-staggered-parameters">Key Staggered Parameters</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#next-steps">Next Steps</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scenario-selection-guide">Scenario Selection Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#quick-reference">Quick Reference</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
@@ -106,8 +114,11 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#variance-estimation">Variance Estimation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#ols-homoskedastic">OLS (Homoskedastic)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hc0-white-s-heteroskedasticity-consistent">HC0 (White’s Heteroskedasticity-Consistent)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#hc1-heteroskedasticity-robust">HC1 (Heteroskedasticity-Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hc2-leverage-adjusted">HC2 (Leverage-Adjusted)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#hc3-small-sample-adjusted-robust">HC3 (Small-Sample Adjusted Robust)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hc4-high-leverage-adjusted">HC4 (High-Leverage Adjusted)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#cluster-robust">Cluster-Robust</a></li>
 </ul>
 </li>
@@ -143,12 +154,22 @@
 <li class="toctree-l3"><a class="reference internal" href="#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#common-errors">Common Errors</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#performance-tips">Performance Tips</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#staggered-adoption-design">Staggered Adoption Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#accessing-staggered-results">Accessing Staggered Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#control-group-strategies">Control Group Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#estimator-selection">Estimator Selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#staggered-example">Staggered Example</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#further-reading">Further Reading</a></li>
@@ -186,6 +207,10 @@
 <li class="toctree-l3"><a class="reference internal" href="examples/index.html#creating-publication-tables">Creating Publication Tables</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="examples/index.html#staggered-did-castle-law">Staggered DiD: Castle Law</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/index.html#castle-doctrine-analysis">Castle Doctrine Analysis</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="examples/index.html#complete-workflow-example">Complete Workflow Example</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="examples/index.html#end-to-end-analysis">End-to-End Analysis</a></li>
 </ul>
@@ -204,40 +229,39 @@
 <li class="toctree-l4"><a class="reference internal" href="api/core.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="api/results.html">LWDIDResults Class</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#lwdid.LWDIDResults"><code class="docutils literal notranslate"><span class="pre">LWDIDResults</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/results.html">Results Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/results.html#attributes-reference">Attributes Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/results.html#methods-reference">Methods Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/results.html#usage-by-design-type">Usage by Design Type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/results.html#lwdidresults-class">LWDIDResults Class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/results.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/results.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="api/results.html#examples">Examples</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#accessing-core-estimates">Accessing Core Estimates</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#sample-information">Sample Information</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#period-specific-effects">Period-Specific Effects</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#randomization-inference-results">Randomization Inference Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#printing-summary">Printing Summary</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#visualization">Visualization</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#exporting-results">Exporting Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#working-with-results-programmatically">Working with Results Programmatically</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/staggered.html">Staggered DiD Module (staggered)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#key-concepts">Key Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#transformations">Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#control-groups">Control Groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#estimation">Estimation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#aggregation">Aggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#ipw-estimator">IPW Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#examples">Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="api/results.html#attributes-reference">Attributes Reference</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#core-estimates">Core Estimates</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#id26">Sample Information</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#period-specific-results">Period-Specific Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/results.html#randomization-inference">Randomization Inference</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="api/results.html#methods-reference">Methods Reference</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/results.html#see-also">See Also</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/transformations.html">Transformations Module (transformations)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#lwdid.transformations.apply_rolling_transform"><code class="docutils literal notranslate"><span class="pre">apply_rolling_transform()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#lwdid.transformations.detrend_unit"><code class="docutils literal notranslate"><span class="pre">detrend_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#lwdid.transformations.demeanq_unit"><code class="docutils literal notranslate"><span class="pre">demeanq_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#lwdid.transformations.detrendq_unit"><code class="docutils literal notranslate"><span class="pre">detrendq_unit()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#overview">Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#transformation-methods">Transformation Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#implementation-details">Implementation Details</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/transformations.html">Transformations Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#available-transformations">Available Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#id1">Available Transformations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#unit-level-functions">Unit-Level Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#internal-functions">Internal Functions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/transformations.html#example-usage">Example Usage</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#technical-notes">Technical Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#transformation-selection-guide">Transformation Selection Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/transformations.html#staggered-adoption-transformations">Staggered Adoption Transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/transformations.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -251,6 +275,8 @@
 <li class="toctree-l4"><a class="reference internal" href="api/estimation.html#implementation-details">Implementation Details</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/estimation.html#technical-notes">Technical Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/estimation.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/estimation.html#large-sample-inference">Large-Sample Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/estimation.html#estimator-selection-for-large-samples">Estimator Selection for Large Samples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/estimation.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -258,23 +284,25 @@
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#best-practices">Best Practices</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#see-also">See Also</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="api/randomization.html">Randomization Module (randomization)</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#lwdid.randomization.randomization_inference"><code class="docutils literal notranslate"><span class="pre">randomization_inference()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#overview">Overview</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#how-randomization-inference-works">How Randomization Inference Works</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#ri-methods">RI Methods</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#practical-considerations">Practical Considerations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#interpreting-ri-results">Interpreting RI Results</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#limitations">Limitations</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#examples">Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/randomization.html">Randomization Inference Module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#main-function">Main Function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#resampling-methods">Resampling Methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#parameters">Parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#returns">Returns</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/randomization.html#methodological-notes">Methodological Notes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/randomization.html#see-also">See Also</a></li>
 </ul>
 </li>
@@ -285,6 +313,7 @@
 <li class="toctree-l4"><a class="reference internal" href="api/visualization.html#plot-components">Plot Components</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/visualization.html#basic-usage">Basic Usage</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/visualization.html#advanced-customization">Advanced Customization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/visualization.html#staggered-adoption-visualization">Staggered Adoption Visualization</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/visualization.html#exporting-plots">Exporting Plots</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/visualization.html#plot-parameters-reference">Plot Parameters Reference</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/visualization.html#examples-gallery">Examples Gallery</a></li>
@@ -305,6 +334,8 @@
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.MissingRequiredColumnError"><code class="docutils literal notranslate"><span class="pre">MissingRequiredColumnError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.RandomizationError"><code class="docutils literal notranslate"><span class="pre">RandomizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#exception-classes">Exception Classes</a></li>
@@ -342,10 +373,20 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#efficiency-considerations">Efficiency Considerations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="methodological_notes.html#monte-carlo-simulation-evidence">Monte Carlo Simulation Evidence</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#no-anticipation">No Anticipation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#parallel-trends">Parallel Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#common-treatment-timing">Common Treatment Timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#common-treatment-timing-common-timing-mode">Common Treatment Timing (Common Timing Mode)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
 </ul>
 </li>
@@ -364,6 +405,15 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#staggered-adoption">Staggered Adoption</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#identification">Identification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#transformation">Transformation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#aggregation">Aggregation</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#references">References</a></li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#further-reading">Further Reading</a></li>
@@ -372,10 +422,6 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Development</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#version-0-1-0">Version 0.1.0</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="contributing.html#how-to-contribute">How to Contribute</a></li>
 <li class="toctree-l2"><a class="reference internal" href="contributing.html#development-setup">Development Setup</a></li>
@@ -412,112 +458,194 @@
   <section id="user-guide">
 <h1>User Guide<a class="headerlink" href="#user-guide" title="Link to this heading"></a></h1>
 <p>This guide covers all aspects of using the <code class="docutils literal notranslate"><span class="pre">lwdid</span></code> package for difference-in-differences
-estimation with small samples.</p>
+estimation with rolling transformations.</p>
 <nav class="contents local" id="table-of-contents">
 <p class="topic-title">Table of Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#overview" id="id2">Overview</a></p></li>
-<li><p><a class="reference internal" href="#quick-reference" id="id3">Quick Reference</a></p></li>
-<li><p><a class="reference internal" href="#transformation-methods" id="id4">Transformation Methods</a></p>
+<li><p><a class="reference internal" href="#overview" id="id3">Overview</a></p></li>
+<li><p><a class="reference internal" href="#scenario-selection-guide" id="id4">Scenario Selection Guide</a></p></li>
+<li><p><a class="reference internal" href="#quick-reference" id="id5">Quick Reference</a></p></li>
+<li><p><a class="reference internal" href="#transformation-methods" id="id6">Transformation Methods</a></p>
 <ul>
-<li><p><a class="reference internal" href="#demean-standard-did-with-unit-fixed-effects" id="id5">demean: Standard DiD with Unit Fixed Effects</a></p></li>
-<li><p><a class="reference internal" href="#detrend-did-with-unit-specific-linear-trends" id="id6">detrend: DiD with Unit-Specific Linear Trends</a></p></li>
-<li><p><a class="reference internal" href="#demeanq-quarterly-data-with-seasonal-fixed-effects" id="id7">demeanq: Quarterly Data with Seasonal Fixed Effects</a></p></li>
-<li><p><a class="reference internal" href="#detrendq-quarterly-data-with-trends-and-seasonal-effects" id="id8">detrendq: Quarterly Data with Trends and Seasonal Effects</a></p></li>
+<li><p><a class="reference internal" href="#demean-standard-did-with-unit-fixed-effects" id="id7">demean: Standard DiD with Unit Fixed Effects</a></p></li>
+<li><p><a class="reference internal" href="#detrend-did-with-unit-specific-linear-trends" id="id8">detrend: DiD with Unit-Specific Linear Trends</a></p></li>
+<li><p><a class="reference internal" href="#demeanq-quarterly-data-with-seasonal-fixed-effects" id="id9">demeanq: Quarterly Data with Seasonal Fixed Effects</a></p></li>
+<li><p><a class="reference internal" href="#detrendq-quarterly-data-with-trends-and-seasonal-effects" id="id10">detrendq: Quarterly Data with Trends and Seasonal Effects</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#variance-estimation" id="id9">Variance Estimation</a></p>
+<li><p><a class="reference internal" href="#variance-estimation" id="id11">Variance Estimation</a></p>
 <ul>
-<li><p><a class="reference internal" href="#ols-homoskedastic" id="id10">OLS (Homoskedastic)</a></p></li>
-<li><p><a class="reference internal" href="#hc1-heteroskedasticity-robust" id="id11">HC1 (Heteroskedasticity-Robust)</a></p></li>
-<li><p><a class="reference internal" href="#hc3-small-sample-adjusted-robust" id="id12">HC3 (Small-Sample Adjusted Robust)</a></p></li>
-<li><p><a class="reference internal" href="#cluster-robust" id="id13">Cluster-Robust</a></p></li>
+<li><p><a class="reference internal" href="#ols-homoskedastic" id="id12">OLS (Homoskedastic)</a></p></li>
+<li><p><a class="reference internal" href="#hc0-white-s-heteroskedasticity-consistent" id="id13">HC0 (White’s Heteroskedasticity-Consistent)</a></p></li>
+<li><p><a class="reference internal" href="#hc1-heteroskedasticity-robust" id="id14">HC1 (Heteroskedasticity-Robust)</a></p></li>
+<li><p><a class="reference internal" href="#hc2-leverage-adjusted" id="id15">HC2 (Leverage-Adjusted)</a></p></li>
+<li><p><a class="reference internal" href="#hc3-small-sample-adjusted-robust" id="id16">HC3 (Small-Sample Adjusted Robust)</a></p></li>
+<li><p><a class="reference internal" href="#hc4-high-leverage-adjusted" id="id17">HC4 (High-Leverage Adjusted)</a></p></li>
+<li><p><a class="reference internal" href="#cluster-robust" id="id18">Cluster-Robust</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#randomization-inference" id="id14">Randomization Inference</a></p>
+<li><p><a class="reference internal" href="#randomization-inference" id="id19">Randomization Inference</a></p>
 <ul>
-<li><p><a class="reference internal" href="#basic-usage" id="id15">Basic Usage</a></p></li>
-<li><p><a class="reference internal" href="#ri-methods" id="id16">RI Methods</a></p></li>
-<li><p><a class="reference internal" href="#accessing-ri-results" id="id17">Accessing RI Results</a></p></li>
+<li><p><a class="reference internal" href="#basic-usage" id="id20">Basic Usage</a></p></li>
+<li><p><a class="reference internal" href="#ri-methods" id="id21">RI Methods</a></p></li>
+<li><p><a class="reference internal" href="#accessing-ri-results" id="id22">Accessing RI Results</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#control-variables" id="id18">Control Variables</a></p>
+<li><p><a class="reference internal" href="#control-variables" id="id23">Control Variables</a></p>
 <ul>
-<li><p><a class="reference internal" href="#id1" id="id19">Basic Usage</a></p></li>
-<li><p><a class="reference internal" href="#requirements" id="id20">Requirements</a></p></li>
-<li><p><a class="reference internal" href="#effect-on-inference" id="id21">Effect on Inference</a></p></li>
+<li><p><a class="reference internal" href="#id1" id="id24">Basic Usage</a></p></li>
+<li><p><a class="reference internal" href="#requirements" id="id25">Requirements</a></p></li>
+<li><p><a class="reference internal" href="#effect-on-inference" id="id26">Effect on Inference</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#working-with-results" id="id22">Working with Results</a></p>
+<li><p><a class="reference internal" href="#working-with-results" id="id27">Working with Results</a></p>
 <ul>
-<li><p><a class="reference internal" href="#core-estimates" id="id23">Core Estimates</a></p></li>
-<li><p><a class="reference internal" href="#period-specific-effects" id="id24">Period-Specific Effects</a></p></li>
-<li><p><a class="reference internal" href="#sample-information" id="id25">Sample Information</a></p></li>
-<li><p><a class="reference internal" href="#visualization" id="id26">Visualization</a></p></li>
-<li><p><a class="reference internal" href="#export-results" id="id27">Export Results</a></p></li>
-<li><p><a class="reference internal" href="#print-summary" id="id28">Print Summary</a></p></li>
+<li><p><a class="reference internal" href="#core-estimates" id="id28">Core Estimates</a></p></li>
+<li><p><a class="reference internal" href="#period-specific-effects" id="id29">Period-Specific Effects</a></p></li>
+<li><p><a class="reference internal" href="#sample-information" id="id30">Sample Information</a></p></li>
+<li><p><a class="reference internal" href="#visualization" id="id31">Visualization</a></p></li>
+<li><p><a class="reference internal" href="#export-results" id="id32">Export Results</a></p></li>
+<li><p><a class="reference internal" href="#print-summary" id="id33">Print Summary</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#data-requirements-and-validation" id="id29">Data Requirements and Validation</a></p>
+<li><p><a class="reference internal" href="#data-requirements-and-validation" id="id34">Data Requirements and Validation</a></p>
 <ul>
-<li><p><a class="reference internal" href="#panel-structure" id="id30">Panel Structure</a></p></li>
-<li><p><a class="reference internal" href="#treatment-structure" id="id31">Treatment Structure</a></p></li>
-<li><p><a class="reference internal" href="#treatment-indicator" id="id32">Treatment Indicator</a></p></li>
-<li><p><a class="reference internal" href="#missing-data" id="id33">Missing Data</a></p></li>
+<li><p><a class="reference internal" href="#panel-structure" id="id35">Panel Structure</a></p></li>
+<li><p><a class="reference internal" href="#treatment-structure" id="id36">Treatment Structure</a></p></li>
+<li><p><a class="reference internal" href="#treatment-indicator" id="id37">Treatment Indicator</a></p></li>
+<li><p><a class="reference internal" href="#missing-data" id="id38">Missing Data</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#best-practices" id="id34">Best Practices</a></p>
+<li><p><a class="reference internal" href="#best-practices" id="id39">Best Practices</a></p>
 <ul>
-<li><p><a class="reference internal" href="#choosing-transformation-method" id="id35">Choosing Transformation Method</a></p></li>
-<li><p><a class="reference internal" href="#choosing-variance-estimator" id="id36">Choosing Variance Estimator</a></p></li>
-<li><p><a class="reference internal" href="#sample-size-considerations" id="id37">Sample Size Considerations</a></p></li>
-<li><p><a class="reference internal" href="#diagnostic-checks" id="id38">Diagnostic Checks</a></p></li>
+<li><p><a class="reference internal" href="#choosing-transformation-method" id="id40">Choosing Transformation Method</a></p></li>
+<li><p><a class="reference internal" href="#choosing-variance-estimator" id="id41">Choosing Variance Estimator</a></p></li>
+<li><p><a class="reference internal" href="#sample-size-considerations" id="id42">Sample Size Considerations</a></p></li>
+<li><p><a class="reference internal" href="#estimator-selection-large-sample-common-timing" id="id43">Estimator Selection (Large-Sample Common Timing)</a></p></li>
+<li><p><a class="reference internal" href="#diagnostic-checks" id="id44">Diagnostic Checks</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#troubleshooting" id="id39">Troubleshooting</a></p>
+<li><p><a class="reference internal" href="#troubleshooting" id="id45">Troubleshooting</a></p>
 <ul>
-<li><p><a class="reference internal" href="#common-errors" id="id40">Common Errors</a></p></li>
-<li><p><a class="reference internal" href="#performance-tips" id="id41">Performance Tips</a></p></li>
+<li><p><a class="reference internal" href="#common-errors" id="id46">Common Errors</a></p></li>
+<li><p><a class="reference internal" href="#performance-tips" id="id47">Performance Tips</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#further-reading" id="id42">Further Reading</a></p></li>
+<li><p><a class="reference internal" href="#staggered-adoption-design" id="id48">Staggered Adoption Design</a></p>
+<ul>
+<li><p><a class="reference internal" href="#id2" id="id49">Basic Usage</a></p></li>
+<li><p><a class="reference internal" href="#staggered-specific-parameters" id="id50">Staggered-Specific Parameters</a></p></li>
+<li><p><a class="reference internal" href="#accessing-staggered-results" id="id51">Accessing Staggered Results</a></p></li>
+<li><p><a class="reference internal" href="#control-group-strategies" id="id52">Control Group Strategies</a></p></li>
+<li><p><a class="reference internal" href="#estimator-selection" id="id53">Estimator Selection</a></p></li>
+<li><p><a class="reference internal" href="#staggered-example" id="id54">Staggered Example</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#further-reading" id="id55">Further Reading</a></p></li>
 </ul>
 </nav>
 <section id="overview">
-<h2><a class="toc-backref" href="#id2" role="doc-backlink">Overview</a><a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">lwdid</span></code> package implements the Lee and Wooldridge (2025) method for
-difference-in-differences estimation with small cross-sectional sample sizes.</p>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Overview</a><a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">lwdid</span></code> package implements the Lee and Wooldridge methods for difference-in-
+differences estimation with panel data, covering three main scenarios:</p>
+<p><strong>Small-Sample Common Timing</strong> (Lee and Wooldridge, 2026):</p>
+<ul class="simple">
+<li><p>Exact t-based inference under CLM assumptions (normality and homoskedasticity)</p></li>
+<li><p>Designed for settings with small numbers of treated or control units</p></li>
+<li><p>Works best with large time dimensions</p></li>
+</ul>
+<p><strong>Large-Sample Common Timing</strong> (Lee and Wooldridge, 2025):</p>
+<ul class="simple">
+<li><p>Asymptotic inference with robust standard errors</p></li>
+<li><p>Supports heteroskedasticity-robust (HC0-HC4) and cluster-robust options</p></li>
+<li><p>Multiple estimators: RA, IPW, IPWRA, PSM</p></li>
+</ul>
+<p><strong>Staggered Adoption</strong> (Lee and Wooldridge, 2025):</p>
+<ul class="simple">
+<li><p>Units treated at different times</p></li>
+<li><p>Cohort-time specific effect estimation</p></li>
+<li><p>Flexible control group strategies and aggregation options</p></li>
+</ul>
 <p>Key features:</p>
 <ul class="simple">
-<li><p>Designed for settings with small numbers of treated or control units</p></li>
-<li><p>Exact t-based inference under classical linear model assumptions (normality and homoskedasticity)</p></li>
-<li><p>Works best with large time dimensions</p></li>
-<li><p>Heteroskedasticity-robust standard errors</p></li>
-<li><p>Randomization inference</p></li>
-<li><p>Four transformation methods</p></li>
+<li><p>Four transformation methods: demean, detrend, demeanq, detrendq</p></li>
+<li><p>Multiple variance estimators for different assumptions</p></li>
+<li><p>Randomization inference for small samples</p></li>
+<li><p>Event study visualization for staggered designs</p></li>
 </ul>
 </section>
+<section id="scenario-selection-guide">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Scenario Selection Guide</a><a class="headerlink" href="#scenario-selection-guide" title="Link to this heading"></a></h2>
+<p>Use this guide to choose the appropriate scenario for your analysis:</p>
+<ul class="simple">
+<li><p><strong>Small-sample common timing</strong>: Use when N is small with common treatment
+timing. Key parameters: <code class="docutils literal notranslate"><span class="pre">post</span></code>, <code class="docutils literal notranslate"><span class="pre">vce=None</span></code>.</p></li>
+<li><p><strong>Large-sample common timing</strong>: Use when N is larger with common treatment
+timing. Key parameters: <code class="docutils literal notranslate"><span class="pre">post</span></code>, <code class="docutils literal notranslate"><span class="pre">vce='hc3'</span></code>.</p></li>
+<li><p><strong>Staggered adoption</strong>: Use when units are treated at different times. Key
+parameters: <code class="docutils literal notranslate"><span class="pre">gvar</span></code>, <code class="docutils literal notranslate"><span class="pre">aggregate</span></code>.</p></li>
+</ul>
+<p><strong>Decision Flowchart:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>                ┌─────────────────────────────────┐
+                │  Treatment timing varies        │
+                │  across units?                  │
+                └───────────────┬─────────────────┘
+                                │
+                ┌───────────────┴───────────────┐
+                │                               │
+                ▼                               ▼
+           ┌────────┐                     ┌─────────┐
+           │  YES   │                     │   NO    │
+           └────┬───┘                     └────┬────┘
+                │                              │
+                ▼                              ▼
+┌───────────────────────────┐   ┌─────────────────────────────┐
+│  STAGGERED ADOPTION       │   │  Is cross-sectional N       │
+│  Use: gvar parameter      │   │  small (&lt; 50)?              │
+│  Estimator: ra/ipwra      │   └───────────────┬─────────────┘
+│  Aggregate: cohort/overall│                   │
+└───────────────────────────┘   ┌───────────────┴───────────────┐
+                                │                               │
+                                ▼                               ▼
+                           ┌────────┐                     ┌─────────┐
+                           │  YES   │                     │   NO    │
+                           └────┬───┘                     └────┬────┘
+                                │                              │
+                                ▼                              ▼
+        ┌─────────────────────────────────────┐   ┌─────────────────────────────────┐
+        │  SMALL-SAMPLE COMMON TIMING         │   │  LARGE-SAMPLE COMMON TIMING     │
+        │  Use: post parameter                │   │  Use: post parameter            │
+        │  VCE: None (exact t-inference)      │   │  VCE: hc3 or robust             │
+        │  Alt: ri=True for RI                │   │  Estimator: ra/ipwra            │
+        │  Reference: Lee and Wooldridge      │   │  Reference: Lee and Wooldridge  │
+        │  (2026)                             │   │  (2025)                         │
+        └─────────────────────────────────────┘   └─────────────────────────────────┘
+</pre></div>
+</div>
+</section>
 <section id="quick-reference">
-<h2><a class="toc-backref" href="#id3" role="doc-backlink">Quick Reference</a><a class="headerlink" href="#quick-reference" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">Quick Reference</a><a class="headerlink" href="#quick-reference" title="Link to this heading"></a></h2>
 <p>For a quick start, see <a class="reference internal" href="quickstart.html"><span class="doc">Quick Start</span></a>. For complete API details, see <a class="reference internal" href="api/index.html"><span class="doc">API Reference</span></a>.</p>
 </section>
 <section id="transformation-methods">
-<h2><a class="toc-backref" href="#id4" role="doc-backlink">Transformation Methods</a><a class="headerlink" href="#transformation-methods" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Transformation Methods</a><a class="headerlink" href="#transformation-methods" title="Link to this heading"></a></h2>
 <p>Four transformation methods convert panel data into cross-sectional form. The choice
 depends on data structure and assumptions.</p>
 <section id="demean-standard-did-with-unit-fixed-effects">
-<h3><a class="toc-backref" href="#id5" role="doc-backlink">demean: Standard DiD with Unit Fixed Effects</a><a class="headerlink" href="#demean-standard-did-with-unit-fixed-effects" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">demean: Standard DiD with Unit Fixed Effects</a><a class="headerlink" href="#demean-standard-did-with-unit-fixed-effects" title="Link to this heading"></a></h3>
 <p><strong>When to use</strong>:</p>
 <ul class="simple">
 <li><p>Annual data or data without seasonal patterns</p></li>
 <li><p>Control for time-invariant unit characteristics</p></li>
-<li><p>At least 1 pre-treatment period (T₀ ≥ 1)</p></li>
+<li><p>At least 1 pre-treatment period (<span class="math notranslate nohighlight">\(T_0 \geq 1\)</span>)</p></li>
 </ul>
 <p><strong>What it does</strong>:</p>
 <p>Removes unit-specific pre-treatment means from each observation.</p>
-<p><strong>Mathematical form</strong> (Lee and Wooldridge 2025, Procedure 2.1):</p>
-<p>For each unit i, compute the pre-treatment mean ȳᵢ₀ and transform:</p>
-<p>ỹᵢₜ = yᵢₜ - ȳᵢ₀ for all t</p>
+<p><strong>Mathematical form</strong> (Lee and Wooldridge, 2026, Procedure 2.1):</p>
+<p>For each unit <span class="math notranslate nohighlight">\(i\)</span>, compute the pre-treatment mean <span class="math notranslate nohighlight">\(\bar{Y}_{i,pre}\)</span> and
+transform:</p>
+<div class="math notranslate nohighlight">
+\[\dot{Y}_{it} = Y_{it} - \bar{Y}_{i,pre} \quad \text{for all } t\]</div>
 <p>Then estimate a cross-sectional regression on the transformed data.</p>
 <p>Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
@@ -528,18 +656,19 @@ depends on data structure and assumptions.</p>
 </div>
 </section>
 <section id="detrend-did-with-unit-specific-linear-trends">
-<h3><a class="toc-backref" href="#id6" role="doc-backlink">detrend: DiD with Unit-Specific Linear Trends</a><a class="headerlink" href="#detrend-did-with-unit-specific-linear-trends" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">detrend: DiD with Unit-Specific Linear Trends</a><a class="headerlink" href="#detrend-did-with-unit-specific-linear-trends" title="Link to this heading"></a></h3>
 <p><strong>When to use</strong>:</p>
 <ul class="simple">
 <li><p>Units exhibit different linear trends in the pre-treatment period</p></li>
 <li><p>Control for both unit fixed effects and unit-specific trends</p></li>
-<li><p>At least 2 pre-treatment periods (T₀ ≥ 2)</p></li>
+<li><p>At least 2 pre-treatment periods (<span class="math notranslate nohighlight">\(T_0 \geq 2\)</span>)</p></li>
 </ul>
 <p><strong>What it does</strong>:</p>
 <p>Estimates and removes unit-specific linear trends from the pre-treatment data.</p>
-<p><strong>Mathematical form</strong> (Lee and Wooldridge 2025, Procedure 3.1):</p>
-<p>For each unit i, estimate linear trend from pre-treatment data:</p>
-<p>yᵢₜ = αᵢ + βᵢ·t + εᵢₜ (for t in pre-treatment period)</p>
+<p><strong>Mathematical form</strong> (Lee and Wooldridge, 2026, Procedure 3.1):</p>
+<p>For each unit <span class="math notranslate nohighlight">\(i\)</span>, estimate linear trend from pre-treatment data:</p>
+<div class="math notranslate nohighlight">
+\[Y_{it} = \alpha_i + \beta_i t + \varepsilon_{it} \quad \text{(for } t \text{ in pre-treatment period)}\]</div>
 <p>Then detrend all observations using the estimated trend.</p>
 <p>Example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
@@ -550,14 +679,15 @@ depends on data structure and assumptions.</p>
 </div>
 </section>
 <section id="demeanq-quarterly-data-with-seasonal-fixed-effects">
-<h3><a class="toc-backref" href="#id7" role="doc-backlink">demeanq: Quarterly Data with Seasonal Fixed Effects</a><a class="headerlink" href="#demeanq-quarterly-data-with-seasonal-fixed-effects" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">demeanq: Quarterly Data with Seasonal Fixed Effects</a><a class="headerlink" href="#demeanq-quarterly-data-with-seasonal-fixed-effects" title="Link to this heading"></a></h3>
 <p><strong>When to use</strong>:</p>
 <ul class="simple">
 <li><p>Quarterly data with seasonal patterns</p></li>
 <li><p>Control for both unit and quarter-of-year effects</p></li>
 <li><p>Pre-treatment sample rich enough to estimate quarter fixed effects for each unit:
 for each unit, the number of pre-treatment observations must be at least the
-number of distinct pre-treatment quarters plus one (n_pre ≥ #quarters_pre + 1)</p></li>
+number of distinct pre-treatment quarters plus one
+(<span class="math notranslate nohighlight">\(n_{pre} \geq \#quarters_{pre} + 1\)</span>)</p></li>
 <li><p>For each unit, every quarter that appears in the post-treatment period must also
 appear in its pre-treatment period (quarter-coverage condition).</p></li>
 </ul>
@@ -575,14 +705,14 @@ appear in its pre-treatment period (quarter-coverage condition).</p></li>
 </div>
 </section>
 <section id="detrendq-quarterly-data-with-trends-and-seasonal-effects">
-<h3><a class="toc-backref" href="#id8" role="doc-backlink">detrendq: Quarterly Data with Trends and Seasonal Effects</a><a class="headerlink" href="#detrendq-quarterly-data-with-trends-and-seasonal-effects" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">detrendq: Quarterly Data with Trends and Seasonal Effects</a><a class="headerlink" href="#detrendq-quarterly-data-with-trends-and-seasonal-effects" title="Link to this heading"></a></h3>
 <p><strong>When to use</strong>:</p>
 <ul class="simple">
 <li><p>Quarterly data with both trends and seasonal patterns</p></li>
 <li><p>Control for unit trends and quarter-of-year effects</p></li>
 <li><p>At least 2 pre-treatment periods overall, and for each unit enough pre-treatment
 observations to estimate a linear trend with quarter fixed effects
-(n_pre ≥ 1 + #quarters_pre)</p></li>
+(<span class="math notranslate nohighlight">\(n_{pre} \geq 1 + \#quarters_{pre}\)</span>)</p></li>
 <li><p>For each unit, every quarter that appears in the post-treatment period must also
 appear in its pre-treatment period (quarter-coverage condition).</p></li>
 </ul>
@@ -599,11 +729,11 @@ appear in its pre-treatment period (quarter-coverage condition).</p></li>
 </section>
 </section>
 <section id="variance-estimation">
-<h2><a class="toc-backref" href="#id9" role="doc-backlink">Variance Estimation</a><a class="headerlink" href="#variance-estimation" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id11" role="doc-backlink">Variance Estimation</a><a class="headerlink" href="#variance-estimation" title="Link to this heading"></a></h2>
 <p>The package supports multiple variance estimators for different assumptions
 about the error structure.</p>
 <section id="ols-homoskedastic">
-<h3><a class="toc-backref" href="#id10" role="doc-backlink">OLS (Homoskedastic)</a><a class="headerlink" href="#ols-homoskedastic" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">OLS (Homoskedastic)</a><a class="headerlink" href="#ols-homoskedastic" title="Link to this heading"></a></h3>
 <p><strong>When to use</strong>:</p>
 <ul class="simple">
 <li><p>Errors are homoskedastic and normally distributed</p></li>
@@ -623,8 +753,23 @@ estimated parameters.</p></li>
 <li><p>Clustered: df = G - 1 (G clusters)</p></li>
 </ul>
 </section>
+<section id="hc0-white-s-heteroskedasticity-consistent">
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">HC0 (White’s Heteroskedasticity-Consistent)</a><a class="headerlink" href="#hc0-white-s-heteroskedasticity-consistent" title="Link to this heading"></a></h3>
+<p><strong>When to use</strong>:</p>
+<ul class="simple">
+<li><p>Heteroskedasticity is suspected</p></li>
+<li><p>Sample size is large</p></li>
+</ul>
+<p><strong>Specification</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc0&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Note</strong>: HC0 is the original White (1980) heteroskedasticity-consistent estimator
+without finite-sample adjustments. Tends to underestimate standard errors in small
+samples.</p>
+</section>
 <section id="hc1-heteroskedasticity-robust">
-<h3><a class="toc-backref" href="#id11" role="doc-backlink">HC1 (Heteroskedasticity-Robust)</a><a class="headerlink" href="#hc1-heteroskedasticity-robust" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id14" role="doc-backlink">HC1 (Heteroskedasticity-Robust)</a><a class="headerlink" href="#hc1-heteroskedasticity-robust" title="Link to this heading"></a></h3>
 <p><strong>When to use</strong>:</p>
 <ul class="simple">
 <li><p>Heteroskedasticity is suspected</p></li>
@@ -636,10 +781,27 @@ estimated parameters.</p></li>
 <span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;robust&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Note: <code class="docutils literal notranslate"><span class="pre">'hc1'</span></code> and <code class="docutils literal notranslate"><span class="pre">'robust'</span></code> are aliases for the same estimator.</p>
+<p>Note: <code class="docutils literal notranslate"><span class="pre">'hc1'</span></code> and <code class="docutils literal notranslate"><span class="pre">'robust'</span></code> are aliases for the same estimator. HC1 applies
+a degrees-of-freedom correction (n/(n-k)) to HC0.</p>
+</section>
+<section id="hc2-leverage-adjusted">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">HC2 (Leverage-Adjusted)</a><a class="headerlink" href="#hc2-leverage-adjusted" title="Link to this heading"></a></h3>
+<p><strong>When to use</strong>:</p>
+<ul class="simple">
+<li><p>Heteroskedasticity is suspected</p></li>
+<li><p>Sample size is small to moderate</p></li>
+<li><p>Observations have varying leverage</p></li>
+</ul>
+<p><strong>Specification</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Note</strong>: HC2 divides squared residuals by (1 - h_ii) where h_ii is the diagonal
+of the hat matrix. Provides better performance than HC1 when leverage varies
+across observations.</p>
 </section>
 <section id="hc3-small-sample-adjusted-robust">
-<h3><a class="toc-backref" href="#id12" role="doc-backlink">HC3 (Small-Sample Adjusted Robust)</a><a class="headerlink" href="#hc3-small-sample-adjusted-robust" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">HC3 (Small-Sample Adjusted Robust)</a><a class="headerlink" href="#hc3-small-sample-adjusted-robust" title="Link to this heading"></a></h3>
 <p><strong>When to use</strong>:</p>
 <ul class="simple">
 <li><p>Heteroskedasticity is suspected</p></li>
@@ -649,10 +811,26 @@ estimated parameters.</p></li>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc3&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Advantage</strong>: HC3 provides better finite-sample performance than HC1 in small samples.</p>
+<p><strong>Advantage</strong>: HC3 divides squared residuals by (1 - h_ii)^2, providing better
+finite-sample performance than HC1 and HC2 in small samples.</p>
+</section>
+<section id="hc4-high-leverage-adjusted">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">HC4 (High-Leverage Adjusted)</a><a class="headerlink" href="#hc4-high-leverage-adjusted" title="Link to this heading"></a></h3>
+<p><strong>When to use</strong>:</p>
+<ul class="simple">
+<li><p>Heteroskedasticity is suspected</p></li>
+<li><p>Data contains high-leverage observations</p></li>
+</ul>
+<p><strong>Specification</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc4&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Note</strong>: HC4 uses an adaptive exponent that increases the adjustment for
+observations with high leverage. Recommended when the design matrix contains
+potentially influential observations.</p>
 </section>
 <section id="cluster-robust">
-<h3><a class="toc-backref" href="#id13" role="doc-backlink">Cluster-Robust</a><a class="headerlink" href="#cluster-robust" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">Cluster-Robust</a><a class="headerlink" href="#cluster-robust" title="Link to this heading"></a></h3>
 <p><strong>When to use</strong>:</p>
 <ul class="simple">
 <li><p>Errors are correlated within clusters (e.g., states, regions)</p></li>
@@ -666,11 +844,11 @@ estimated parameters.</p></li>
 </section>
 </section>
 <section id="randomization-inference">
-<h2><a class="toc-backref" href="#id14" role="doc-backlink">Randomization Inference</a><a class="headerlink" href="#randomization-inference" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id19" role="doc-backlink">Randomization Inference</a><a class="headerlink" href="#randomization-inference" title="Link to this heading"></a></h2>
 <p>Randomization inference provides an alternative to t-based inference without
 distributional assumptions.</p>
 <section id="basic-usage">
-<h3><a class="toc-backref" href="#id15" role="doc-backlink">Basic Usage</a><a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">Basic Usage</a><a class="headerlink" href="#basic-usage" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
     <span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span> <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
     <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
@@ -684,7 +862,7 @@ distributional assumptions.</p>
 </div>
 </section>
 <section id="ri-methods">
-<h3><a class="toc-backref" href="#id16" role="doc-backlink">RI Methods</a><a class="headerlink" href="#ri-methods" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">RI Methods</a><a class="headerlink" href="#ri-methods" title="Link to this heading"></a></h3>
 <p>The package supports two RI methods:</p>
 <p><strong>Bootstrap</strong> (default):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ri</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ri_method</span><span class="o">=</span><span class="s1">&#39;bootstrap&#39;</span><span class="p">)</span>
@@ -698,7 +876,7 @@ distributional assumptions.</p>
 <p>Fisher randomization inference without replacement.</p>
 </section>
 <section id="accessing-ri-results">
-<h3><a class="toc-backref" href="#id17" role="doc-backlink">Accessing RI Results</a><a class="headerlink" href="#accessing-ri-results" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">Accessing RI Results</a><a class="headerlink" href="#accessing-ri-results" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="o">.</span><span class="n">ri_pvalue</span>          <span class="c1"># RI p-value (available if ri=True)</span>
 <span class="n">results</span><span class="o">.</span><span class="n">ri_method</span>          <span class="c1"># RI method (&#39;permutation&#39; or &#39;bootstrap&#39;)</span>
 <span class="n">results</span><span class="o">.</span><span class="n">rireps</span>             <span class="c1"># Number of RI replications</span>
@@ -710,10 +888,10 @@ distributional assumptions.</p>
 </section>
 </section>
 <section id="control-variables">
-<h2><a class="toc-backref" href="#id18" role="doc-backlink">Control Variables</a><a class="headerlink" href="#control-variables" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id23" role="doc-backlink">Control Variables</a><a class="headerlink" href="#control-variables" title="Link to this heading"></a></h2>
 <p>You can include time-invariant control variables in the estimation.</p>
 <section id="id1">
-<h3><a class="toc-backref" href="#id19" role="doc-backlink">Basic Usage</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">Basic Usage</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
     <span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span> <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
     <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
@@ -723,7 +901,7 @@ distributional assumptions.</p>
 </div>
 </section>
 <section id="requirements">
-<h3><a class="toc-backref" href="#id20" role="doc-backlink">Requirements</a><a class="headerlink" href="#requirements" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id25" role="doc-backlink">Requirements</a><a class="headerlink" href="#requirements" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>Controls must be time-invariant (constant within each unit)</p></li>
 <li><p>Controls are automatically centered (demeaned)</p></li>
@@ -734,7 +912,7 @@ are omitted and the full regression sample is retained (with a warning)</p></li>
 </ul>
 </section>
 <section id="effect-on-inference">
-<h3><a class="toc-backref" href="#id21" role="doc-backlink">Effect on Inference</a><a class="headerlink" href="#effect-on-inference" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id26" role="doc-backlink">Effect on Inference</a><a class="headerlink" href="#effect-on-inference" title="Link to this heading"></a></h3>
 <p>Including controls:</p>
 <ul class="simple">
 <li><p>Reduces residual variance (potentially increasing power)</p></li>
@@ -745,11 +923,11 @@ are omitted and the full regression sample is retained (with a warning)</p></li>
 </section>
 </section>
 <section id="working-with-results">
-<h2><a class="toc-backref" href="#id22" role="doc-backlink">Working with Results</a><a class="headerlink" href="#working-with-results" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id27" role="doc-backlink">Working with Results</a><a class="headerlink" href="#working-with-results" title="Link to this heading"></a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">lwdid()</span></code> function returns a <code class="docutils literal notranslate"><span class="pre">LWDIDResults</span></code> object with comprehensive
 estimation results and export capabilities.</p>
 <section id="core-estimates">
-<h3><a class="toc-backref" href="#id23" role="doc-backlink">Core Estimates</a><a class="headerlink" href="#core-estimates" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id28" role="doc-backlink">Core Estimates</a><a class="headerlink" href="#core-estimates" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="o">.</span><span class="n">att</span>           <span class="c1"># Average treatment effect on treated</span>
 <span class="n">results</span><span class="o">.</span><span class="n">se_att</span>        <span class="c1"># Standard error</span>
 <span class="n">results</span><span class="o">.</span><span class="n">t_stat</span>        <span class="c1"># t-statistic</span>
@@ -761,7 +939,7 @@ estimation results and export capabilities.</p>
 </div>
 </section>
 <section id="period-specific-effects">
-<h3><a class="toc-backref" href="#id24" role="doc-backlink">Period-Specific Effects</a><a class="headerlink" href="#period-specific-effects" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id29" role="doc-backlink">Period-Specific Effects</a><a class="headerlink" href="#period-specific-effects" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access period-by-period estimates</span>
 <span class="n">df_periods</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">att_by_period</span>
 
@@ -779,7 +957,7 @@ estimation results and export capabilities.</p>
 </div>
 </section>
 <section id="sample-information">
-<h3><a class="toc-backref" href="#id25" role="doc-backlink">Sample Information</a><a class="headerlink" href="#sample-information" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">Sample Information</a><a class="headerlink" href="#sample-information" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="o">.</span><span class="n">nobs</span>          <span class="c1"># Total observations in regression</span>
 <span class="n">results</span><span class="o">.</span><span class="n">n_treated</span>     <span class="c1"># Number of treated units</span>
 <span class="n">results</span><span class="o">.</span><span class="n">n_control</span>     <span class="c1"># Number of control units</span>
@@ -789,7 +967,7 @@ estimation results and export capabilities.</p>
 </div>
 </section>
 <section id="visualization">
-<h3><a class="toc-backref" href="#id26" role="doc-backlink">Visualization</a><a class="headerlink" href="#visualization" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id31" role="doc-backlink">Visualization</a><a class="headerlink" href="#visualization" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot treatment effects over time</span>
 <span class="n">results</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 
@@ -799,7 +977,7 @@ estimation results and export capabilities.</p>
 </div>
 </section>
 <section id="export-results">
-<h3><a class="toc-backref" href="#id27" role="doc-backlink">Export Results</a><a class="headerlink" href="#export-results" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id32" role="doc-backlink">Export Results</a><a class="headerlink" href="#export-results" title="Link to this heading"></a></h3>
 <p>Excel:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="s1">&#39;results.xlsx&#39;</span><span class="p">)</span>
 <span class="c1"># Creates sheets: Summary, ByPeriod, and RI (if available)</span>
@@ -817,16 +995,16 @@ estimation results and export capabilities.</p>
 </div>
 </section>
 <section id="print-summary">
-<h3><a class="toc-backref" href="#id28" role="doc-backlink">Print Summary</a><a class="headerlink" href="#print-summary" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id33" role="doc-backlink">Print Summary</a><a class="headerlink" href="#print-summary" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>  <span class="c1"># Prints formatted summary to console</span>
 </pre></div>
 </div>
 </section>
 </section>
 <section id="data-requirements-and-validation">
-<h2><a class="toc-backref" href="#id29" role="doc-backlink">Data Requirements and Validation</a><a class="headerlink" href="#data-requirements-and-validation" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id34" role="doc-backlink">Data Requirements and Validation</a><a class="headerlink" href="#data-requirements-and-validation" title="Link to this heading"></a></h2>
 <section id="panel-structure">
-<h3><a class="toc-backref" href="#id30" role="doc-backlink">Panel Structure</a><a class="headerlink" href="#panel-structure" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id35" role="doc-backlink">Panel Structure</a><a class="headerlink" href="#panel-structure" title="Link to this heading"></a></h3>
 <p><strong>Required format</strong>:</p>
 <ul class="simple">
 <li><p>Long format: one row per (unit, time) observation</p></li>
@@ -842,7 +1020,7 @@ estimation results and export capabilities.</p>
 </ul>
 </section>
 <section id="treatment-structure">
-<h3><a class="toc-backref" href="#id31" role="doc-backlink">Treatment Structure</a><a class="headerlink" href="#treatment-structure" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id36" role="doc-backlink">Treatment Structure</a><a class="headerlink" href="#treatment-structure" title="Link to this heading"></a></h3>
 <p><strong>Common timing assumption</strong>:</p>
 <p>All treated units must start treatment in the same period. The <code class="docutils literal notranslate"><span class="pre">post</span></code>
 variable must be a function of time only.</p>
@@ -858,7 +1036,7 @@ periods (no reversals).</p>
 </ul>
 </section>
 <section id="treatment-indicator">
-<h3><a class="toc-backref" href="#id32" role="doc-backlink">Treatment Indicator</a><a class="headerlink" href="#treatment-indicator" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id37" role="doc-backlink">Treatment Indicator</a><a class="headerlink" href="#treatment-indicator" title="Link to this heading"></a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">d</span></code> parameter must be a time-invariant treatment group indicator:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">=</span> <span class="pre">1</span></code> for all periods if unit is in treatment group</p></li>
@@ -868,7 +1046,7 @@ periods (no reversals).</p>
 <p>Common mistake: Passing time-varying treatment status instead of group indicator.</p>
 </section>
 <section id="missing-data">
-<h3><a class="toc-backref" href="#id33" role="doc-backlink">Missing Data</a><a class="headerlink" href="#missing-data" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id38" role="doc-backlink">Missing Data</a><a class="headerlink" href="#missing-data" title="Link to this heading"></a></h3>
 <p><strong>Allowed</strong>:</p>
 <ul class="simple">
 <li><p>Missing values in outcome variable <code class="docutils literal notranslate"><span class="pre">y</span></code> (observations dropped)</p></li>
@@ -882,18 +1060,19 @@ periods (no reversals).</p>
 </section>
 </section>
 <section id="best-practices">
-<h2><a class="toc-backref" href="#id34" role="doc-backlink">Best Practices</a><a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id39" role="doc-backlink">Best Practices</a><a class="headerlink" href="#best-practices" title="Link to this heading"></a></h2>
 <section id="choosing-transformation-method">
-<h3><a class="toc-backref" href="#id35" role="doc-backlink">Choosing Transformation Method</a><a class="headerlink" href="#choosing-transformation-method" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id40" role="doc-backlink">Choosing Transformation Method</a><a class="headerlink" href="#choosing-transformation-method" title="Link to this heading"></a></h3>
 <ol class="arabic simple">
 <li><p><strong>Start with ``demean``</strong> for annual data</p></li>
 <li><p><strong>Use ``detrend``</strong> if pre-treatment trends differ across units</p></li>
 <li><p><strong>Use ``demeanq``/``detrendq``</strong> for quarterly data with seasonality</p></li>
-<li><p><strong>Check pre-treatment period requirements</strong> (T₀ ≥ 1 for demean, T₀ ≥ 2 for detrend)</p></li>
+<li><p><strong>Check pre-treatment period requirements</strong> (<span class="math notranslate nohighlight">\(T_0 \geq 1\)</span> for demean,
+<span class="math notranslate nohighlight">\(T_0 \geq 2\)</span> for detrend)</p></li>
 </ol>
 </section>
 <section id="choosing-variance-estimator">
-<h3><a class="toc-backref" href="#id36" role="doc-backlink">Choosing Variance Estimator</a><a class="headerlink" href="#choosing-variance-estimator" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id41" role="doc-backlink">Choosing Variance Estimator</a><a class="headerlink" href="#choosing-variance-estimator" title="Link to this heading"></a></h3>
 <ol class="arabic simple">
 <li><p><strong>Default (``vce=None``)</strong>: Use if you believe homoskedasticity holds</p></li>
 <li><p><strong>``vce=’hc3’``</strong>: Recommended for small to moderate sample sizes when you suspect heteroskedasticity</p></li>
@@ -902,16 +1081,60 @@ periods (no reversals).</p>
 </ol>
 </section>
 <section id="sample-size-considerations">
-<h3><a class="toc-backref" href="#id37" role="doc-backlink">Sample Size Considerations</a><a class="headerlink" href="#sample-size-considerations" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id42" role="doc-backlink">Sample Size Considerations</a><a class="headerlink" href="#sample-size-considerations" title="Link to this heading"></a></h3>
 <ul class="simple">
-<li><p><strong>Theoretical minimum:</strong> N ≥ 3 units (requires strong CLM assumptions: normality and homoskedasticity)</p></li>
-<li><p><strong>Practical recommendation:</strong> As a rough guideline, having at least 10 units improves stability, especially with heteroskedasticity-robust standard errors</p></li>
-<li><p><strong>Time dimension:</strong> Method works best with large T (many time periods), where the central limit theorem across time supports normality</p></li>
-<li><p><strong>Large samples:</strong> For very large cross-sectional samples (for example, N in the hundreds or more), standard difference-in-differences implementations designed for large N are also available; <code class="docutils literal notranslate"><span class="pre">lwdid</span></code> remains valid but is primarily motivated by small-N applications</p></li>
+<li><p><strong>Small samples (N &lt; 50):</strong> Use exact t-based inference (<code class="docutils literal notranslate"><span class="pre">vce=None</span></code>) under
+CLM assumptions (normality and homoskedasticity). Minimum requirement is
+<span class="math notranslate nohighlight">\(N \geq 3\)</span> units. Having at least 10 units improves stability.</p></li>
+<li><p><strong>Moderate to large samples (N &gt;= 50):</strong> Use heteroskedasticity-robust
+standard errors (<code class="docutils literal notranslate"><span class="pre">vce='hc3'</span></code>) for valid asymptotic inference.</p></li>
+<li><p><strong>Large samples with controls:</strong> Consider IPWRA (<code class="docutils literal notranslate"><span class="pre">estimator='ipwra'</span></code>) for
+doubly robust estimation when functional form assumptions are uncertain.</p></li>
+<li><p><strong>Time dimension:</strong> Method works best with large T (many time periods), where
+the central limit theorem across time supports normality of the transformed
+outcome.</p></li>
+<li><p><strong>Asymptotic theory:</strong> Lee and Wooldridge (2025) develops the theoretical
+foundation for large-sample inference, supporting HC0-HC4 and cluster-robust
+standard errors.</p></li>
 </ul>
 </section>
+<section id="estimator-selection-large-sample-common-timing">
+<h3><a class="toc-backref" href="#id43" role="doc-backlink">Estimator Selection (Large-Sample Common Timing)</a><a class="headerlink" href="#estimator-selection-large-sample-common-timing" title="Link to this heading"></a></h3>
+<p>For large cross-sectional samples in common timing settings, multiple estimators
+are available beyond regression adjustment. Lee and Wooldridge (2025) shows
+that the rolling transformation approach enables application of various treatment
+effects estimators, including doubly robust methods.</p>
+<p><strong>Available estimators for common timing:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'ra'</span></code> (default): Regression adjustment via OLS. Consistent when the outcome
+model is correctly specified. Efficient under correct specification.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'ipw'</span></code>: Inverse probability weighting. Consistent when the propensity score
+model is correctly specified. Requires <code class="docutils literal notranslate"><span class="pre">controls</span></code> parameter.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'ipwra'</span></code>: Doubly robust estimator combining regression and IPW. Consistent
+when either the outcome model or propensity score is correctly specified.
+Recommended when functional form assumptions are uncertain.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'psm'</span></code>: Propensity score matching. Matches treated to control units based
+on propensity scores. Requires adequate sample sizes for matching.</p></li>
+</ul>
+<p><strong>Example (IPWRA in common timing):</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span> <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+    <span class="n">estimator</span><span class="o">=</span><span class="s1">&#39;ipwra&#39;</span><span class="p">,</span>           <span class="c1"># Doubly robust estimator</span>
+    <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="s1">&#39;x2&#39;</span><span class="p">],</span>       <span class="c1"># Controls for outcome and PS models</span>
+    <span class="n">vce</span><span class="o">=</span><span class="s1">&#39;hc3&#39;</span>                    <span class="c1"># Robust standard errors</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Estimator selection guidelines:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Start with RA</strong> for simplicity when N is moderate</p></li>
+<li><p><strong>Use IPWRA</strong> as a robustness check or when model misspecification is a concern</p></li>
+<li><p><strong>Use IPW/PSM</strong> when propensity score weighting/matching is preferred</p></li>
+</ol>
+</section>
 <section id="diagnostic-checks">
-<h3><a class="toc-backref" href="#id38" role="doc-backlink">Diagnostic Checks</a><a class="headerlink" href="#diagnostic-checks" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id44" role="doc-backlink">Diagnostic Checks</a><a class="headerlink" href="#diagnostic-checks" title="Link to this heading"></a></h3>
 <ol class="arabic simple">
 <li><p>Visual inspection: Plot outcome trends for treated vs. control units</p></li>
 <li><p>Pre-treatment balance: Check if treated and control units are similar pre-treatment</p></li>
@@ -921,13 +1144,13 @@ periods (no reversals).</p>
 </section>
 </section>
 <section id="troubleshooting">
-<h2><a class="toc-backref" href="#id39" role="doc-backlink">Troubleshooting</a><a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id45" role="doc-backlink">Troubleshooting</a><a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
 <section id="common-errors">
-<h3><a class="toc-backref" href="#id40" role="doc-backlink">Common Errors</a><a class="headerlink" href="#common-errors" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id46" role="doc-backlink">Common Errors</a><a class="headerlink" href="#common-errors" title="Link to this heading"></a></h3>
 <p><strong>“Insufficient pre-treatment periods”</strong>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">demean</span></code>/<code class="docutils literal notranslate"><span class="pre">demeanq</span></code> require T₀ ≥ 1</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">detrend</span></code>/<code class="docutils literal notranslate"><span class="pre">detrendq</span></code> require T₀ ≥ 2</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">demean</span></code>/<code class="docutils literal notranslate"><span class="pre">demeanq</span></code> require <span class="math notranslate nohighlight">\(T_0 \geq 1\)</span></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">detrend</span></code>/<code class="docutils literal notranslate"><span class="pre">detrendq</span></code> require <span class="math notranslate nohighlight">\(T_0 \geq 2\)</span></p></li>
 <li><p>Solution: Check your <code class="docutils literal notranslate"><span class="pre">post</span></code> variable or use a different transformation</p></li>
 </ul>
 <p><strong>“Treatment timing is not common across units”</strong>:</p>
@@ -947,7 +1170,7 @@ periods (no reversals).</p>
 </ul>
 </section>
 <section id="performance-tips">
-<h3><a class="toc-backref" href="#id41" role="doc-backlink">Performance Tips</a><a class="headerlink" href="#performance-tips" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id47" role="doc-backlink">Performance Tips</a><a class="headerlink" href="#performance-tips" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>For large <code class="docutils literal notranslate"><span class="pre">rireps</span></code> (e.g., 10,000), RI can be slow</p></li>
 <li><p>Use <code class="docutils literal notranslate"><span class="pre">seed</span></code> parameter for reproducible RI results</p></li>
@@ -955,18 +1178,156 @@ periods (no reversals).</p>
 </ul>
 </section>
 </section>
+<section id="staggered-adoption-design">
+<h2><a class="toc-backref" href="#id48" role="doc-backlink">Staggered Adoption Design</a><a class="headerlink" href="#staggered-adoption-design" title="Link to this heading"></a></h2>
+<p>When units are treated at different times, use the staggered adoption framework.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Staggered mode limitations</strong>: The <code class="docutils literal notranslate"><span class="pre">demeanq</span></code> and <code class="docutils literal notranslate"><span class="pre">detrendq</span></code>
+transformations are only available for common timing designs. In staggered
+mode, only <code class="docutils literal notranslate"><span class="pre">demean</span></code> and <code class="docutils literal notranslate"><span class="pre">detrend</span></code> are supported.</p>
+</div>
+<section id="id2">
+<h3><a class="toc-backref" href="#id49" role="doc-backlink">Basic Usage</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>Instead of <code class="docutils literal notranslate"><span class="pre">post</span></code> (common timing), specify <code class="docutils literal notranslate"><span class="pre">gvar</span></code> (first treatment period):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">gvar</span><span class="o">=</span><span class="s1">&#39;first_treat_year&#39;</span><span class="p">,</span>  <span class="c1"># First treatment period for each unit</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s1">&#39;overall&#39;</span><span class="p">,</span>      <span class="c1"># Aggregate to overall effect</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="staggered-specific-parameters">
+<h3><a class="toc-backref" href="#id50" role="doc-backlink">Staggered-Specific Parameters</a><a class="headerlink" href="#staggered-specific-parameters" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt><strong>gvar</strong><span class="classifier">str</span></dt><dd><p>Column name indicating the first treatment period for each unit.
+Units with <code class="docutils literal notranslate"><span class="pre">gvar</span> <span class="pre">=</span> <span class="pre">inf</span></code> or <code class="docutils literal notranslate"><span class="pre">gvar</span> <span class="pre">=</span> <span class="pre">NaN</span></code> are never treated.</p>
+</dd>
+<dt><strong>aggregate</strong><span class="classifier">{‘none’, ‘cohort’, ‘overall’}</span></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'none'</span></code>: Return (g,r)-specific effects only</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'cohort'</span></code>: Average effects within each cohort (default)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'overall'</span></code>: Weighted average across cohorts</p></li>
+</ul>
+</dd>
+<dt><strong>control_group</strong><span class="classifier">{‘not_yet_treated’, ‘never_treated’}</span></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'not_yet_treated'</span></code>: Use never-treated plus not-yet-treated units (default)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'never_treated'</span></code>: Use only never-treated units</p></li>
+</ul>
+</dd>
+<dt><strong>estimator</strong><span class="classifier">{‘ra’, ‘ipw’, ‘ipwra’, ‘psm’}</span></dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'ra'</span></code>: Regression adjustment (default)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'ipw'</span></code>: Inverse probability weighting</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'ipwra'</span></code>: Doubly robust (recommended)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'psm'</span></code>: Propensity score matching</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="accessing-staggered-results">
+<h3><a class="toc-backref" href="#id51" role="doc-backlink">Accessing Staggered Results</a><a class="headerlink" href="#accessing-staggered-results" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Overall weighted effect</span>
+<span class="n">results</span><span class="o">.</span><span class="n">att_overall</span>       <span class="c1"># ATT estimate</span>
+<span class="n">results</span><span class="o">.</span><span class="n">se_overall</span>        <span class="c1"># Standard error</span>
+
+<span class="c1"># Cohort-specific effects</span>
+<span class="n">df_cohorts</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">att_by_cohort</span>
+
+<span class="c1"># Cohort-time specific effects</span>
+<span class="n">df_gt</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">att_by_cohort_time</span>
+
+<span class="c1"># Event study visualization</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_event_study</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="control-group-strategies">
+<h3><a class="toc-backref" href="#id52" role="doc-backlink">Control Group Strategies</a><a class="headerlink" href="#control-group-strategies" title="Link to this heading"></a></h3>
+<p><strong>Not-yet-treated (default)</strong>:</p>
+<p>Uses both never-treated units and units that will be treated in future periods.
+More efficient but requires stronger no-anticipation assumption.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">control_group</span><span class="o">=</span><span class="s1">&#39;not_yet_treated&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Never-treated only</strong>:</p>
+<p>Uses only units that are never treated during the observation period.
+More robust but potentially less efficient.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">control_group</span><span class="o">=</span><span class="s1">&#39;never_treated&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="estimator-selection">
+<h3><a class="toc-backref" href="#id53" role="doc-backlink">Estimator Selection</a><a class="headerlink" href="#estimator-selection" title="Link to this heading"></a></h3>
+<p><strong>Regression Adjustment (RA)</strong>:</p>
+<ul class="simple">
+<li><p>Consistent when conditional mean is correctly specified</p></li>
+<li><p>Default estimator, efficient under correct specification</p></li>
+</ul>
+<p><strong>Doubly Robust (IPWRA)</strong>:</p>
+<ul class="simple">
+<li><p>Consistent if either outcome model or propensity score is correct</p></li>
+<li><p>Recommended when functional form assumptions are uncertain</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">estimator</span><span class="o">=</span><span class="s1">&#39;ipwra&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Inverse Probability Weighting (IPW)</strong>:</p>
+<ul class="simple">
+<li><p>Weights by propensity score</p></li>
+<li><p>Consistent when propensity score is correctly specified</p></li>
+</ul>
+<p><strong>Propensity Score Matching (PSM)</strong>:</p>
+<ul class="simple">
+<li><p>Matches treated to control units by propensity score</p></li>
+<li><p>Use when sample sizes are adequate for matching</p></li>
+</ul>
+</section>
+<section id="staggered-example">
+<h3><a class="toc-backref" href="#id54" role="doc-backlink">Staggered Example</a><a class="headerlink" href="#staggered-example" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span>
+
+<span class="c1"># Load castle law data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;castle.csv&#39;</span><span class="p">)</span>
+
+<span class="c1"># Estimate with staggered design</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;l_homicide&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">gvar</span><span class="o">=</span><span class="s1">&#39;effyear&#39;</span><span class="p">,</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s1">&#39;overall&#39;</span><span class="p">,</span>
+    <span class="n">control_group</span><span class="o">=</span><span class="s1">&#39;not_yet_treated&#39;</span><span class="p">,</span>
+    <span class="n">estimator</span><span class="o">=</span><span class="s1">&#39;ipwra&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Display results</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+
+<span class="c1"># Event study plot</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">plot_event_study</span><span class="p">(</span>
+    <span class="n">include_pre_treatment</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">show_ci</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
 <section id="further-reading">
-<h2><a class="toc-backref" href="#id42" role="doc-backlink">Further Reading</a><a class="headerlink" href="#further-reading" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id55" role="doc-backlink">Further Reading</a><a class="headerlink" href="#further-reading" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="quickstart.html"><span class="doc">Quick Start</span></a> - Quick start tutorial</p></li>
 <li><p><a class="reference internal" href="methodological_notes.html"><span class="doc">Methodological Notes</span></a> - Theoretical background</p></li>
 <li><p><a class="reference internal" href="api/index.html"><span class="doc">API Reference</span></a> - Complete API reference</p></li>
+<li><p><a class="reference internal" href="api/staggered.html"><span class="doc">Staggered DiD Module (staggered)</span></a> - Staggered module API</p></li>
 <li><p><a class="reference internal" href="examples/index.html"><span class="doc">Examples</span></a> - Usage examples</p></li>
 </ul>
-<p>Reference:</p>
-<p>Lee, S. J., and Wooldridge, J. M. (2025). <em>Simple Approaches to Inference with
-Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes</em>.
-Available at SSRN 5325686.</p>
 </section>
 </section>
 

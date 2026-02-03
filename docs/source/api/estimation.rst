@@ -2,7 +2,7 @@ Estimation Module (estimation)
 ===============================
 
 The estimation module implements the core regression and inference procedures
-for the Lee and Wooldridge (2025) difference-in-differences method.
+for the Lee and Wooldridge difference-in-differences methods.
 
 .. automodule:: lwdid.estimation
    :members:
@@ -27,14 +27,14 @@ estimate_att()
 ~~~~~~~~~~~~~~
 
 **Purpose:** Estimate the overall average treatment effect on the treated (ATT)
-from the cross-sectional representation of the Lee and Wooldridge (2025)
+from the cross-sectional representation of the Lee and Wooldridge
 estimator.
 
 **Regression specification (conceptual):**
 
-.. code-block:: text
+.. math::
 
-   y_i = α + τ·D_i + Z_i'β + ε_i
+   Y_i = \alpha + \tau D_i + Z_i'\beta + \varepsilon_i
 
 where:
 
@@ -43,10 +43,10 @@ where:
   module)
 - D_i: Treatment indicator (1 = treated, 0 = control)
 - Z_i: Optional time-invariant controls and their interactions constructed
-  following Lee and Wooldridge (2025, Section 2.2)
+  following Lee and Wooldridge (2026, Section 2.2)
 - ε_i: Regression error term
 
-**Estimand:** τ is the ATT.
+**Estimand:** :math:`\tau` is the ATT.
 
 **Returns:**
 
@@ -65,9 +65,9 @@ period using cross-sectional regressions.
 
 **Regression specification (for each post-treatment period t):**
 
-.. code-block:: text
+.. math::
 
-   y_it = α_t + τ_t·D_i + Z_i'β_t + ε_it
+   Y_{it} = \alpha_t + \tau_t D_i + Z_i'\beta_t + \varepsilon_{it}
 
 where:
 
@@ -75,7 +75,7 @@ where:
 - D_i: Treatment indicator (1 = treated, 0 = control)
 - Z_i: Optional time-invariant controls (and their interactions) re-used
   from the main regression
-- τ_t: Treatment effect in period t (period-specific ATT)
+- :math:`\tau_t`: Treatment effect in period :math:`t` (period-specific ATT)
 
 **Returns:** DataFrame with period-specific estimates, standard errors,
 t-statistics, p-values, and confidence intervals.
@@ -93,17 +93,36 @@ OLS (Homoskedastic)
 
 **Formula:**
 
-.. code-block:: text
+.. math::
 
-   Var(β̂) = σ̂² (X'X)⁻¹
+   \text{Var}(\hat{\beta}) = \hat{\sigma}^2 (X'X)^{-1}
 
-where σ̂² = RSS / (n - k)
+where :math:`\hat{\sigma}^2 = RSS / (n - k)`.
 
 **Degrees of freedom:**
 
-- Non-clustered: df = n - k
+- Non-clustered: :math:`df = n - k`
 
-**When to use:** When homoskedasticity and normality are plausible and exact t-based inference is desired.
+**When to use:** When homoskedasticity and normality are plausible and exact
+t-based inference is desired.
+
+HC0 (White's Original Estimator)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Assumption:** Errors may be heteroskedastic.
+
+**Formula:**
+
+.. math::
+
+   \text{Var}(\hat{\beta}) = (X'X)^{-1} \left(\sum_i x_i x_i' \hat{\varepsilon}_i^2\right) (X'X)^{-1}
+
+**Degrees of freedom:** Same as OLS.
+
+**When to use:** Large samples with suspected heteroskedasticity. This is the
+original White (1980) heteroskedasticity-consistent estimator without
+finite-sample corrections. Tends to underestimate standard errors in small
+samples.
 
 HC1 (Heteroskedasticity-Robust)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,13 +131,33 @@ HC1 (Heteroskedasticity-Robust)
 
 **Formula:**
 
-.. code-block:: text
+.. math::
 
-   Var(β̂) = (X'X)⁻¹ (Σᵢ x̂ᵢx̂ᵢ' ε̂ᵢ²) (X'X)⁻¹ × n/(n-k)
+   \text{Var}(\hat{\beta}) = (X'X)^{-1} \left(\sum_i x_i x_i' \hat{\varepsilon}_i^2\right) (X'X)^{-1} \times \frac{n}{n-k}
 
 **Degrees of freedom:** Same as OLS.
 
 **When to use:** Medium to large samples with suspected heteroskedasticity.
+HC1 applies a degrees-of-freedom correction to HC0.
+
+HC2 (Leverage-Adjusted)
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Assumption:** Errors may be heteroskedastic.
+
+**Formula:**
+
+.. math::
+
+   \text{Var}(\hat{\beta}) = (X'X)^{-1} \left(\sum_i \frac{x_i x_i' \hat{\varepsilon}_i^2}{1-h_{ii}}\right) (X'X)^{-1}
+
+where :math:`h_{ii}` is the i-th diagonal element of the hat matrix
+:math:`H = X(X'X)^{-1}X'`.
+
+**Degrees of freedom:** Same as OLS.
+
+**When to use:** Small to moderate samples with suspected heteroskedasticity
+and varying leverage across observations.
 
 HC3 (Small-Sample Adjusted)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,16 +166,64 @@ HC3 (Small-Sample Adjusted)
 
 **Formula:**
 
-.. code-block:: text
+.. math::
 
-   Var(β̂) = (X'X)⁻¹ (Σᵢ x̂ᵢx̂ᵢ' ε̂ᵢ²/(1-hᵢᵢ)²) (X'X)⁻¹
+   \text{Var}(\hat{\beta}) = (X'X)^{-1} \left(\sum_i \frac{x_i x_i' \hat{\varepsilon}_i^2}{(1-h_{ii})^2}\right) (X'X)^{-1}
 
-where hᵢᵢ is the i-th diagonal element of the hat matrix.
+where :math:`h_{ii}` is the i-th diagonal element of the hat matrix.
 
 **Degrees of freedom:** Same as OLS.
 
 **When to use:** Small or moderate samples with suspected heteroskedasticity.
-Simulation evidence suggests HC3 can perform reasonably well in some small-sample designs, but results can still be sensitive when the number of treated or control units is very small. See :doc:`../methodological_notes` for further discussion.
+Simulation evidence suggests HC3 can perform reasonably well in some
+small-sample designs, but results can still be sensitive when the number of
+treated or control units is very small. See :doc:`../methodological_notes`
+for further discussion.
+
+HC4 (High-Leverage Adjusted)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Assumption:** Errors may be heteroskedastic.
+
+**Formula:**
+
+.. math::
+
+   \text{Var}(\hat{\beta}) = (X'X)^{-1} \left(\sum_i \frac{x_i x_i' \hat{\varepsilon}_i^2}{(1-h_{ii})^{\delta_i}}\right) (X'X)^{-1}
+
+where :math:`\delta_i = \min(4, n h_{ii}/\sum_j h_{jj})` is an adaptive exponent
+based on leverage.
+
+**Degrees of freedom:** Same as OLS.
+
+**When to use:** When data contains high-leverage observations. HC4 provides
+adaptive adjustment that increases for observations with high leverage.
+
+Variance Estimator Selection Guide
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **OLS**: Sample size: Any. Assumes homoskedasticity and normality. Use for
+  exact t-inference under CLM assumptions.
+- **HC0**: Sample size: Large (N > 100). Assumes heteroskedasticity. Use for
+  large samples only; understates SE in small samples.
+- **HC1**: Sample size: Moderate-Large (N > 50). Assumes heteroskedasticity.
+  General robust SE; df-corrected HC0.
+- **HC2**: Sample size: Small-Moderate (N = 20-100). Assumes heteroskedasticity
+  with varying leverage. Use when leverage varies across observations.
+- **HC3**: Sample size: Small-Moderate (N = 10-50). Assumes heteroskedasticity.
+  Default for small samples with suspected heteroskedasticity.
+- **HC4**: Sample size: Any. Assumes heteroskedasticity with influential points.
+  Use when high-leverage points are present in data.
+- **Cluster**: Sample size: G > 30 clusters. Assumes within-cluster correlation.
+  Use for clustered data (states, schools).
+
+**Selection guidelines:**
+
+1. **CLM assumptions plausible + exact inference needed**: Use OLS (``vce=None``)
+2. **Heteroskedasticity suspected + small sample**: Use HC3 (``vce='hc3'``)
+3. **Heteroskedasticity suspected + moderate/large sample**: Use HC1 (``vce='hc1'``)
+4. **High-leverage observations present**: Use HC4 (``vce='hc4'``)
+5. **Clustered errors**: Use cluster-robust (``vce='cluster'``)
 
 Cluster-Robust
 ~~~~~~~~~~~~~~
@@ -146,11 +233,11 @@ clusters.
 
 **Formula:**
 
-.. code-block:: text
+.. math::
 
-   Var(β̂) = (X'X)⁻¹ (Σ_g X_g' ε̂_g ε̂_g' X_g) (X'X)⁻¹
+   \text{Var}(\hat{\beta}) = (X'X)^{-1} \left(\sum_g X_g' \hat{\varepsilon}_g \hat{\varepsilon}_g' X_g\right) (X'X)^{-1}
 
-where g indexes clusters.
+where :math:`g` indexes clusters.
 
 **Degrees of freedom:** G - 1 (number of clusters minus 1).
 
@@ -165,11 +252,11 @@ Regression Procedure
 1. **Prepare design matrix:** For the main regression, construct a
    cross-sectional design matrix with an intercept, the treatment
    indicator, and (when applicable) time-invariant controls and their
-   interactions with treatment as in Lee and Wooldridge (2025, Section 2.2).
+   interactions with treatment as in Lee and Wooldridge (2026, Section 2.2).
    The same control specification is reused for period-by-period
    regressions.
-2. **Run OLS:** Compute β̂ = (X'X)⁻¹ X'y
-3. **Compute residuals:** ε̂ = y - Xβ̂
+2. **Run OLS:** Compute :math:`\hat{\beta} = (X'X)^{-1} X'y`
+3. **Compute residuals:** :math:`\hat{\varepsilon} = y - X\hat{\beta}`
 4. **Compute variance:** Use appropriate variance estimator
 5. **Inference:** Compute t-statistics and p-values using t-distribution
 
@@ -199,12 +286,12 @@ Confidence Intervals
 
 95% confidence intervals are computed as:
 
-.. code-block:: text
+.. math::
 
-   CI = β̂ ± t_{α/2, df} × SE(β̂)
+   CI = \hat{\beta} \pm t_{\alpha/2, df} \times SE(\hat{\beta})
 
-where t_{α/2, df} is the critical value from the t-distribution with df
-degrees of freedom.
+where :math:`t_{\alpha/2, df}` is the critical value from the t-distribution
+with :math:`df` degrees of freedom.
 
 Technical Notes
 ---------------
@@ -215,7 +302,7 @@ Numerical Stability
 The module relies on the numerically stable OLS implementation in ``statsmodels``:
 
 - OLS estimation and variance–covariance computation are delegated to ``statsmodels``
-- Robust variance estimators with small-sample adjustments (HC1/HC3)
+- Robust variance estimators with small-sample adjustments (HC0-HC4)
 - Singular or ill-conditioned designs raise errors or warnings rather than failing silently
 
 Missing Data
@@ -226,9 +313,9 @@ Missing Data
   are dropped during validation.
 - For control variables, missing values are handled at the estimation
   stage: if dropping observations with missing controls still leaves
-  enough treated and control units to satisfy the N₁ > K+1 and
-  N₀ > K+1 conditions, those observations are removed and controls are
-  included; otherwise, controls are omitted and the full regression
+  enough treated and control units to satisfy the :math:`N_1 > K+1` and
+  :math:`N_0 > K+1` conditions, those observations are removed and controls
+  are included; otherwise, controls are omitted and the full regression
   sample is retained. In both cases, informative warnings are issued.
 - The effective sample size (n) reported in the results corresponds to
   the cross-sectional regression sample used for ATT estimation (the
@@ -254,6 +341,122 @@ most applications, you should call :func:`lwdid.lwdid` directly and rely on
 its high-level interface. Advanced users who need low-level access can
 consult the docstrings and source code in :mod:`lwdid.estimation` to see the
 exact function signatures and required inputs.
+
+Large-Sample Inference
+----------------------
+
+For large cross-sectional samples, asymptotic inference using robust standard
+errors is appropriate:
+
+**HC0-HC4 Standard Errors**
+
+- HC1 provides heteroskedasticity-consistent standard errors with a degrees-of-
+  freedom correction (n/(n-k))
+- HC3 adds leverage-based adjustments suitable for smaller samples
+
+**Cluster-Robust Standard Errors**
+
+When errors are correlated within clusters (e.g., states, regions), cluster-
+robust standard errors account for this correlation. Inference relies on
+asymptotic approximations that improve with the number of clusters G.
+
+**Variance Estimator Recommendation**
+
+- Small samples with CLM assumptions: Use ``vce=None`` for exact t-based inference
+- Small to moderate samples with heteroskedasticity: Use ``vce='hc3'``
+- Moderate to large samples: Use ``vce='hc1'`` or ``vce='robust'``
+- Clustered data with many clusters: Use ``vce='cluster'``
+
+Estimator Selection for Large Samples
+-------------------------------------
+
+Lee and Wooldridge (2025) establishes theoretical and simulation evidence for
+choosing among estimators when sample sizes are large enough for asymptotic
+inference. The key results from the Monte Carlo simulations (Sections 7.1-7.2)
+inform the following recommendations.
+
+**Available Estimators**
+
+- **RA (Regression Adjustment)**: Default estimator. Under correct specification
+  of the outcome model, RA is both best linear unbiased (BLUE) and asymptotically
+  efficient. Equivalent to POLS/ETWFE in the common timing case.
+
+- **IPW (Inverse Probability Weighting)**: Consistent when the propensity score
+  model is correctly specified. May be less efficient than RA under correct
+  outcome model specification.
+
+- **IPWRA (Doubly Robust)**: Combines regression adjustment with propensity score
+  weighting. Consistent if either the outcome model or propensity score model is
+  correctly specified (double robustness property).
+
+**Doubly Robust ATT Estimator (Mathematical Formulation)**
+
+The influence function representation of the doubly robust ATT estimator is:
+
+.. math::
+
+   \psi_i^{DR} = \frac{D_i}{\pi} \left[ Y_i - m_0(X_i) \right]
+   - \frac{(1-D_i) p(X_i)}{\pi (1-p(X_i))} \left[ Y_i - m_0(X_i) \right]
+   - \tau_{ATT}
+
+where :math:`\pi = P(D=1)` is the unconditional treatment probability,
+:math:`p(X_i) = P(D=1|X_i)` is the propensity score, and
+:math:`m_0(X_i) = E[Y|D=0, X_i]` is the conditional mean for controls.
+
+**Double robustness property**:
+
+- If :math:`m_0(X)` is correctly specified: ATT is identified via regression
+  adjustment regardless of propensity score specification
+- If :math:`p(X)` is correctly specified: IPW component corrects for outcome
+  model misspecification
+- Both correct: achieves semiparametric efficiency bound
+
+- **PSM (Propensity Score Matching)**: Matches treated to control units based on
+  estimated propensity scores. Generally less efficient than RA and IPWRA.
+
+**Efficiency Comparison** (from Lee and Wooldridge (2025), Tables 7.2-7.10)
+
+Under correct specification of all models:
+
+1. RA/POLS has the smallest standard deviation and RMSE
+2. IPWRA performs close to RA (within 3-5% higher SD in most scenarios)
+3. PSM and CS(2021) have notably larger standard deviations (25-40% higher)
+
+Under model misspecification:
+
+1. When outcome model is misspecified but propensity score is correct:
+   IPWRA has smallest RMSE due to its double robustness
+2. When both models are misspecified: IPWRA still tends to have smaller
+   bias than RA while maintaining reasonable precision
+
+**Estimator Selection Guidelines**
+
+1. **Start with RA** when N is moderate and functional form assumptions are
+   plausible. RA is efficient and computationally simple.
+
+2. **Use IPWRA** as primary estimator when:
+
+   - Functional form assumptions are uncertain
+   - Robustness to model misspecification is desired
+   - Controls are available for both outcome and propensity score models
+
+3. **Use IPW/PSM** when:
+
+   - Propensity score weighting or matching is preferred for substantive reasons
+   - Comparison with other treatment effects literature is desired
+
+4. **Report multiple estimators** for robustness: If RA and IPWRA give similar
+   results, this provides evidence that findings are not sensitive to functional
+   form assumptions.
+
+**Relationship to Callaway and Sant'Anna (2021)**
+
+The long-differencing approach of Callaway and Sant'Anna (2021) uses only the
+period just prior to intervention, discarding information from earlier
+pre-treatment periods. Lee and Wooldridge (2025) shows that this can result in
+substantial efficiency loss. The rolling transformation approach uses all
+suitable pre-treatment periods, achieving efficiency close to POLS while
+permitting application of doubly robust estimators.
 
 See Also
 --------

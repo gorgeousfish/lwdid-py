@@ -2,7 +2,7 @@ User Guide
 ==========
 
 This guide covers all aspects of using the ``lwdid`` package for difference-in-differences
-estimation with small samples.
+estimation with rolling transformations.
 
 .. contents:: Table of Contents
    :local:
@@ -11,17 +11,84 @@ estimation with small samples.
 Overview
 --------
 
-The ``lwdid`` package implements the Lee and Wooldridge (2025) method for
-difference-in-differences estimation with small cross-sectional sample sizes.
+The ``lwdid`` package implements the Lee and Wooldridge methods for difference-in-
+differences estimation with panel data, covering three main scenarios:
+
+**Small-Sample Common Timing** (Lee and Wooldridge, 2026):
+
+- Exact t-based inference under CLM assumptions (normality and homoskedasticity)
+- Designed for settings with small numbers of treated or control units
+- Works best with large time dimensions
+
+**Large-Sample Common Timing** (Lee and Wooldridge, 2025):
+
+- Asymptotic inference with robust standard errors
+- Supports heteroskedasticity-robust (HC0-HC4) and cluster-robust options
+- Multiple estimators: RA, IPW, IPWRA, PSM
+
+**Staggered Adoption** (Lee and Wooldridge, 2025):
+
+- Units treated at different times
+- Cohort-time specific effect estimation
+- Flexible control group strategies and aggregation options
 
 Key features:
 
-- Designed for settings with small numbers of treated or control units
-- Exact t-based inference under classical linear model assumptions (normality and homoskedasticity)
-- Works best with large time dimensions
-- Heteroskedasticity-robust standard errors
-- Randomization inference
-- Four transformation methods
+- Four transformation methods: demean, detrend, demeanq, detrendq
+- Multiple variance estimators for different assumptions
+- Randomization inference for small samples
+- Event study visualization for staggered designs
+
+Scenario Selection Guide
+------------------------
+
+Use this guide to choose the appropriate scenario for your analysis:
+
+- **Small-sample common timing**: Use when N is small with common treatment
+  timing. Key parameters: ``post``, ``vce=None``.
+- **Large-sample common timing**: Use when N is larger with common treatment
+  timing. Key parameters: ``post``, ``vce='hc3'``.
+- **Staggered adoption**: Use when units are treated at different times. Key
+  parameters: ``gvar``, ``aggregate``.
+
+**Decision Flowchart:**
+
+.. code-block:: text
+
+                    ┌─────────────────────────────────┐
+                    │  Treatment timing varies        │
+                    │  across units?                  │
+                    └───────────────┬─────────────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                    ▼                               ▼
+               ┌────────┐                     ┌─────────┐
+               │  YES   │                     │   NO    │
+               └────┬───┘                     └────┬────┘
+                    │                              │
+                    ▼                              ▼
+    ┌───────────────────────────┐   ┌─────────────────────────────┐
+    │  STAGGERED ADOPTION       │   │  Is cross-sectional N       │
+    │  Use: gvar parameter      │   │  small (< 50)?              │
+    │  Estimator: ra/ipwra      │   └───────────────┬─────────────┘
+    │  Aggregate: cohort/overall│                   │
+    └───────────────────────────┘   ┌───────────────┴───────────────┐
+                                    │                               │
+                                    ▼                               ▼
+                               ┌────────┐                     ┌─────────┐
+                               │  YES   │                     │   NO    │
+                               └────┬───┘                     └────┬────┘
+                                    │                              │
+                                    ▼                              ▼
+            ┌─────────────────────────────────────┐   ┌─────────────────────────────────┐
+            │  SMALL-SAMPLE COMMON TIMING         │   │  LARGE-SAMPLE COMMON TIMING     │
+            │  Use: post parameter                │   │  Use: post parameter            │
+            │  VCE: None (exact t-inference)      │   │  VCE: hc3 or robust             │
+            │  Alt: ri=True for RI                │   │  Estimator: ra/ipwra            │
+            │  Reference: Lee and Wooldridge      │   │  Reference: Lee and Wooldridge  │
+            │  (2026)                             │   │  (2025)                         │
+            └─────────────────────────────────────┘   └─────────────────────────────────┘
 
 Quick Reference
 ---------------
@@ -41,17 +108,20 @@ demean: Standard DiD with Unit Fixed Effects
 
 - Annual data or data without seasonal patterns
 - Control for time-invariant unit characteristics
-- At least 1 pre-treatment period (T₀ ≥ 1)
+- At least 1 pre-treatment period (:math:`T_0 \geq 1`)
 
 **What it does**:
 
 Removes unit-specific pre-treatment means from each observation.
 
-**Mathematical form** (Lee and Wooldridge 2025, Procedure 2.1):
+**Mathematical form** (Lee and Wooldridge, 2026, Procedure 2.1):
 
-For each unit i, compute the pre-treatment mean ȳᵢ₀ and transform:
+For each unit :math:`i`, compute the pre-treatment mean :math:`\bar{Y}_{i,pre}` and
+transform:
 
-ỹᵢₜ = yᵢₜ - ȳᵢ₀ for all t
+.. math::
+
+   \dot{Y}_{it} = Y_{it} - \bar{Y}_{i,pre} \quad \text{for all } t
 
 Then estimate a cross-sectional regression on the transformed data.
 
@@ -71,17 +141,19 @@ detrend: DiD with Unit-Specific Linear Trends
 
 - Units exhibit different linear trends in the pre-treatment period
 - Control for both unit fixed effects and unit-specific trends
-- At least 2 pre-treatment periods (T₀ ≥ 2)
+- At least 2 pre-treatment periods (:math:`T_0 \geq 2`)
 
 **What it does**:
 
 Estimates and removes unit-specific linear trends from the pre-treatment data.
 
-**Mathematical form** (Lee and Wooldridge 2025, Procedure 3.1):
+**Mathematical form** (Lee and Wooldridge, 2026, Procedure 3.1):
 
-For each unit i, estimate linear trend from pre-treatment data:
+For each unit :math:`i`, estimate linear trend from pre-treatment data:
 
-yᵢₜ = αᵢ + βᵢ·t + εᵢₜ (for t in pre-treatment period)
+.. math::
+
+   Y_{it} = \alpha_i + \beta_i t + \varepsilon_{it} \quad \text{(for } t \text{ in pre-treatment period)}
 
 Then detrend all observations using the estimated trend.
 
@@ -103,7 +175,8 @@ demeanq: Quarterly Data with Seasonal Fixed Effects
 - Control for both unit and quarter-of-year effects
 - Pre-treatment sample rich enough to estimate quarter fixed effects for each unit:
   for each unit, the number of pre-treatment observations must be at least the
-  number of distinct pre-treatment quarters plus one (n_pre ≥ #quarters_pre + 1)
+  number of distinct pre-treatment quarters plus one
+  (:math:`n_{pre} \geq \#quarters_{pre} + 1`)
 - For each unit, every quarter that appears in the post-treatment period must also
   appear in its pre-treatment period (quarter-coverage condition).
 
@@ -134,7 +207,7 @@ detrendq: Quarterly Data with Trends and Seasonal Effects
 - Control for unit trends and quarter-of-year effects
 - At least 2 pre-treatment periods overall, and for each unit enough pre-treatment
   observations to estimate a linear trend with quarter fixed effects
-  (n_pre ≥ 1 + #quarters_pre)
+  (:math:`n_{pre} \geq 1 + \#quarters_{pre}`)
 - For each unit, every quarter that appears in the post-treatment period must also
   appear in its pre-treatment period (quarter-coverage condition).
 
@@ -181,6 +254,24 @@ OLS (Homoskedastic)
   estimated parameters.
 - Clustered: df = G - 1 (G clusters)
 
+HC0 (White's Heteroskedasticity-Consistent)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**When to use**:
+
+- Heteroskedasticity is suspected
+- Sample size is large
+
+**Specification**:
+
+.. code-block:: python
+
+   results = lwdid(..., vce='hc0')
+
+**Note**: HC0 is the original White (1980) heteroskedasticity-consistent estimator
+without finite-sample adjustments. Tends to underestimate standard errors in small
+samples.
+
 HC1 (Heteroskedasticity-Robust)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -197,7 +288,27 @@ HC1 (Heteroskedasticity-Robust)
    # or equivalently:
    results = lwdid(..., vce='robust')
 
-Note: ``'hc1'`` and ``'robust'`` are aliases for the same estimator.
+Note: ``'hc1'`` and ``'robust'`` are aliases for the same estimator. HC1 applies
+a degrees-of-freedom correction (n/(n-k)) to HC0.
+
+HC2 (Leverage-Adjusted)
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+**When to use**:
+
+- Heteroskedasticity is suspected
+- Sample size is small to moderate
+- Observations have varying leverage
+
+**Specification**:
+
+.. code-block:: python
+
+   results = lwdid(..., vce='hc2')
+
+**Note**: HC2 divides squared residuals by (1 - h_ii) where h_ii is the diagonal
+of the hat matrix. Provides better performance than HC1 when leverage varies
+across observations.
 
 HC3 (Small-Sample Adjusted Robust)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,7 +324,26 @@ HC3 (Small-Sample Adjusted Robust)
 
    results = lwdid(..., vce='hc3')
 
-**Advantage**: HC3 provides better finite-sample performance than HC1 in small samples.
+**Advantage**: HC3 divides squared residuals by (1 - h_ii)^2, providing better
+finite-sample performance than HC1 and HC2 in small samples.
+
+HC4 (High-Leverage Adjusted)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**When to use**:
+
+- Heteroskedasticity is suspected
+- Data contains high-leverage observations
+
+**Specification**:
+
+.. code-block:: python
+
+   results = lwdid(..., vce='hc4')
+
+**Note**: HC4 uses an adaptive exponent that increases the adjustment for
+observations with high leverage. Recommended when the design matrix contains
+potentially influential observations.
 
 Cluster-Robust
 ~~~~~~~~~~~~~~
@@ -486,7 +616,8 @@ Choosing Transformation Method
 1. **Start with ``demean``** for annual data
 2. **Use ``detrend``** if pre-treatment trends differ across units
 3. **Use ``demeanq``/``detrendq``** for quarterly data with seasonality
-4. **Check pre-treatment period requirements** (T₀ ≥ 1 for demean, T₀ ≥ 2 for detrend)
+4. **Check pre-treatment period requirements** (:math:`T_0 \geq 1` for demean,
+   :math:`T_0 \geq 2` for detrend)
 
 Choosing Variance Estimator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -499,10 +630,60 @@ Choosing Variance Estimator
 Sample Size Considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **Theoretical minimum:** N ≥ 3 units (requires strong CLM assumptions: normality and homoskedasticity)
-- **Practical recommendation:** As a rough guideline, having at least 10 units improves stability, especially with heteroskedasticity-robust standard errors
-- **Time dimension:** Method works best with large T (many time periods), where the central limit theorem across time supports normality
-- **Large samples:** For very large cross-sectional samples (for example, N in the hundreds or more), standard difference-in-differences implementations designed for large N are also available; ``lwdid`` remains valid but is primarily motivated by small-N applications
+- **Small samples (N < 50):** Use exact t-based inference (``vce=None``) under
+  CLM assumptions (normality and homoskedasticity). Minimum requirement is
+  :math:`N \geq 3` units. Having at least 10 units improves stability.
+- **Moderate to large samples (N >= 50):** Use heteroskedasticity-robust
+  standard errors (``vce='hc3'``) for valid asymptotic inference.
+- **Large samples with controls:** Consider IPWRA (``estimator='ipwra'``) for
+  doubly robust estimation when functional form assumptions are uncertain.
+- **Time dimension:** Method works best with large T (many time periods), where
+  the central limit theorem across time supports normality of the transformed
+  outcome.
+- **Asymptotic theory:** Lee and Wooldridge (2025) develops the theoretical
+  foundation for large-sample inference, supporting HC0-HC4 and cluster-robust
+  standard errors.
+
+Estimator Selection (Large-Sample Common Timing)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For large cross-sectional samples in common timing settings, multiple estimators
+are available beyond regression adjustment. Lee and Wooldridge (2025) shows
+that the rolling transformation approach enables application of various treatment
+effects estimators, including doubly robust methods.
+
+**Available estimators for common timing:**
+
+- ``'ra'`` (default): Regression adjustment via OLS. Consistent when the outcome
+  model is correctly specified. Efficient under correct specification.
+
+- ``'ipw'``: Inverse probability weighting. Consistent when the propensity score
+  model is correctly specified. Requires ``controls`` parameter.
+
+- ``'ipwra'``: Doubly robust estimator combining regression and IPW. Consistent
+  when either the outcome model or propensity score is correctly specified.
+  Recommended when functional form assumptions are uncertain.
+
+- ``'psm'``: Propensity score matching. Matches treated to control units based
+  on propensity scores. Requires adequate sample sizes for matching.
+
+**Example (IPWRA in common timing):**
+
+.. code-block:: python
+
+   results = lwdid(
+       data, y='outcome', d='treated', ivar='unit', tvar='year',
+       post='post', rolling='demean',
+       estimator='ipwra',           # Doubly robust estimator
+       controls=['x1', 'x2'],       # Controls for outcome and PS models
+       vce='hc3'                    # Robust standard errors
+   )
+
+**Estimator selection guidelines:**
+
+1. **Start with RA** for simplicity when N is moderate
+2. **Use IPWRA** as a robustness check or when model misspecification is a concern
+3. **Use IPW/PSM** when propensity score weighting/matching is preferred
 
 Diagnostic Checks
 ~~~~~~~~~~~~~~~~~
@@ -520,8 +701,8 @@ Common Errors
 
 **"Insufficient pre-treatment periods"**:
 
-- ``demean``/``demeanq`` require T₀ ≥ 1
-- ``detrend``/``detrendq`` require T₀ ≥ 2
+- ``demean``/``demeanq`` require :math:`T_0 \geq 1`
+- ``detrend``/``detrendq`` require :math:`T_0 \geq 2`
 - Solution: Check your ``post`` variable or use a different transformation
 
 **"Treatment timing is not common across units"**:
@@ -546,16 +727,160 @@ Performance Tips
 - Use ``seed`` parameter for reproducible RI results
 - Export results to Excel/CSV for further analysis in other tools
 
+Staggered Adoption Design
+-------------------------
+
+When units are treated at different times, use the staggered adoption framework.
+
+.. note::
+
+   **Staggered mode limitations**: The ``demeanq`` and ``detrendq``
+   transformations are only available for common timing designs. In staggered
+   mode, only ``demean`` and ``detrend`` are supported.
+
+Basic Usage
+~~~~~~~~~~~
+
+Instead of ``post`` (common timing), specify ``gvar`` (first treatment period):
+
+.. code-block:: python
+
+   results = lwdid(
+       data,
+       y='outcome',
+       ivar='unit',
+       tvar='year',
+       gvar='first_treat_year',  # First treatment period for each unit
+       rolling='demean',
+       aggregate='overall',      # Aggregate to overall effect
+   )
+
+Staggered-Specific Parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**gvar** : str
+    Column name indicating the first treatment period for each unit.
+    Units with ``gvar = inf`` or ``gvar = NaN`` are never treated.
+
+**aggregate** : {'none', 'cohort', 'overall'}
+    - ``'none'``: Return (g,r)-specific effects only
+    - ``'cohort'``: Average effects within each cohort (default)
+    - ``'overall'``: Weighted average across cohorts
+
+**control_group** : {'not_yet_treated', 'never_treated'}
+    - ``'not_yet_treated'``: Use never-treated plus not-yet-treated units (default)
+    - ``'never_treated'``: Use only never-treated units
+
+**estimator** : {'ra', 'ipw', 'ipwra', 'psm'}
+    - ``'ra'``: Regression adjustment (default)
+    - ``'ipw'``: Inverse probability weighting
+    - ``'ipwra'``: Doubly robust (recommended)
+    - ``'psm'``: Propensity score matching
+
+Accessing Staggered Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Overall weighted effect
+   results.att_overall       # ATT estimate
+   results.se_overall        # Standard error
+
+   # Cohort-specific effects
+   df_cohorts = results.att_by_cohort
+
+   # Cohort-time specific effects
+   df_gt = results.att_by_cohort_time
+
+   # Event study visualization
+   fig, ax = results.plot_event_study()
+
+Control Group Strategies
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Not-yet-treated (default)**:
+
+Uses both never-treated units and units that will be treated in future periods.
+More efficient but requires stronger no-anticipation assumption.
+
+.. code-block:: python
+
+   results = lwdid(..., control_group='not_yet_treated')
+
+**Never-treated only**:
+
+Uses only units that are never treated during the observation period.
+More robust but potentially less efficient.
+
+.. code-block:: python
+
+   results = lwdid(..., control_group='never_treated')
+
+Estimator Selection
+~~~~~~~~~~~~~~~~~~~
+
+**Regression Adjustment (RA)**:
+
+- Consistent when conditional mean is correctly specified
+- Default estimator, efficient under correct specification
+
+**Doubly Robust (IPWRA)**:
+
+- Consistent if either outcome model or propensity score is correct
+- Recommended when functional form assumptions are uncertain
+
+.. code-block:: python
+
+   results = lwdid(..., estimator='ipwra')
+
+**Inverse Probability Weighting (IPW)**:
+
+- Weights by propensity score
+- Consistent when propensity score is correctly specified
+
+**Propensity Score Matching (PSM)**:
+
+- Matches treated to control units by propensity score
+- Use when sample sizes are adequate for matching
+
+Staggered Example
+~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   import pandas as pd
+   from lwdid import lwdid
+
+   # Load castle law data
+   data = pd.read_csv('castle.csv')
+
+   # Estimate with staggered design
+   results = lwdid(
+       data,
+       y='l_homicide',
+       ivar='state',
+       tvar='year',
+       gvar='effyear',
+       rolling='demean',
+       aggregate='overall',
+       control_group='not_yet_treated',
+       estimator='ipwra',
+   )
+
+   # Display results
+   print(results.summary())
+
+   # Event study plot
+   fig, ax = results.plot_event_study(
+       include_pre_treatment=True,
+       show_ci=True
+   )
+
 Further Reading
 ---------------
 
 - :doc:`quickstart` - Quick start tutorial
 - :doc:`methodological_notes` - Theoretical background
 - :doc:`api/index` - Complete API reference
+- :doc:`api/staggered` - Staggered module API
 - :doc:`examples/index` - Usage examples
-
-Reference:
-
-Lee, S. J., and Wooldridge, J. M. (2025). *Simple Approaches to Inference with
-Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes*.
-Available at SSRN 5325686.

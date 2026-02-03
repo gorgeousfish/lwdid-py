@@ -335,4 +335,4 @@ replace gvar = 0 if missing(gvar)
 ---
 
 *文档更新日期: 2025-12-03*  
-*版本: lwdid 0.1.0*
+*版本: lwdid 0.2.0*
