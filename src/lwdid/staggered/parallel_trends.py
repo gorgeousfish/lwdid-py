@@ -1,21 +1,32 @@
 """
-Parallel trends assumption testing for staggered difference-in-differences.
+Statistical tests for the parallel trends assumption in staggered DiD.
 
-This module implements statistical tests for the parallel trends assumption
+This module provides hypothesis tests to assess the parallel trends assumption
 using pre-treatment ATT estimates. Under the null hypothesis of parallel
 trends and no anticipation, pre-treatment ATT estimates should be
 statistically indistinguishable from zero.
 
-Two types of tests are provided:
+Two complementary testing approaches are implemented:
 
-1. **Individual t-tests**: Test H0: ATT_e = 0 for each pre-treatment
-   event time e < -1 (excluding the anchor point).
+1. **Individual t-tests**: Test H0: ATT_e = 0 for each pre-treatment event
+   time e < -1, excluding the anchor point which is zero by construction.
 
-2. **Joint F-test**: Test H0: all pre-treatment ATT = 0 simultaneously.
-   This is the primary test for parallel trends.
+2. **Joint F-test (or Wald test)**: Test H0: all pre-treatment ATT = 0
+   simultaneously. This is the primary diagnostic for parallel trends.
 
-The anchor point (e = -1) is excluded from testing because it is set to
-zero by construction of the rolling transformation.
+The anchor point at event time e = -1 is excluded from testing because
+it is set to zero by construction of the rolling transformation.
+
+Notes
+-----
+The joint F-test assumes independence across pre-treatment periods. For
+settings with substantial serial correlation, the Wald (chi-squared) test
+may be preferred. Both tests are asymptotically valid under standard
+regularity conditions.
+
+Rejection of the null hypothesis suggests potential violation of the
+parallel trends assumption. However, failure to reject does not prove
+parallel trends holds, as the test may simply lack statistical power.
 """
 
 from __future__ import annotations
@@ -88,50 +99,54 @@ def _compute_individual_t_tests(
     alpha: float = 0.05,
 ) -> tuple[pd.DataFrame, list[int]]:
     """
-    Compute individual t-tests for each pre-treatment ATT.
+    Compute individual t-tests for each pre-treatment ATT estimate.
+
+    Tests H0: ATT_e = 0 for each pre-treatment event time, using a
+    t-distribution with degrees of freedom based on sample sizes.
 
     Parameters
     ----------
     pre_treatment_effects : list of PreTreatmentEffect
         Pre-treatment effect estimates from estimate_pre_treatment_effects.
     alpha : float, default=0.05
-        Significance level for individual tests.
+        Significance level for determining the 'significant' flag.
 
     Returns
     -------
     individual_tests : pd.DataFrame
-        DataFrame with columns: event_time, cohort, att, se, t_stat,
-        pvalue, significant.
+        DataFrame with columns: event_time, cohort, period, att, se,
+        t_stat, pvalue, significant, n_treated, n_control. Each row
+        represents test results for one pre-treatment period.
     excluded_periods : list of int
-        Event times excluded from testing.
+        Event times excluded from testing due to anchor point status,
+        missing standard errors, or invalid ATT values.
     """
     test_results = []
     excluded_periods = []
 
     for effect in pre_treatment_effects:
-        # Skip anchor points (e = -1)
+        # Anchor points are zero by construction and provide no test information.
         if effect.is_anchor:
             excluded_periods.append(effect.event_time)
             continue
 
-        # Skip if SE is missing or zero
+        # Invalid SE prevents reliable t-test computation.
         if np.isnan(effect.se) or effect.se <= 0:
             excluded_periods.append(effect.event_time)
             continue
 
-        # Skip if ATT is missing
+        # Missing ATT indicates estimation failure for this period.
         if np.isnan(effect.att):
             excluded_periods.append(effect.event_time)
             continue
 
-        # Compute t-statistic
         t_stat = effect.att / effect.se
 
-        # Use t-distribution with appropriate df
-        # If df_inference not available, use large-sample approximation
+        # Approximate df using pooled sample size; default to 1000 for
+        # asymptotic approximation when sample is too small.
         df = effect.n_treated + effect.n_control - 2
         if df <= 0:
-            df = 1000  # Large-sample approximation
+            df = 1000
 
         pvalue = 2 * (1 - stats.t.cdf(abs(t_stat), df))
 
@@ -164,55 +179,50 @@ def _compute_joint_f_test(
     """
     Compute joint F-test for H0: all pre-treatment ATT = 0.
 
-    Uses a Wald-type test statistic:
-    F = (1/q) * sum((ATT_j / SE_j)^2)
-
-    where q is the number of pre-treatment periods being tested.
+    Uses a Wald-type F-statistic computed as the average of squared
+    t-statistics across pre-treatment periods.
 
     Parameters
     ----------
     individual_tests : pd.DataFrame
-        DataFrame with columns: att, se, t_stat.
+        DataFrame with columns: att, se, t_stat, n_treated, n_control.
     alpha : float, default=0.05
-        Significance level.
+        Significance level for hypothesis testing. Currently unused
+        but retained for API consistency with related functions.
 
     Returns
     -------
     f_stat : float
-        F-statistic.
+        F-statistic computed as (1/q) * sum(t_j^2).
     pvalue : float
-        P-value from F-distribution.
+        P-value from F(q, df2) distribution.
     df1 : int
-        Numerator degrees of freedom.
+        Numerator degrees of freedom (number of restrictions q).
     df2 : int
-        Denominator degrees of freedom.
+        Denominator degrees of freedom (based on average sample size).
 
     Notes
     -----
     This is a simplified F-test that assumes independence across
-    pre-treatment periods. For a more rigorous test accounting for
-    correlation, a full variance-covariance matrix would be needed.
+    pre-treatment periods. For settings with substantial correlation
+    between period-specific estimates, a test based on the full
+    variance-covariance matrix would provide more accurate inference.
     """
     if len(individual_tests) == 0:
         return np.nan, np.nan, 0, 0
 
-    # Number of restrictions (pre-treatment periods)
     q = len(individual_tests)
-
-    # Sum of squared t-statistics
     t_stats = individual_tests['t_stat'].values
     sum_t2 = np.sum(t_stats ** 2)
 
-    # F-statistic: average of squared t-statistics
+    # F-statistic as average of squared t-statistics follows F(q, df2).
     f_stat = sum_t2 / q
 
-    # Degrees of freedom
     df1 = q
-    # Use average sample size for df2 approximation
+    # Approximate denominator df using average sample size across periods.
     avg_n = individual_tests['n_treated'].mean() + individual_tests['n_control'].mean()
     df2 = max(int(avg_n - 2), 1)
 
-    # P-value from F-distribution
     pvalue = 1 - stats.f.cdf(f_stat, df1, df2)
 
     return f_stat, pvalue, df1, df2
@@ -223,40 +233,43 @@ def _compute_joint_wald_test(
     alpha: float = 0.05,
 ) -> tuple[float, float, int]:
     """
-    Compute joint Wald test (chi-squared) for H0: all pre-treatment ATT = 0.
+    Compute joint Wald test for H0: all pre-treatment ATT = 0.
 
-    Uses a Wald statistic:
-    W = sum((ATT_j / SE_j)^2) ~ chi^2(q)
-
-    under the null hypothesis.
+    The Wald statistic is the sum of squared t-statistics, which follows
+    a chi-squared distribution with q degrees of freedom under the null.
 
     Parameters
     ----------
     individual_tests : pd.DataFrame
         DataFrame with columns: att, se, t_stat.
     alpha : float, default=0.05
-        Significance level.
+        Significance level for hypothesis testing. Currently unused
+        but retained for API consistency with related functions.
 
     Returns
     -------
     wald_stat : float
-        Wald statistic.
+        Wald statistic computed as sum(t_j^2).
     pvalue : float
-        P-value from chi-squared distribution.
+        P-value from chi-squared(q) distribution.
     df : int
-        Degrees of freedom.
+        Degrees of freedom (number of pre-treatment periods tested).
+
+    Notes
+    -----
+    The Wald test is asymptotically equivalent to the F-test but uses
+    the chi-squared distribution rather than the F-distribution. This
+    test may be preferred when sample sizes are large or when comparing
+    results with other software implementations.
     """
     if len(individual_tests) == 0:
         return np.nan, np.nan, 0
 
-    # Number of restrictions
     q = len(individual_tests)
-
-    # Wald statistic: sum of squared t-statistics
     t_stats = individual_tests['t_stat'].values
-    wald_stat = np.sum(t_stats ** 2)
 
-    # P-value from chi-squared distribution
+    # Sum of squared t-statistics follows chi-squared(q) under the null.
+    wald_stat = np.sum(t_stats ** 2)
     pvalue = 1 - stats.chi2.cdf(wald_stat, q)
 
     return wald_stat, pvalue, q
@@ -304,15 +317,20 @@ def run_parallel_trends_test(
 
     Notes
     -----
-    The anchor point (event time e = -1) is excluded from testing because
-    it is set to zero by construction of the rolling transformation.
+    The anchor point at event time e = -1 is excluded from testing because
+    it is exactly zero by construction of the rolling transformation.
 
-    Interpretation:
-    - If reject_null is True: Evidence against parallel trends assumption.
-      Pre-treatment effects are significantly different from zero.
-    - If reject_null is False: No evidence against parallel trends.
-      However, this does not prove parallel trends holds - it may
-      simply reflect low statistical power.
+    Test interpretation guidelines:
+
+    - **reject_null = True**: Evidence against parallel trends. The
+      pre-treatment ATT estimates are jointly significantly different
+      from zero, suggesting potential violation of the identifying
+      assumption.
+
+    - **reject_null = False**: No evidence against parallel trends.
+      This does not prove the assumption holds; the test may lack
+      sufficient power to detect violations, particularly with few
+      pre-treatment periods or small sample sizes.
     """
     if len(pre_treatment_effects) == 0:
         raise ValueError("pre_treatment_effects is empty")
@@ -394,15 +412,27 @@ def summarize_parallel_trends_test(
     """
     Generate a human-readable summary of parallel trends test results.
 
+    Produces a formatted text report containing joint test statistics,
+    individual period-specific test results, and interpretation guidance.
+
     Parameters
     ----------
     test_result : ParallelTrendsTestResult
-        Test results from test_parallel_trends.
+        Test results from run_parallel_trends_test.
 
     Returns
     -------
     str
-        Formatted summary string.
+        Multi-line formatted summary including:
+        - Joint test F-statistic, p-value, and degrees of freedom
+        - Individual t-tests for each pre-treatment event time
+        - List of excluded event times (anchor points and missing data)
+        - Plain-language interpretation of the test outcome
+
+    See Also
+    --------
+    run_parallel_trends_test : Compute parallel trends test statistics.
+    ParallelTrendsTestResult : Container for test results.
     """
     lines = []
     lines.append("=" * 60)
@@ -462,6 +492,5 @@ def summarize_parallel_trends_test(
     return "\n".join(lines)
 
 
-# Alias for convenience - use parallel_trends_test instead of test_parallel_trends
-# to avoid pytest collecting it as a test function
+# Alternative function name following common API naming conventions.
 parallel_trends_test = run_parallel_trends_test

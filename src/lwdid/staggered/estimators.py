@@ -80,7 +80,7 @@ class IPWResult:
         Degrees of freedom for inference.
     weights_cv : float
         Coefficient of variation of IPW weights.
-    diagnostics : dict, optional
+    diagnostics : dict[str, Any] or None
         Additional diagnostic information.
     """
     att: float
@@ -97,7 +97,7 @@ class IPWResult:
     df_resid: int = 0
     df_inference: int = 0
     weights_cv: float = 0.0
-    diagnostics: dict | None = None
+    diagnostics: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -220,24 +220,14 @@ def estimate_ipw(
 
     where :math:`\\hat{p}(X_i)` is the estimated propensity score.
 
-    **Inference Distribution**
-
-    This implementation uses the normal distribution for inference (p-values
-    and confidence intervals).
-
-    Design rationale:
-
-    1. IPW is based on asymptotic theory (influence function approach), which
-       yields asymptotically normal estimators.
-    2. This ensures consistency with IPWRA and PSM estimators in this package.
-    3. For OLS-based estimators with small samples, t-distribution inference
-       is appropriate; however, IPW relies on asymptotic normality.
+    Inference uses the normal distribution based on influence function
+    asymptotics, consistent with IPWRA and PSM estimators in this package.
     """
-    # Validate inputs
+    # Validate inputs.
     if not propensity_controls:
         raise ValueError("propensity_controls must be specified for IPW estimation.")
 
-    # Extract data
+    # Extract data.
     y_values = data[y].values
     d_values = data[d].values.astype(int)
     X_ps = data[propensity_controls].values
@@ -252,17 +242,17 @@ def estimate_ipw(
     if n_control == 0:
         raise ValueError("No control units in the data.")
 
-    # Estimate propensity scores
+    # Estimate propensity scores.
     ps, ps_coef = estimate_propensity_score(
         data=data,
         d=d,
         controls=propensity_controls,
         trim_threshold=trim_threshold,
     )
-    # Compute trimmed mask based on threshold
+    # Compute trimmed mask based on threshold.
     trimmed_mask = (ps < trim_threshold) | (ps > 1 - trim_threshold)
 
-    # Apply trimming
+    # Apply trimming.
     valid_mask = ~trimmed_mask
     if valid_mask.sum() == 0:
         raise ValueError("All observations were trimmed. Adjust trim_threshold.")
@@ -281,54 +271,52 @@ def estimate_ipw(
     if n_control_valid == 0:
         raise ValueError("No control units remain after trimming.")
 
-    # IPW weights w = p/(1-p) reweight controls to match treated covariate distribution
+    # IPW weights w = p/(1-p) reweight controls to match treated covariate distribution.
     weights = np.zeros(len(y_valid))
     weights[control_valid] = ps_valid[control_valid] / (1 - ps_valid[control_valid])
 
-    # Normalize weights so they sum to n_treated for proper ATT estimation
+    # Normalize weights so they sum to n_treated for proper ATT estimation.
     weight_sum = weights[control_valid].sum()
     if weight_sum > 0:
         weights[control_valid] = weights[control_valid] * n_treated_valid / weight_sum
 
-    # Compute ATT
+    # Compute ATT.
     y_treated_mean = y_valid[treated_valid].mean()
     y_control_weighted = np.sum(weights[control_valid] * y_valid[control_valid]) / n_treated_valid
     att = y_treated_mean - y_control_weighted
 
-    # Influence function approach provides asymptotically valid variance estimation
+    # Influence function approach provides asymptotically valid variance estimation.
     psi = np.zeros(len(y_valid))
 
-    # For treated: psi_i = (Y_i - tau) / N_1
+    # For treated: psi_i = (Y_i - tau) / N_1.
     psi[treated_valid] = (y_valid[treated_valid] - att) / n_treated_valid
 
-    # For control: psi_i = -w_i * (Y_i - mu_0) / N_1
-    # where mu_0 is the weighted mean of control outcomes
+    # For control: psi_i = -w_i * Y_i / N_1, where mu_0 is the weighted control mean.
     psi[control_valid] = -weights[control_valid] * y_valid[control_valid] / n_treated_valid
 
-    # Variance is sum of squared influence functions
+    # Variance is the sum of squared influence functions.
     var_att = np.sum(psi**2)
     se = np.sqrt(var_att)
 
-    # Degrees of freedom: kept for backward compatibility but not used for inference.
-    # IPW uses normal distribution based on asymptotic theory.
+    # Degrees of freedom retained for interface compatibility; inference uses normal distribution.
     df_resid = n_treated_valid + n_control_valid - 2
     df_resid = max(1, df_resid)
     df_inference = df_resid
 
-    # z-statistic and p-value using normal distribution (asymptotic inference)
+    # z-statistic and p-value using normal distribution (asymptotic inference).
     if se > 0:
-        t_stat = att / se  # Keep variable name for backward compatibility
+        t_stat = att / se
         pvalue = 2 * (1 - stats.norm.cdf(abs(t_stat)))
     else:
         t_stat = np.nan
         pvalue = np.nan
 
-    # Confidence interval using normal distribution (asymptotic inference)
+    # Confidence interval using normal distribution (asymptotic inference).
     z_crit = stats.norm.ppf(1 - alpha / 2)
     ci_lower = att - z_crit * se
     ci_upper = att + z_crit * se
 
-    # CV of weights diagnoses overlap violations; high CV indicates extreme weights
+    # Coefficient of variation diagnoses overlap violations; high CV indicates extreme weights.
     weights_control = weights[control_valid]
     if len(weights_control) > 1:
         weights_mean = np.mean(weights_control)
@@ -444,7 +432,7 @@ def estimate_ipwra(
     estimate_ipw : Pure IPW estimator without outcome regression.
     estimate_psm : Propensity score matching estimator.
     """
-    # Validate inputs
+    # Validate inputs.
     if y not in data.columns:
         raise ValueError(f"Outcome variable '{y}' not found in data.")
     if d not in data.columns:
@@ -461,7 +449,7 @@ def estimate_ipwra(
         if missing_ps:
             raise ValueError(f"Propensity score controls not found: {missing_ps}")
     
-    # Remove observations with missing values
+    # Remove observations with missing values.
     all_vars = [y, d] + list(set(controls + propensity_controls))
     data_clean = data[all_vars].dropna().copy()
     
@@ -488,7 +476,7 @@ def estimate_ipwra(
             UserWarning
         )
     
-    # Estimate propensity scores
+    # Estimate propensity scores.
     pscores, ps_coef = estimate_propensity_score(
         data_clean, d, propensity_controls, trim_threshold
     )
@@ -499,24 +487,24 @@ def estimate_ipwra(
     # distribution, ensuring the outcome model targets the ATT estimand.
     att_weights = np.where(D == 1, 1.0, pscores / (1 - pscores))
     
-    # Estimate outcome model on control units using WLS with ATT weights
+    # Estimate outcome model on control units using WLS with ATT weights.
     m0_hat, outcome_coef = estimate_outcome_model(
         data_clean, y, d, controls, sample_weights=att_weights
     )
     
-    # Compute IPWRA-ATT estimator
+    # Compute IPWRA-ATT estimator.
     treat_mask = D == 1
     control_mask = D == 0
     
-    # Treated component: (1/N_1) sum_{D=1} [Y - m_0(X)]
+    # Treated component: (1/N_1) sum_{D=1} [Y - m_0(X)].
     treat_term = (Y[treat_mask] - m0_hat[treat_mask]).mean()
     
-    # Weighted control component
+    # Weighted control component.
     weights = pscores / (1 - pscores)
     weights_control = weights[control_mask]
     residuals_control = Y[control_mask] - m0_hat[control_mask]
     
-    # Check for extreme weights indicating overlap violation
+    # Check for extreme weights indicating overlap violation.
     weights_cv = np.std(weights_control) / np.mean(weights_control) if np.mean(weights_control) > 0 else np.inf
     if weights_cv > 2.0:
         warnings.warn(
@@ -526,7 +514,7 @@ def estimate_ipwra(
             UserWarning
         )
     
-    # Check proportion of extreme propensity scores
+    # Check proportion of extreme propensity scores.
     extreme_low = (pscores < 0.05).mean()
     extreme_high = (pscores > 0.95).mean()
     if extreme_low > 0.1 or extreme_high > 0.1:
@@ -545,7 +533,7 @@ def estimate_ipwra(
     
     att = treat_term - control_term
     
-    # Compute standard errors
+    # Compute standard errors.
     if se_method == 'analytical':
         se, ci_lower, ci_upper = compute_ipwra_se_analytical(
             data_clean, y, d, controls,
@@ -559,7 +547,7 @@ def estimate_ipwra(
     else:
         raise ValueError(f"Unknown se_method: {se_method}. Use 'analytical' or 'bootstrap'.")
     
-    # Compute t-statistic and p-value
+    # Compute t-statistic and p-value.
     if se > 0:
         t_stat = att / se
         pvalue = 2 * (1 - stats.norm.cdf(abs(t_stat)))
@@ -624,13 +612,13 @@ def estimate_propensity_score(
     X = data[controls].values.astype(float)
     D = data[d].values.astype(float)
     
-    # Standardize covariates for numerical stability
+    # Standardize covariates for numerical stability.
     X_mean = X.mean(axis=0)
     X_std = X.std(axis=0)
-    X_std[X_std == 0] = 1  # Prevent division by zero
+    X_std[X_std == 0] = 1  # Avoid division by zero for constant columns.
     X_scaled = (X - X_mean) / X_std
     
-    # No regularization ensures unbiased coefficient estimates
+    # No regularization ensures unbiased coefficient estimates.
     try:
         model = LogisticRegression(
             penalty=None,
@@ -642,13 +630,13 @@ def estimate_propensity_score(
     except Exception as e:
         raise ValueError(f"Propensity score model estimation failed: {e}")
     
-    # Predict propensity scores
+    # Predict propensity scores.
     pscores = model.predict_proba(X_scaled)[:, 1]
     
-    # Trimming prevents extreme IPW weights that inflate variance
+    # Trimming prevents extreme IPW weights that inflate variance.
     pscores = np.clip(pscores, trim_threshold, 1 - trim_threshold)
     
-    # Transform coefficients back to original scale
+    # Transform coefficients back to original scale.
     coef_scaled = model.coef_[0]
     intercept = model.intercept_[0]
     
@@ -722,25 +710,23 @@ def estimate_outcome_model(
     Y = data[y].values.astype(float)
     X = data[controls].values.astype(float)
     
-    # Extract control group data
+    # Extract control group data.
     control_mask = D == 0
     X_control = X[control_mask]
     Y_control = Y[control_mask]
     
-    # Add intercept term
+    # Add intercept term.
     X_control_const = np.column_stack([np.ones(len(X_control)), X_control])
     
     if sample_weights is not None:
-        # Weighted Least Squares (WLS) estimation
-        # Extract weights for control units only
+        # Weighted Least Squares (WLS) estimation.
+        # Extract weights for control units only.
         w_control = sample_weights[control_mask]
         
-        # Ensure weights are positive
+        # Ensure weights are positive.
         w_control = np.maximum(w_control, 1e-10)
         
-        # WLS: beta = (X'WX)^{-1} X'WY
-        # For efficiency, use sqrt(W) formulation: beta = (X̃'X̃)^{-1} X̃'Ỹ
-        # where X̃ = sqrt(W) @ X, Ỹ = sqrt(W) @ Y
+        # WLS via sqrt(W) transformation: beta = (X̃'X̃)^{-1} X̃'Ỹ.
         sqrt_w = np.sqrt(w_control)
         X_weighted = X_control_const * sqrt_w[:, np.newaxis]
         Y_weighted = Y_control * sqrt_w
@@ -751,18 +737,18 @@ def estimate_outcome_model(
         except np.linalg.LinAlgError:
             raise ValueError("Weighted outcome model design matrix is singular; cannot estimate coefficients.")
     else:
-        # Standard OLS estimation: beta = (X'X)^{-1} X'Y
+        # Standard OLS estimation.
         try:
             XtX_inv = np.linalg.inv(X_control_const.T @ X_control_const)
             beta = XtX_inv @ (X_control_const.T @ Y_control)
         except np.linalg.LinAlgError:
             raise ValueError("Outcome model design matrix is singular; cannot estimate coefficients.")
     
-    # Generate predictions for all units
+    # Generate predictions for all units.
     X_all_const = np.column_stack([np.ones(len(X)), X])
     m0_hat = X_all_const @ beta
     
-    # Store coefficients
+    # Store coefficients.
     coef_dict = {'_intercept': beta[0]}
     for i, name in enumerate(controls):
         coef_dict[name] = beta[i + 1]
@@ -827,28 +813,28 @@ def compute_ipwra_se_analytical(
     treat_mask = D == 1
     control_mask = D == 0
     
-    # Simplified influence function
+    # Simplified influence function.
     p_bar = n_treated / n
     weights_sum = weights[control_mask].sum()
     
-    # Treated unit contribution
+    # Treated unit contribution.
     psi_treat = (Y[treat_mask] - m0_hat[treat_mask] - att) / p_bar
     
-    # Control unit contribution
+    # Control unit contribution.
     residuals_control = Y[control_mask] - m0_hat[control_mask]
     psi_control = -weights[control_mask] * residuals_control / weights_sum
     
-    # Combine influence functions
+    # Combine influence functions.
     psi = np.zeros(n)
     psi[treat_mask] = psi_treat
     psi[control_mask] = psi_control
     
-    # Variance estimation
+    # Variance estimation.
     var_psi = np.var(psi, ddof=1)
     var_att = var_psi / n
     se = np.sqrt(var_att)
     
-    # Confidence interval
+    # Confidence interval.
     z_crit = stats.norm.ppf(1 - alpha / 2)
     ci_lower = att - z_crit * se
     ci_upper = att + z_crit * se
@@ -914,7 +900,7 @@ def compute_ipwra_se_bootstrap(
     att_boots = []
     
     for _ in range(n_bootstrap):
-        # Resample with replacement
+        # Resample with replacement.
         indices = np.random.choice(n, size=n, replace=True)
         data_boot = data.iloc[indices].reset_index(drop=True)
         
@@ -923,7 +909,7 @@ def compute_ipwra_se_bootstrap(
                 data_boot, d, propensity_controls, trim_threshold
             )
             
-            # Compute ATT weights for WLS (same as main estimation)
+            # Compute ATT weights for WLS (same as main estimation).
             D_boot = data_boot[d].values.astype(float)
             att_weights_boot = np.where(D_boot == 1, 1.0, pscores_boot / (1 - pscores_boot))
             
@@ -950,7 +936,8 @@ def compute_ipwra_se_bootstrap(
                 control_term = (weights_control * residuals_control).sum() / weights_sum
                 att_boot = treat_term - control_term
                 att_boots.append(att_boot)
-        except Exception:
+        except (ValueError, np.linalg.LinAlgError, FloatingPointError, ZeroDivisionError):
+            # Skip failed bootstrap iterations due to numerical issues.
             continue
     
     if len(att_boots) < n_bootstrap * 0.5:
@@ -1122,10 +1109,10 @@ def estimate_psm(
     estimate_ipwra : Doubly robust IPWRA estimator.
     estimate_ipw : Pure IPW estimator.
     """
-    # Validate inputs
+    # Validate inputs.
     _validate_psm_inputs(data, y, d, propensity_controls, n_neighbors)
     
-    # Remove observations with missing values
+    # Remove observations with missing values.
     all_vars = [y, d] + list(set(propensity_controls))
     data_clean = data[all_vars].dropna().copy()
     
@@ -1150,19 +1137,19 @@ def estimate_psm(
             UserWarning
         )
     
-    # Estimate propensity scores
+    # Estimate propensity scores.
     pscores, _ = estimate_propensity_score(
         data_clean, d, propensity_controls, trim_threshold
     )
     
-    # Perform matching
+    # Perform matching.
     treat_indices = np.where(D == 1)[0]
     control_indices = np.where(D == 0)[0]
     
     pscores_treat = pscores[treat_indices]
     pscores_control = pscores[control_indices]
     
-    # Compute caliper if specified
+    # Compute caliper if specified.
     actual_caliper = None
     if caliper is not None:
         if caliper_scale == 'sd':
@@ -1171,7 +1158,7 @@ def estimate_psm(
         else:
             actual_caliper = caliper
     
-    # Execute nearest neighbor matching
+    # Execute nearest neighbor matching.
     matched_control_ids, match_counts, n_dropped = _nearest_neighbor_match(
         pscores_treat=pscores_treat,
         pscores_control=pscores_control,
@@ -1180,11 +1167,11 @@ def estimate_psm(
         caliper=actual_caliper,
     )
     
-    # Compute ATT
+    # Compute ATT.
     Y_treat = Y[treat_indices]
     Y_control = Y[control_indices]
     
-    # Filter out treated units dropped due to caliper
+    # Filter out treated units dropped due to caliper.
     valid_treat_mask = np.array([len(m) > 0 for m in matched_control_ids])
     
     if valid_treat_mask.sum() == 0:
@@ -1193,24 +1180,24 @@ def estimate_psm(
             "Consider relaxing the caliper or checking propensity score overlap."
         )
     
-    # Compute matched mean for each treated unit
+    # Compute matched mean for each treated unit.
     att_individual = []
     for i, matches in enumerate(matched_control_ids):
         if len(matches) > 0:
-            # matches contains indices within control group
+            # Matches contains indices within control group.
             y_matched = Y_control[matches].mean()
             att_i = Y_treat[i] - y_matched
             att_individual.append(att_i)
     
     att = np.mean(att_individual)
     
-    # Count unique matched control units
+    # Count unique matched control units.
     all_matched = set()
     for matches in matched_control_ids:
         all_matched.update(matches)
     n_matched = len(all_matched)
     
-    # Compute standard errors
+    # Compute standard errors.
     if se_method == 'abadie_imbens':
         se, ci_lower, ci_upper = _compute_psm_se_abadie_imbens(
             Y_treat=Y_treat,
@@ -1240,7 +1227,7 @@ def estimate_psm(
             "Use 'abadie_imbens' or 'bootstrap'."
         )
     
-    # Compute t-statistic and p-value
+    # Compute t-statistic and p-value.
     if se > 0:
         t_stat = att / se
         pvalue = 2 * (1 - stats.norm.cdf(abs(t_stat)))
@@ -1306,7 +1293,7 @@ def _validate_psm_inputs(
     if n_neighbors < 1:
         raise ValueError(f"n_neighbors must be >= 1, got: {n_neighbors}")
     
-    # Check that treatment indicator is binary
+    # Check that treatment indicator is binary.
     d_vals = data[d].dropna().unique()
     if not set(d_vals).issubset({0, 1, 0.0, 1.0}):
         raise ValueError(
@@ -1357,41 +1344,41 @@ def _nearest_neighbor_match(
     match_counts = np.zeros(n_treat, dtype=int)
     n_dropped = 0
     
-    # Track used controls for matching without replacement
+    # Track used controls for matching without replacement.
     used_controls: set | None = None if with_replacement else set()
     
     for i in range(n_treat):
         ps_i = pscores_treat[i]
         
-        # Compute distances to all control units
+        # Compute distances to all control units.
         distances = np.abs(pscores_control - ps_i)
         
-        # For matching without replacement, exclude already-used controls
+        # For matching without replacement, exclude already-used controls.
         if not with_replacement and used_controls:
             available_mask = np.array([
                 j not in used_controls for j in range(n_control)
             ])
             if not available_mask.any():
-                # No available control units
+                # No available control units.
                 matched_control_ids.append([])
                 n_dropped += 1
                 continue
             distances[~available_mask] = np.inf
         
-        # Apply caliper constraint
+        # Apply caliper constraint.
         if caliper is not None:
             valid_mask = distances <= caliper
             if not valid_mask.any():
-                # No valid matches within caliper
+                # No valid matches within caliper.
                 matched_control_ids.append([])
                 n_dropped += 1
                 continue
         
-        # Find k nearest neighbors
+        # Find k nearest neighbors.
         k = min(n_neighbors, n_control)
         nearest_indices = np.argsort(distances)[:k]
         
-        # Verify caliper constraint for selected neighbors
+        # Verify caliper constraint for selected neighbors.
         if caliper is not None:
             nearest_indices = [
                 idx for idx in nearest_indices 
@@ -1403,11 +1390,11 @@ def _nearest_neighbor_match(
             n_dropped += 1
             continue
         
-        # Record matches
+        # Record matches.
         matched_control_ids.append(list(nearest_indices))
         match_counts[i] = len(nearest_indices)
         
-        # Mark controls as used for matching without replacement
+        # Mark controls as used for matching without replacement.
         if not with_replacement and used_controls is not None:
             used_controls.update(nearest_indices)
     
@@ -1455,7 +1442,7 @@ def _compute_psm_se_abadie_imbens(
     if n_valid < 2:
         return np.nan, np.nan, np.nan
     
-    # Compute individual treatment effects for each matched pair
+    # Compute individual treatment effects for each matched pair.
     individual_effects = []
     for i, matches in enumerate(matched_control_ids):
         if len(matches) > 0:
@@ -1465,12 +1452,12 @@ def _compute_psm_se_abadie_imbens(
     
     individual_effects = np.array(individual_effects)
     
-    # Use variance of individual effects for SE estimation
+    # Use variance of individual effects for SE estimation.
     var_effects = np.var(individual_effects, ddof=1)
     var_att = var_effects / n_valid
     se = np.sqrt(var_att)
     
-    # Confidence interval
+    # Confidence interval.
     z_crit = stats.norm.ppf(1 - alpha / 2)
     ci_lower = att - z_crit * se
     ci_upper = att + z_crit * se
@@ -1542,12 +1529,12 @@ def _compute_psm_se_bootstrap(
     att_boots = []
     
     for _ in range(n_bootstrap):
-        # Resample with replacement
+        # Resample with replacement.
         indices = np.random.choice(n, size=n, replace=True)
         data_boot = data.iloc[indices].reset_index(drop=True)
         
         try:
-            # Estimate propensity scores
+            # Estimate propensity scores.
             pscores_boot, _ = estimate_propensity_score(
                 data_boot, d, propensity_controls, trim_threshold
             )
@@ -1564,7 +1551,7 @@ def _compute_psm_se_bootstrap(
             pscores_treat = pscores_boot[treat_indices]
             pscores_control = pscores_boot[control_indices]
             
-            # Compute caliper
+            # Compute caliper.
             actual_caliper = None
             if caliper is not None:
                 if caliper_scale == 'sd':
@@ -1573,13 +1560,13 @@ def _compute_psm_se_bootstrap(
                 else:
                     actual_caliper = caliper
             
-            # Perform matching
+            # Perform matching.
             matched_ids, _, _ = _nearest_neighbor_match(
                 pscores_treat, pscores_control,
                 n_neighbors, with_replacement, actual_caliper
             )
             
-            # Compute ATT
+            # Compute ATT.
             Y_treat = Y_boot[treat_indices]
             Y_control = Y_boot[control_indices]
             
@@ -1593,8 +1580,9 @@ def _compute_psm_se_bootstrap(
             if len(att_individual) > 0:
                 att_boot = np.mean(att_individual)
                 att_boots.append(att_boot)
-                
-        except Exception:
+
+        except (ValueError, np.linalg.LinAlgError, FloatingPointError, ZeroDivisionError):
+            # Skip failed bootstrap iterations due to numerical issues.
             continue
     
     if len(att_boots) < n_bootstrap * 0.5:

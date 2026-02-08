@@ -5,7 +5,7 @@ Sensitivity Analysis
 
 This module provides tools for assessing the robustness of difference-in-differences
 estimates to specification choices, implementing the recommendations from
-Lee & Wooldridge (2026) Section 8.1.
+Lee and Wooldridge (2026) and Lee and Wooldridge (2025).
 
 Main Functions
 --------------

@@ -2,17 +2,17 @@
 Result container for difference-in-differences estimation outputs.
 
 This module provides the LWDIDResults class for encapsulating estimation
-outputs from Lee and Wooldridge's DiD methodology, supporting three scenarios:
+outputs from rolling transformation DiD methodology, supporting three scenarios:
 
-1. **Small-sample common timing** (Lee and Wooldridge, 2026): Results include
-   exact t-based inference statistics under classical linear model assumptions.
+1. **Small-sample common timing**: Results include exact t-based inference
+   statistics under classical linear model assumptions.
 
-2. **Large-sample common timing** (Lee and Wooldridge, 2025): Results include
-   asymptotic inference with heteroskedasticity-robust standard errors.
+2. **Large-sample common timing**: Results include asymptotic inference with
+   heteroskedasticity-robust standard errors.
 
-3. **Staggered adoption** (Lee and Wooldridge, 2025): Results include
-   cohort-time specific effects, cohort-level aggregations, and overall
-   weighted effects with flexible control group strategies.
+3. **Staggered adoption**: Results include cohort-time specific effects,
+   cohort-level aggregations, and overall weighted effects with flexible
+   control group strategies.
 
 The class implements immutable core attributes via properties to ensure
 result integrity, provides multiple summary formats (text, LaTeX, Excel,
@@ -20,7 +20,9 @@ CSV), supports event study visualization for staggered designs, and
 includes period-specific effects for common timing designs.
 """
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
@@ -34,17 +36,16 @@ class LWDIDResults:
     Container for difference-in-differences estimation results.
 
     Stores all estimation outputs from the lwdid() function implementing
-    Lee and Wooldridge's rolling transformation methodology. Supports three
-    scenarios:
+    the rolling transformation methodology. Supports three scenarios:
 
-    1. **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based
-       inference under classical linear model assumptions.
+    1. **Small-sample common timing**: Exact t-based inference under classical
+       linear model assumptions.
 
-    2. **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic
-       inference with heteroskedasticity-robust standard errors.
+    2. **Large-sample common timing**: Asymptotic inference with
+       heteroskedasticity-robust standard errors.
 
-    3. **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific
-       effects with flexible control group strategies.
+    3. **Staggered adoption**: Cohort-time specific effects with flexible
+       control group strategies.
 
     All core attributes are read-only properties to ensure result integrity.
     Provides methods for displaying, visualizing, and exporting results.
@@ -179,10 +180,10 @@ class LWDIDResults:
     
     def __init__(
         self,
-        results_dict: Dict[str, Any],
-        metadata: Dict[str, Any],
-        att_by_period: Optional[pd.DataFrame] = None,
-        cohort_time_effects: Optional[List] = None,
+        results_dict: dict[str, Any],
+        metadata: dict[str, Any],
+        att_by_period: pd.DataFrame | None = None,
+        cohort_time_effects: list | None = None,
     ):
         """
         Initialize LWDIDResults container with estimation outputs.
@@ -236,17 +237,17 @@ class LWDIDResults:
         self._resid = results_dict['resid']
         self._metadata = metadata
 
-        self._ri_pvalue: Optional[float] = None
-        self._ri_seed: Optional[int] = None
-        self._rireps: Optional[int] = None
-        self._ri_method: Optional[str] = None
-        self._ri_valid: Optional[int] = None
-        self._ri_failed: Optional[int] = None
-        self._data: Optional[pd.DataFrame] = None
+        self._ri_pvalue: float | None = None
+        self._ri_seed: int | None = None
+        self._rireps: int | None = None
+        self._ri_method: str | None = None
+        self._ri_valid: int | None = None
+        self._ri_failed: int | None = None
+        self._data: pd.DataFrame | None = None
         
         # === Pre-treatment dynamics attributes ===
-        self._att_pre_treatment: Optional[pd.DataFrame] = results_dict.get('att_pre_treatment', None)
-        self._parallel_trends_test: Optional['ParallelTrendsTestResult'] = results_dict.get('parallel_trends_test', None)
+        self._att_pre_treatment: pd.DataFrame | None = results_dict.get('att_pre_treatment', None)
+        self._parallel_trends_test: ParallelTrendsTestResult | None = results_dict.get('parallel_trends_test', None)
         self._include_pretreatment: bool = results_dict.get('include_pretreatment', False)
         
         # === Staggered-specific attributes ===
@@ -377,17 +378,17 @@ class LWDIDResults:
         return self._rolling
 
     @property
-    def vce_type(self) -> Optional[str]:
+    def vce_type(self) -> str | None:
         """Variance estimator type."""
         return self._vce_type
 
     @property
-    def cluster_var(self) -> Optional[str]:
+    def cluster_var(self) -> str | None:
         """Clustering variable name."""
         return self._cluster_var
 
     @property
-    def n_clusters(self) -> Optional[int]:
+    def n_clusters(self) -> int | None:
         """Number of clusters."""
         return self._n_clusters
 
@@ -417,73 +418,73 @@ class LWDIDResults:
         return self._vcov
 
     @property
-    def att_by_period(self) -> Optional[pd.DataFrame]:
+    def att_by_period(self) -> pd.DataFrame | None:
         """Period-specific ATT estimates (returns copy)."""
         if self._att_by_period is None:
             return None
         return self._att_by_period.copy()
 
     @property
-    def ri_pvalue(self) -> Optional[float]:
+    def ri_pvalue(self) -> float | None:
         """Randomization inference p-value."""
         return self._ri_pvalue
 
     @ri_pvalue.setter
-    def ri_pvalue(self, value: Optional[float]) -> None:
+    def ri_pvalue(self, value: float | None) -> None:
         self._ri_pvalue = value
 
     @property
-    def ri_seed(self) -> Optional[int]:
+    def ri_seed(self) -> int | None:
         """Random seed used for RI."""
         return self._ri_seed
 
     @ri_seed.setter
-    def ri_seed(self, value: Optional[int]) -> None:
+    def ri_seed(self, value: int | None) -> None:
         self._ri_seed = value
 
     @property
-    def rireps(self) -> Optional[int]:
+    def rireps(self) -> int | None:
         """Number of RI replications."""
         return self._rireps
 
     @rireps.setter
-    def rireps(self, value: Optional[int]) -> None:
+    def rireps(self, value: int | None) -> None:
         self._rireps = value
 
     @property
-    def ri_method(self) -> Optional[str]:
+    def ri_method(self) -> str | None:
         """Randomization inference method."""
         return self._ri_method
 
     @ri_method.setter
-    def ri_method(self, value: Optional[str]) -> None:
+    def ri_method(self, value: str | None) -> None:
         self._ri_method = value
 
     @property
-    def ri_valid(self) -> Optional[int]:
+    def ri_valid(self) -> int | None:
         """Number of valid RI replications."""
         return self._ri_valid
 
     @ri_valid.setter
-    def ri_valid(self, value: Optional[int]) -> None:
+    def ri_valid(self, value: int | None) -> None:
         self._ri_valid = value
 
     @property
-    def ri_failed(self) -> Optional[int]:
+    def ri_failed(self) -> int | None:
         """Number of failed RI replications."""
         return self._ri_failed
 
     @ri_failed.setter
-    def ri_failed(self, value: Optional[int]) -> None:
+    def ri_failed(self, value: int | None) -> None:
         self._ri_failed = value
 
     @property
-    def data(self) -> Optional[pd.DataFrame]:
+    def data(self) -> pd.DataFrame | None:
         """Transformed data used for regression."""
         return self._data
 
     @data.setter
-    def data(self, value: Optional[pd.DataFrame]) -> None:
+    def data(self, value: pd.DataFrame | None) -> None:
         self._data = value
 
     # === Staggered-specific Properties ===
@@ -504,46 +505,46 @@ class LWDIDResults:
         return dict(self._cohort_sizes)
 
     @property
-    def att_by_cohort_time(self) -> Optional[pd.DataFrame]:
+    def att_by_cohort_time(self) -> pd.DataFrame | None:
         """Cohort-time specific ATT estimates (returns copy)."""
         if self._att_by_cohort_time is None:
             return None
         return self._att_by_cohort_time.copy()
 
     @property
-    def att_by_cohort(self) -> Optional[pd.DataFrame]:
+    def att_by_cohort(self) -> pd.DataFrame | None:
         """Cohort-specific ATT estimates (returns copy)."""
         if self._att_by_cohort is None:
             return None
         return self._att_by_cohort.copy()
 
     @property
-    def att_overall(self) -> Optional[float]:
+    def att_overall(self) -> float | None:
         """Overall weighted ATT estimate."""
         return self._att_overall
 
     @property
-    def se_overall(self) -> Optional[float]:
+    def se_overall(self) -> float | None:
         """Standard error of overall ATT."""
         return self._se_overall
 
     @property
-    def ci_overall_lower(self) -> Optional[float]:
+    def ci_overall_lower(self) -> float | None:
         """95% CI lower bound for overall ATT."""
         return self._ci_overall_lower
 
     @property
-    def ci_overall_upper(self) -> Optional[float]:
+    def ci_overall_upper(self) -> float | None:
         """95% CI upper bound for overall ATT."""
         return self._ci_overall_upper
 
     @property
-    def t_stat_overall(self) -> Optional[float]:
+    def t_stat_overall(self) -> float | None:
         """t-statistic for overall ATT."""
         return self._t_stat_overall
 
     @property
-    def pvalue_overall(self) -> Optional[float]:
+    def pvalue_overall(self) -> float | None:
         """p-value for overall ATT."""
         return self._pvalue_overall
 
@@ -553,34 +554,34 @@ class LWDIDResults:
         return dict(self._cohort_weights)
 
     @property
-    def control_group(self) -> Optional[str]:
+    def control_group(self) -> str | None:
         """User-specified control group strategy."""
         return self._control_group
 
     @property
-    def control_group_used(self) -> Optional[str]:
+    def control_group_used(self) -> str | None:
         """Actual control group strategy used."""
         return self._control_group_used
 
     @property
-    def aggregate(self) -> Optional[str]:
+    def aggregate(self) -> str | None:
         """Aggregation level."""
         return self._aggregate
 
     @property
-    def estimator(self) -> Optional[str]:
+    def estimator(self) -> str | None:
         """Estimation method."""
         return self._estimator
 
     @property
-    def n_never_treated(self) -> Optional[int]:
+    def n_never_treated(self) -> int | None:
         """Number of never-treated units."""
         return self._n_never_treated
 
     # === Pre-treatment Dynamics Properties ===
 
     @property
-    def att_pre_treatment(self) -> Optional[pd.DataFrame]:
+    def att_pre_treatment(self) -> pd.DataFrame | None:
         """
         Pre-treatment ATT estimates (returns copy).
         
@@ -596,11 +597,11 @@ class LWDIDResults:
         return self._att_pre_treatment.copy()
 
     @att_pre_treatment.setter
-    def att_pre_treatment(self, value: Optional[pd.DataFrame]) -> None:
+    def att_pre_treatment(self, value: pd.DataFrame | None) -> None:
         self._att_pre_treatment = value
 
     @property
-    def parallel_trends_test(self) -> Optional['ParallelTrendsTestResult']:
+    def parallel_trends_test(self) -> ParallelTrendsTestResult | None:
         """
         Parallel trends test results.
         
@@ -613,7 +614,7 @@ class LWDIDResults:
         return self._parallel_trends_test
 
     @parallel_trends_test.setter
-    def parallel_trends_test(self, value: Optional['ParallelTrendsTestResult']) -> None:
+    def parallel_trends_test(self, value: ParallelTrendsTestResult | None) -> None:
         self._parallel_trends_test = value
 
     @property
@@ -929,11 +930,11 @@ class LWDIDResults:
         return self.summary()
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """Internal metadata dictionary (returns copy)."""
         return dict(self._metadata)
 
-    def plot(self, gid: Optional[Union[str, int]] = None, graph_options: Optional[dict] = None):
+    def plot(self, gid: str | int | None = None, graph_options: dict | None = None):
         """
         Generate a plot of residualized outcomes for treated and control groups.
 
@@ -1008,19 +1009,19 @@ class LWDIDResults:
 
     def plot_event_study(
         self,
-        ref_period: Optional[int] = 0,
+        ref_period: int | None = 0,
         show_ci: bool = True,
         aggregation: str = 'mean',
         include_pre_treatment: bool = True,
         alpha: float = 0.05,
         df_strategy: str = 'conservative',
-        title: Optional[str] = None,
-        xlabel: Optional[str] = None,
-        ylabel: Optional[str] = None,
+        title: str | None = None,
+        xlabel: str | None = None,
+        ylabel: str | None = None,
         figsize: tuple = (10, 6),
-        savefig: Optional[str] = None,
+        savefig: str | None = None,
         dpi: int = 150,
-        ax: Optional['matplotlib.axes.Axes'] = None,
+        ax: matplotlib.axes.Axes | None = None,
         return_data: bool = False,
         **kwargs
     ):
@@ -1087,9 +1088,9 @@ class LWDIDResults:
 
         Notes
         -----
-        Confidence intervals use t-distribution rather than normal distribution,
-        following Lee & Wooldridge (2025) recommendation for proper inference.
-        The degrees of freedom are selected based on df_strategy parameter.
+        Confidence intervals use t-distribution rather than normal distribution
+        for proper small-sample inference. The degrees of freedom are selected
+        based on the df_strategy parameter.
 
         See Also
         --------

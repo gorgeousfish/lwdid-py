@@ -35,7 +35,11 @@ Exception Hierarchy
    ├── TimeDiscontinuityError
    ├── MissingRequiredColumnError
    ├── RandomizationError
-   └── VisualizationError
+   ├── VisualizationError
+   ├── UnbalancedPanelError
+   └── AggregationError
+       ├── InvalidAggregationError
+       └── InsufficientCellSizeError
 
 Exception Classes
 -----------------
@@ -316,6 +320,8 @@ Catch specific exceptions for targeted error handling:
        MissingRequiredColumnError,
        RandomizationError,
        VisualizationError,
+       UnbalancedPanelError,
+       AggregationError,
    )
 
    try:

@@ -43,7 +43,7 @@ where:
   module)
 - D_i: Treatment indicator (1 = treated, 0 = control)
 - Z_i: Optional time-invariant controls and their interactions constructed
-  following Lee and Wooldridge (2026, Section 2.2)
+  following Lee and Wooldridge (2026)
 - ε_i: Regression error term
 
 **Estimand:** :math:`\tau` is the ATT.
@@ -120,9 +120,8 @@ HC0 (White's Original Estimator)
 **Degrees of freedom:** Same as OLS.
 
 **When to use:** Large samples with suspected heteroskedasticity. This is the
-original White (1980) heteroskedasticity-consistent estimator without
-finite-sample corrections. Tends to underestimate standard errors in small
-samples.
+original heteroskedasticity-consistent estimator without finite-sample
+corrections.
 
 HC1 (Heteroskedasticity-Robust)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,7 +251,7 @@ Regression Procedure
 1. **Prepare design matrix:** For the main regression, construct a
    cross-sectional design matrix with an intercept, the treatment
    indicator, and (when applicable) time-invariant controls and their
-   interactions with treatment as in Lee and Wooldridge (2026, Section 2.2).
+   interactions with treatment as in Lee and Wooldridge (2026).
    The same control specification is reused for period-by-period
    regressions.
 2. **Run OLS:** Compute :math:`\hat{\beta} = (X'X)^{-1} X'y`
@@ -337,7 +336,7 @@ Example Usage
 These functions are used internally by :func:`lwdid.lwdid` after the
 transformation step has constructed the transformed outcomes and main
 regression sample. They are not part of the typical user-facing API. For
-most applications, you should call :func:`lwdid.lwdid` directly and rely on
+most applications, :func:`lwdid.lwdid` should be called directly, relying on
 its high-level interface. Advanced users who need low-level access can
 consult the docstrings and source code in :mod:`lwdid.estimation` to see the
 exact function signatures and required inputs.
@@ -372,8 +371,8 @@ Estimator Selection for Large Samples
 
 Lee and Wooldridge (2025) establishes theoretical and simulation evidence for
 choosing among estimators when sample sizes are large enough for asymptotic
-inference. The key results from the Monte Carlo simulations (Sections 7.1-7.2)
-inform the following recommendations.
+inference. The key Monte Carlo simulation results inform the following
+recommendations.
 
 **Available Estimators**
 
@@ -414,13 +413,14 @@ where :math:`\pi = P(D=1)` is the unconditional treatment probability,
 - **PSM (Propensity Score Matching)**: Matches treated to control units based on
   estimated propensity scores. Generally less efficient than RA and IPWRA.
 
-**Efficiency Comparison** (from Lee and Wooldridge (2025), Tables 7.2-7.10)
+**Efficiency Comparison** (from Lee and Wooldridge, 2025)
 
 Under correct specification of all models:
 
 1. RA/POLS has the smallest standard deviation and RMSE
 2. IPWRA performs close to RA (within 3-5% higher SD in most scenarios)
-3. PSM and CS(2021) have notably larger standard deviations (25-40% higher)
+3. PSM and long differencing methods have notably larger standard deviations
+   (25-40% higher)
 
 Under model misspecification:
 
@@ -449,14 +449,14 @@ Under model misspecification:
    results, this provides evidence that findings are not sensitive to functional
    form assumptions.
 
-**Relationship to Callaway and Sant'Anna (2021)**
+**Relationship to Long Differencing Approaches**
 
-The long-differencing approach of Callaway and Sant'Anna (2021) uses only the
-period just prior to intervention, discarding information from earlier
-pre-treatment periods. Lee and Wooldridge (2025) shows that this can result in
-substantial efficiency loss. The rolling transformation approach uses all
-suitable pre-treatment periods, achieving efficiency close to POLS while
-permitting application of doubly robust estimators.
+Long differencing approaches use only the period just prior to intervention,
+discarding information from earlier pre-treatment periods. Lee and Wooldridge
+(2025) shows that this can result in substantial efficiency loss. The rolling
+transformation approach uses all suitable pre-treatment periods, achieving
+efficiency close to POLS while permitting application of doubly robust
+estimators.
 
 See Also
 --------

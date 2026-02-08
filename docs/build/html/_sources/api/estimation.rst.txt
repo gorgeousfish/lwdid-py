@@ -337,7 +337,7 @@ Example Usage
 These functions are used internally by :func:`lwdid.lwdid` after the
 transformation step has constructed the transformed outcomes and main
 regression sample. They are not part of the typical user-facing API. For
-most applications, you should call :func:`lwdid.lwdid` directly and rely on
+most applications, :func:`lwdid.lwdid` should be called directly, relying on
 its high-level interface. Advanced users who need low-level access can
 consult the docstrings and source code in :mod:`lwdid.estimation` to see the
 exact function signatures and required inputs.

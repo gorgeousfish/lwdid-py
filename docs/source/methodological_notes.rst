@@ -55,8 +55,8 @@ then pools the transformed outcomes across units. This proceeds in two steps:
 The transformation uses only pre-treatment information, preserving the treatment
 variation for estimation in the second step.
 
-Demean Transformation (Procedure 2.1)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Demean Transformation
+~~~~~~~~~~~~~~~~~~~~~~
 
 **Setup**
 
@@ -108,8 +108,8 @@ post-treatment average is undefined.
 fixed effects (TWFE) DiD estimator. The cross-sectional representation enables
 exact t-based inference under classical linear model assumptions.
 
-Detrend Transformation (Procedure 3.1)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Detrend Transformation
+~~~~~~~~~~~~~~~~~~~~~~~
 
 **Motivation**: When units exhibit heterogeneous linear trends in pre-treatment
 periods, the standard parallel trends assumption (constant trends across units)
@@ -163,11 +163,11 @@ ATT regression because their post-treatment average is undefined.
 Seasonal Transformations (demeanq/detrendq)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**demeanq**: Extends Procedure 2.1 to include seasonal fixed effects,
-removing seasonal patterns in periodic data.
+**demeanq**: Extends the demean transformation to include seasonal fixed
+effects, removing seasonal patterns in periodic data.
 
-**detrendq**: Extends Procedure 3.1 to include both linear trends and
-seasonal fixed effects.
+**detrendq**: Extends the detrend transformation to include both linear
+trends and seasonal fixed effects.
 
 Both methods include seasonal dummies in the pre-treatment regression to remove
 seasonal variation before computing post-treatment residuals.
@@ -280,8 +280,8 @@ Period-Specific Effects
 In addition to an overall post-treatment average effect, the Lee and Wooldridge
 framework allows estimation of period-specific treatment effects by running
 separate cross-sectional regressions for each post-treatment period, using the
-transformed outcome in that period as the dependent variable (see equation (2.20)
-in Lee and Wooldridge (2026)). In ``lwdid``, these regressions use the same
+transformed outcome in that period as the dependent variable. In ``lwdid``,
+these regressions use the same
 variance estimator (``vce``) and control-variable specification as the main ATT
 regression.
 
@@ -295,7 +295,7 @@ When homoskedasticity is violated, heteroskedasticity-robust standard errors
 provide asymptotically valid inference. The ``lwdid`` package supports the
 following HC estimators:
 
-- **HC0**: White's original heteroskedasticity-consistent estimator. Tends to
+- **HC0**: The original heteroskedasticity-consistent estimator. Tends to
   underestimate standard errors in small samples.
 - **HC1**: Degrees-of-freedom adjusted version of HC0 (applies :math:`n/(n-k)`
   correction). Equivalent to ``vce='robust'``.
@@ -307,11 +307,9 @@ following HC estimators:
   leverage. Use when data contains influential observations.
 
 Robust standard errors rely on asymptotic approximations and may be less accurate
-in very small samples. Recent simulation evidence (Simonsohn 2021) suggests HC3
-can perform reasonably well even with small sample sizes (e.g.,
-:math:`N_0 = 18`, :math:`N_1 = 2` in the cited study), though caution is
-warranted with very small samples.
-Exact inference is not available under heteroskedasticity.
+in very small samples. Simulation evidence suggests HC3 can perform reasonably
+well even with small sample sizes, though caution is warranted with very small
+samples. Exact inference is not available under heteroskedasticity.
 
 Cluster-Robust Standard Errors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -371,9 +369,9 @@ Clustering at Higher Levels
 ---------------------------
 
 When the policy or treatment varies at a level higher than the unit of observation,
-cluster standard errors at the policy variation level (Lee & Wooldridge 2026,
-Section 8.2). This section provides guidance on choosing the appropriate clustering
-level and tools for diagnosing clustering structure.
+cluster standard errors at the policy variation level (Lee and Wooldridge, 2026).
+This section provides guidance on choosing the appropriate clustering level and
+tools for diagnosing clustering structure.
 
 When to Cluster at Higher Levels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -497,9 +495,8 @@ Wild Cluster Bootstrap
 ~~~~~~~~~~~~~~~~~~~~~~
 
 When the number of clusters is small (< 20), the wild cluster bootstrap provides
-more reliable inference than asymptotic cluster-robust standard errors. This
-method, developed by Cameron, Gelbach, and Miller (2008), constructs a bootstrap
-distribution by:
+more reliable inference than asymptotic cluster-robust standard errors. The
+procedure constructs a bootstrap distribution by:
 
 1. Estimating the original model and obtaining residuals
 2. Generating cluster-level random weights
@@ -525,8 +522,7 @@ distribution by:
 - **rademacher** (default): P(w=1) = P(w=-1) = 0.5. Simplest and most common.
 - **mammen**: Two-point distribution matching first three moments. Better for
   asymmetric error distributions.
-- **webb**: Six-point distribution (Webb 2014). Recommended for very few clusters
-  (G < 10).
+- **webb**: Six-point distribution. Recommended for very few clusters (G < 10).
 
 **Example with Webb weights for few clusters**::
 
@@ -592,19 +588,6 @@ A recommended workflow for choosing and validating clustering:
             cluster_var=rec.recommended_var, n_bootstrap=999
         )
         print(f"Bootstrap p-value: {boot_result.pvalue:.4f}")
-
-References for Clustering
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- Cameron, A.C. & Miller, D.L. (2015). "A Practitioner's Guide to Cluster-Robust
-  Inference." *Journal of Human Resources*, 50(2), 317-372.
-
-- Cameron, A.C., Gelbach, J.B., & Miller, D.L. (2008). "Bootstrap-based
-  improvements for inference with clustered errors." *Review of Economics and
-  Statistics*, 90(3), 414-427.
-
-- Webb, M.D. (2014). "Reworking wild bootstrap based inference for clustered
-  errors." *Queen's Economics Department Working Paper No. 1315*.
 
 Large-Sample Asymptotic Inference
 ---------------------------------
@@ -693,17 +676,16 @@ Under correct specification of all models, Lee and Wooldridge (2025) shows that:
    asymptotically efficient under standard assumptions
 2. **IPWRA** achieves efficiency close to RA while providing robustness to
    model misspecification
-3. **Long differencing methods** (e.g., Callaway and Sant'Anna 2021) can be
-   considerably less efficient because they use only the period just prior to
-   intervention
+3. **Long differencing methods** can be considerably less efficient because
+   they use only the period just prior to intervention
 
 Monte Carlo Simulation Evidence
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Monte Carlo simulations in Lee and Wooldridge (2025, Section 7) provide
-quantitative evidence for these theoretical results. Key findings include:
+The Monte Carlo simulations in Lee and Wooldridge (2025) provide quantitative
+evidence for these theoretical results. Key findings include:
 
-**Efficiency comparison under correct specification** (Tables 7.2-7.10):
+**Efficiency comparison under correct specification**:
 
 - **RA/POLS**: Relative SD = 1.00 (baseline), RMSE ratio to RA = 1.00. Best
   linear unbiased estimator.
@@ -713,15 +695,13 @@ quantitative evidence for these theoretical results. Key findings include:
   score-based weighting.
 - **PSM**: Relative SD = 1.25-1.40, RMSE ratio to RA ≈ 1.30. Matching-based
   estimator.
-- **CS(2021)**: Relative SD = 1.25-1.40, RMSE ratio to RA ≈ 1.30. Long
-  differencing approach.
 
 **Rolling vs. long differencing efficiency**:
 
 The rolling transformation uses all pre-treatment periods to estimate
-unit-specific means or trends, whereas long differencing methods (e.g.,
-Callaway and Sant'Anna, 2021) use only the period immediately prior to
-treatment. This difference has substantial efficiency implications:
+unit-specific means or trends, whereas long differencing methods use only the
+period immediately prior to treatment. This difference has substantial
+efficiency implications:
 
 - Rolling transformation: Uses :math:`T_0` pre-treatment periods per unit
 - Long differencing: Uses only 1 pre-treatment period per unit
@@ -731,9 +711,9 @@ treatment. This difference has substantial efficiency implications:
 
 In the simulation designs with :math:`T_0 = 4`, the rolling approach achieves
 approximately 25-40% smaller standard deviations than long differencing
-methods (CS 2021), translating to substantially more precise estimates.
+methods, translating to substantially more precise estimates.
 
-**Robustness to misspecification** (Tables 7.4-7.5, 7.9-7.10):
+**Robustness to misspecification**:
 
 When outcome models are misspecified but propensity scores are correct:
 
@@ -757,6 +737,52 @@ Large-sample asymptotic inference is appropriate when:
 For small samples where CLM assumptions (normality and homoskedasticity) are
 plausible, exact t-based inference with ``vce=None`` remains appropriate.
 
+Inference Distribution by Estimator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``lwdid`` package uses different reference distributions for statistical
+inference depending on the estimator and sample size considerations:
+
+**Regression Adjustment (RA)**:
+
+- Uses the t-distribution with degrees of freedom :math:`df = N - k`, where
+  :math:`N` is the cross-sectional sample size and :math:`k` is the number of
+  regression parameters
+- Under CLM assumptions (homoskedasticity and normality), this provides exact
+  finite-sample inference
+- With robust standard errors (HC0-HC4), inference is asymptotically valid
+
+**Inverse Probability Weighting (IPW)**:
+
+- Uses the normal distribution for asymptotic inference
+- This follows the standard inverse probability weighting framework
+- Valid for moderate to large samples where asymptotic approximations hold
+
+**Inverse Probability Weighted Regression Adjustment (IPWRA)**:
+
+- Uses the normal distribution for asymptotic inference
+- This is consistent with Lee and Wooldridge (2025), which develops the
+  asymptotic theory for doubly robust estimators in the rolling transformation
+  framework
+- For small samples, consider using RA with ``vce=None`` for exact t-based
+  inference instead
+
+**Propensity Score Matching (PSM)**:
+
+- Uses the normal distribution for asymptotic inference
+- Standard errors are computed analytically
+- PSM inference is generally valid for moderate to large samples
+
+**Practical Guidance**:
+
+- **Small samples** (:math:`N < 50`): Use RA (``estimator='ra'``) with
+  ``vce=None`` for exact t-based inference under CLM assumptions, or use
+  randomization inference (``ri=True``) for assumption-free testing
+- **Moderate samples** (:math:`50 \leq N < 200`): Use RA or IPWRA with HC3
+  standard errors (``vce='hc3'``)
+- **Large samples** (:math:`N \geq 200`): All estimators with asymptotic
+  inference are appropriate; IPWRA provides robustness to model misspecification
+
 Identification Assumptions
 ---------------------------
 
@@ -771,13 +797,13 @@ Example violation: Firms may alter behavior before a regulation takes effect.
 Parallel Trends
 ~~~~~~~~~~~~~~~
 
-**Demean (Procedure 2.1)**: In the absence of treatment, the average change in
+**Demean**: In the absence of treatment, the average change in
 outcomes from pre- to post-treatment periods would be the same for treated and
 control units. Formally, :math:`E[Y_{it}(0) - Y_{i1}(0) | D_i]` is constant
 across treatment groups for all :math:`t`. This is the standard parallel trends
 assumption.
 
-**Detrend (Procedure 3.1)**: In the absence of treatment, the average change in
+**Detrend**: In the absence of treatment, the average change in
 outcomes after removing unit-specific linear trends would be the same for treated
 and control units. This allows for heterogeneous linear trends across units,
 relaxing the standard parallel trends assumption.
@@ -805,10 +831,143 @@ indicator must be monotone non-decreasing in the time index (once ``post`` switc
 from 0 to 1, it cannot revert to 0). Treatment reversals or temporary treatments
 are therefore not permitted.
 
+Unbalanced Panels and Selection Mechanism
+-----------------------------------------
+
+Lee and Wooldridge (2025) addresses the treatment of unbalanced panels,
+where not all units are observed in all time periods. This section describes the
+selection mechanism assumption and guidance for working with incomplete panel data.
+
+Selection Mechanism Assumption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The key assumption for unbalanced panels is that selection into the sample may depend
+on unobserved time-invariant heterogeneity (which is removed by the transformation),
+but cannot systematically depend on the shocks to :math:`Y_{it}(\infty)`.
+
+Formally, if :math:`S_{it}` indicates whether unit :math:`i` is observed at time :math:`t`:
+
+.. math::
+
+   E[Y_{it}(\infty) | S_{it} = 1, D_i, X_i] = E[Y_{it}(\infty) | D_i, X_i]
+
+This means that, conditional on treatment status and covariates, being observed does
+not systematically predict the untreated potential outcome.
+
+**Analogy to Fixed Effects**: This assumption is analogous to the standard fixed effects
+assumption where the error term may be correlated with time-invariant characteristics
+but not with idiosyncratic shocks. The rolling transformation removes the time-invariant
+component, so selection based on permanent characteristics does not cause bias.
+
+Acceptable Missing Data Patterns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Missing data is acceptable when it depends on:
+
+1. **Time-invariant characteristics**: Units that are always high or low performers
+   may be more or less likely to remain in the sample
+2. **Observable covariates**: Missingness related to baseline characteristics that
+   are controlled for in the analysis
+3. **Random factors**: Missing completely at random (MCAR)
+4. **Deterministic patterns**: Units observed only in certain calendar time periods
+   due to sample design
+
+**Examples of acceptable patterns**:
+
+- A panel of firms where smaller firms are less likely to survive (selection on
+  time-invariant firm quality)
+- A survey where certain regions are only surveyed in specific years
+- Administrative data where units enter and exit based on observable eligibility
+
+Problematic Missing Data Patterns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Missing data is problematic when it depends on:
+
+1. **Outcome shocks**: Units experiencing negative shocks being more likely to
+   leave the sample
+2. **Treatment anticipation**: Units selecting out based on expected treatment
+   effects
+3. **Unobserved time-varying factors**: Missingness correlated with transitory
+   components of the outcome
+
+**Examples of problematic patterns**:
+
+- Firms exiting the sample after experiencing losses (selection on outcome shocks)
+- Workers leaving a survey after job loss, where job loss is correlated with
+   outcomes of interest
+- Treatment group units dropping out more frequently than control units
+   in a pattern correlated with outcomes
+
+Detrending for Robustness
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lee and Wooldridge (2025) notes that detrending provides additional robustness
+to unbalanced panels. Removing unit-specific trends allows for two sources of
+heterogeneity — level and trend — to be correlated with selection into the sample.
+
+When selection may depend on both the level and growth rate of the outcome, detrending
+removes both sources of heterogeneity, making the estimates more robust to selection
+bias.
+
+**Recommendation**: When panel imbalance is substantial or selection mechanisms are
+uncertain, consider using ``rolling='detrend'`` for additional robustness.
+
+Diagnosing Selection Risk
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``lwdid`` package provides diagnostic tools for assessing selection risk:
+
+.. code-block:: python
+
+   from lwdid import diagnose_selection_mechanism
+
+   diagnostics = diagnose_selection_mechanism(
+       data, ivar='unit', tvar='year', gvar='first_treat'
+   )
+
+   print(diagnostics.summary())
+
+The diagnostics include:
+
+- **Balance statistics**: Panel balance ratio, observation counts
+- **Attrition analysis**: Dropout rates by cohort and period
+- **Missing pattern classification**: MCAR, MAR, or MNAR assessment
+- **Risk level**: LOW, MEDIUM, or HIGH selection risk
+- **Recommendations**: Suggested actions based on diagnostics
+
+**Interpreting risk levels**:
+
+- **LOW**: Proceed with estimation; selection mechanism likely satisfied
+- **MEDIUM**: Consider using detrending; perform sensitivity analysis
+- **HIGH**: Results should be interpreted with caution; consider balanced subsample
+
+Controlling Panel Balance
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``balanced_panel`` parameter in ``lwdid()`` controls behavior when unbalanced
+panels are detected:
+
+- ``balanced_panel='warn'`` (default): Issue warning and continue estimation
+- ``balanced_panel='error'``: Raise exception; require balanced panel
+- ``balanced_panel='ignore'``: Silently proceed with unbalanced panel
+
+.. code-block:: python
+
+   # Strict balanced panel requirement
+   result = lwdid(
+       data, y='outcome', ivar='unit', tvar='year',
+       gvar='first_treat',
+       balanced_panel='error'  # Raises exception if unbalanced
+   )
+
+See :doc:`api/selection_diagnostics` for detailed documentation of the diagnostic
+functions.
+
 Heterogeneous Trends and Assumption CHT
 ----------------------------------------
 
-Lee and Wooldridge (2025, Section 5) introduces Assumption CHT (Cohort-specific
+Lee and Wooldridge (2025) introduces Assumption CHT (Cohort-specific
 Heterogeneous Trends), which relaxes the standard parallel trends assumption to
 allow for cohort-specific linear trends.
 
@@ -856,13 +1015,13 @@ trends assumption holds:
 **Use demean when**:
 
 - Pre-treatment trends are parallel across treatment groups
-- You have limited pre-treatment periods (:math:`T_0 < 3`)
-- You want more efficient estimates (demean is more efficient when PT holds)
+- The number of pre-treatment periods is limited (:math:`T_0 < 3`)
+- More efficient estimates are desired (demean is more efficient when PT holds)
 
 **Use detrend when**:
 
 - Pre-treatment trends differ across treatment groups
-- You have sufficient pre-treatment periods (:math:`T_0 \geq 2`, preferably :math:`\geq 3`)
+- Sufficient pre-treatment periods are available (:math:`T_0 \geq 2`, preferably :math:`\geq 3`)
 - Visual inspection or formal tests suggest heterogeneous trends
 
 **Decision procedure**:
@@ -872,10 +1031,10 @@ trends assumption holds:
 3. Diagnose trend heterogeneity using ``diagnose_heterogeneous_trends()``
 4. Get a recommendation using ``recommend_transformation()``
 
-Procedure 5.1: Detrending Under CHT
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Detrending Under CHT
+~~~~~~~~~~~~~~~~~~~~
 
-Lee and Wooldridge (2025, Procedure 5.1) describes the detrending procedure for
+Lee and Wooldridge (2025) describes the detrending procedure for
 staggered adoption under Assumption CHT:
 
 **Step 1**: For each cohort :math:`g \in \{S, \ldots, T\}`, run unit-specific
@@ -972,13 +1131,10 @@ The recommendation considers:
 - Panel balance
 - Seasonal patterns (for quarterly data)
 
-Comparison with Other DiD Methods
-----------------------------------
-
 Pre-treatment Period Dynamics
 -----------------------------
 
-Lee & Wooldridge (2025) Appendix D develops a methodology for estimating treatment
+Lee and Wooldridge (2025) develops a methodology for estimating treatment
 effects in pre-treatment periods to assess the validity of the parallel trends
 assumption. This section describes the theoretical foundation and implementation.
 
@@ -1000,7 +1156,7 @@ For pre-treatment periods, the transformation uses future pre-treatment periods
 rather than past periods. This ensures the transformation is well-defined for
 all pre-treatment periods.
 
-**Pre-treatment Demeaning (Formula D.1)**
+**Pre-treatment Demeaning**
 
 For cohort :math:`g` and pre-treatment period :math:`t < g`, the demeaned outcome is:
 
@@ -1016,7 +1172,7 @@ Key properties:
 - Rolling window looks forward, not backward
 - Window size decreases as :math:`t` approaches :math:`g-1`
 
-**Pre-treatment Detrending (Formula D.2)**
+**Pre-treatment Detrending**
 
 For cohort :math:`g` and pre-treatment period :math:`t < g`, fit an OLS regression:
 
@@ -1075,7 +1231,7 @@ For pre-treatment period :math:`t < g`, valid control units are:
 - **Not-yet-treated at t**: Units with first treatment after :math:`t`
   (cohorts :math:`h > t`)
 
-This differs from post-treatment control groups because we need units that are
+This differs from post-treatment control groups because units must be
 untreated at time :math:`t`, not just at time :math:`r \geq g`.
 
 Joint Test for Parallel Trends
@@ -1119,20 +1275,18 @@ assumptions when homoskedastic OLS standard errors are used. In contrast, TWFE
 inference is usually based on large-sample approximations with cluster-robust
 standard errors.
 
-Callaway and Sant'Anna (2021)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Long Differencing Approaches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Callaway and Sant'Anna (2021) develop DiD estimators for settings with staggered
-adoption and group-time average treatment effects, with inference based on
-large-sample approximations in panels with many groups and time periods.
-Lee and Wooldridge (2025) extends the rolling transformation approach to
-staggered adoption settings and develops large-sample asymptotic inference
-using doubly robust estimators (IPWRA). Lee and Wooldridge (2026) focuses
-on small cross-sectional sample sizes in common timing settings, showing
-that exact t-based inference is available under classical linear model
-assumptions (normality and homoskedasticity).
-
-
+Long differencing approaches to staggered DiD use only the single period just
+prior to the intervention as a reference. Lee and Wooldridge (2025) extends the
+rolling transformation approach to staggered adoption settings and develops
+large-sample asymptotic inference using doubly robust estimators (IPWRA). The
+rolling approach uses all pre-treatment periods, achieving better efficiency
+while permitting application of various treatment effect estimators. Lee and
+Wooldridge (2026) focuses on small cross-sectional sample sizes in common
+timing settings, showing that exact t-based inference is available under
+classical linear model assumptions (normality and homoskedasticity).
 
 When to Use This Method
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -1270,8 +1424,10 @@ This implementation has the following limitations:
 1. **Binary treatment**: Treatment is either on or off (no continuous treatment intensity)
 2. **Time-invariant controls**: Controls must not vary over time
 3. **Treatment persistence**: Once treated, units must remain treated
-4. **Quarterly methods in staggered mode**: The ``demeanq`` and ``detrendq``
-   transformations are only available for common timing designs
+4. **Seasonal methods data requirements**: The ``demeanq`` and ``detrendq``
+   transformations require sufficient pre-treatment observations for seasonal
+   parameter estimation. In staggered designs, early cohorts with limited
+   pre-treatment data may be excluded if they lack the required observations
 
 Staggered Adoption
 ------------------
@@ -1318,18 +1474,17 @@ where the trend coefficients are estimated from pre-treatment periods
 Control Group Strategies
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Lee and Wooldridge (2025, Section 4.1) establishes that, under the conditional
-parallel trends assumption (CPTS), the cohort treatment indicators are
-unconfounded with respect to the transformed potential outcome. This implies:
+Lee and Wooldridge (2025) establishes that, under the conditional parallel
+trends assumption (CPTS), the cohort treatment indicators are unconfounded with
+respect to the transformed potential outcome. This implies:
 
 - For estimating :math:`\tau_{gr}` (effect for cohort :math:`g` at time
   :math:`r`), cohorts :math:`h > r` (not-yet-treated at time :math:`r`) can
   serve as valid controls in addition to never-treated units
-- Equation (4.8) in the paper shows:
+- Under CPTS, the conditional expectation
   :math:`E[\dot{Y}_{rg}(\infty)|D_\infty=1, X] = E[\dot{Y}_{rg}(\infty)|D_h=1, X]`
-  for all :math:`h`, meaning the conditional expectation is the same across all
-  cohorts
-- Equation (4.9) further shows that, by no anticipation,
+  is the same across all cohorts
+- By the no-anticipation assumption,
   :math:`E[\dot{Y}_{rg}(\infty)|D_h=1, X] = E[\dot{Y}_{rg}(h)|D_h=1, X]` for
   :math:`h > r`, so not-yet-treated units can substitute for never-treated units
 
@@ -1347,7 +1502,7 @@ no anticipation.
 All Units Eventually Treated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Lee and Wooldridge (2025, Section 4.2) addresses the case where no units remain
+Lee and Wooldridge (2025) addresses the case where no units remain
 untreated through period :math:`T` (no never-treated group). In this setting:
 
 1. Treatment effects are defined relative to :math:`Y_t(T)`, the state of being
@@ -1395,40 +1550,22 @@ Different estimators use different reference distributions for inference:
      - t-distribution
      - Exact inference under CLM assumptions; df = N - k
    * - IPW
-     - t-distribution
-     - Structure similar to OLS; conservative in small samples
+     - Normal
+     - Asymptotic inference based on influence functions
    * - IPWRA
      - Normal
      - Asymptotic inference based on influence functions
    * - PSM
      - Normal
-     - Asymptotic inference based on Abadie-Imbens SE
+     - Asymptotic inference; SE based on matching-based variance estimator
 
-**Comparison with Stata**
-
-Stata's ``teffects`` commands use the normal distribution for all estimators
-(``teffects ipw``, ``teffects ipwra``, ``teffects psmatch``). This implementation
-differs for IPW:
-
-- **IPW**: Uses t-distribution (differs from Stata)
-- **IPWRA**: Uses normal distribution (matches Stata)
-- **PSM**: Uses normal distribution (matches Stata)
-
-The IPW design decision is based on:
-
-1. Lee and Wooldridge (2026) equation (2.10) establishes t-distribution inference
-   for cross-sectional regressions under CLM assumptions
-2. The IPW estimator structure resembles a simple mean difference, analogous to
-   OLS regression
-3. In small samples, the t-distribution provides more conservative inference with
-   better confidence interval coverage
-4. As sample size increases, the t-distribution converges to the normal
-   distribution, preserving asymptotic properties
-
-For large samples (N > 50), the difference between t and normal distributions
-is negligible. For small samples, the t-distribution provides wider confidence
-intervals and larger p-values, which may be more appropriate given the
-uncertainty in variance estimation.
+The RA estimator uses the t-distribution because Lee and Wooldridge (2026)
+provides exact finite-sample inference under classical linear model assumptions.
+The IPW, IPWRA, and PSM estimators use the normal distribution because these
+estimators rely on asymptotic theory (influence functions or matching-based
+variance estimators) where t-distribution adjustments are not directly applicable.
+For large samples (N > 50), the practical difference between t and normal
+distributions is negligible.
 
 Aggregation
 ~~~~~~~~~~~
@@ -1448,11 +1585,63 @@ Cohort-time specific effects :math:`\tau_{gr}` can be aggregated:
 
      \tau_\omega = \sum_g \omega_g \tau_g \quad \text{where } \omega_g = N_g/N_{treat}
 
+Event Time Aggregation (WATT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The weighted average treatment effect on the treated (WATT) by event time provides
+an aggregation of cohort-time specific effects :math:`\tau_{gr}` across cohorts
+sharing the same relative time since treatment onset, as developed in Lee and
+Wooldridge (2025).
+
+For event time :math:`e = r - g` (relative time since treatment), the WATT is:
+
+.. math::
+
+   \text{WATT}(e) = \sum_{g \in G_e} w(g,e) \cdot \tau_{g, g+e}
+
+where :math:`G_e` is the set of cohorts with a valid ATT estimate at event time
+:math:`e`, and the weights are cohort-size proportions:
+
+.. math::
+
+   w(g,e) = \frac{N_g}{\sum_{g' \in G_e} N_{g'}}
+
+**Standard Error Computation**
+
+The standard error for the WATT at event time :math:`e` is computed as:
+
+.. math::
+
+   SE(\text{WATT}(e)) = \sqrt{\sum_{g \in G_e} [w(g,e)]^2 \cdot [SE(\tau_{g,g+e})]^2}
+
+This formula assumes independence across cohorts and uses the normalized weights.
+
+**Degrees of Freedom**
+
+For t-distribution inference on event-time aggregated effects, the degrees of
+freedom are chosen conservatively as the minimum across contributing cohorts:
+
+.. math::
+
+   df(e) = \min_{g \in G_e} df_g
+
+This provides conservative coverage that accounts for finite-sample uncertainty.
+
+**Event Study Visualization**
+
+Event time aggregation is particularly useful for event study plots, which display
+treatment effects as a function of relative time. The pre-treatment effects
+(negative event times) serve as placebo tests for the parallel trends assumption,
+while post-treatment effects reveal the dynamic treatment response.
+
+The anchor point at event time :math:`e = -1` is set to zero by convention,
+serving as the reference baseline for interpreting other effects.
+
 Robustness to Pre-treatment Period Selection
 --------------------------------------------
 
-Lee and Wooldridge (2026) Section 8.1 recommends studying the robustness of DiD
-estimates by varying the number of pre-treatment periods used in the transformation.
+Lee and Wooldridge (2026) recommends studying the robustness of DiD estimates
+by varying the number of pre-treatment periods used in the transformation.
 This section describes the sensitivity analysis tools implemented in ``lwdid``.
 
 Motivation
@@ -1465,11 +1654,9 @@ include can affect the estimates:
 - **Too few periods**: May not adequately capture unit-specific patterns
 - **Too many periods**: May include periods where parallel trends do not hold
 
-From Lee and Wooldridge (2026):
-
-    "With synthetic control-type approaches and the approaches we suggest here,
-    one can study the robustness of the findings by adjusting the number of
-    pre-treatment time periods."
+Robustness of the estimates can be studied by adjusting the number of
+pre-treatment time periods used in the transformation, analogous to the
+variation of pre-treatment windows in synthetic control methods.
 
 Sensitivity Ratio
 ~~~~~~~~~~~~~~~~~
@@ -1556,7 +1743,7 @@ The function:
 Using exclude_pre_periods Parameter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Based on sensitivity analysis results, you can exclude periods in the main
+Based on sensitivity analysis results, periods can be excluded in the main
 estimation using the ``exclude_pre_periods`` parameter::
 
     from lwdid import lwdid
@@ -1571,7 +1758,7 @@ This parameter:
 
 - Excludes the specified number of pre-treatment periods from transformation
 - Addresses potential anticipation effects
-- Implements the robustness check from Lee and Wooldridge (2026) Section 8.1
+- Implements the robustness check from Lee and Wooldridge (2026)
 
 Comprehensive Sensitivity Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1602,11 +1789,6 @@ Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes.
 Lee, S. J., and Wooldridge, J. M. (2025). A Simple Transformation Approach to
 Difference-in-Differences Estimation for Panel Data.
 *Available at SSRN 4516518*.
-
-Authors
--------
-
-Xuanyu Cai, Wenli Xu
 
 Further Reading
 ---------------

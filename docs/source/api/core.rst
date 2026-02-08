@@ -107,8 +107,8 @@ Including time-invariant control variables:
 .. warning::
 
    Control variables must be time-invariant (constant within each unit).
-   If you have time-varying variables, you must first aggregate them to
-   create unit-level constants. Common approaches:
+   Time-varying variables must first be aggregated to create unit-level
+   constants. Common approaches:
    
    - Pre-treatment mean: ``data[data['post']==0].groupby('unit')[var].mean()``
    - First period value: ``data.groupby('unit')[var].first()``
@@ -249,7 +249,7 @@ For staggered treatment adoption (different units treated at different times):
    )
    
    print(f"Overall ATT: {results.att_overall:.4f}")
-   print(f"95% CI: [{results.ci_lower_overall:.4f}, {results.ci_upper_overall:.4f}]")
+   print(f"95% CI: [{results.ci_overall_lower:.4f}, {results.ci_overall_upper:.4f}]")
 
 .. code-block:: python
 
@@ -285,6 +285,77 @@ For staggered treatment adoption (different units treated at different times):
    group is automatically switched to ``never_treated`` if ``not_yet_treated``
    was specified. This is required by the theoretical framework (see Lee and
    Wooldridge, 2025).
+
+Pre-treatment Dynamics and Parallel Trends Testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For parallel trends assessment in staggered designs:
+
+.. code-block:: python
+
+   results = lwdid(
+       data=data,
+       y='lhomicide',
+       ivar='sid',
+       tvar='year',
+       gvar='gvar',
+       rolling='demean',
+       aggregate='cohort',
+       include_pretreatment=True,    # Compute pre-treatment ATT
+       pretreatment_test=True,       # Run parallel trends test
+   )
+   
+   # Access parallel trends test results
+   pt = results.parallel_trends_test
+   print(f"Joint F-stat: {pt.joint_f_stat:.4f}, p-value: {pt.joint_pvalue:.4f}")
+   
+   # Plot with pre-treatment effects
+   results.plot_event_study(include_pre_treatment=True)
+
+Handling Unbalanced Panels
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For panels with missing observations:
+
+.. code-block:: python
+
+   from lwdid import lwdid, diagnose_selection_mechanism
+   
+   # Run selection diagnostics first
+   diagnostics = diagnose_selection_mechanism(
+       data=data, ivar='unit', tvar='year', gvar='gvar'
+   )
+   print(f"Selection risk: {diagnostics.risk_level}")
+   
+   # Estimation with unbalanced panel handling
+   results = lwdid(
+       data=data,
+       y='outcome',
+       ivar='unit',
+       tvar='year',
+       gvar='gvar',
+       rolling='detrend',     # Detrending is more robust to selection
+       balanced_panel='warn'  # Issue warning with diagnostics (default)
+   )
+
+Excluding Pre-treatment Periods for Anticipation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When no-anticipation assumption may be violated:
+
+.. code-block:: python
+
+   # Exclude 2 periods before treatment to test for anticipation effects
+   results = lwdid(
+       data=data,
+       y='outcome',
+       d='treated',
+       ivar='unit',
+       tvar='year',
+       post='post',
+       rolling='demean',
+       exclude_pre_periods=2  # Exclude t-1 and t-2 from transformation
+   )
 
 See Also
 --------

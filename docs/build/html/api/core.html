@@ -107,8 +107,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrend-did-with-unit-specific-linear-trends">detrend: DiD with Unit-Specific Linear Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demeanq-quarterly-data-with-seasonal-fixed-effects">demeanq: Quarterly Data with Seasonal Fixed Effects</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrendq-quarterly-data-with-trends-and-seasonal-effects">detrendq: Quarterly Data with Trends and Seasonal Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demeanq-seasonal-data-with-seasonal-fixed-effects">demeanq: Seasonal Data with Seasonal Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrendq-seasonal-data-with-trends-and-seasonal-effects">detrendq: Seasonal Data with Trends and Seasonal Effects</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#variance-estimation">Variance Estimation</a><ul>
@@ -149,10 +149,18 @@
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#missing-data">Missing Data</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#never-treated-unit-data-preparation">Never-Treated Unit Data Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#valid-never-treated-encodings">Valid Never-Treated Encodings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#converting-from-stata-data">Converting from Stata Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#checking-never-treated-status">Checking Never-Treated Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#common-issues-and-solutions">Common Issues and Solutions</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#best-practices">Best Practices</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-size-and-inference-method-selection-matrix">Sample Size and Inference Method Selection Matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
@@ -165,10 +173,28 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#staggered-adoption-design">Staggered Adoption Design</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#id2">Basic Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#robustness-to-no-anticipation-violations">Robustness to No-Anticipation Violations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#accessing-staggered-results">Accessing Staggered Results</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#estimator-selection">Estimator Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#staggered-example">Staggered Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#pre-treatment-dynamics-and-parallel-trends-testing">Pre-treatment Dynamics and Parallel Trends Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#why-pre-treatment-dynamics-matter">Why Pre-treatment Dynamics Matter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#id3">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#accessing-pre-treatment-results">Accessing Pre-treatment Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#interpreting-the-parallel-trends-test">Interpreting the Parallel Trends Test</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#event-study-visualization-with-pre-treatment">Event Study Visualization with Pre-treatment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#complete-workflow-example">Complete Workflow Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#transformation-methods-for-pre-treatment">Transformation Methods for Pre-treatment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#trend-diagnostics-tools">Trend Diagnostics Tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#testing-parallel-trends-with-standalone-function">Testing Parallel Trends with Standalone Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#getting-automated-transformation-recommendation">Getting Automated Transformation Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#visualizing-cohort-trends">Visualizing Cohort Trends</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#further-reading">Further Reading</a></li>
@@ -182,6 +208,14 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../examples/index.html#quarterly-data">Quarterly Data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../examples/index.html#retail-sales-with-seasonal-patterns">Retail Sales with Seasonal Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#monthly-data">Monthly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#monthly-sales-with-seasonal-adjustment-q-12">Monthly Sales with Seasonal Adjustment (Q=12)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#weekly-data">Weekly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#weekly-sales-with-seasonal-adjustment-q-52">Weekly Sales with Seasonal Adjustment (Q=52)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../examples/index.html#control-variables">Control Variables</a><ul>
@@ -247,7 +281,9 @@
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#ipw-estimator">IPW Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#pre-treatment-dynamics">Pre-treatment Dynamics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#examples">Examples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#see-also">See Also</a></li>
 </ul>
@@ -279,16 +315,102 @@
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#see-also">See Also</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#inference-and-diagnostics">Inference and Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="inference.html">Inference Module (inference)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#methodological-notes">Methodological Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="clustering_diagnostics.html">Clustering Diagnostics Module (clustering_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#enums">Enums</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#data-classes">Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trend_diagnostics.html">Trend Diagnostics Module (trend_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod"><code class="docutils literal notranslate"><span class="pre">TrendTestMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod"><code class="docutils literal notranslate"><span class="pre">TransformationMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.RecommendationConfidence"><code class="docutils literal notranslate"><span class="pre">RecommendationConfidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate"><code class="docutils literal notranslate"><span class="pre">PreTrendEstimate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate"><code class="docutils literal notranslate"><span class="pre">CohortTrendEstimate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference"><code class="docutils literal notranslate"><span class="pre">TrendDifference</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult"><code class="docutils literal notranslate"><span class="pre">ParallelTrendsTestResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics"><code class="docutils literal notranslate"><span class="pre">HeterogeneousTrendsDiagnostics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation"><code class="docutils literal notranslate"><span class="pre">TransformationRecommendation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.test_parallel_trends"><code class="docutils literal notranslate"><span class="pre">test_parallel_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.diagnose_heterogeneous_trends"><code class="docutils literal notranslate"><span class="pre">diagnose_heterogeneous_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.recommend_transformation"><code class="docutils literal notranslate"><span class="pre">recommend_transformation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.plot_cohort_trends"><code class="docutils literal notranslate"><span class="pre">plot_cohort_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#testing-functions">Testing Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#visualization">Visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#supporting-data-classes">Supporting Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#methodological-background">Methodological Background</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="selection_diagnostics.html">Selection Diagnostics Module (selection_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#enums">Enums</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#data-classes">Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#interpretation-guide">Interpretation Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sensitivity.html">Sensitivity Analysis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#interpreting-results">Interpreting Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#data-processing">Data Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="preprocessing.html">Preprocessing Module (preprocessing)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#key-functions">Key Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#key-classes">Key Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#lwdid.preprocessing.aggregate_to_panel"><code class="docutils literal notranslate"><span class="pre">aggregate_to_panel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#lwdid.preprocessing.AggregationResult"><code class="docutils literal notranslate"><span class="pre">AggregationResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#lwdid.preprocessing.CellStatistics"><code class="docutils literal notranslate"><span class="pre">CellStatistics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#methodological-notes">Methodological Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#data-requirements">Data Requirements</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="validation.html">Validation Module (validation)</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_season_diversity"><code class="docutils literal notranslate"><span class="pre">validate_season_diversity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_season_coverage"><code class="docutils literal notranslate"><span class="pre">validate_season_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#lwdid.validation.detect_frequency"><code class="docutils literal notranslate"><span class="pre">detect_frequency()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="validation.html#never-treated-unit-identification">Never-Treated Unit Identification</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="validation.html#best-practices">Best Practices</a></li>
@@ -324,6 +446,7 @@
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidParameterError"><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidRollingMethodError"><code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidVCETypeError"><code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.UnbalancedPanelError"><code class="docutils literal notranslate"><span class="pre">UnbalancedPanelError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientDataError"><code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoTreatedUnitsError"><code class="docutils literal notranslate"><span class="pre">NoTreatedUnitsError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoControlUnitsError"><code class="docutils literal notranslate"><span class="pre">NoControlUnitsError</span></code></a></li>
@@ -335,6 +458,9 @@
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.AggregationError"><code class="docutils literal notranslate"><span class="pre">AggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidAggregationError"><code class="docutils literal notranslate"><span class="pre">InvalidAggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientCellSizeError"><code class="docutils literal notranslate"><span class="pre">InsufficientCellSizeError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-classes">Exception Classes</a></li>
@@ -357,7 +483,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#core-principle">Core Principle</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#demean-transformation-procedure-2-1">Demean Transformation (Procedure 2.1)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#detrend-transformation-procedure-3-1">Detrend Transformation (Procedure 3.1)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#quarterly-transformations">Quarterly Transformations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#seasonal-transformations-demeanq-detrendq">Seasonal Transformations (demeanq/detrendq)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#inference-under-clm-assumptions">Inference Under CLM Assumptions</a><ul>
@@ -372,6 +498,18 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#clustering-at-higher-levels">Clustering at Higher Levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#when-to-cluster-at-higher-levels">When to Cluster at Higher Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#minimum-cluster-requirements">Minimum Cluster Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#id1">Degrees of Freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#diagnosing-clustering-structure">Diagnosing Clustering Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#getting-a-clustering-recommendation">Getting a Clustering Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#checking-clustering-consistency">Checking Clustering Consistency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#clustering-workflow">Clustering Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#references-for-clustering">References for Clustering</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
@@ -380,6 +518,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
@@ -387,6 +526,25 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#parallel-trends">Parallel Trends</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#common-treatment-timing-common-timing-mode">Common Treatment Timing (Common Timing Mode)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#heterogeneous-trends-and-assumption-cht">Heterogeneous Trends and Assumption CHT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#assumption-cht">Assumption CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#first-difference-under-cht">First Difference Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#choosing-between-demean-and-detrend">Choosing Between Demean and Detrend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#procedure-5-1-detrending-under-cht">Procedure 5.1: Detrending Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#testing-parallel-trends">Testing Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#getting-a-transformation-recommendation">Getting a Transformation Recommendation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#pre-treatment-period-dynamics">Pre-treatment Period Dynamics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#motivation">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#rolling-transformation-for-pre-treatment-periods">Rolling Transformation for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#anchor-point-convention">Anchor Point Convention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#pre-treatment-att-estimation">Pre-treatment ATT Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#control-group-for-pre-treatment-periods">Control Group for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#joint-test-for-parallel-trends">Joint Test for Parallel Trends</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#comparison-with-other-did-methods">Comparison with Other DiD Methods</a><ul>
@@ -410,11 +568,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#id2">Inference Distribution by Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#aggregation">Aggregation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#event-time-aggregation-watt">Event Time Aggregation (WATT)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#robustness-to-pre-treatment-period-selection">Robustness to Pre-treatment Period Selection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#id3">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#sensitivity-ratio">Sensitivity Ratio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#using-robustness-pre-periods">Using robustness_pre_periods()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#no-anticipation-sensitivity">No-Anticipation Sensitivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#using-exclude-pre-periods-parameter">Using exclude_pre_periods Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#comprehensive-sensitivity-analysis">Comprehensive Sensitivity Analysis</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#references">References</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#further-reading">Further Reading</a></li>
 </ul>
 </li>
@@ -473,17 +641,17 @@ PSM) is supported.</p>
 <h2>Main Function<a class="headerlink" href="#main-function" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.lwdid">
-<span class="sig-prename descclassname"><span class="pre">lwdid.</span></span><span class="sig-name descname"><span class="pre">lwdid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'demean'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">gvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'not_yet_treated'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ra'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cohort'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ps_controls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trim_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_diagnostics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_neighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caliper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vce</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ri</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rireps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ri_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bootstrap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/core.html#lwdid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.lwdid" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lwdid.</span></span><span class="sig-name descname"><span class="pre">lwdid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'demean'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">gvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'not_yet_treated'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">estimator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ra'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aggregate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cohort'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">balanced_panel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'warn'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ps_controls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trim_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_diagnostics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_neighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">caliper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_replacement</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">match_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'data'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vce</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ri</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rireps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ri_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bootstrap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">graph_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">season_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_detect_frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_pretreatment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pretreatment_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pretreatment_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_pre_periods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/core.html#lwdid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.lwdid" title="Link to this definition"></a></dt>
 <dd><p>Difference-in-differences estimator with unit-specific transformations.</p>
-<p>Implements the Lee-Wooldridge rolling transformation approach for DiD
-estimation, supporting three methodological scenarios:</p>
+<p>Implements the rolling transformation approach for DiD estimation,
+supporting three methodological scenarios:</p>
 <ol class="arabic simple">
-<li><p><strong>Small-sample common timing</strong> (Lee and Wooldridge, 2026): Exact t-based
-inference under classical linear model assumptions.</p></li>
-<li><p><strong>Large-sample common timing</strong> (Lee and Wooldridge, 2025): Asymptotic
-inference with heteroskedasticity-robust standard errors.</p></li>
-<li><p><strong>Staggered adoption</strong> (Lee and Wooldridge, 2025): Cohort-time specific
-effect estimation with flexible control group strategies.</p></li>
+<li><p><strong>Small-sample common timing</strong>: Exact t-based inference under classical
+linear model assumptions.</p></li>
+<li><p><strong>Large-sample common timing</strong>: Asymptotic inference with
+heteroskedasticity-robust standard errors.</p></li>
+<li><p><strong>Staggered adoption</strong>: Cohort-time specific effect estimation with
+flexible control group strategies.</p></li>
 </ol>
 <p>The transformation removes unit-specific pre-treatment patterns, converting
 panel DiD into a cross-sectional treatment effects problem.</p>
@@ -507,18 +675,25 @@ periods. Must be monotone non-decreasing in time (no treatment reversals).</p></
 <ul>
 <li><p>’demean’: Remove unit-specific pre-treatment mean.</p></li>
 <li><p>’detrend’: Remove unit-specific linear time trend.</p></li>
-<li><p>’demeanq’: Demeaning with quarterly fixed effects.</p></li>
-<li><p>’detrendq’: Detrending with quarterly fixed effects.</p></li>
+<li><p>’demeanq’: Demeaning with seasonal fixed effects. Requires <code class="docutils literal notranslate"><span class="pre">season_var</span></code>
+and <code class="docutils literal notranslate"><span class="pre">Q</span></code> parameters. Supports quarterly (Q=4), monthly (Q=12), or
+weekly (Q=52) data.</p></li>
+<li><p>’detrendq’: Detrending with seasonal fixed effects. Requires <code class="docutils literal notranslate"><span class="pre">season_var</span></code>
+and <code class="docutils literal notranslate"><span class="pre">Q</span></code> parameters. Supports quarterly (Q=4), monthly (Q=12), or
+weekly (Q=52) data.</p></li>
 </ul>
-<p>Quarterly methods are only supported in common timing mode.</p>
+<p>Seasonal methods (demeanq, detrendq) are only supported in common timing mode.</p>
 </p></li>
 <li><p><strong>gvar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Column name indicating first treatment period for staggered adoption.
 If specified, activates staggered mode and ignores <code class="docutils literal notranslate"><span class="pre">d</span></code> and <code class="docutils literal notranslate"><span class="pre">post</span></code>.
 Valid values: positive integers (treatment cohort), 0/inf/NaN (never-treated).</p></li>
-<li><p><strong>control_group</strong> (<em>{'not_yet_treated'</em><em>, </em><em>'never_treated'}</em><em>, </em><em>default='not_yet_treated'</em>) – <p>Control group composition for staggered adoption:</p>
+<li><p><strong>control_group</strong> (<em>{'not_yet_treated'</em><em>, </em><em>'never_treated'</em><em>, </em><em>'all_others'}</em><em>, </em><em>default='not_yet_treated'</em>) – <p>Control group composition for staggered adoption:</p>
 <ul>
 <li><p>’not_yet_treated’: Never-treated plus not-yet-treated units.</p></li>
 <li><p>’never_treated’: Only never-treated units.</p></li>
+<li><p>’all_others’: All units not in the treated cohort (including already-treated units).
+This option is mainly intended for replication/diagnostics and may introduce
+forbidden comparisons under no-anticipation.</p></li>
 </ul>
 <p>Auto-switched to ‘never_treated’ for cohort/overall aggregation.</p>
 </p></li>
@@ -536,6 +711,16 @@ Valid values: positive integers (treatment cohort), 0/inf/NaN (never-treated).</
 <li><p>’cohort’: Aggregate to cohort-specific effects.</p></li>
 <li><p>’overall’: Aggregate to a single weighted overall effect.</p></li>
 </ul>
+</p></li>
+<li><p><strong>balanced_panel</strong> (<em>{'warn'</em><em>, </em><em>'error'</em><em>, </em><em>'ignore'}</em><em>, </em><em>default='warn'</em>) – <p>How to handle unbalanced panels (units with different observation counts):</p>
+<ul>
+<li><p>’warn’: Issue a warning with selection mechanism diagnostics (default).</p></li>
+<li><p>’error’: Raise UnbalancedPanelError if panel is unbalanced.</p></li>
+<li><p>’ignore’: Silently proceed without warnings.</p></li>
+</ul>
+<p>Selection may depend on time-invariant heterogeneity but not on
+shocks to the untreated potential outcome. Use
+<code class="docutils literal notranslate"><span class="pre">diagnose_selection_mechanism()</span></code> for detailed diagnostics.</p>
 </p></li>
 <li><p><strong>ps_controls</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Control variables for propensity score model. If None, uses <code class="docutils literal notranslate"><span class="pre">controls</span></code>.</p></li>
 <li><p><strong>trim_threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default=0.01</em>) – Propensity score trimming threshold. Observations with propensity scores
@@ -579,6 +764,72 @@ deviation. Treated units without valid matches are dropped.</p></li>
 <li><p><strong>graph</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default=False</em>) – Whether to generate a plot of transformed outcomes over time.</p></li>
 <li><p><strong>gid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Specific unit identifier to highlight in the plot.</p></li>
 <li><p><strong>graph_options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional plotting options passed to the visualization function.</p></li>
+<li><p><strong>season_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Column name of seasonal indicator variable for seasonal transformations
+(demeanq, detrendq). Values should be integers from 1 to Q representing
+seasonal periods (e.g., quarters 1-4, months 1-12, or weeks 1-52).
+This parameter is preferred over the legacy <code class="docutils literal notranslate"><span class="pre">quarter</span></code> parameter in
+<code class="docutils literal notranslate"><span class="pre">tvar</span></code> for non-quarterly seasonal data.</p></li>
+<li><p><strong>Q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>default=4</em>) – <p>Number of seasonal periods per cycle. Used with seasonal transformations
+(demeanq, detrendq). Common values:</p>
+<ul>
+<li><p>4: Quarterly data (default)</p></li>
+<li><p>12: Monthly data</p></li>
+<li><p>52: Weekly data</p></li>
+</ul>
+<p>Must match the range of values in <code class="docutils literal notranslate"><span class="pre">season_var</span></code> (1 to Q).</p>
+</p></li>
+<li><p><strong>auto_detect_frequency</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default=False</em>) – <p>Whether to automatically detect data frequency and set Q accordingly.
+When True, the function analyzes the time variable to infer whether
+data is quarterly (Q=4), monthly (Q=12), or weekly (Q=52).</p>
+<ul>
+<li><p>If detection succeeds with high confidence, Q is set automatically.</p></li>
+<li><p>If detection fails or has low confidence, a warning is issued and
+the explicit Q value is used.</p></li>
+<li><p>An explicit Q value always overrides auto-detection when both are
+specified (Q != 4 and auto_detect_frequency=True).</p></li>
+</ul>
+<p>This parameter is useful when working with datasets of unknown frequency
+or when building generic analysis pipelines.</p>
+</p></li>
+<li><p><strong>include_pretreatment</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default=False</em>) – <p>Whether to compute pre-treatment transformed outcomes and ATT estimates
+for parallel trends assessment. Only applicable in staggered mode.</p>
+<p>When True:</p>
+<ul>
+<li><p>Applies rolling transformations to pre-treatment periods using
+future pre-treatment periods {t+1, …, g-1} as reference.</p></li>
+<li><p>Estimates pre-treatment ATT for each (cohort, period) pair.</p></li>
+<li><p>Stores results in <code class="docutils literal notranslate"><span class="pre">att_pre_treatment</span></code> attribute of LWDIDResults.</p></li>
+<li><p>Enables extended event study visualization with pre-treatment effects.</p></li>
+</ul>
+<p>Under the parallel trends assumption, pre-treatment ATT estimates
+should be statistically indistinguishable from zero.</p>
+</p></li>
+<li><p><strong>pretreatment_test</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default=True</em>) – <p>Whether to perform parallel trends statistical test when
+<code class="docutils literal notranslate"><span class="pre">include_pretreatment=True</span></code>. The test includes:</p>
+<ul>
+<li><p>Individual t-tests for each pre-treatment period ATT.</p></li>
+<li><p>Joint F-test for H0: all pre-treatment ATT = 0.</p></li>
+</ul>
+<p>Results are stored in <code class="docutils literal notranslate"><span class="pre">parallel_trends_test</span></code> attribute.</p>
+</p></li>
+<li><p><strong>pretreatment_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>default=0.05</em>) – Significance level for parallel trends test. Used for determining
+<code class="docutils literal notranslate"><span class="pre">reject_null</span></code> in the test results.</p></li>
+<li><p><strong>exclude_pre_periods</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>default=0</em>) – <p>Number of pre-treatment periods to exclude immediately before treatment.
+Used to address potential anticipation effects when the no-anticipation
+assumption may be violated.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">exclude_pre_periods</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>:</p>
+<ul>
+<li><p>The specified number of periods immediately before treatment are
+excluded from the pre-treatment sample used for transformation.</p></li>
+<li><p>For common timing: excludes the last k pre-treatment periods.</p></li>
+<li><p>For staggered adoption: excludes k periods before each cohort’s
+treatment date.</p></li>
+</ul>
+<p>This implements a robustness check for testing sensitivity to
+anticipation effects.</p>
+<p>Example: If treatment occurs at t=6 and <code class="docutils literal notranslate"><span class="pre">exclude_pre_periods=2</span></code>,
+periods t=4 and t=5 are excluded from the pre-treatment sample.</p>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -594,9 +845,12 @@ deviation. Treated units without valid matches are dropped.</p></li>
 <li><p>n_treated, n_control : Unit counts by treatment status.</p></li>
 <li><p>att_by_period : Period-specific ATT estimates (DataFrame).</p></li>
 <li><p>ri_pvalue : Randomization inference p-value (if ri=True).</p></li>
+<li><p>att_pre_treatment : Pre-treatment ATT estimates (if include_pretreatment=True).</p></li>
+<li><p>parallel_trends_test : Parallel trends test results (if include_pretreatment=True).</p></li>
+<li><p>include_pretreatment : Whether pre-treatment dynamics were computed.</p></li>
 </ul>
 <p>Key methods: summary(), plot(), to_excel(), to_csv(), to_latex(),
-get_diagnostics().</p>
+get_diagnostics(), plot_event_study().</p>
 </p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -708,8 +962,8 @@ freedom N-k (homoskedastic) or G-1 (cluster-robust).</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Control variables must be time-invariant (constant within each unit).
-If you have time-varying variables, you must first aggregate them to
-create unit-level constants. Common approaches:</p>
+Time-varying variables must first be aggregated to create unit-level
+constants. Common approaches:</p>
 <ul class="simple">
 <li><p>Pre-treatment mean: <code class="docutils literal notranslate"><span class="pre">data[data['post']==0].groupby('unit')[var].mean()</span></code></p></li>
 <li><p>First period value: <code class="docutils literal notranslate"><span class="pre">data.groupby('unit')[var].first()</span></code></p></li>
@@ -876,6 +1130,71 @@ reasons.</p></li>
 group is automatically switched to <code class="docutils literal notranslate"><span class="pre">never_treated</span></code> if <code class="docutils literal notranslate"><span class="pre">not_yet_treated</span></code>
 was specified. This is required by the theoretical framework (see Lee and
 Wooldridge, 2025).</p>
+</div>
+</section>
+<section id="pre-treatment-dynamics-and-parallel-trends-testing">
+<h3>Pre-treatment Dynamics and Parallel Trends Testing<a class="headerlink" href="#pre-treatment-dynamics-and-parallel-trends-testing" title="Link to this heading"></a></h3>
+<p>For parallel trends assessment in staggered designs:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;lhomicide&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;sid&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">gvar</span><span class="o">=</span><span class="s1">&#39;gvar&#39;</span><span class="p">,</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+    <span class="n">aggregate</span><span class="o">=</span><span class="s1">&#39;cohort&#39;</span><span class="p">,</span>
+    <span class="n">include_pretreatment</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>    <span class="c1"># Compute pre-treatment ATT</span>
+    <span class="n">pretreatment_test</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>       <span class="c1"># Run parallel trends test</span>
+<span class="p">)</span>
+
+<span class="c1"># Access parallel trends test results</span>
+<span class="n">pt</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">parallel_trends_test</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Joint F-stat: </span><span class="si">{</span><span class="n">pt</span><span class="o">.</span><span class="n">joint_f_stat</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, p-value: </span><span class="si">{</span><span class="n">pt</span><span class="o">.</span><span class="n">joint_pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Plot with pre-treatment effects</span>
+<span class="n">results</span><span class="o">.</span><span class="n">plot_event_study</span><span class="p">(</span><span class="n">include_pre_treatment</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="handling-unbalanced-panels">
+<h3>Handling Unbalanced Panels<a class="headerlink" href="#handling-unbalanced-panels" title="Link to this heading"></a></h3>
+<p>For panels with missing observations:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid</span><span class="w"> </span><span class="kn">import</span> <span class="n">lwdid</span><span class="p">,</span> <span class="n">diagnose_selection_mechanism</span>
+
+<span class="c1"># Run selection diagnostics first</span>
+<span class="n">diagnostics</span> <span class="o">=</span> <span class="n">diagnose_selection_mechanism</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span> <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span> <span class="n">gvar</span><span class="o">=</span><span class="s1">&#39;gvar&#39;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Selection risk: </span><span class="si">{</span><span class="n">diagnostics</span><span class="o">.</span><span class="n">risk_level</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Estimation with unbalanced panel handling</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">gvar</span><span class="o">=</span><span class="s1">&#39;gvar&#39;</span><span class="p">,</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;detrend&#39;</span><span class="p">,</span>     <span class="c1"># Detrending is more robust to selection</span>
+    <span class="n">balanced_panel</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span>  <span class="c1"># Issue warning with diagnostics (default)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="excluding-pre-treatment-periods-for-anticipation">
+<h3>Excluding Pre-treatment Periods for Anticipation<a class="headerlink" href="#excluding-pre-treatment-periods-for-anticipation" title="Link to this heading"></a></h3>
+<p>When no-anticipation assumption may be violated:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Exclude 2 periods before treatment to test for anticipation effects</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">lwdid</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="s1">&#39;outcome&#39;</span><span class="p">,</span>
+    <span class="n">d</span><span class="o">=</span><span class="s1">&#39;treated&#39;</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="o">=</span><span class="s1">&#39;unit&#39;</span><span class="p">,</span>
+    <span class="n">tvar</span><span class="o">=</span><span class="s1">&#39;year&#39;</span><span class="p">,</span>
+    <span class="n">post</span><span class="o">=</span><span class="s1">&#39;post&#39;</span><span class="p">,</span>
+    <span class="n">rolling</span><span class="o">=</span><span class="s1">&#39;demean&#39;</span><span class="p">,</span>
+    <span class="n">exclude_pre_periods</span><span class="o">=</span><span class="mi">2</span>  <span class="c1"># Exclude t-1 and t-2 from transformation</span>
+<span class="p">)</span>
+</pre></div>
 </div>
 </section>
 </section>

@@ -114,7 +114,7 @@ demean: Standard DiD with Unit Fixed Effects
 
 Removes unit-specific pre-treatment means from each observation.
 
-**Mathematical form** (Lee and Wooldridge, 2026, Procedure 2.1):
+**Mathematical form** (Lee and Wooldridge, 2026):
 
 For each unit :math:`i`, compute the pre-treatment mean :math:`\bar{Y}_{i,pre}` and
 transform:
@@ -147,7 +147,7 @@ detrend: DiD with Unit-Specific Linear Trends
 
 Estimates and removes unit-specific linear trends from the pre-treatment data.
 
-**Mathematical form** (Lee and Wooldridge, 2026, Procedure 3.1):
+**Mathematical form** (Lee and Wooldridge, 2026):
 
 For each unit :math:`i`, estimate linear trend from pre-treatment data:
 
@@ -288,6 +288,31 @@ Weekly data (Q=52):
        season_var='week'
    )
 
+Automatic Frequency Detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For convenience, ``lwdid`` can automatically detect the data frequency and set
+the appropriate ``Q`` parameter:
+
+.. code-block:: python
+
+   results = lwdid(
+       data, y='sales', d='treated', ivar='store',
+       tvar='time',
+       post='post', rolling='demeanq',
+       auto_detect_frequency=True    # Automatically detect Q
+   )
+
+When ``auto_detect_frequency=True``, the package examines the time variable to
+determine the most likely data frequency:
+
+- Detects monthly data (Q=12) based on 12 observations per year pattern
+- Detects weekly data (Q=52) based on 52 observations per year pattern
+- Falls back to quarterly (Q=4) if frequency cannot be determined
+
+**Note**: If both ``Q`` and ``auto_detect_frequency=True`` are specified, an error
+is raised unless ``Q=4`` (the default).
+
 Variance Estimation
 -------------------
 
@@ -331,9 +356,8 @@ HC0 (White's Heteroskedasticity-Consistent)
 
    results = lwdid(..., vce='hc0')
 
-**Note**: HC0 is the original White (1980) heteroskedasticity-consistent estimator
-without finite-sample adjustments. Tends to underestimate standard errors in small
-samples.
+**Note**: HC0 is the original heteroskedasticity-consistent estimator without
+finite-sample adjustments.
 
 HC1 (Heteroskedasticity-Robust)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -424,6 +448,20 @@ Cluster-Robust
 
 **Degrees of freedom**: G - 1, where G is the number of clusters.
 
+**Clustering Level Selection**:
+Lee and Wooldridge (2025) provides guidance on choosing the
+clustering level. The clustering level should match the level at which the
+policy varies:
+
+- If the unit of observation is county but policy varies at the state level,
+  cluster at the state level
+- If the unit of observation is individual but policy varies at the firm level,
+  cluster at the firm level
+
+In general, cluster at the highest level where treatment assignment is
+determined. This ensures that standard errors properly account for the
+correlation structure induced by the policy variation.
+
 Randomization Inference
 -----------------------
 
@@ -481,7 +519,7 @@ Accessing RI Results
 Control Variables
 -----------------
 
-You can include time-invariant control variables in the estimation.
+Time-invariant control variables can be included in the estimation.
 
 Basic Usage
 ~~~~~~~~~~~
@@ -670,6 +708,45 @@ Missing Data
 - Rows with missing values in ``d``, ``ivar``, ``tvar``, or ``post`` (these observations are dropped during validation)
 - Gaps in time sequence
 
+Handling Unbalanced Panels
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the panel is unbalanced (different units observed in different periods), the
+``balanced_panel`` parameter controls behavior:
+
+- ``balanced_panel='warn'`` (default): Issue a warning and proceed with estimation
+- ``balanced_panel='error'``: Raise an exception; require a balanced panel
+- ``balanced_panel='ignore'``: Silently proceed without any warning
+
+.. code-block:: python
+
+   # Default: warn about unbalanced panel but proceed
+   results = lwdid(data, y='outcome', ..., balanced_panel='warn')
+
+   # Strict: require balanced panel
+   results = lwdid(data, y='outcome', ..., balanced_panel='error')
+
+   # Silent: ignore panel imbalance
+   results = lwdid(data, y='outcome', ..., balanced_panel='ignore')
+
+**Selection mechanism assumption**: With unbalanced panels, selection into the sample
+may depend on time-invariant characteristics (removed by the transformation), but
+should not depend on outcome shocks. See :doc:`methodological_notes` for details.
+
+**Tip**: Use ``detrend`` instead of ``demean`` for additional robustness to selection
+bias in unbalanced panels, as detrending removes both level and trend heterogeneity.
+
+For diagnosing potential selection issues, use the selection diagnostics tools:
+
+.. code-block:: python
+
+   from lwdid import diagnose_selection_mechanism
+
+   diag = diagnose_selection_mechanism(data, ivar='unit', tvar='year')
+   print(diag.summary())
+
+See :doc:`api/selection_diagnostics` for detailed documentation.
+
 Never-Treated Unit Data Preparation
 ------------------------------------
 
@@ -804,9 +881,9 @@ Choosing Transformation Method
 Choosing Variance Estimator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. **Default (``vce=None``)**: Use if you believe homoskedasticity holds
-2. **``vce='hc3'``**: Recommended for small to moderate sample sizes when you suspect heteroskedasticity
-3. **``vce='cluster'``**: Use if errors are clustered
+1. **Default (``vce=None``)**: Appropriate when homoskedasticity is plausible
+2. **``vce='hc3'``**: Recommended for small to moderate sample sizes when heteroskedasticity is suspected
+3. **``vce='cluster'``**: Appropriate when errors are clustered
 4. **Randomization inference**: Use as robustness check or when normality is doubtful
 
 Sample Size Considerations
@@ -826,6 +903,44 @@ Sample Size Considerations
   foundation for large-sample inference, supporting HC0-HC4 and cluster-robust
   standard errors.
 
+Sample Size and Inference Method Selection Matrix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following matrix provides guidance on selecting the appropriate estimator
+and inference method based on sample size:
+
+**Small Samples (N < 50):**
+
+- **Recommended**: RA with ``vce=None`` (exact t-based inference)
+- **Alternative**: RA with ``ri=True`` (randomization inference)
+- **VCE options**: ``vce=None`` or ``vce='hc3'``
+- **Inference distribution**: t-distribution
+- **Key assumption**: CLM assumptions (normality, homoskedasticity) for exact inference
+
+**Moderate Samples (50 ≤ N < 200):**
+
+- **Recommended**: RA or IPWRA with ``vce='hc3'``
+- **VCE options**: ``vce='hc1'``, ``vce='hc3'``, or ``vce='cluster'``
+- **Inference distribution**: t-distribution (RA) or normal (IPW/IPWRA/PSM)
+- **Key consideration**: HC3 provides better finite-sample performance
+
+**Large Samples (N ≥ 200):**
+
+- **Recommended**: IPWRA with ``vce='hc1'`` or ``vce='robust'``
+- **Alternative**: RA, IPW, or PSM depending on substantive considerations
+- **VCE options**: All HC variants and cluster-robust
+- **Inference distribution**: t-distribution (RA) or normal (IPW/IPWRA/PSM)
+- **Key advantage**: Double robustness of IPWRA protects against misspecification
+
+**Inference Distribution by Estimator:**
+
+- **RA (Regression Adjustment)**: t-distribution with df = N - k
+- **IPW (Inverse Probability Weighting)**: Normal distribution (asymptotic)
+- **IPWRA (Doubly Robust)**: Normal distribution (asymptotic)
+- **PSM (Propensity Score Matching)**: Normal distribution (asymptotic)
+
+For detailed theoretical foundations, see :doc:`methodological_notes`.
+
 Estimator Selection (Large-Sample Common Timing)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -838,16 +953,20 @@ effects estimators, including doubly robust methods.
 
 - ``'ra'`` (default): Regression adjustment via OLS. Consistent when the outcome
   model is correctly specified. Efficient under correct specification.
+  Uses t-distribution for inference.
 
 - ``'ipw'``: Inverse probability weighting. Consistent when the propensity score
   model is correctly specified. Requires ``controls`` parameter.
+  Uses normal distribution for asymptotic inference.
 
 - ``'ipwra'``: Doubly robust estimator combining regression and IPW. Consistent
   when either the outcome model or propensity score is correctly specified.
   Recommended when functional form assumptions are uncertain.
+  Uses normal distribution for asymptotic inference.
 
 - ``'psm'``: Propensity score matching. Matches treated to control units based
   on propensity scores. Requires adequate sample sizes for matching.
+  Uses normal distribution for asymptotic inference.
 
 **Example (IPWRA in common timing):**
 
@@ -863,9 +982,14 @@ effects estimators, including doubly robust methods.
 
 **Estimator selection guidelines:**
 
-1. **Start with RA** for simplicity when N is moderate
-2. **Use IPWRA** as a robustness check or when model misspecification is a concern
-3. **Use IPW/PSM** when propensity score weighting/matching is preferred
+1. **Small samples (N < 50)**: Use RA with ``vce=None`` for exact t-based
+   inference under CLM assumptions
+2. **Moderate samples (50 ≤ N < 200)**: Start with RA and ``vce='hc3'``; use
+   IPWRA as robustness check
+3. **Large samples (N ≥ 200)**: Use IPWRA as primary estimator when functional
+   form assumptions are uncertain
+4. **All sample sizes**: Use randomization inference (``ri=True``) as a
+   robustness check that does not rely on distributional assumptions
 
 Diagnostic Checks
 ~~~~~~~~~~~~~~~~~
@@ -916,9 +1040,12 @@ When units are treated at different times, use the staggered adoption framework.
 
 .. note::
 
-   **Staggered mode limitations**: The ``demeanq`` and ``detrendq``
-   transformations are only available for common timing designs. In staggered
-   mode, only ``demean`` and ``detrend`` are supported.
+   **Staggered transformation options**: All four transformation methods
+   (``demean``, ``detrend``, ``demeanq``, ``detrendq``) are available for
+   staggered designs. Seasonal transformations (``demeanq``, ``detrendq``)
+   require sufficient pre-treatment observations for each cohort to estimate
+   seasonal parameters (at least Q+1 periods for ``demeanq``, Q+2 for
+   ``detrendq``, where Q is the number of seasonal periods).
 
 Basic Usage
 ~~~~~~~~~~~
@@ -967,13 +1094,13 @@ Staggered-Specific Parameters
     For cohort g, the pre-treatment mean/trend is computed using periods
     {T_min, ..., g-1-exclude_pre_periods} instead of {T_min, ..., g-1}.
 
-    See Lee & Wooldridge (2025) Section 6 for methodological details.
+    See Lee and Wooldridge (2025) for methodological details.
 
 Robustness to No-Anticipation Violations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When the no-anticipation assumption may be violated (e.g., units adjust behavior
-before formal treatment), you can use the ``exclude_pre_periods`` parameter to
+before formal treatment), the ``exclude_pre_periods`` parameter can be used to
 perform robustness checks.
 
 **Example**:
@@ -1117,11 +1244,11 @@ Staggered Example
 Pre-treatment Dynamics and Parallel Trends Testing
 --------------------------------------------------
 
-Pre-treatment dynamics analysis allows you to assess the validity of the parallel
-trends assumption by estimating treatment effects in pre-treatment periods. Under
+Pre-treatment dynamics analysis enables assessment of the parallel trends
+assumption validity by estimating treatment effects in pre-treatment periods. Under
 the null hypothesis of parallel trends, these pre-treatment effects should be zero.
 
-This feature implements the methodology from Lee & Wooldridge (2025) Appendix D,
+This feature implements the methodology from Lee and Wooldridge (2025),
 using rolling transformations that look forward to future pre-treatment periods
 rather than backward.
 
@@ -1297,7 +1424,112 @@ Uses rolling demeaning with future pre-treatment periods. For period t < g:
 Uses rolling OLS detrending with future pre-treatment periods. Fits a linear
 trend using periods {t+1, ..., g-1} and computes the residual.
 
-Choose ``detrend`` when you suspect cohorts have different pre-treatment trends.
+The ``detrend`` option is appropriate when cohorts are suspected to have different pre-treatment trends.
+
+Trend Diagnostics Tools
+-----------------------
+
+For exploratory analysis before running estimation, ``lwdid`` provides standalone
+diagnostic functions in the ``trend_diagnostics`` module. These tools help assess
+whether parallel trends holds and recommend an appropriate transformation method.
+
+Testing Parallel Trends with Standalone Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   import lwdid
+   
+   # Test parallel trends using placebo method
+   pt_result = lwdid.test_parallel_trends(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat',
+       method='placebo',   # or 'regression', 'visual'
+       alpha=0.05
+   )
+   
+   # Display summary
+   print(pt_result.summary())
+   
+   # Access individual results
+   if pt_result.reject_null:
+       print(f"Parallel trends rejected (p={pt_result.pvalue:.4f})")
+       print(f"Recommendation: {pt_result.recommendation}")
+   else:
+       print("No evidence against parallel trends")
+
+Diagnosing Heterogeneous Trends
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Diagnose trend heterogeneity across cohorts
+   ht_diag = lwdid.diagnose_heterogeneous_trends(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat'
+   )
+   
+   # Display summary
+   print(ht_diag.summary())
+   
+   # Check for heterogeneous trends
+   if ht_diag.has_heterogeneous_trends:
+       print("Heterogeneous trends detected")
+       print(f"Recommendation: {ht_diag.recommendation}")
+
+Getting Automated Transformation Recommendation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Get data-driven recommendation
+   rec = lwdid.recommend_transformation(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat',
+       verbose=True
+   )
+   
+   print(f"Recommended method: {rec.recommended_method}")
+   print(f"Confidence: {rec.confidence:.1%}")
+   for reason in rec.reasons:
+       print(f"  - {reason}")
+   
+   # Use the recommendation
+   results = lwdid.lwdid(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat',
+       rolling=rec.recommended_method,
+   )
+
+Visualizing Cohort Trends
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Plot outcome trajectories by cohort
+   fig = lwdid.plot_cohort_trends(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat',
+       normalize=True    # Normalize to first period
+   )
+   fig.savefig('cohort_trends.png', dpi=300)
+
+See :doc:`api/trend_diagnostics` for complete API documentation.
 
 Further Reading
 ---------------

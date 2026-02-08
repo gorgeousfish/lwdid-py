@@ -1,23 +1,20 @@
 """
 Randomization inference for staggered difference-in-differences estimation.
 
-This module implements permutation-based inference procedures for staggered
-DiD settings with multiple treatment cohorts. Randomization inference provides
-finite-sample valid p-values without distributional assumptions by comparing
-the observed test statistic to its null distribution generated through random
-reassignment of treatment cohort labels.
+This module implements permutation-based inference for staggered DiD settings
+with multiple treatment cohorts. Randomization inference provides finite-sample
+valid p-values without distributional assumptions by comparing the observed
+test statistic to its permutation distribution.
 
 Notes
 -----
-Randomization inference is particularly useful in staggered DiD settings with
-a small number of treated or control units where asymptotic approximations may
-be unreliable. The permutation distribution preserves the cohort structure by
-shuffling which units belong to each cohort while maintaining the total number
-of units per cohort.
+Randomization inference is useful when the number of treated or control units
+is small and asymptotic approximations may be unreliable. The permutation
+procedure shuffles cohort assignments while preserving the marginal distribution.
 
 For overall effect inference, never-treated units are required as a consistent
-reference group across permutations. When testing cohort-specific or (g, r)-
-specific effects, the target cohort must be present after each permutation.
+reference group. For cohort-specific inference, the target cohort must remain
+present after each permutation.
 """
 
 from __future__ import annotations
@@ -89,7 +86,6 @@ def randomization_inference_staggered(
     ivar: str,
     tvar: str,
     y: str,
-    cohorts: list[int],
     observed_att: float,
     target: Literal['overall', 'cohort', 'cohort_time'] = 'overall',
     target_cohort: int | None = None,
@@ -123,8 +119,6 @@ def randomization_inference_staggered(
         Column name for the time period variable.
     y : str
         Column name for the outcome variable.
-    cohorts : list of int
-        List of treatment cohort values present in the data.
     observed_att : float
         Observed ATT estimate to be tested against the null hypothesis.
     target : {'overall', 'cohort', 'cohort_time'}, default 'overall'
@@ -185,15 +179,9 @@ def randomization_inference_staggered(
 
     Notes
     -----
-    The permutation procedure shuffles cohort assignments across units while
-    preserving the marginal distribution of cohorts. This generates the null
-    distribution under the sharp null hypothesis that treatment has no effect
-    on any unit.
-
-    For inference on overall effects, never-treated units must be present to
-    serve as a consistent control group across all permutations. When testing
-    cohort-specific effects, replications where the target cohort is absent
-    after permutation are marked as invalid.
+    The permutation procedure shuffles cohort assignments while preserving
+    the marginal cohort distribution, generating the null distribution under
+    the sharp null hypothesis of no treatment effect.
 
     The two-sided p-value is computed as:
 
@@ -205,7 +193,7 @@ def randomization_inference_staggered(
     :math:`\\hat{\\tau}^{(r)}` is the ATT from replication :math:`r`.
 
     A minimum of 50 valid replications (or 10% of rireps, whichever is larger)
-    is required to ensure reliable p-value computation.
+    is required for reliable p-value computation.
     """
     # =========================================================================
     # Input Validation
@@ -238,9 +226,8 @@ def randomization_inference_staggered(
             f"rolling must be 'demean' or 'detrend', got '{rolling}'"
         )
 
-    # Seed ensures reproducibility of permutation sequence across runs.
     rng = np.random.default_rng(seed)
-    
+
     # Cohort assignment is time-invariant; extract once per unit for efficiency.
     unit_gvar = data.groupby(ivar)[gvar].first()
     unit_ids = unit_gvar.index.tolist()
@@ -262,7 +249,7 @@ def randomization_inference_staggered(
     )
 
     T_max = int(data[tvar].max())
-    
+
     # =========================================================================
     # Resampling Loop
     # =========================================================================
@@ -353,7 +340,7 @@ def randomization_inference_staggered(
         except Exception:
             # Catch-all for unexpected failures; NaN exclusion handles these.
             perm_stats[rep] = np.nan
-    
+
     # =========================================================================
     # P-Value Computation
     # =========================================================================
@@ -381,7 +368,7 @@ def randomization_inference_staggered(
             f"valid replications.",
             UserWarning
         )
-    
+
     return StaggeredRIResult(
         p_value=p_value,
         ri_method=ri_method,
@@ -451,13 +438,9 @@ def ri_overall_effect(
     randomization_inference_staggered : Full-featured inference function.
     ri_cohort_effect : Inference for cohort-specific effects.
     """
-    from .transformations import get_cohorts
     from ..validation import is_never_treated
 
     unit_gvar = data.groupby(ivar)[gvar].first()
-    cohorts = get_cohorts(data, gvar, ivar)
-
-    # Identify never-treated units using the single source of truth function.
     nt_mask = unit_gvar.apply(is_never_treated)
     n_nt = int(nt_mask.sum())
 
@@ -467,7 +450,6 @@ def ri_overall_effect(
         ivar=ivar,
         tvar=tvar,
         y=y,
-        cohorts=cohorts,
         observed_att=observed_att,
         target='overall',
         ri_method=ri_method,
@@ -542,13 +524,9 @@ def ri_cohort_effect(
     randomization_inference_staggered : Full-featured inference function.
     ri_overall_effect : Inference for overall weighted effect.
     """
-    from .transformations import get_cohorts
     from ..validation import is_never_treated
 
     unit_gvar = data.groupby(ivar)[gvar].first()
-    cohorts = get_cohorts(data, gvar, ivar)
-
-    # Identify never-treated units using the single source of truth function.
     nt_mask = unit_gvar.apply(is_never_treated)
     n_nt = int(nt_mask.sum())
 
@@ -558,7 +536,6 @@ def ri_cohort_effect(
         ivar=ivar,
         tvar=tvar,
         y=y,
-        cohorts=cohorts,
         observed_att=observed_att,
         target='cohort',
         target_cohort=target_cohort,

@@ -102,7 +102,7 @@ Example Usage
        ri=True,
        rireps=1000,
        ri_method='permutation',
-       ri_seed=42
+       seed=42
    )
 
    # Access RI results

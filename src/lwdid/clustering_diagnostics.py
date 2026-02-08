@@ -2,21 +2,21 @@
 Clustering diagnostics and recommendations for difference-in-differences.
 
 This module provides tools for analyzing clustering structure in panel data
-and recommending appropriate clustering levels for standard error estimation.
+and recommending appropriate clustering levels for standard error estimation
+in difference-in-differences analysis.
 
-Based on Lee & Wooldridge (2026) Section 8.2 "Clustering at Higher Levels":
-- When policy varies at a level higher than the unit of observation,
-  cluster standard errors at the policy variation level
-- Requires sufficient number of treated and control clusters (≥20-30 recommended)
-- Uses G-1 degrees of freedom for cluster-robust inference
+When the policy or treatment varies at a level higher than the unit of
+observation, standard errors should be clustered at the policy variation
+level. This module helps identify the appropriate clustering level by:
 
-References
-----------
-Lee, S.J. & Wooldridge, J.M. (2026). "Difference-in-Differences for Policy
-Evaluation." SSRN 5325686, Section 8.2.
+- Analyzing hierarchical relationships between potential clustering variables
+- Detecting the level at which treatment assignment varies
+- Recommending clustering variables with sufficient cluster counts
+- Checking consistency between clustering choice and treatment variation
 
-Cameron, A.C. & Miller, D.L. (2015). "A Practitioner's Guide to Cluster-Robust
-Inference." Journal of Human Resources, 50(2), 317-372.
+For reliable cluster-robust inference, a minimum of 20-30 clusters is
+generally recommended. When clusters are fewer, wild cluster bootstrap
+methods provide more accurate inference.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ from scipy import stats
 
 
 # =============================================================================
-# 枚举类型
+# Enumeration Types
 # =============================================================================
 
 class ClusteringLevel(Enum):
@@ -74,7 +74,7 @@ class ClusteringWarningLevel(Enum):
 
 
 # =============================================================================
-# 数据类
+# Data Classes
 # =============================================================================
 
 @dataclass
@@ -197,20 +197,20 @@ class ClusterVarStats:
         float
             Reliability score between 0 and 1.
         """
-        # 聚类数量得分 (0-1, 在50个聚类时饱和)
+        # Cluster count score (0-1, saturates at 50 clusters).
         cluster_score = min(self.n_clusters / 50, 1.0)
         
-        # 平衡得分 (0-1)
+        # Balance score (0-1).
         if self.n_clusters > 0:
             balance = min(self.n_treated_clusters, self.n_control_clusters) / (self.n_clusters / 2)
             balance_score = min(balance, 1.0)
         else:
             balance_score = 0.0
         
-        # 大小变异得分 (0-1, CV越低越好)
+        # Size variation score (0-1, lower CV is better).
         cv_score = max(0, 1 - self.cluster_size_cv / 2)
         
-        # 加权平均
+        # Weighted average.
         return 0.5 * cluster_score + 0.3 * balance_score + 0.2 * cv_score
 
 
@@ -475,12 +475,6 @@ class WildClusterBootstrapResult:
         Bootstrap t-statistics.
     rejection_rate : float
         Proportion of bootstrap t-stats exceeding original.
-    
-    References
-    ----------
-    Cameron, A.C., Gelbach, J.B., & Miller, D.L. (2008). "Bootstrap-based
-    improvements for inference with clustered errors." Review of Economics
-    and Statistics, 90(3), 414-427.
     """
     att: float
     se_bootstrap: float
@@ -519,7 +513,7 @@ class WildClusterBootstrapResult:
 
 
 # =============================================================================
-# 辅助函数
+# Helper Functions
 # =============================================================================
 
 def _validate_clustering_inputs(
@@ -601,13 +595,13 @@ def _analyze_cluster_var(
     ClusterVarStats
         Statistics for the clustering variable.
     """
-    # 基本聚类统计
+    # Basic cluster statistics.
     cluster_sizes = data.groupby(cluster_var).size()
     n_clusters = len(cluster_sizes)
     
-    # 确定处理变量
+    # Determine treatment variable.
     if gvar is not None:
-        # Staggered: 如果 gvar 不是 never-treated 则为处理组
+        # Staggered design: units with non-never-treated gvar values are treated.
         never_treated_vals = [0, np.inf]
         treated_mask = ~data[gvar].isin(never_treated_vals) & data[gvar].notna()
     elif d is not None:
@@ -615,19 +609,18 @@ def _analyze_cluster_var(
     else:
         treated_mask = pd.Series(False, index=data.index)
     
-    # 计算处理/控制聚类数
-    cluster_has_treated = data.groupby(cluster_var).apply(
-        lambda x: treated_mask.loc[x.index].any()
-    )
+    # Count treated and control clusters.
+    # Group treated_mask directly by cluster variable to avoid FutureWarning.
+    cluster_has_treated = treated_mask.groupby(data[cluster_var]).any()
     n_treated_clusters = int(cluster_has_treated.sum())
     n_control_clusters = n_clusters - n_treated_clusters
     
-    # 检查聚类是否嵌套在单位内（无效）
+    # Check if cluster is nested within unit (invalid for clustering).
     units_per_cluster = data.groupby(cluster_var)[ivar].nunique()
     n_unique_units = data[ivar].nunique()
     is_nested_in_unit = (units_per_cluster == 1).all() and n_clusters > n_unique_units
     
-    # 确定相对于单位的层级
+    # Determine level relative to unit.
     if is_nested_in_unit:
         level = ClusteringLevel.LOWER
     elif n_clusters == n_unique_units:
@@ -635,7 +628,7 @@ def _analyze_cluster_var(
     else:
         level = ClusteringLevel.HIGHER
     
-    # 检查处理是否在聚类内变化
+    # Check if treatment varies within clusters.
     if gvar is not None:
         treatment_per_cluster = data.groupby(cluster_var)[gvar].nunique()
     elif d is not None:
@@ -646,7 +639,7 @@ def _analyze_cluster_var(
     treatment_varies = (treatment_per_cluster > 1).any()
     n_with_variation = int((treatment_per_cluster > 1).sum())
     
-    # 计算聚类大小的变异系数
+    # Compute coefficient of variation of cluster sizes.
     if cluster_sizes.mean() > 0:
         cluster_size_cv = float(cluster_sizes.std() / cluster_sizes.mean())
     else:
@@ -705,7 +698,7 @@ def _detect_treatment_variation_level(
     if treatment_var is None:
         return "unknown"
     
-    # 从最高层级（最少唯一值）到最低层级检查
+    # Check from highest level (fewest unique values) to lowest level.
     sorted_vars = sorted(potential_cluster_vars, key=lambda v: data[v].nunique())
     
     for var in sorted_vars:
@@ -713,7 +706,7 @@ def _detect_treatment_variation_level(
         if (treatment_per_group == 1).all():
             return var
     
-    # 如果处理在所有层级都变化，返回单位层级
+    # If treatment varies at all levels, return the unit level.
     return ivar
 
 
@@ -738,7 +731,7 @@ def _generate_clustering_recommendation(
     """
     warnings = []
     
-    # 筛选有效选项
+    # Filter to valid options.
     valid_options = {
         var: stats for var, stats in cluster_structure.items()
         if stats.is_valid_cluster
@@ -749,7 +742,7 @@ def _generate_clustering_recommendation(
             "All potential cluster variables are invalid (nested within units or < 2 clusters)."
         ]
     
-    # 优先选择处理变化层级的聚类
+    # Prefer clustering at the treatment variation level.
     if treatment_level in valid_options:
         stats = valid_options[treatment_level]
         if stats.n_clusters >= 20:
@@ -763,7 +756,7 @@ def _generate_clustering_recommendation(
                 f"{stats.n_clusters} clusters available."
             )
     
-    # 否则，选择聚类数足够且可靠性最高的选项
+    # Otherwise, select the option with sufficient clusters and highest reliability.
     ranked = sorted(
         valid_options.items(),
         key=lambda x: (x[1].n_clusters >= 20, x[1].reliability_score),
@@ -816,11 +809,11 @@ def _generate_recommendation_reasons(
     """
     reasons = []
     
-    # 处理变化层级
+    # Treatment variation level.
     if var == diag.treatment_variation_level:
         reasons.append(f"Treatment varies at {var} level - clustering at this level is appropriate")
     
-    # 聚类数量
+    # Cluster count.
     if stats.n_clusters >= 30:
         reasons.append(f"Sufficient clusters ({stats.n_clusters}) for reliable inference")
     elif stats.n_clusters >= 20:
@@ -828,13 +821,13 @@ def _generate_recommendation_reasons(
     else:
         reasons.append(f"Limited clusters ({stats.n_clusters}) - consider wild bootstrap")
     
-    # 平衡性
+    # Balance.
     if stats.n_treated_clusters > 0 and stats.n_control_clusters > 0:
         balance_ratio = min(stats.n_treated_clusters, stats.n_control_clusters) / max(stats.n_treated_clusters, stats.n_control_clusters)
         if balance_ratio > 0.5:
             reasons.append(f"Good balance between treated ({stats.n_treated_clusters}) and control ({stats.n_control_clusters}) clusters")
     
-    # 层级
+    # Hierarchy level.
     if stats.level_relative_to_unit == ClusteringLevel.HIGHER:
         reasons.append(f"Clustering at higher level than unit of observation")
     
@@ -933,7 +926,7 @@ def _determine_cluster_level(
     n_units = data[ivar].nunique()
     n_clusters = data[cluster_var].nunique()
     
-    # 检查每个单位属于多少个聚类
+    # Check how many units belong to each cluster.
     units_per_cluster = data.groupby(cluster_var)[ivar].nunique()
     
     if n_clusters < n_units and (units_per_cluster > 1).any():
@@ -945,7 +938,7 @@ def _determine_cluster_level(
 
 
 # =============================================================================
-# 主要公共函数
+# Main Public Functions
 # =============================================================================
 
 def diagnose_clustering(
@@ -1000,51 +993,36 @@ def diagnose_clustering(
     Notes
     -----
     When the policy or treatment varies at a level higher than the unit of
-    observation, cluster standard errors at the policy variation level
-    (Lee & Wooldridge 2026, Section 8.2).
+    observation, standard errors should be clustered at the policy variation
+    level to properly account for within-cluster correlation.
     
     The function evaluates each potential clustering variable based on:
-    - Number of clusters (more is better, ≥20-30 recommended)
+    
+    - Number of clusters (more is better, 20-30 minimum recommended)
     - Balance between treated and control clusters
     - Whether treatment varies within clusters
-    - Cluster size variation
+    - Cluster size variation (coefficient of variation)
     
-    Examples
+    See Also
     --------
-    >>> import pandas as pd
-    >>> from lwdid import diagnose_clustering
-    >>> 
-    >>> # State-level policy with county-level data
-    >>> diag = diagnose_clustering(
-    ...     data, ivar='county',
-    ...     potential_cluster_vars=['state', 'region', 'county'],
-    ...     gvar='first_treat'
-    ... )
-    >>> print(diag.summary())
-    
-    References
-    ----------
-    Lee, S.J. & Wooldridge, J.M. (2026). "Difference-in-Differences for Policy
-    Evaluation." SSRN 5325686, Section 8.2.
-    
-    Cameron, A.C. & Miller, D.L. (2015). "A Practitioner's Guide to Cluster-Robust
-    Inference." Journal of Human Resources, 50(2), 317-372.
+    recommend_clustering_level : Get detailed recommendation with alternatives.
+    check_clustering_consistency : Validate clustering choice against treatment.
     """
-    # 验证输入
+    # Validate inputs.
     _validate_clustering_inputs(data, ivar, potential_cluster_vars, gvar, d)
     
-    # 分析每个潜在聚类变量
+    # Analyze each potential clustering variable.
     cluster_structure = {}
     for var in potential_cluster_vars:
         stats = _analyze_cluster_var(data, ivar, var, gvar, d)
         cluster_structure[var] = stats
     
-    # 检测处理变化层级
+    # Detect treatment variation level.
     treatment_level = _detect_treatment_variation_level(
         data, ivar, potential_cluster_vars, gvar, d
     )
     
-    # 生成推荐
+    # Generate recommendation.
     recommended_var, reason, warnings = _generate_clustering_recommendation(
         cluster_structure, treatment_level
     )
@@ -1130,37 +1108,27 @@ def recommend_clustering_level(
     
     Notes
     -----
-    The reliability score is based on:
+    The reliability score is computed as a weighted combination of:
+    
     - Number of clusters (50% weight, saturates at 50 clusters)
     - Balance of treated/control clusters (30% weight)
     - Cluster size variation (20% weight, lower CV is better)
     
-    Examples
-    --------
-    >>> from lwdid import recommend_clustering_level
-    >>> 
-    >>> rec = recommend_clustering_level(
-    ...     data, ivar='county', tvar='year',
-    ...     potential_cluster_vars=['state', 'county'],
-    ...     gvar='first_treat',
-    ...     min_clusters=20
-    ... )
-    >>> print(rec.summary())
-    >>> 
-    >>> if rec.use_wild_bootstrap:
-    ...     print("Consider using wild_cluster_bootstrap() for inference")
+    When the number of clusters is below ``min_clusters``, the function
+    recommends using wild cluster bootstrap for more reliable inference.
     
     See Also
     --------
     diagnose_clustering : Get detailed diagnostics for clustering structure.
     check_clustering_consistency : Check if clustering is consistent with treatment.
+    wild_cluster_bootstrap : Bootstrap inference for small cluster counts.
     """
-    # 运行诊断
+    # Run diagnostics.
     diag = diagnose_clustering(
         data, ivar, potential_cluster_vars, gvar=gvar, d=d, verbose=False
     )
     
-    # 筛选有效选项
+    # Filter to valid options.
     valid_options = [
         (var, stats) for var, stats in diag.cluster_structure.items()
         if stats.is_valid_cluster
@@ -1173,16 +1141,16 @@ def recommend_clustering_level(
             "or have fewer than 2 clusters."
         )
     
-    # 按可靠性评分排序
+    # Rank by reliability score.
     ranked = sorted(valid_options, key=lambda x: x[1].reliability_score, reverse=True)
     
-    # 选择最佳选项
+    # Select the best option.
     best_var, best_stats = ranked[0]
     
-    # 生成推荐理由
+    # Generate recommendation reasons.
     reasons = _generate_recommendation_reasons(best_var, best_stats, diag)
     
-    # 检查是否需要 wild bootstrap
+    # Check if wild bootstrap is needed.
     use_wild_bootstrap = best_stats.n_clusters < min_clusters
     wild_reason = None
     if use_wild_bootstrap:
@@ -1191,9 +1159,9 @@ def recommend_clustering_level(
             f"Wild cluster bootstrap recommended for reliable inference."
         )
     
-    # 生成替代方案
+    # Generate alternatives.
     alternatives = []
-    for var, stats in ranked[1:3]:  # 前 2 个替代方案
+    for var, stats in ranked[1:3]:  # Top 2 alternatives.
         alternatives.append({
             'var': var,
             'n_clusters': stats.n_clusters,
@@ -1201,7 +1169,7 @@ def recommend_clustering_level(
             'reason': _get_alternative_reason(stats)
         })
     
-    # 生成警告
+    # Generate warnings.
     warnings = _generate_clustering_warnings(best_stats, diag)
     
     result = ClusteringRecommendation(
@@ -1277,31 +1245,19 @@ def check_clustering_consistency(
     Notes
     -----
     A clustering choice is considered consistent if:
+    
     - Less than 5% of clusters have within-cluster treatment variation
     - The cluster level is at the same level or higher than the unit
     
     If treatment varies within clusters, standard errors may be conservative
     (too large), leading to under-rejection of the null hypothesis.
     
-    Examples
-    --------
-    >>> from lwdid import check_clustering_consistency
-    >>> 
-    >>> # Check if state-level clustering is appropriate
-    >>> result = check_clustering_consistency(
-    ...     data, ivar='county', cluster_var='state',
-    ...     gvar='first_treat'
-    ... )
-    >>> 
-    >>> if not result.is_consistent:
-    ...     print(f"Warning: {result.recommendation}")
-    
     See Also
     --------
     diagnose_clustering : Get detailed diagnostics for clustering structure.
     recommend_clustering_level : Get recommendation for clustering level.
     """
-    # 验证输入
+    # Validate inputs.
     if cluster_var not in data.columns:
         raise ValueError(f"Cluster variable '{cluster_var}' not found in data")
     if ivar not in data.columns:
@@ -1313,27 +1269,27 @@ def check_clustering_consistency(
     if treatment_var not in data.columns:
         raise ValueError(f"Treatment variable '{treatment_var}' not found in data")
     
-    # 检查处理是否在聚类内变化
+    # Check if treatment varies within clusters.
     cluster_treatment = data.groupby(cluster_var)[treatment_var].nunique()
     n_clusters_with_variation = int((cluster_treatment > 1).sum())
     n_clusters = len(cluster_treatment)
     pct_with_variation = n_clusters_with_variation / n_clusters * 100 if n_clusters > 0 else 0
     
-    # 确定处理变化层级
+    # Determine treatment variation level.
     treatment_level = _detect_treatment_variation_level(
         data, ivar, [cluster_var], gvar, d
     )
     
-    # 确定聚类层级
+    # Determine cluster level.
     cluster_level = _determine_cluster_level(data, ivar, cluster_var)
     
-    # 检查一致性
+    # Check consistency.
     is_consistent = (
-        pct_with_variation < 5 and  # 少于 5% 的聚类有变化
+        pct_with_variation < 5 and  # Less than 5% of clusters have variation.
         cluster_level in ['same', 'higher']
     )
     
-    # 生成建议
+    # Generate recommendation.
     if is_consistent:
         recommendation = "Clustering choice is appropriate."
     else:
@@ -1348,7 +1304,7 @@ def check_clustering_consistency(
                 f"Consider clustering at the treatment variation level ({treatment_level})."
             )
     
-    # 生成详细信息
+    # Generate details.
     details = (
         f"Analyzed {n_clusters} clusters.\n"
         f"Treatment varies within {n_clusters_with_variation} clusters "

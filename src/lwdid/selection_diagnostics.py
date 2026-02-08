@@ -2,12 +2,12 @@
 Selection mechanism diagnostics for unbalanced panel data.
 
 This module provides diagnostic tools for assessing potential selection bias
-in unbalanced panel data, following the framework in Lee & Wooldridge (2025)
-Section 4.4.
+in unbalanced panel data for difference-in-differences estimation.
 
 The key assumption is that selection (missing data) may depend on unobserved
-time-invariant heterogeneity, but cannot systematically depend on Y_it(∞)
-shocks. This is analogous to the standard fixed effects assumption.
+time-invariant heterogeneity, but cannot systematically depend on outcome
+shocks in the untreated state. This is analogous to the standard fixed effects
+assumption and is removed by the rolling transformation.
 
 Main Functions
 --------------
@@ -27,21 +27,13 @@ Enums
 -----
 MissingPattern : Missing data pattern classification (MCAR, MAR, MNAR).
 SelectionRisk : Selection bias risk level (LOW, MEDIUM, HIGH).
-
-References
-----------
-Lee, S.J. & Wooldridge, J.M. (2025). "A Simple Transformation Approach to
-Difference-in-Differences Estimation for Panel Data." SSRN 4516518, Section 4.4.
-
-Little, R.J.A. & Rubin, D.B. (2019). "Statistical Analysis with Missing Data."
-Wiley.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -68,16 +60,15 @@ class MissingPattern(Enum):
     MNAR : str
         Missing Not At Random - missingness depends on unobserved data.
         This may violate the selection mechanism assumption if missingness
-        depends on Y_it(∞) shocks.
+        depends on outcome shocks in the untreated state.
     UNKNOWN : str
         Pattern could not be determined with available data.
     
     Notes
     -----
-    From Lee & Wooldridge (2025) Section 4.4:
-    
-        "Selection may depend on unobserved time-invariant heterogeneity,
-        but cannot systematically depend on Y_it(∞) shocks."
+    The selection mechanism assumption requires that missingness may depend on
+    unobserved time-invariant heterogeneity, but cannot systematically depend
+    on time-varying outcome shocks.
     
     MCAR and MAR patterns are generally acceptable. MNAR patterns may be
     acceptable if missingness depends only on time-invariant factors (which
@@ -117,11 +108,9 @@ class SelectionRisk(Enum):
     - Differential attrition before/after treatment
     - Panel balance ratio
     
-    From Lee & Wooldridge (2025):
-    
-        "Because our method removes unit-specific averages in Procedure 4.1,
-        selection is allowed to depend on unobserved time-constant
-        heterogeneity – just like with the usual fixed effects estimator."
+    The rolling transformation removes unit-specific averages, so selection
+    is allowed to depend on unobserved time-constant heterogeneity, similar
+    to the standard fixed effects assumption.
     """
     LOW = "low"
     MEDIUM = "medium"
@@ -146,10 +135,10 @@ class AttritionAnalysis:
         Number of units with at least one missing period.
     attrition_rate : float
         Proportion of units with incomplete observations (n_partial / n_total).
-    attrition_by_cohort : Dict[int, float]
+    attrition_by_cohort : dict[int, float]
         Attrition rate by treatment cohort. Keys are cohort identifiers,
         values are attrition rates within each cohort.
-    attrition_by_period : Dict[int, float]
+    attrition_by_period : dict[int, float]
         Cumulative attrition rate by time period. Shows the proportion of
         units not observed at each time point.
     early_dropout_rate : float
@@ -172,8 +161,8 @@ class AttritionAnalysis:
     n_units_complete: int
     n_units_partial: int
     attrition_rate: float
-    attrition_by_cohort: Dict[int, float] = field(default_factory=dict)
-    attrition_by_period: Dict[int, float] = field(default_factory=dict)
+    attrition_by_cohort: dict[int, float] = field(default_factory=dict)
+    attrition_by_period: dict[int, float] = field(default_factory=dict)
     early_dropout_rate: float = 0.0
     late_entry_rate: float = 0.0
     dropout_before_treatment: int = 0
@@ -217,11 +206,15 @@ class BalanceStatistics:
     
     Notes
     -----
-    From Lee & Wooldridge (2025) Section 4.4:
+    For treatment cohort g in period r, the transformed outcome can only be
+    computed if there are enough observed pre-treatment periods (t < g):
     
-        "For treatment cohort g in period r, the transformed outcome can only
-        be used if there are enough observed data in the periods t < g to
-        compute an average (one period) or a linear trend (two periods)."
+    - Demeaning requires at least one pre-treatment period to compute the mean.
+    - Detrending requires at least two pre-treatment periods to estimate a
+      linear trend.
+    
+    Units with insufficient pre-treatment observations are excluded from the
+    corresponding transformation method.
     """
     is_balanced: bool
     n_units: int
@@ -254,7 +247,7 @@ class SelectionTestResult:
         Whether to reject the null hypothesis at alpha=0.05.
     interpretation : str
         Human-readable interpretation of the test result.
-    details : Dict[str, Any]
+    details : dict[str, Any]
         Additional test-specific details (e.g., means, correlations).
     
     Notes
@@ -270,7 +263,7 @@ class SelectionTestResult:
     pvalue: float
     reject_null: bool
     interpretation: str
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -282,7 +275,7 @@ class UnitMissingStats:
     ----------
     unit_id : Any
         Unit identifier.
-    cohort : Optional[int]
+    cohort : int | None
         Treatment cohort (None for never-treated units).
     is_treated : bool
         Whether the unit is ever treated.
@@ -300,23 +293,23 @@ class UnitMissingStats:
         Last period with observation.
     observation_span : int
         Span from first to last observation (last - first + 1).
-    n_pre_treatment : Optional[int]
+    n_pre_treatment : int | None
         Pre-treatment observations (treated units only).
-    n_post_treatment : Optional[int]
+    n_post_treatment : int | None
         Post-treatment observations (treated units only).
-    pre_treatment_missing_rate : Optional[float]
+    pre_treatment_missing_rate : float | None
         Missing rate in pre-treatment period.
-    post_treatment_missing_rate : Optional[float]
+    post_treatment_missing_rate : float | None
         Missing rate in post-treatment period.
     can_use_demean : bool
         Whether unit has sufficient data for demeaning (≥1 pre-treatment obs).
     can_use_detrend : bool
         Whether unit has sufficient data for detrending (≥2 pre-treatment obs).
-    reason_if_excluded : Optional[str]
+    reason_if_excluded : str | None
         Reason for exclusion if unit cannot be used.
     """
     unit_id: Any
-    cohort: Optional[int]
+    cohort: int | None
     is_treated: bool
     n_total_periods: int
     n_observed: int
@@ -325,13 +318,13 @@ class UnitMissingStats:
     first_observed: int
     last_observed: int
     observation_span: int
-    n_pre_treatment: Optional[int] = None
-    n_post_treatment: Optional[int] = None
-    pre_treatment_missing_rate: Optional[float] = None
-    post_treatment_missing_rate: Optional[float] = None
+    n_pre_treatment: int | None = None
+    n_post_treatment: int | None = None
+    pre_treatment_missing_rate: float | None = None
+    post_treatment_missing_rate: float | None = None
     can_use_demean: bool = True
     can_use_detrend: bool = True
-    reason_if_excluded: Optional[str] = None
+    reason_if_excluded: str | None = None
 
 
 @dataclass
@@ -340,8 +333,7 @@ class SelectionDiagnostics:
     Complete selection mechanism diagnostics for unbalanced panels.
     
     This class aggregates all diagnostic information about missing data
-    patterns and potential selection bias in panel data, following the
-    framework in Lee & Wooldridge (2025) Section 4.4.
+    patterns and potential selection bias in panel data for DiD estimation.
     
     Attributes
     ----------
@@ -355,15 +347,15 @@ class SelectionDiagnostics:
         Detailed attrition pattern analysis.
     balance_statistics : BalanceStatistics
         Panel balance statistics.
-    recommendations : List[str]
+    recommendations : list[str]
         Actionable recommendations based on diagnostics.
-    warnings : List[str]
+    warnings : list[str]
         Warning messages about potential issues.
     missing_rate_overall : float
         Overall missing rate across all unit-periods.
-    missing_rate_by_period : Dict[int, float]
+    missing_rate_by_period : dict[int, float]
         Missing rate by time period.
-    missing_rate_by_cohort : Dict[int, float]
+    missing_rate_by_cohort : dict[int, float]
         Missing rate by treatment cohort.
     selection_tests : List[SelectionTestResult]
         Results of statistical tests for selection.
@@ -372,35 +364,28 @@ class SelectionDiagnostics:
     
     Notes
     -----
-    The selection mechanism assumption from Lee & Wooldridge (2025):
-    
-        "Selection may depend on unobserved time-invariant heterogeneity,
-        but cannot systematically depend on Y_it(∞) shocks."
+    The selection mechanism assumption requires that selection may depend on
+    unobserved time-invariant heterogeneity, but cannot systematically depend
+    on time-varying outcome shocks.
     
     This is analogous to the standard fixed effects assumption. The rolling
     transformation removes unit-specific averages (or trends), which eliminates
     bias from selection on time-invariant factors.
     
-    Examples
+    See Also
     --------
-    >>> from lwdid import diagnose_selection_mechanism
-    >>> diag = diagnose_selection_mechanism(
-    ...     data, y='outcome', ivar='unit_id', tvar='year', gvar='first_treat'
-    ... )
-    >>> print(diag.summary())
-    >>> if diag.selection_risk == SelectionRisk.HIGH:
-    ...     print("Consider using detrending for additional robustness")
+    diagnose_selection_mechanism : Function to create this diagnostics object.
     """
     missing_pattern: MissingPattern
     missing_pattern_confidence: float
     selection_risk: SelectionRisk
     attrition_analysis: AttritionAnalysis
     balance_statistics: BalanceStatistics
-    recommendations: List[str]
-    warnings: List[str]
+    recommendations: list[str]
+    warnings: list[str]
     missing_rate_overall: float
-    missing_rate_by_period: Dict[int, float]
-    missing_rate_by_cohort: Dict[int, float]
+    missing_rate_by_period: dict[int, float]
+    missing_rate_by_cohort: dict[int, float]
     selection_tests: List[SelectionTestResult] = field(default_factory=list)
     unit_stats: List[UnitMissingStats] = field(default_factory=list)
     
@@ -417,7 +402,6 @@ class SelectionDiagnostics:
         lines = [
             "=" * 70,
             "SELECTION MECHANISM DIAGNOSTICS",
-            "Based on Lee & Wooldridge (2025) Section 4.4",
             "=" * 70,
             "",
             "PANEL BALANCE:",
@@ -468,19 +452,19 @@ class SelectionDiagnostics:
             "=" * 70,
             "SELECTION MECHANISM ASSUMPTION:",
             "  Selection may depend on unobserved time-invariant heterogeneity,",
-            "  but cannot systematically depend on Y_it(∞) shocks.",
+            "  but cannot systematically depend on time-varying outcome shocks.",
             "=" * 70,
         ])
         
         return "\n".join(lines)
     
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert diagnostics to dictionary format.
         
         Returns
         -------
-        Dict[str, Any]
+        dict[str, Any]
             Dictionary containing all diagnostic information.
         """
         return {
@@ -517,7 +501,7 @@ def _validate_diagnostic_inputs(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
+    gvar: str | None,
 ) -> None:
     """
     Validate inputs for diagnostic functions.
@@ -605,7 +589,7 @@ def _compute_balance_statistics(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
+    gvar: str | None,
     never_treated_values: List,
 ) -> BalanceStatistics:
     """
@@ -699,7 +683,7 @@ def _compute_attrition_analysis(
     data: pd.DataFrame,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
+    gvar: str | None,
     never_treated_values: List,
 ) -> AttritionAnalysis:
     """
@@ -804,7 +788,7 @@ def _classify_missing_pattern(
     y: str,
     ivar: str,
     tvar: str,
-    controls: Optional[List[str]] = None,
+    controls: Optional[list[str]] = None,
 ) -> Tuple[MissingPattern, float, List[SelectionTestResult]]:
     """
     Classify missing data pattern using statistical tests.
@@ -822,7 +806,7 @@ def _classify_missing_pattern(
         Unit identifier column name.
     tvar : str
         Time variable column name.
-    controls : List[str] or None
+    controls : list[str] or None
         Control variable column names.
     
     Returns
@@ -1036,11 +1020,11 @@ def _assess_selection_risk(
     attrition_analysis: AttritionAnalysis,
     balance_statistics: BalanceStatistics,
     selection_tests: List[SelectionTestResult],
-) -> Tuple[SelectionRisk, List[str], List[str]]:
+) -> Tuple[SelectionRisk, list[str], list[str]]:
     """
     Assess overall selection bias risk based on multiple indicators.
     
-    Risk Assessment Criteria (based on Lee & Wooldridge 2025):
+    Risk Assessment Criteria:
     
     LOW Risk (acceptable):
     - Missing pattern is MCAR or MAR
@@ -1074,7 +1058,7 @@ def _assess_selection_risk(
     
     Returns
     -------
-    Tuple[SelectionRisk, List[str], List[str]]
+    Tuple[SelectionRisk, list[str], list[str]]
         - Assessed risk level
         - List of recommendations
         - List of warnings
@@ -1189,9 +1173,9 @@ def _compute_missing_rates(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
+    gvar: str | None,
     never_treated_values: List,
-) -> Tuple[float, Dict[int, float], Dict[int, float]]:
+) -> Tuple[float, dict[int, float], dict[int, float]]:
     """
     Compute missing rates overall, by period, and by cohort.
     
@@ -1212,7 +1196,7 @@ def _compute_missing_rates(
     
     Returns
     -------
-    Tuple[float, Dict[int, float], Dict[int, float]]
+    Tuple[float, dict[int, float], dict[int, float]]
         - Overall missing rate
         - Missing rate by period
         - Missing rate by cohort
@@ -1259,7 +1243,7 @@ def _compute_unit_stats(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
+    gvar: str | None,
     never_treated_values: List,
 ) -> List[UnitMissingStats]:
     """
@@ -1380,8 +1364,8 @@ def diagnose_selection_mechanism(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str] = None,
-    controls: Optional[List[str]] = None,
+    gvar: str | None = None,
+    controls: Optional[list[str]] = None,
     never_treated_values: Optional[List] = None,
     verbose: bool = True,
 ) -> SelectionDiagnostics:
@@ -1389,9 +1373,9 @@ def diagnose_selection_mechanism(
     Diagnose potential selection mechanism violations in unbalanced panels.
     
     This function implements diagnostic procedures to assess whether the
-    selection mechanism assumption in Lee & Wooldridge (2025) is likely
-    to hold. The key assumption is that selection (missing data) may depend
-    on time-invariant heterogeneity but not on Y_it(∞) shocks.
+    selection mechanism assumption is likely to hold. The key assumption is
+    that selection (missing data) may depend on time-invariant heterogeneity
+    but not on time-varying outcome shocks.
     
     Parameters
     ----------
@@ -1443,42 +1427,15 @@ def diagnose_selection_mechanism(
     4. **Selection Risk Assessment**: Combines multiple indicators to
        assess the overall risk of selection bias.
     
-    The selection mechanism assumption from Lee & Wooldridge (2025):
-    
-        "Because our method removes unit-specific averages in Procedure 4.1,
-        selection is allowed to depend on unobserved time-constant
-        heterogeneity – just like with the usual fixed effects estimator.
-        Selection cannot be systematically related to the shocks to
-        Y_it(∞) – again, just as with the FE estimator."
-    
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> from lwdid import diagnose_selection_mechanism
-    >>> 
-    >>> # Load panel data with some missing observations
-    >>> data = pd.read_csv('panel_data.csv')
-    >>> 
-    >>> # Run diagnostics
-    >>> diag = diagnose_selection_mechanism(
-    ...     data, y='outcome', ivar='unit_id', tvar='year', gvar='first_treat'
-    ... )
-    >>> 
-    >>> # Check selection risk
-    >>> if diag.selection_risk == SelectionRisk.HIGH:
-    ...     print("Warning: High risk of selection bias!")
-    ...     for rec in diag.recommendations:
-    ...         print(f"  - {rec}")
+    The selection mechanism assumption requires that selection may depend on
+    unobserved time-constant heterogeneity (which is removed by the rolling
+    transformation, similar to the fixed effects estimator), but cannot
+    systematically depend on time-varying outcome shocks.
     
     See Also
     --------
     plot_missing_pattern : Visualize missing data patterns.
     get_unit_missing_stats : Get per-unit missing statistics as DataFrame.
-    
-    References
-    ----------
-    Lee, S.J. & Wooldridge, J.M. (2025). "A Simple Transformation Approach
-    to Difference-in-Differences Estimation for Panel Data." Section 4.4.
     """
     # Validate inputs
     _validate_diagnostic_inputs(data, y, ivar, tvar, gvar)
@@ -1543,7 +1500,7 @@ def get_unit_missing_stats(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str] = None,
+    gvar: str | None = None,
     never_treated_values: Optional[List] = None,
 ) -> pd.DataFrame:
     """
@@ -1579,15 +1536,6 @@ def get_unit_missing_stats(
         - n_post_treatment: Post-treatment observations
         - can_use_demean: Sufficient data for demeaning
         - can_use_detrend: Sufficient data for detrending
-    
-    Examples
-    --------
-    >>> stats_df = get_unit_missing_stats(
-    ...     data, y='outcome', ivar='unit_id', tvar='year', gvar='first_treat'
-    ... )
-    >>> # Find units that cannot use detrending
-    >>> excluded = stats_df[~stats_df['can_use_detrend']]
-    >>> print(f"{len(excluded)} units excluded from detrending")
     
     See Also
     --------
@@ -1632,8 +1580,8 @@ def plot_missing_pattern(
     data: pd.DataFrame,
     ivar: str,
     tvar: str,
-    y: Optional[str] = None,
-    gvar: Optional[str] = None,
+    y: str | None = None,
+    gvar: str | None = None,
     sort_by: str = 'cohort',
     figsize: Tuple[float, float] = (12, 8),
     cmap: str = 'RdYlGn',
@@ -1689,13 +1637,6 @@ def plot_missing_pattern(
     - Green: Observed (Y value present)
     - Red: Missing (Y value missing or row absent)
     - Black line: Treatment timing (if gvar provided)
-    
-    Examples
-    --------
-    >>> fig = plot_missing_pattern(
-    ...     data, ivar='unit_id', tvar='year', y='outcome', gvar='first_treat'
-    ... )
-    >>> fig.savefig('missing_pattern.png', dpi=150, bbox_inches='tight')
     
     See Also
     --------

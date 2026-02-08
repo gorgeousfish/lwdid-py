@@ -166,29 +166,37 @@ Example:
        post='post', rolling='detrend'
    )
 
-demeanq: Quarterly Data with Seasonal Fixed Effects
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+demeanq: Seasonal Data with Seasonal Fixed Effects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **When to use**:
 
-- Quarterly data with seasonal patterns
-- Control for both unit and quarter-of-year effects
-- Pre-treatment sample rich enough to estimate quarter fixed effects for each unit:
-  for each unit, the number of pre-treatment observations must be at least the
-  number of distinct pre-treatment quarters plus one
-  (:math:`n_{pre} \geq \#quarters_{pre} + 1`)
-- For each unit, every quarter that appears in the post-treatment period must also
-  appear in its pre-treatment period (quarter-coverage condition).
+- Periodic data with seasonal patterns (quarterly, monthly, or weekly)
+- Control for both unit and season-of-year effects
+- Pre-treatment sample rich enough to estimate seasonal fixed effects for each unit:
+  for each unit, the number of pre-treatment observations must be at least Q + 1
+  (where Q is the number of seasons per year)
+- For each unit, every season that appears in the post-treatment period must also
+  appear in its pre-treatment period (season-coverage condition).
 
 **What it does**:
 
-Removes unit-specific pre-treatment means and quarter-of-year effects.
+Removes unit-specific pre-treatment means and season-of-year effects.
+
+**Supported seasonal periods (Q parameter)**:
+
+- **Q=4** (default): Quarterly data (4 seasons per year)
+- **Q=12**: Monthly data (12 seasons per year)
+- **Q=52**: Weekly data (52 seasons per year)
 
 **Data requirements**:
 
-Pass ``tvar`` as a list: ``tvar=['year', 'quarter']``
+- For quarterly data: Pass ``tvar`` as a list: ``tvar=['year', 'quarter']``
+- For monthly/weekly data: Use a single time variable with ``Q`` and ``season_var`` parameters
 
-Example:
+**Examples**:
+
+Quarterly data (Q=4, default):
 
 .. code-block:: python
 
@@ -198,24 +206,55 @@ Example:
        post='post', rolling='demeanq'
    )
 
-detrendq: Quarterly Data with Trends and Seasonal Effects
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Monthly data (Q=12):
+
+.. code-block:: python
+
+   results = lwdid(
+       data_m, y='sales', d='treated', ivar='store',
+       tvar='time',              # Single time index
+       post='post', rolling='demeanq',
+       Q=12,                     # 12 seasons per year
+       season_var='month'        # Month indicator (1-12)
+   )
+
+Weekly data (Q=52):
+
+.. code-block:: python
+
+   results = lwdid(
+       data_w, y='sales', d='treated', ivar='store',
+       tvar='time',              # Single time index
+       post='post', rolling='demeanq',
+       Q=52,                     # 52 seasons per year
+       season_var='week'         # Week indicator (1-52)
+   )
+
+detrendq: Seasonal Data with Trends and Seasonal Effects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **When to use**:
 
-- Quarterly data with both trends and seasonal patterns
-- Control for unit trends and quarter-of-year effects
-- At least 2 pre-treatment periods overall, and for each unit enough pre-treatment
-  observations to estimate a linear trend with quarter fixed effects
-  (:math:`n_{pre} \geq 1 + \#quarters_{pre}`)
-- For each unit, every quarter that appears in the post-treatment period must also
-  appear in its pre-treatment period (quarter-coverage condition).
+- Periodic data with both trends and seasonal patterns
+- Control for unit trends and season-of-year effects
+- At least Q + 2 pre-treatment observations per unit (where Q is the number of
+  seasons per year)
+- For each unit, every season that appears in the post-treatment period must also
+  appear in its pre-treatment period (season-coverage condition).
 
 **What it does**:
 
-Combines detrending with quarterly seasonal adjustment.
+Combines detrending with seasonal adjustment.
 
-Example:
+**Supported seasonal periods (Q parameter)**:
+
+- **Q=4** (default): Quarterly data (4 seasons per year)
+- **Q=12**: Monthly data (12 seasons per year)
+- **Q=52**: Weekly data (52 seasons per year)
+
+**Examples**:
+
+Quarterly data (Q=4, default):
 
 .. code-block:: python
 
@@ -224,6 +263,55 @@ Example:
        tvar=['year', 'quarter'],
        post='post', rolling='detrendq'
    )
+
+Monthly data (Q=12):
+
+.. code-block:: python
+
+   results = lwdid(
+       data_m, y='sales', d='treated', ivar='store',
+       tvar='time',
+       post='post', rolling='detrendq',
+       Q=12,
+       season_var='month'
+   )
+
+Weekly data (Q=52):
+
+.. code-block:: python
+
+   results = lwdid(
+       data_w, y='sales', d='treated', ivar='store',
+       tvar='time',
+       post='post', rolling='detrendq',
+       Q=52,
+       season_var='week'
+   )
+
+Automatic Frequency Detection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For convenience, ``lwdid`` can automatically detect the data frequency and set
+the appropriate ``Q`` parameter:
+
+.. code-block:: python
+
+   results = lwdid(
+       data, y='sales', d='treated', ivar='store',
+       tvar='time',
+       post='post', rolling='demeanq',
+       auto_detect_frequency=True    # Automatically detect Q
+   )
+
+When ``auto_detect_frequency=True``, the package examines the time variable to
+determine the most likely data frequency:
+
+- Detects monthly data (Q=12) based on 12 observations per year pattern
+- Detects weekly data (Q=52) based on 52 observations per year pattern
+- Falls back to quarterly (Q=4) if frequency cannot be determined
+
+**Note**: If both ``Q`` and ``auto_detect_frequency=True`` are specified, an error
+is raised unless ``Q=4`` (the default).
 
 Variance Estimation
 -------------------
@@ -361,6 +449,21 @@ Cluster-Robust
 
 **Degrees of freedom**: G - 1, where G is the number of clusters.
 
+**Clustering Level Selection**:
+
+Lee and Wooldridge (2025, Section 8.2) provides guidance on choosing the
+clustering level. The clustering level should match the level at which the
+policy varies:
+
+- If the unit of observation is county but policy varies at the state level,
+  cluster at the state level
+- If the unit of observation is individual but policy varies at the firm level,
+  cluster at the firm level
+
+In general, cluster at the highest level where treatment assignment is
+determined. This ensures that standard errors properly account for the
+correlation structure induced by the policy variation.
+
 Randomization Inference
 -----------------------
 
@@ -418,7 +521,7 @@ Accessing RI Results
 Control Variables
 -----------------
 
-You can include time-invariant control variables in the estimation.
+Time-invariant control variables can be included in the estimation.
 
 Basic Usage
 ~~~~~~~~~~~
@@ -607,6 +710,125 @@ Missing Data
 - Rows with missing values in ``d``, ``ivar``, ``tvar``, or ``post`` (these observations are dropped during validation)
 - Gaps in time sequence
 
+Never-Treated Unit Data Preparation
+------------------------------------
+
+In staggered adoption designs, never-treated units serve as the control group.
+Proper encoding of never-treated units is essential for correct estimation.
+
+Valid Never-Treated Encodings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``gvar`` column can encode never-treated units using any of these values:
+
+1. **Zero (0)**: Common in Stata and other software
+
+   .. code-block:: python
+
+      data['gvar'] = data['gvar'].fillna(0)  # Convert NaN to 0
+
+2. **Positive infinity (np.inf)**: Represents "treated at infinity"
+
+   .. code-block:: python
+
+      import numpy as np
+      data.loc[data['never_treated'], 'gvar'] = np.inf
+
+3. **NaN/NA/None**: Missing treatment time indicates never-treated
+
+   .. code-block:: python
+
+      # NaN is automatically recognized as never-treated
+      data['gvar'] = data['first_treat_year']  # NaN for never-treated
+
+All three encodings are equivalent and produce identical results.
+
+Converting from Stata Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When importing data from Stata, never-treated units may be encoded differently:
+
+.. code-block:: python
+
+   import pandas as pd
+   import numpy as np
+
+   # Load Stata data
+   data = pd.read_stata('staggered_data.dta')
+
+   # Common Stata encodings for never-treated:
+   # - Missing values (.) → automatically become NaN in pandas
+   # - Zero (0) → recognized as never-treated
+   # - Large values (9999) → need manual conversion
+
+   # Convert custom encoding to standard format
+   data['gvar'] = data['gvar'].replace({9999: 0, -1: 0})
+
+   # Verify never-treated identification
+   from lwdid.validation import is_never_treated
+   unit_gvar = data.groupby('unit')['gvar'].first()
+   n_nt = unit_gvar.apply(is_never_treated).sum()
+   print(f"Never-treated units: {n_nt}")
+
+Checking Never-Treated Status
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``is_never_treated()`` function to verify encoding:
+
+.. code-block:: python
+
+   from lwdid.validation import is_never_treated
+   import numpy as np
+
+   # Check individual values
+   print(is_never_treated(0))        # True
+   print(is_never_treated(np.inf))   # True
+   print(is_never_treated(np.nan))   # True
+   print(is_never_treated(2005))     # False
+
+   # Check DataFrame
+   unit_gvar = data.groupby('unit')['gvar'].first()
+   nt_mask = unit_gvar.apply(is_never_treated)
+
+   print(f"Total units: {len(unit_gvar)}")
+   print(f"Never-treated: {nt_mask.sum()}")
+   print(f"Treated: {(~nt_mask).sum()}")
+
+Common Issues and Solutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Issue: No never-treated units found**
+
+.. code-block:: python
+
+   # Check gvar values
+   print(data['gvar'].unique())
+
+   # If using custom encoding (e.g., 9999 for never-treated)
+   data['gvar'] = data['gvar'].replace({9999: 0})
+
+**Issue: Negative gvar values**
+
+.. code-block:: python
+
+   # Negative values are invalid
+   if (data['gvar'] < 0).any():
+       print("Warning: Negative gvar values found")
+       # Convert to valid encoding
+       data.loc[data['gvar'] < 0, 'gvar'] = 0
+
+**Issue: gvar varies within unit**
+
+.. code-block:: python
+
+   # gvar must be time-invariant
+   gvar_varies = data.groupby('unit')['gvar'].nunique() > 1
+   if gvar_varies.any():
+       print(f"Units with varying gvar: {gvar_varies.sum()}")
+       # Use first observation's gvar
+       first_gvar = data.groupby('unit')['gvar'].first()
+       data['gvar'] = data['unit'].map(first_gvar)
+
 Best Practices
 --------------
 
@@ -622,9 +844,9 @@ Choosing Transformation Method
 Choosing Variance Estimator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. **Default (``vce=None``)**: Use if you believe homoskedasticity holds
-2. **``vce='hc3'``**: Recommended for small to moderate sample sizes when you suspect heteroskedasticity
-3. **``vce='cluster'``**: Use if errors are clustered
+1. **Default (``vce=None``)**: Appropriate when homoskedasticity is plausible
+2. **``vce='hc3'``**: Recommended for small to moderate sample sizes when heteroskedasticity is suspected
+3. **``vce='cluster'``**: Appropriate when errors are clustered
 4. **Randomization inference**: Use as robustness check or when normality is doubtful
 
 Sample Size Considerations
@@ -644,6 +866,44 @@ Sample Size Considerations
   foundation for large-sample inference, supporting HC0-HC4 and cluster-robust
   standard errors.
 
+Sample Size and Inference Method Selection Matrix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following matrix provides guidance on selecting the appropriate estimator
+and inference method based on sample size:
+
+**Small Samples (N < 50):**
+
+- **Recommended**: RA with ``vce=None`` (exact t-based inference)
+- **Alternative**: RA with ``ri=True`` (randomization inference)
+- **VCE options**: ``vce=None`` or ``vce='hc3'``
+- **Inference distribution**: t-distribution
+- **Key assumption**: CLM assumptions (normality, homoskedasticity) for exact inference
+
+**Moderate Samples (50 ≤ N < 200):**
+
+- **Recommended**: RA or IPWRA with ``vce='hc3'``
+- **VCE options**: ``vce='hc1'``, ``vce='hc3'``, or ``vce='cluster'``
+- **Inference distribution**: t-distribution (RA) or normal (IPW/IPWRA/PSM)
+- **Key consideration**: HC3 provides better finite-sample performance
+
+**Large Samples (N ≥ 200):**
+
+- **Recommended**: IPWRA with ``vce='hc1'`` or ``vce='robust'``
+- **Alternative**: RA, IPW, or PSM depending on substantive considerations
+- **VCE options**: All HC variants and cluster-robust
+- **Inference distribution**: t-distribution (RA) or normal (IPW/IPWRA/PSM)
+- **Key advantage**: Double robustness of IPWRA protects against misspecification
+
+**Inference Distribution by Estimator:**
+
+- **RA (Regression Adjustment)**: t-distribution with df = N - k
+- **IPW (Inverse Probability Weighting)**: Normal distribution (asymptotic)
+- **IPWRA (Doubly Robust)**: Normal distribution (asymptotic)
+- **PSM (Propensity Score Matching)**: Normal distribution (asymptotic)
+
+For detailed theoretical foundations, see :doc:`methodological_notes`.
+
 Estimator Selection (Large-Sample Common Timing)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -656,16 +916,20 @@ effects estimators, including doubly robust methods.
 
 - ``'ra'`` (default): Regression adjustment via OLS. Consistent when the outcome
   model is correctly specified. Efficient under correct specification.
+  Uses t-distribution for inference.
 
 - ``'ipw'``: Inverse probability weighting. Consistent when the propensity score
   model is correctly specified. Requires ``controls`` parameter.
+  Uses normal distribution for asymptotic inference.
 
 - ``'ipwra'``: Doubly robust estimator combining regression and IPW. Consistent
   when either the outcome model or propensity score is correctly specified.
   Recommended when functional form assumptions are uncertain.
+  Uses normal distribution for asymptotic inference.
 
 - ``'psm'``: Propensity score matching. Matches treated to control units based
   on propensity scores. Requires adequate sample sizes for matching.
+  Uses normal distribution for asymptotic inference.
 
 **Example (IPWRA in common timing):**
 
@@ -681,9 +945,14 @@ effects estimators, including doubly robust methods.
 
 **Estimator selection guidelines:**
 
-1. **Start with RA** for simplicity when N is moderate
-2. **Use IPWRA** as a robustness check or when model misspecification is a concern
-3. **Use IPW/PSM** when propensity score weighting/matching is preferred
+1. **Small samples (N < 50)**: Use RA with ``vce=None`` for exact t-based
+   inference under CLM assumptions
+2. **Moderate samples (50 ≤ N < 200)**: Start with RA and ``vce='hc3'``; use
+   IPWRA as robustness check
+3. **Large samples (N ≥ 200)**: Use IPWRA as primary estimator when functional
+   form assumptions are uncertain
+4. **All sample sizes**: Use randomization inference (``ri=True``) as a
+   robustness check that does not rely on distributional assumptions
 
 Diagnostic Checks
 ~~~~~~~~~~~~~~~~~
@@ -734,9 +1003,12 @@ When units are treated at different times, use the staggered adoption framework.
 
 .. note::
 
-   **Staggered mode limitations**: The ``demeanq`` and ``detrendq``
-   transformations are only available for common timing designs. In staggered
-   mode, only ``demean`` and ``detrend`` are supported.
+   **Staggered transformation options**: All four transformation methods
+   (``demean``, ``detrend``, ``demeanq``, ``detrendq``) are available for
+   staggered designs. Seasonal transformations (``demeanq``, ``detrendq``)
+   require sufficient pre-treatment observations for each cohort to estimate
+   seasonal parameters (at least Q+1 periods for ``demeanq``, Q+2 for
+   ``detrendq``, where Q is the number of seasonal periods).
 
 Basic Usage
 ~~~~~~~~~~~
@@ -776,6 +1048,62 @@ Staggered-Specific Parameters
     - ``'ipw'``: Inverse probability weighting
     - ``'ipwra'``: Doubly robust (recommended)
     - ``'psm'``: Propensity score matching
+
+**exclude_pre_periods** : int, default 0
+    Number of periods immediately before treatment to exclude from pre-treatment
+    calculations. Used for robustness checks when the no-anticipation assumption
+    may be violated.
+
+    For cohort g, the pre-treatment mean/trend is computed using periods
+    {T_min, ..., g-1-exclude_pre_periods} instead of {T_min, ..., g-1}.
+
+    See Lee and Wooldridge (2025) Section 6 for methodological details.
+
+Robustness to No-Anticipation Violations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the no-anticipation assumption may be violated (e.g., units adjust behavior
+before formal treatment), the ``exclude_pre_periods`` parameter can be used to
+perform robustness checks.
+
+**Example**:
+
+.. code-block:: python
+
+   # Baseline estimation
+   result_baseline = lwdid(
+       data, y='outcome', ivar='unit', tvar='year',
+       gvar='cohort', rolling='demean'
+   )
+
+   # Robustness check: exclude 1 period before treatment
+   result_robust1 = lwdid(
+       data, y='outcome', ivar='unit', tvar='year',
+       gvar='cohort', rolling='demean',
+       exclude_pre_periods=1
+   )
+
+   # Robustness check: exclude 2 periods before treatment
+   result_robust2 = lwdid(
+       data, y='outcome', ivar='unit', tvar='year',
+       gvar='cohort', rolling='demean',
+       exclude_pre_periods=2
+   )
+
+   # Compare results
+   print(f"Baseline ATT: {result_baseline.att_overall:.4f}")
+   print(f"Exclude 1 period: {result_robust1.att_overall:.4f}")
+   print(f"Exclude 2 periods: {result_robust2.att_overall:.4f}")
+
+**Minimum pre-treatment period requirements**:
+
+- ``demean``: At least 1 pre-treatment period remaining after exclusion
+- ``detrend``: At least 2 pre-treatment periods remaining after exclusion
+- ``demeanq``: At least Q+1 pre-treatment periods remaining (Q = number of seasons)
+- ``detrendq``: At least Q+2 pre-treatment periods remaining
+
+If any cohort has insufficient pre-treatment periods after applying
+``exclude_pre_periods``, an ``InsufficientPrePeriodsError`` is raised.
 
 Accessing Staggered Results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -875,6 +1203,296 @@ Staggered Example
        include_pre_treatment=True,
        show_ci=True
    )
+
+Pre-treatment Dynamics and Parallel Trends Testing
+--------------------------------------------------
+
+Pre-treatment dynamics analysis enables assessment of the parallel trends
+assumption validity by estimating treatment effects in pre-treatment periods. Under
+the null hypothesis of parallel trends, these pre-treatment effects should be zero.
+
+This feature implements the methodology from Lee and Wooldridge (2025) Appendix D,
+using rolling transformations that look forward to future pre-treatment periods
+rather than backward.
+
+Why Pre-treatment Dynamics Matter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The parallel trends assumption is fundamental to difference-in-differences
+identification. While this assumption cannot be directly tested (it concerns
+counterfactual outcomes), examining pre-treatment dynamics provides indirect
+evidence:
+
+- **Under parallel trends**: Pre-treatment ATT estimates should be approximately
+  zero (within sampling variation)
+- **Violation of parallel trends**: Systematic non-zero pre-treatment effects
+  suggest the control group may not provide a valid counterfactual
+
+The anchor point convention sets the effect at event time e = -1 (the period
+immediately before treatment) to exactly zero, providing a reference point for
+interpreting other pre-treatment effects.
+
+Basic Usage
+~~~~~~~~~~~
+
+Enable pre-treatment dynamics by setting ``include_pretreatment=True``:
+
+.. code-block:: python
+
+   from lwdid import lwdid
+
+   results = lwdid(
+       data,
+       y='outcome',
+       ivar='unit',
+       tvar='year',
+       gvar='first_treat',
+       rolling='demean',
+       aggregate='cohort',
+       include_pretreatment=True,    # Enable pre-treatment estimation
+       pretreatment_test=True,       # Run parallel trends test (default)
+       pretreatment_alpha=0.05,      # Significance level (default)
+   )
+
+   # View complete summary including pre-treatment results
+   print(results.summary())
+
+Accessing Pre-treatment Results
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Pre-treatment ATT estimates as DataFrame
+   pre_df = results.att_pre_treatment
+   print(pre_df)
+   # Columns: cohort, period, event_time, att, se, ci_lower, ci_upper,
+   #          t_stat, pvalue, n_treated, n_control, is_anchor, rolling_window_size
+
+   # Parallel trends test results
+   pt = results.parallel_trends_test
+   print(f"Joint F-statistic: {pt.joint_f_stat:.4f}")
+   print(f"Joint p-value: {pt.joint_pvalue:.4f}")
+   print(f"Reject parallel trends: {pt.reject_null}")
+   print(f"Number of pre-treatment periods tested: {pt.n_periods}")
+
+Interpreting the Parallel Trends Test
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The parallel trends test performs a joint F-test of the null hypothesis that all
+pre-treatment ATT estimates (excluding the anchor point) are jointly zero:
+
+- **H0**: All pre-treatment ATT = 0 (parallel trends holds)
+- **H1**: At least one pre-treatment ATT ≠ 0 (parallel trends violated)
+
+**Interpretation guidelines**:
+
+- ``reject_null=False``: No statistical evidence against parallel trends. This
+  does not prove parallel trends holds, but the data are consistent with it.
+- ``reject_null=True``: Evidence of pre-treatment differences. Consider:
+
+  - Using ``detrend`` instead of ``demean`` to allow for heterogeneous trends
+  - Examining which cohorts or periods show violations
+  - Investigating potential anticipation effects or data issues
+
+Event Study Visualization with Pre-treatment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The event study plot can display both pre-treatment and post-treatment effects:
+
+.. code-block:: python
+
+   # Plot with pre-treatment effects
+   fig, ax = results.plot_event_study(
+       include_pre_treatment=True,      # Show pre-treatment effects
+       pre_treatment_color='gray',      # Color for pre-treatment points
+       post_treatment_color='blue',     # Color for post-treatment points
+       show_anchor_line=True,           # Vertical line at e=-1
+       title='Event Study with Pre-treatment Dynamics',
+       ylabel='Treatment Effect',
+   )
+   fig.savefig('event_study_pretreatment.png', dpi=300)
+
+The plot shows:
+
+- Pre-treatment effects (e < -1) in gray with confidence intervals
+- Anchor point (e = -1) at zero
+- Post-treatment effects (e ≥ 0) in blue with confidence intervals
+- Optional vertical dashed line at the anchor point
+
+Complete Workflow Example
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   import pandas as pd
+   from lwdid import lwdid
+
+   # Load data
+   data = pd.read_csv('castle.csv')
+
+   # Step 1: Estimate with pre-treatment dynamics
+   results = lwdid(
+       data,
+       y='l_homicide',
+       ivar='state',
+       tvar='year',
+       gvar='effyear',
+       rolling='demean',
+       aggregate='cohort',
+       include_pretreatment=True,
+       pretreatment_test=True,
+   )
+
+   # Step 2: Check parallel trends test
+   pt = results.parallel_trends_test
+   if pt.reject_null:
+       print("Warning: Evidence against parallel trends!")
+       print(f"F-stat: {pt.joint_f_stat:.3f}, p-value: {pt.joint_pvalue:.4f}")
+       print("Consider using rolling='detrend' to allow heterogeneous trends")
+   else:
+       print("No evidence against parallel trends")
+       print(f"F-stat: {pt.joint_f_stat:.3f}, p-value: {pt.joint_pvalue:.4f}")
+
+   # Step 3: Examine pre-treatment effects
+   pre_df = results.att_pre_treatment
+   non_anchor = pre_df[~pre_df['is_anchor']]
+   print("\nPre-treatment effects (excluding anchor):")
+   print(non_anchor[['event_time', 'att', 'se', 'pvalue']].to_string(index=False))
+
+   # Step 4: Visualize
+   fig, ax = results.plot_event_study(
+       include_pre_treatment=True,
+       title='Castle Doctrine: Event Study with Pre-treatment',
+   )
+   fig.savefig('castle_event_study.png', dpi=300, bbox_inches='tight')
+
+   # Step 5: Report main results
+   print(f"\nOverall ATT: {results.att_overall:.4f} (SE: {results.se_overall:.4f})")
+
+Transformation Methods for Pre-treatment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pre-treatment dynamics support both ``demean`` and ``detrend`` transformations:
+
+**Demean (default)**:
+
+Uses rolling demeaning with future pre-treatment periods. For period t < g:
+
+.. math::
+
+   \dot{Y}_{itg} = Y_{it} - \frac{1}{g-1-t} \sum_{q=t+1}^{g-1} Y_{iq}
+
+**Detrend**:
+
+Uses rolling OLS detrending with future pre-treatment periods. Fits a linear
+trend using periods {t+1, ..., g-1} and computes the residual.
+
+The ``detrend`` option is appropriate when cohorts are suspected to have different pre-treatment trends.
+
+Trend Diagnostics Tools
+-----------------------
+
+For exploratory analysis before running estimation, ``lwdid`` provides standalone
+diagnostic functions in the ``trend_diagnostics`` module. These tools help assess
+whether parallel trends holds and recommend an appropriate transformation method.
+
+Testing Parallel Trends with Standalone Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   import lwdid
+   
+   # Test parallel trends using placebo method
+   pt_result = lwdid.test_parallel_trends(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat',
+       method='placebo',   # or 'regression', 'visual'
+       alpha=0.05
+   )
+   
+   # Display summary
+   print(pt_result.summary())
+   
+   # Access individual results
+   if pt_result.reject_null:
+       print(f"Parallel trends rejected (p={pt_result.pvalue:.4f})")
+       print(f"Recommendation: {pt_result.recommendation}")
+   else:
+       print("No evidence against parallel trends")
+
+Diagnosing Heterogeneous Trends
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Diagnose trend heterogeneity across cohorts
+   ht_diag = lwdid.diagnose_heterogeneous_trends(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat'
+   )
+   
+   # Display summary
+   print(ht_diag.summary())
+   
+   # Check for heterogeneous trends
+   if ht_diag.has_heterogeneous_trends:
+       print("Heterogeneous trends detected")
+       print(f"Recommendation: {ht_diag.recommendation}")
+
+Getting Automated Transformation Recommendation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Get data-driven recommendation
+   rec = lwdid.recommend_transformation(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat',
+       verbose=True
+   )
+   
+   print(f"Recommended method: {rec.recommended_method}")
+   print(f"Confidence: {rec.confidence:.1%}")
+   for reason in rec.reasons:
+       print(f"  - {reason}")
+   
+   # Use the recommendation
+   results = lwdid.lwdid(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat',
+       rolling=rec.recommended_method,
+   )
+
+Visualizing Cohort Trends
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Plot outcome trajectories by cohort
+   fig = lwdid.plot_cohort_trends(
+       data=df,
+       y='outcome',
+       ivar='unit_id',
+       tvar='year',
+       gvar='first_treat',
+       normalize=True    # Normalize to first period
+   )
+   fig.savefig('cohort_trends.png', dpi=300)
+
+See :doc:`api/trend_diagnostics` for complete API documentation.
 
 Further Reading
 ---------------

@@ -2,33 +2,36 @@
 Control group selection for staggered difference-in-differences.
 
 This module provides functions for identifying and validating control
-groups in staggered adoption designs. Two control unit types are
-supported:
+groups in staggered adoption designs. Three control group strategies
+are supported:
 
 - **Never-Treated (NT)**: Units that never receive treatment throughout
-  the observation period, serving as a stable comparison group.
+  the observation period. These form a stable comparison group whose
+  composition does not change across calendar time periods.
 
 - **Not-Yet-Treated (NYT)**: Units scheduled for future treatment but
   not yet treated at the current period. Under conditional parallel
-  trends, these provide valid controls before their treatment begins.
+  trends and no anticipation, these units provide valid controls before
+  their own treatment begins, expanding the control pool for improved
+  estimation efficiency.
 
-In addition, an "all others" control strategy is supported for
-replicating published rolling cross-sectional specifications that set
-``D_{ig} = 1{g_i = g}`` and use *all* non-cohort units as controls in each
-cross-section (including already-treated units). This strategy can
-introduce forbidden comparisons and is generally **not recommended** for
-identification under no-anticipation, but it is useful for replication
-and diagnostics.
+- **All Others**: All units not in the focal treatment cohort, including
+  already-treated units. This strategy may introduce forbidden
+  comparisons and is generally not recommended for identification, but
+  is provided for replication and diagnostic purposes.
 
 For estimating the ATT of cohort g in period r, valid controls are
-units with first treatment time strictly greater than r (gvar > r),
-including both never-treated units and units first treated after r.
+units with first treatment period strictly greater than r (gvar > r),
+which includes both never-treated units and units first treated after
+period r.
 
 Notes
 -----
-The strict inequality (gvar > period rather than gvar >= period) is
-essential: units beginning treatment in period r belong to the
-treatment group, not the control group.
+The strict inequality criterion (gvar > r rather than gvar >= r) is
+fundamental to correct identification. Units beginning treatment in
+period r (i.e., gvar == r) belong to the treatment group for that
+period, not the control group. This ensures that comparisons are made
+only against units that remain untreated throughout period r.
 """
 
 from __future__ import annotations
@@ -43,32 +46,37 @@ class ControlGroupStrategy(Enum):
     """
     Enumeration of control group selection strategies.
 
-    Defines the set of units eligible to serve as controls when
+    Defines which units are eligible to serve as controls when
     estimating treatment effects for a given cohort-period pair.
+    The choice of strategy affects both the valid comparison group
+    and the identifying assumptions required.
 
     Attributes
     ----------
     NEVER_TREATED : str
-        Use only units that never receive treatment. Most conservative
-        choice; required for aggregated effect estimation.
+        Use only units that never receive treatment throughout the
+        observation window. Provides a stable control group whose
+        composition does not vary across periods. Required for
+        aggregated effect estimation where controls must be consistent.
     NOT_YET_TREATED : str
-        Use never-treated plus not-yet-treated units. Expands the
-        control pool for improved efficiency under conditional
-        parallel trends.
+        Use never-treated units plus units not yet treated at the
+        current period. Expands the control pool by including future
+        treatment cohorts as temporary controls, improving estimation
+        efficiency under conditional parallel trends and no anticipation.
     ALL_OTHERS : str
-        Use all units not in the treatment cohort as controls (including
-        already-treated units). This may violate no-anticipation / induce
-        forbidden comparisons and is mainly intended for replication and
-        diagnostic purposes.
+        Use all units not in the focal treatment cohort, including
+        already-treated units from earlier cohorts. May induce forbidden
+        comparisons that violate identification assumptions. Provided
+        primarily for replication and diagnostic purposes.
     AUTO : str
-        Automatically select based on data availability. Uses
-        not-yet-treated when available, falls back to never-treated
-        only if necessary.
+        Automatically select based on data availability. Prefers the
+        not-yet-treated strategy when sufficient controls are available,
+        falling back to never-treated only when necessary.
 
     See Also
     --------
     get_valid_control_units : Apply strategy to select control units.
-    count_control_units_by_strategy : Compare counts across strategies.
+    count_control_units_by_strategy : Compare control counts across strategies.
     """
 
     NEVER_TREATED = 'never_treated'
@@ -100,7 +108,7 @@ def identify_never_treated_units(
     never_treated_values : list, optional
         Values in gvar indicating never-treated status. Defaults to
         [0, np.inf]. Units with NaN in gvar are also classified as
-        never-treated.
+        never-treated regardless of this parameter.
 
     Returns
     -------
@@ -119,6 +127,16 @@ def identify_never_treated_units(
     --------
     has_never_treated_units : Check presence of never-treated units.
     get_valid_control_units : Select control units for estimation.
+
+    Notes
+    -----
+    Never-treated units are identified through three mechanisms:
+
+    1. Missing values (NaN) in gvar, representing units with no
+       recorded treatment date.
+    2. Zero values, a common coding convention for never-treated.
+    3. Infinity values, representing treatment dates beyond the
+       observation window.
     """
     if len(data) == 0:
         raise ValueError("Input data is empty")
@@ -126,19 +144,23 @@ def identify_never_treated_units(
         raise KeyError(f"Column '{gvar}' not found in data")
     if ivar not in data.columns:
         raise KeyError(f"Column '{ivar}' not found in data")
-    
+
+    # Extract first gvar value per unit; panel data may have repeated rows
     unit_gvar = data.groupby(ivar)[gvar].first()
-    
+
+    # Default sentinel values: 0 and infinity are common conventions
     if never_treated_values is None:
         nt_values = [0, np.inf]
     else:
         nt_values = never_treated_values
-    
+
+    # NaN always indicates never-treated (missing treatment date)
     never_treated_mask = unit_gvar.isna()
-    
+
+    # Include units matching any specified sentinel value
     if len(nt_values) > 0:
         never_treated_mask = never_treated_mask | unit_gvar.isin(nt_values)
-    
+
     return never_treated_mask
 
 
@@ -152,7 +174,8 @@ def has_never_treated_units(
     Check whether the data contains any never-treated units.
 
     A convenience function for quickly determining if a never-treated
-    control group is available for estimation.
+    control group is available for estimation. This is particularly
+    useful for deciding whether aggregated effects can be estimated.
 
     Parameters
     ----------
@@ -174,6 +197,7 @@ def has_never_treated_units(
     See Also
     --------
     identify_never_treated_units : Get full mask of never-treated units.
+    validate_control_group : Validate control group for aggregation.
     """
     nt_mask = identify_never_treated_units(data, gvar, ivar, never_treated_values)
     return nt_mask.sum() > 0
@@ -192,8 +216,9 @@ def get_valid_control_units(
     """
     Determine valid control units for a specific cohort-period pair.
 
-    For estimating the ATT of cohort g in period r, identifies which units
-    can serve as valid controls based on the selected strategy.
+    For estimating the ATT of cohort g in period r, identifies which
+    units can serve as valid controls based on the selected strategy
+    and the fundamental strict inequality criterion.
 
     Parameters
     ----------
@@ -215,9 +240,9 @@ def get_valid_control_units(
         Values in gvar indicating never-treated status. Defaults to
         [0, np.inf].
     is_pre_treatment : bool, default False
-        If True, selects control units for pre-treatment period estimation.
-        For pre-treatment periods t < g, the control group consists of
-        units with gvar > t plus never-treated units.
+        If True, selects control units for pre-treatment period estimation
+        (parallel trends testing). For pre-treatment periods t < g, the
+        control group includes all units not yet treated at period t.
 
     Returns
     -------
@@ -241,37 +266,45 @@ def get_valid_control_units(
 
     Notes
     -----
-    For post-treatment periods (is_pre_treatment=False):
-        Control units must have first treatment period strictly greater
-        than the current period (gvar > period), ensuring units beginning
-        treatment in the current period are correctly classified as
-        treated, not controls.
+    The strict inequality criterion (gvar > period) is fundamental:
 
-    For pre-treatment periods (is_pre_treatment=True):
-        The control group is defined as {units with gvar > t} plus
-        never-treated units. This includes all units not yet treated
-        at period t.
+    - Units with gvar == period are beginning treatment in period r and
+      thus belong to the treatment group, not the control group.
+    - This ensures valid controls have not yet been exposed to treatment.
+
+    For post-treatment estimation (period >= cohort):
+        The treatment cohort is automatically excluded because cohort
+        units have gvar == cohort <= period, failing the gvar > period
+        criterion.
+
+    For pre-treatment estimation (period < cohort):
+        The treatment cohort is correctly included as controls because
+        period < cohort implies gvar (== cohort) > period. At pre-treatment
+        periods, these units are not yet treated and serve as valid
+        comparisons for parallel trends assessment.
     """
-    # Validate inputs
+    # -------------------------------------------------------------------------
+    # Input Validation
+    # -------------------------------------------------------------------------
     if len(data) == 0:
         raise ValueError("Input data is empty")
     if gvar not in data.columns:
         raise KeyError(f"Column '{gvar}' not found in data")
     if ivar not in data.columns:
         raise KeyError(f"Column '{ivar}' not found in data")
-    
-    # Check gvar is numeric
+
+    # Require numeric gvar for comparison operations
     if not pd.api.types.is_numeric_dtype(data[gvar]):
         raise TypeError(
             f"gvar column '{gvar}' must be numeric, got {data[gvar].dtype}. "
             f"String values like 'never' or '2005' are not supported."
         )
-    
-    # Convert to float for consistent numeric comparison across int/float inputs
+
+    # Convert to float for consistent comparison across int/float inputs
     cohort_f = float(cohort)
     period_f = float(period)
-    
-    # Validate period constraints based on pre/post treatment
+
+    # Validate period constraints based on pre/post treatment context
     if is_pre_treatment:
         if period_f >= cohort_f:
             raise ValueError(
@@ -279,66 +312,57 @@ def get_valid_control_units(
                 f"Pre-treatment effects are only defined for periods t < g."
             )
     else:
-        # ATT is only defined for post-treatment periods (r >= g)
         if period_f < cohort_f:
             raise ValueError(
                 f"period ({period}) must be >= cohort ({cohort}). "
                 f"Treatment effects are only defined for periods r >= g."
             )
-    
-    # Extract unit-level gvar values
+
+    # -------------------------------------------------------------------------
+    # Identify Never-Treated Units
+    # -------------------------------------------------------------------------
+    # Extract first gvar value per unit from panel data
     unit_gvar = data.groupby(ivar)[gvar].first()
-    
-    # Handle never_treated_values parameter
+
+    # Default sentinel values for never-treated status
     if never_treated_values is None:
         nt_values = [0, np.inf]
     else:
         nt_values = never_treated_values
-    
-    # Identify never treated units
+
+    # Build never-treated mask from NaN and sentinel values
     never_treated_mask = unit_gvar.isna()
     if len(nt_values) > 0:
         never_treated_mask = never_treated_mask | unit_gvar.isin(nt_values)
-    
-    # Calculate control mask based on strategy
+
+    # -------------------------------------------------------------------------
+    # Build Control Mask by Strategy
+    # -------------------------------------------------------------------------
     if strategy == ControlGroupStrategy.NEVER_TREATED:
+        # Use only units that never receive treatment
         control_mask = never_treated_mask
-        
+
     elif strategy == ControlGroupStrategy.NOT_YET_TREATED:
-        if is_pre_treatment:
-            # For pre-treatment: control = {gvar > t} ∪ {never-treated}
-            # This includes all units not yet treated at period t
-            not_yet_treated_mask = (unit_gvar > period_f)
-            control_mask = never_treated_mask | not_yet_treated_mask
-        else:
-            # For post-treatment: use strict inequality
-            # Units starting treatment in this period (gvar == period) are treated
-            not_yet_treated_mask = (unit_gvar > period_f)
-            control_mask = never_treated_mask | not_yet_treated_mask
-    
+        # Include never-treated plus units first treated after current period
+        # Strict inequality: gvar > period excludes units starting treatment now
+        not_yet_treated_mask = (unit_gvar > period_f)
+        control_mask = never_treated_mask | not_yet_treated_mask
+
     elif strategy == ControlGroupStrategy.ALL_OTHERS:
-        # All units except those in the treatment cohort itself.
-        # This includes never-treated, not-yet-treated, and already-treated units.
+        # Include all units except the focal treatment cohort
+        # Warning: may include already-treated units from earlier cohorts
         control_mask = (unit_gvar != cohort_f)
-        
-    else:  # AUTO
+
+    else:  # AUTO strategy
+        # Prefer not-yet-treated if available, fallback to never-treated
         not_yet_treated_mask = (unit_gvar > period_f)
         nyt_plus_nt_mask = never_treated_mask | not_yet_treated_mask
-        
+
         if nyt_plus_nt_mask.sum() > 0:
             control_mask = nyt_plus_nt_mask
         else:
             control_mask = never_treated_mask
-    
-    # For post-treatment: Treatment cohort is excluded automatically by the
-    # strict inequality: cohort units have gvar == cohort <= period, so they
-    # fail gvar > period
-    
-    # For pre-treatment: The treatment cohort (gvar == cohort) is included
-    # in the control group since period < cohort implies gvar > period for
-    # the cohort units. This is correct because at pre-treatment periods,
-    # the cohort units are not yet treated.
-    
+
     return control_mask
 
 
@@ -356,7 +380,9 @@ def get_all_control_masks(
     Compute control group masks for all cohort-period combinations.
 
     Efficiently generates control masks for multiple cohort-period pairs
-    by pre-computing shared data structures to avoid redundant calculations.
+    by pre-computing shared data structures. This batch approach avoids
+    redundant groupby operations when estimating effects across many
+    (cohort, period) combinations.
 
     Parameters
     ----------
@@ -369,7 +395,7 @@ def get_all_control_masks(
     cohorts : list of int or float
         Treatment cohorts for which to generate control masks.
     T_max : int or float
-        Maximum time period to consider.
+        Maximum time period to consider (inclusive).
     T_min : int or float, optional
         Minimum time period. Reserved for future extension.
     strategy : ControlGroupStrategy, default NOT_YET_TREATED
@@ -396,56 +422,65 @@ def get_all_control_masks(
 
     Notes
     -----
-    For each cohort g, masks are generated for periods {g, g+1, ...,
-    T_max}. The never-treated mask is pre-computed once and reused
-    across all cohort-period pairs for efficiency.
+    For each cohort g, masks are generated for post-treatment periods
+    {g, g+1, ..., T_max}. The never-treated mask is computed once and
+    reused across all cohort-period pairs, while not-yet-treated masks
+    vary by period due to the strict inequality criterion.
     """
     if len(data) == 0:
         raise ValueError("Input data is empty")
-    
-    # Pre-compute shared data
+
+    # -------------------------------------------------------------------------
+    # Pre-compute Shared Data Structures
+    # -------------------------------------------------------------------------
+    # Extract unit-level gvar once to avoid repeated groupby operations
     unit_gvar = data.groupby(ivar)[gvar].first()
-    
+
+    # Build never-treated mask (constant across all periods)
     if never_treated_values is None:
         nt_values = [0, np.inf]
     else:
         nt_values = never_treated_values
-    
+
     never_treated_mask = unit_gvar.isna()
     if len(nt_values) > 0:
         never_treated_mask = never_treated_mask | unit_gvar.isin(nt_values)
-    
-    # Convert to float for consistent numeric comparison
+
     T_max_f = float(T_max)
-    
+
+    # -------------------------------------------------------------------------
+    # Generate Masks for Each (cohort, period) Pair
+    # -------------------------------------------------------------------------
     results = {}
-    
+
     for g in cohorts:
         g_f = float(g)
-        # Period range: from cohort g to T_max
+        # Iterate over post-treatment periods: g, g+1, ..., T_max
         r = g_f
         while r <= T_max_f:
             if strategy == ControlGroupStrategy.NEVER_TREATED:
                 control_mask = never_treated_mask.copy()
-                
+
             elif strategy == ControlGroupStrategy.NOT_YET_TREATED:
+                # Not-yet-treated: units with first treatment after period r
                 not_yet_treated_mask = (unit_gvar > r)
                 control_mask = never_treated_mask | not_yet_treated_mask
-            
+
             elif strategy == ControlGroupStrategy.ALL_OTHERS:
+                # All non-cohort units (may include already-treated)
                 control_mask = (unit_gvar != g_f)
-                
-            else:  # AUTO
+
+            else:  # AUTO strategy
                 not_yet_treated_mask = (unit_gvar > r)
                 nyt_plus_nt_mask = never_treated_mask | not_yet_treated_mask
                 if nyt_plus_nt_mask.sum() > 0:
                     control_mask = nyt_plus_nt_mask
                 else:
                     control_mask = never_treated_mask.copy()
-            
+
             results[(g, r)] = control_mask
             r += 1
-    
+
     return results
 
 
@@ -462,7 +497,9 @@ def get_all_control_masks_pre(
     Compute control group masks for all pre-treatment cohort-period combinations.
 
     Efficiently generates control masks for pre-treatment periods by
-    pre-computing shared data structures to avoid redundant calculations.
+    pre-computing shared data structures. Used for parallel trends
+    testing and event study visualization where pre-treatment effects
+    should be approximately zero under the identifying assumptions.
 
     Parameters
     ----------
@@ -475,7 +512,7 @@ def get_all_control_masks_pre(
     cohorts : list of int or float
         Treatment cohorts for which to generate control masks.
     T_min : int or float
-        Minimum time period in the data.
+        Minimum time period in the data (inclusive).
     strategy : ControlGroupStrategy, default NOT_YET_TREATED
         Strategy for selecting control units.
     never_treated_values : list, optional
@@ -501,57 +538,64 @@ def get_all_control_masks_pre(
     Notes
     -----
     For each cohort g, masks are generated for pre-treatment periods
-    {T_min, T_min+1, ..., g-1}. For pre-treatment period t, the control
-    group is defined as {units with gvar > t} plus never-treated units.
+    {T_min, T_min+1, ..., g-1}. At pre-treatment period t < g, the
+    focal treatment cohort (gvar == g) is correctly included as
+    controls because these units are not yet treated.
     """
     if len(data) == 0:
         raise ValueError("Input data is empty")
-    
-    # Pre-compute shared data
+
+    # -------------------------------------------------------------------------
+    # Pre-compute Shared Data Structures
+    # -------------------------------------------------------------------------
+    # Extract unit-level gvar once to avoid repeated groupby operations
     unit_gvar = data.groupby(ivar)[gvar].first()
-    
+
+    # Build never-treated mask (constant across all periods)
     if never_treated_values is None:
         nt_values = [0, np.inf]
     else:
         nt_values = never_treated_values
-    
+
     never_treated_mask = unit_gvar.isna()
     if len(nt_values) > 0:
         never_treated_mask = never_treated_mask | unit_gvar.isin(nt_values)
-    
-    # Convert to float for consistent numeric comparison
+
     T_min_f = float(T_min)
-    
+
+    # -------------------------------------------------------------------------
+    # Generate Masks for Each (cohort, period) Pair
+    # -------------------------------------------------------------------------
     results = {}
-    
+
     for g in cohorts:
         g_f = float(g)
-        # Pre-treatment period range: from T_min to g-1
+        # Iterate over pre-treatment periods: T_min, T_min+1, ..., g-1
         t = T_min_f
         while t < g_f:
             if strategy == ControlGroupStrategy.NEVER_TREATED:
                 control_mask = never_treated_mask.copy()
-                
+
             elif strategy == ControlGroupStrategy.NOT_YET_TREATED:
-                # For pre-treatment: control = {gvar > t} ∪ {never-treated}
+                # Include all units not yet treated at period t
                 not_yet_treated_mask = (unit_gvar > t)
                 control_mask = never_treated_mask | not_yet_treated_mask
-            
+
             elif strategy == ControlGroupStrategy.ALL_OTHERS:
-                # All units except those in the treatment cohort itself.
+                # All non-cohort units (may include already-treated)
                 control_mask = (unit_gvar != g_f)
-                
-            else:  # AUTO
+
+            else:  # AUTO strategy
                 not_yet_treated_mask = (unit_gvar > t)
                 nyt_plus_nt_mask = never_treated_mask | not_yet_treated_mask
                 if nyt_plus_nt_mask.sum() > 0:
                     control_mask = nyt_plus_nt_mask
                 else:
                     control_mask = never_treated_mask.copy()
-            
+
             results[(g, t)] = control_mask
             t += 1
-    
+
     return results
 
 
@@ -568,7 +612,7 @@ def validate_control_group(
     Validate whether a control group meets estimation requirements.
 
     Checks control group suitability for treatment effect estimation,
-    including size requirements and aggregation constraints.
+    including minimum size requirements and aggregation constraints.
 
     Parameters
     ----------
@@ -579,15 +623,16 @@ def validate_control_group(
     period : int or float
         Time period being estimated.
     min_control_units : int, default 1
-        Minimum number of control units required.
+        Minimum number of control units required for estimation.
     aggregate_type : str, optional
         Type of aggregation ('cohort' or 'overall'). Aggregated effects
-        require never-treated units for proper identification.
+        require never-treated units because not-yet-treated controls
+        vary across periods and cannot form a consistent comparison group.
     has_never_treated : bool, default True
-        Whether the data contains never-treated units.
+        Whether the data contains any never-treated units.
     strategy : ControlGroupStrategy, optional
-        Control group strategy being used. Generates warnings for
-        aggregated estimation when appropriate.
+        Control group strategy being used. Generates warnings when
+        aggregated estimation uses non-recommended strategies.
 
     Returns
     -------
@@ -599,47 +644,50 @@ def validate_control_group(
     See Also
     --------
     get_valid_control_units : Generate control group masks.
+    has_never_treated_units : Check for never-treated unit availability.
 
     Notes
     -----
-    Validation checks in priority order:
+    Validation checks are applied in priority order:
 
-    1. Non-empty control group
-    2. Minimum size requirement
-    3. Aggregation constraints (cohort/overall effects require
-       never-treated units since not-yet-treated controls vary
-       across periods)
+    1. Non-empty control group (required for any estimation)
+    2. Minimum size requirement (ensures sufficient degrees of freedom)
+    3. Aggregation constraints: cohort-level and overall effects require
+       never-treated units because they aggregate across multiple periods,
+       and not-yet-treated units transition out of the control group as
+       they become treated
     """
     n_controls = control_mask.sum()
-    
-    # Check 1: Empty control group
+
+    # Check 1: Non-empty control group
     if n_controls == 0:
         return False, f"No control units found for cohort={cohort}, period={period}."
-    
-    # Check 2: Minimum size
+
+    # Check 2: Minimum size requirement
     if n_controls < min_control_units:
         return False, (
             f"Insufficient control units for cohort={cohort}, period={period}. "
             f"Found {n_controls}, required {min_control_units}."
         )
-    
-    # Check 3: Aggregate constraints
+
+    # Check 3: Aggregation constraints
     if aggregate_type in ('cohort', 'overall'):
+        # Aggregated effects need consistent controls across periods
         if not has_never_treated:
             return False, (
                 f"Cannot estimate {aggregate_type} effects without never-treated units. "
                 f"When all units are eventually treated, only cohort-period-specific "
                 f"effects can be estimated using not-yet-treated controls."
             )
-        
-        # Warn if strategy is not NEVER_TREATED for aggregate estimation
+
+        # Recommend never-treated strategy for aggregated estimation
         if strategy is not None and strategy != ControlGroupStrategy.NEVER_TREATED:
             return True, (
                 f"Valid control group with {n_controls} units. "
                 f"Warning: For {aggregate_type} effect estimation, it is recommended "
                 f"to use 'never_treated' control group strategy for robustness."
             )
-    
+
     return True, f"Valid control group with {n_controls} units for cohort={cohort}, period={period}."
 
 

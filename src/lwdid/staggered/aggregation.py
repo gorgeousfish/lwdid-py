@@ -2,7 +2,8 @@
 Aggregation of cohort-time ATT estimates to summary parameters.
 
 This module aggregates (g, r)-specific treatment effect estimates into
-cohort-level, overall, and event-time summary parameters.
+cohort-level, overall, and event-time summary parameters for staggered
+difference-in-differences designs.
 
 Three aggregation levels are supported:
 
@@ -44,8 +45,23 @@ outcome transformation, so only never-treated units provide a consistent
 counterfactual baseline. When no never-treated units exist, use aggregate='none'
 to estimate (g, r)-specific effects with not-yet-treated controls.
 
-Event-time aggregation (WATT) uses t-distribution for confidence intervals
-and p-values, which provides proper inference with finite samples.
+The event-time aggregation computes:
+
+.. math::
+
+    \\text{WATT}(r) = \\sum_{g \\in G_r} w(g, r) \\cdot \\widehat{\\tau}_{g, g+r}
+
+where :math:`G_r` is the set of cohorts observed at event time r, and weights
+:math:`w(g, r) = N_g / \\sum_{g' \\in G_r} N_{g'}` are proportional to cohort
+sizes. The standard error assumes independence across cohorts:
+
+.. math::
+
+    \\text{SE}(\\text{WATT}(r)) = \\sqrt{\\sum_{g \\in G_r} w(g, r)^2 \\cdot
+    \\text{SE}(\\widehat{\\tau}_{g, g+r})^2}
+
+Inference uses the t-distribution with conservative degrees of freedom
+(minimum across contributing cohorts) for proper finite-sample coverage.
 """
 
 from __future__ import annotations
@@ -90,10 +106,19 @@ _INSUFFICIENT_SAMPLE_ERROR = (
 )
 
 
+# =============================================================================
+# Data Classes: Result Containers
+# =============================================================================
+
+
 @dataclass
 class CohortEffect:
     """
     Cohort-specific time-averaged treatment effect estimate.
+
+    Stores the ATT estimate for a single treatment cohort, computed by
+    averaging the transformed outcome across all post-treatment periods
+    and regressing on cohort membership with never-treated controls.
 
     Attributes
     ----------
@@ -123,6 +148,11 @@ class CohortEffect:
         Degrees of freedom used for inference (equals df_resid for
         homoskedastic/HC variance, or number of clusters minus one for
         cluster-robust variance).
+
+    See Also
+    --------
+    aggregate_to_cohort : Function that produces CohortEffect instances.
+    cohort_effects_to_dataframe : Convert results to DataFrame format.
     """
     cohort: int
     att: float
@@ -142,6 +172,11 @@ class CohortEffect:
 class OverallEffect:
     """
     Overall cohort-size-weighted treatment effect estimate.
+
+    Stores the aggregate ATT estimate across all treatment cohorts, with
+    weights proportional to cohort sizes. The weight for cohort g is
+    :math:`w(g) = N_g / \\sum_{g'} N_{g'}`, where :math:`N_g` is the number
+    of treated units in cohort g.
 
     Attributes
     ----------
@@ -169,6 +204,10 @@ class OverallEffect:
         Degrees of freedom used for inference (equals df_resid for
         homoskedastic/HC variance, or number of clusters minus one for
         cluster-robust variance).
+
+    See Also
+    --------
+    aggregate_to_overall : Function that produces OverallEffect instances.
     """
     att: float
     se: float
@@ -220,6 +259,11 @@ class EventTimeEffect:
         Sum of normalized weights (should equal 1.0 for validation).
     alpha : float
         Significance level used for confidence interval (default 0.05).
+
+    See Also
+    --------
+    aggregate_to_event_time : Function that produces EventTimeEffect instances.
+    event_time_effects_to_dataframe : Convert results to DataFrame format.
     """
     event_time: int
     att: float
@@ -233,6 +277,11 @@ class EventTimeEffect:
     cohort_contributions: dict[int, float]
     weight_sum: float
     alpha: float = 0.05
+
+
+# =============================================================================
+# Helper Functions: Internal Utilities
+# =============================================================================
 
 
 def _compute_cohort_aggregated_variable(
@@ -271,6 +320,11 @@ def _compute_cohort_aggregated_variable(
     UserWarning
         If rows contain multiple non-NaN values (unexpected for correctly
         transformed data) or if units are excluded due to missing data.
+
+    See Also
+    --------
+    aggregate_to_cohort : Uses this function for cohort effect estimation.
+    construct_aggregated_outcome : Uses this function for overall effect.
 
     Notes
     -----
@@ -353,6 +407,11 @@ def _get_unit_level_gvar(
     pd.Series
         Unit-level cohort values indexed by unit ID.
 
+    See Also
+    --------
+    _identify_nt_mask : Uses output to identify never-treated units.
+    get_cohort_mask : Uses cohort values for treatment indicator construction.
+
     Notes
     -----
     Uses groupby().first() rather than drop_duplicates() for efficiency
@@ -426,6 +485,11 @@ def _add_cluster_to_reg_data(
         If units have missing cluster values or if the number of clusters
         is below the recommended threshold for reliable inference.
 
+    See Also
+    --------
+    aggregate_to_cohort : Calls this function for cluster-robust inference.
+    aggregate_to_overall : Calls this function for cluster-robust inference.
+
     Notes
     -----
     Cluster-robust standard errors require sufficient clusters (typically
@@ -478,6 +542,11 @@ def _add_cluster_to_reg_data(
         )
 
     return reg_data
+
+
+# =============================================================================
+# Cohort-Level Aggregation
+# =============================================================================
 
 
 def aggregate_to_cohort(
@@ -538,6 +607,31 @@ def aggregate_to_cohort(
     ------
     NoNeverTreatedError
         If no never-treated control units exist.
+
+    See Also
+    --------
+    CohortEffect : Result container for cohort-level estimates.
+    aggregate_to_overall : Aggregate across cohorts to overall effect.
+    cohort_effects_to_dataframe : Convert results to DataFrame format.
+
+    Notes
+    -----
+    For each cohort g, the time-averaged transformed outcome is:
+
+    .. math::
+
+        \\bar{Y}_{ig} = \\frac{1}{T - g + 1} \\sum_{r=g}^{T} \\dot{Y}_{irg}
+
+    where :math:`\\dot{Y}_{irg}` is the demeaned or detrended outcome for unit i
+    in period r. The cohort ATT is estimated by regressing :math:`\\bar{Y}_{ig}`
+    on cohort membership indicator :math:`D_{ig}` using never-treated controls:
+
+    .. math::
+
+        \\bar{Y}_{ig} = \\alpha + \\tau_g D_{ig} + \\varepsilon_i
+
+    The coefficient :math:`\\tau_g` estimates the time-averaged treatment effect
+    for cohort g.
     """
     if never_treated_values is not None:
         warnings.warn(
@@ -755,6 +849,25 @@ def construct_aggregated_outcome(
     ------
     ValueError
         If cohorts list is empty or weights keys do not match cohorts.
+
+    See Also
+    --------
+    aggregate_to_overall : Uses this function to construct outcomes.
+    _compute_cohort_aggregated_variable : Computes cohort-specific averages.
+
+    Notes
+    -----
+    The aggregated outcome is constructed differently by treatment status:
+
+    - **Treated units**: Use their own cohort's time-averaged transformation,
+      :math:`\\bar{Y}_i = \\bar{Y}_{ig}` where g is the unit's cohort.
+
+    - **Never-treated units**: Use a weighted average across all cohorts,
+      :math:`\\bar{Y}_i = \\sum_g w(g) \\cdot \\bar{Y}_{ig}`.
+
+    When some cohorts have missing data for a never-treated unit, weights
+    are renormalized to available cohorts. This preserves unbiasedness if
+    missingness is unrelated to potential outcomes.
     """
     if never_treated_values is not None:
         warnings.warn(
@@ -1034,6 +1147,11 @@ def construct_aggregated_outcome(
     return Y_bar
 
 
+# =============================================================================
+# Overall Effect Aggregation
+# =============================================================================
+
+
 def aggregate_to_overall(
     data_transformed: pd.DataFrame,
     gvar: str,
@@ -1088,6 +1206,31 @@ def aggregate_to_overall(
         If no never-treated control units exist.
     ValueError
         If sample size insufficient or no valid cohorts exist.
+
+    See Also
+    --------
+    OverallEffect : Result container for overall effect estimate.
+    aggregate_to_cohort : Estimate cohort-specific effects.
+    construct_aggregated_outcome : Helper function for outcome construction.
+
+    Notes
+    -----
+    Cohort weights are proportional to cohort sizes:
+
+    .. math::
+
+        w(g) = \\frac{N_g}{\\sum_{g'} N_{g'}}
+
+    For treated units, the aggregated outcome equals their cohort's
+    time-averaged transformation. For never-treated units, it is a
+    weighted average across all cohorts' transformations:
+
+    .. math::
+
+        \\bar{Y}_i = \\sum_g w(g) \\cdot \\bar{Y}_{ig}
+
+    The overall ATT is estimated by regressing :math:`\\bar{Y}_i` on an
+    ever-treated indicator with never-treated controls.
     """
     if never_treated_values is not None:
         warnings.warn(
@@ -1258,6 +1401,11 @@ def aggregate_to_overall(
     )
 
 
+# =============================================================================
+# DataFrame Conversion Utilities
+# =============================================================================
+
+
 def cohort_effects_to_dataframe(results: list[CohortEffect]) -> pd.DataFrame:
     """
     Convert CohortEffect objects to a pandas DataFrame.
@@ -1319,6 +1467,11 @@ def cohort_effects_to_dataframe(results: list[CohortEffect]) -> pd.DataFrame:
     ])
 
 
+# =============================================================================
+# Event-Time Aggregation
+# =============================================================================
+
+
 def _compute_event_time_weights(
     cohort_sizes: dict[int, int],
     available_cohorts: list[int],
@@ -1345,6 +1498,11 @@ def _compute_event_time_weights(
     ------
     ValueError
         If available_cohorts is empty or total size is zero.
+
+    See Also
+    --------
+    aggregate_to_event_time : Uses this function for weight computation.
+    _validate_weight_sum : Validates computed weights sum to 1.0.
 
     Notes
     -----
@@ -1423,6 +1581,19 @@ def _select_degrees_of_freedom(
     ------
     ValueError
         If strategy is invalid.
+
+    See Also
+    --------
+    aggregate_to_event_time : Uses this function for df selection.
+
+    Notes
+    -----
+    The 'conservative' strategy (default) uses the minimum df across cohorts,
+    which produces wider confidence intervals but guards against under-coverage
+    when cohort-specific df values vary substantially. The 'weighted' strategy
+    may be appropriate when cohort df values are similar. The 'fallback' strategy
+    ignores cohort-specific df and uses n_cohorts - 1, which may be suitable
+    when cohort df values are unreliable or unavailable.
     """
     valid_strategies = {'conservative', 'weighted', 'fallback'}
     if strategy not in valid_strategies:
@@ -1510,10 +1681,30 @@ def aggregate_to_event_time(
         If weight sum deviates from 1.0, if cohorts are excluded due to
         missing data, or if df information is unavailable.
 
+    See Also
+    --------
+    EventTimeEffect : Result container for event-time estimates.
+    event_time_effects_to_dataframe : Convert results to DataFrame format.
+    _compute_event_time_weights : Weight computation helper.
+    _select_degrees_of_freedom : Degrees of freedom selection.
+
     Notes
     -----
-    The standard error formula assumes independence across cohorts:
-    SE(WATT(r)) = sqrt(Σ [w(g,r)]² × [SE(ATT)]²)
+    The weighted average treatment effect at event time r is:
+
+    .. math::
+
+        \\text{WATT}(r) = \\sum_{g \\in G_r} w(g, r) \\cdot
+        \\widehat{\\tau}_{g, g+r}
+
+    where :math:`G_r` is the set of cohorts observed at event time r, and
+    weights :math:`w(g, r) = N_g / \\sum_{g' \\in G_r} N_{g'}` are proportional
+    to cohort sizes. The standard error assumes independence across cohorts:
+
+    .. math::
+
+        \\text{SE}(\\text{WATT}(r)) = \\sqrt{\\sum_{g \\in G_r} w(g, r)^2
+        \\cdot \\text{SE}(\\widehat{\\tau}_{g, g+r})^2}
 
     Confidence intervals use t-distribution rather than normal distribution,
     which provides proper inference for small samples.
@@ -1751,7 +1942,11 @@ def aggregate_to_event_time(
     if verbose:
         n_event_times = len(results)
         n_valid = sum(1 for e in results if not np.isnan(e.att))
-        print(f"aggregate_to_event_time: {n_valid}/{n_event_times} event times computed")
+        warnings.warn(
+            f"aggregate_to_event_time: {n_valid}/{n_event_times} event times computed",
+            UserWarning,
+            stacklevel=2
+        )
 
     return results
 

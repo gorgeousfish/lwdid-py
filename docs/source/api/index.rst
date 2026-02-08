@@ -12,10 +12,29 @@ Core Modules
 
    core
    results
-   sensitivity
    staggered
    transformations
    estimation
+
+Inference and Diagnostics
+-------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   inference
+   clustering_diagnostics
+   trend_diagnostics
+   selection_diagnostics
+   sensitivity
+
+Data Processing
+---------------
+
+.. toctree::
+   :maxdepth: 2
+
+   preprocessing
    validation
    randomization
    visualization
@@ -24,7 +43,7 @@ Core Modules
 Quick Index
 -----------
 
-Main exported components:
+**Main API:**
 
 - :func:`lwdid.lwdid` - Main estimation function supporting three scenarios:
 
@@ -33,7 +52,21 @@ Main exported components:
   - Staggered adoption with cohort-time effects (Lee and Wooldridge, 2025)
 
 - :class:`lwdid.LWDIDResults` - Results container class
-- :mod:`lwdid.sensitivity` - Sensitivity analysis module
+
+**Diagnostics:**
+
+- :mod:`lwdid.clustering_diagnostics` - Clustering analysis and recommendations
+- :mod:`lwdid.trend_diagnostics` - Parallel trends testing and heterogeneous trends
+- :mod:`lwdid.selection_diagnostics` - Selection mechanism diagnostics
+
+**Inference:**
+
+- :mod:`lwdid.inference` - Wild cluster bootstrap inference
+- :mod:`lwdid.sensitivity` - Sensitivity analysis
+
+**Data Processing:**
+
+- :mod:`lwdid.preprocessing` - Repeated cross-section aggregation
 - :mod:`lwdid.staggered` - Staggered DiD module
 - :mod:`lwdid.exceptions` - Exception hierarchy
 

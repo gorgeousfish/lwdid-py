@@ -107,8 +107,9 @@
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#detrend-did-with-unit-specific-linear-trends">detrend: DiD with Unit-Specific Linear Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="user_guide.html#demeanq-quarterly-data-with-seasonal-fixed-effects">demeanq: Quarterly Data with Seasonal Fixed Effects</a></li>
-<li class="toctree-l3"><a class="reference internal" href="user_guide.html#detrendq-quarterly-data-with-trends-and-seasonal-effects">detrendq: Quarterly Data with Trends and Seasonal Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#demeanq-seasonal-data-with-seasonal-fixed-effects">demeanq: Seasonal Data with Seasonal Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#detrendq-seasonal-data-with-trends-and-seasonal-effects">detrendq: Seasonal Data with Trends and Seasonal Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#automatic-frequency-detection">Automatic Frequency Detection</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#variance-estimation">Variance Estimation</a><ul>
@@ -149,10 +150,18 @@
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#missing-data">Missing Data</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide.html#never-treated-unit-data-preparation">Never-Treated Unit Data Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#valid-never-treated-encodings">Valid Never-Treated Encodings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#converting-from-stata-data">Converting from Stata Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#checking-never-treated-status">Checking Never-Treated Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#common-issues-and-solutions">Common Issues and Solutions</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#best-practices">Best Practices</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#sample-size-and-inference-method-selection-matrix">Sample Size and Inference Method Selection Matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
@@ -165,10 +174,28 @@
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#staggered-adoption-design">Staggered Adoption Design</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#id2">Basic Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#robustness-to-no-anticipation-violations">Robustness to No-Anticipation Violations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#accessing-staggered-results">Accessing Staggered Results</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#estimator-selection">Estimator Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#staggered-example">Staggered Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide.html#pre-treatment-dynamics-and-parallel-trends-testing">Pre-treatment Dynamics and Parallel Trends Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#why-pre-treatment-dynamics-matter">Why Pre-treatment Dynamics Matter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#id3">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#accessing-pre-treatment-results">Accessing Pre-treatment Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#interpreting-the-parallel-trends-test">Interpreting the Parallel Trends Test</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#event-study-visualization-with-pre-treatment">Event Study Visualization with Pre-treatment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#complete-workflow-example">Complete Workflow Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#transformation-methods-for-pre-treatment">Transformation Methods for Pre-treatment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide.html#trend-diagnostics-tools">Trend Diagnostics Tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#testing-parallel-trends-with-standalone-function">Testing Parallel Trends with Standalone Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#getting-automated-transformation-recommendation">Getting Automated Transformation Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#visualizing-cohort-trends">Visualizing Cohort Trends</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#further-reading">Further Reading</a></li>
@@ -182,6 +209,14 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="examples/index.html#quarterly-data">Quarterly Data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="examples/index.html#retail-sales-with-seasonal-patterns">Retail Sales with Seasonal Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples/index.html#monthly-data">Monthly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/index.html#monthly-sales-with-seasonal-adjustment-q-12">Monthly Sales with Seasonal Adjustment (Q=12)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples/index.html#weekly-data">Weekly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/index.html#weekly-sales-with-seasonal-adjustment-q-52">Weekly Sales with Seasonal Adjustment (Q=52)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="examples/index.html#control-variables">Control Variables</a><ul>
@@ -247,7 +282,9 @@
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#ipw-estimator">IPW Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#pre-treatment-dynamics">Pre-treatment Dynamics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#examples">Examples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#see-also">See Also</a></li>
 </ul>
@@ -279,16 +316,99 @@
 <li class="toctree-l4"><a class="reference internal" href="api/estimation.html#see-also">See Also</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#inference-and-diagnostics">Inference and Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/inference.html">Inference Module (inference)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#methodological-notes">Methodological Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/clustering_diagnostics.html">Clustering Diagnostics Module (clustering_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#enums">Enums</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#data-classes">Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/trend_diagnostics.html">Trend Diagnostics Module (trend_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod"><code class="docutils literal notranslate"><span class="pre">TrendTestMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod"><code class="docutils literal notranslate"><span class="pre">TransformationMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.RecommendationConfidence"><code class="docutils literal notranslate"><span class="pre">RecommendationConfidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate"><code class="docutils literal notranslate"><span class="pre">PreTrendEstimate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate"><code class="docutils literal notranslate"><span class="pre">CohortTrendEstimate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference"><code class="docutils literal notranslate"><span class="pre">TrendDifference</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult"><code class="docutils literal notranslate"><span class="pre">ParallelTrendsTestResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics"><code class="docutils literal notranslate"><span class="pre">HeterogeneousTrendsDiagnostics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation"><code class="docutils literal notranslate"><span class="pre">TransformationRecommendation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.test_parallel_trends"><code class="docutils literal notranslate"><span class="pre">test_parallel_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.diagnose_heterogeneous_trends"><code class="docutils literal notranslate"><span class="pre">diagnose_heterogeneous_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.recommend_transformation"><code class="docutils literal notranslate"><span class="pre">recommend_transformation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.plot_cohort_trends"><code class="docutils literal notranslate"><span class="pre">plot_cohort_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#testing-functions">Testing Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#visualization">Visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#supporting-data-classes">Supporting Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#methodological-background">Methodological Background</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/selection_diagnostics.html">Selection Diagnostics Module (selection_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#enums">Enums</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#data-classes">Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#interpretation-guide">Interpretation Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/sensitivity.html">Sensitivity Analysis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#interpreting-results">Interpreting Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#data-processing">Data Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/preprocessing.html">Preprocessing Module (preprocessing)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#key-functions">Key Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#key-classes">Key Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#methodological-notes">Methodological Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#data-requirements">Data Requirements</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="api/validation.html">Validation Module (validation)</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_season_diversity"><code class="docutils literal notranslate"><span class="pre">validate_season_diversity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_season_coverage"><code class="docutils literal notranslate"><span class="pre">validate_season_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.detect_frequency"><code class="docutils literal notranslate"><span class="pre">detect_frequency()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#never-treated-unit-identification">Never-Treated Unit Identification</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#best-practices">Best Practices</a></li>
@@ -324,6 +444,7 @@
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidParameterError"><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidRollingMethodError"><code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidVCETypeError"><code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.UnbalancedPanelError"><code class="docutils literal notranslate"><span class="pre">UnbalancedPanelError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InsufficientDataError"><code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.NoTreatedUnitsError"><code class="docutils literal notranslate"><span class="pre">NoTreatedUnitsError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.NoControlUnitsError"><code class="docutils literal notranslate"><span class="pre">NoControlUnitsError</span></code></a></li>
@@ -335,6 +456,9 @@
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.AggregationError"><code class="docutils literal notranslate"><span class="pre">AggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidAggregationError"><code class="docutils literal notranslate"><span class="pre">InvalidAggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InsufficientCellSizeError"><code class="docutils literal notranslate"><span class="pre">InsufficientCellSizeError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#exception-classes">Exception Classes</a></li>
@@ -357,7 +481,7 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#core-principle">Core Principle</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#demean-transformation-procedure-2-1">Demean Transformation (Procedure 2.1)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#detrend-transformation-procedure-3-1">Detrend Transformation (Procedure 3.1)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#quarterly-transformations">Quarterly Transformations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#seasonal-transformations-demeanq-detrendq">Seasonal Transformations (demeanq/detrendq)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#inference-under-clm-assumptions">Inference Under CLM Assumptions</a><ul>
@@ -372,6 +496,18 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#clustering-at-higher-levels">Clustering at Higher Levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#when-to-cluster-at-higher-levels">When to Cluster at Higher Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#minimum-cluster-requirements">Minimum Cluster Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#id1">Degrees of Freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#diagnosing-clustering-structure">Diagnosing Clustering Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#getting-a-clustering-recommendation">Getting a Clustering Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#checking-clustering-consistency">Checking Clustering Consistency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#clustering-workflow">Clustering Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#references-for-clustering">References for Clustering</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
@@ -380,6 +516,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
@@ -387,6 +524,34 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#parallel-trends">Parallel Trends</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#common-treatment-timing-common-timing-mode">Common Treatment Timing (Common Timing Mode)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#unbalanced-panels-and-selection-mechanism">Unbalanced Panels and Selection Mechanism</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#selection-mechanism-assumption">Selection Mechanism Assumption</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#acceptable-missing-data-patterns">Acceptable Missing Data Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#problematic-missing-data-patterns">Problematic Missing Data Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#detrending-for-robustness">Detrending for Robustness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#diagnosing-selection-risk">Diagnosing Selection Risk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#controlling-panel-balance">Controlling Panel Balance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#heterogeneous-trends-and-assumption-cht">Heterogeneous Trends and Assumption CHT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#assumption-cht">Assumption CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#first-difference-under-cht">First Difference Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#choosing-between-demean-and-detrend">Choosing Between Demean and Detrend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#procedure-5-1-detrending-under-cht">Procedure 5.1: Detrending Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#testing-parallel-trends">Testing Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#getting-a-transformation-recommendation">Getting a Transformation Recommendation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#pre-treatment-period-dynamics">Pre-treatment Period Dynamics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#motivation">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#rolling-transformation-for-pre-treatment-periods">Rolling Transformation for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#anchor-point-convention">Anchor Point Convention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#pre-treatment-att-estimation">Pre-treatment ATT Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#control-group-for-pre-treatment-periods">Control Group for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#joint-test-for-parallel-trends">Joint Test for Parallel Trends</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#comparison-with-other-did-methods">Comparison with Other DiD Methods</a><ul>
@@ -410,11 +575,21 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#id2">Inference Distribution by Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#aggregation">Aggregation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#event-time-aggregation-watt">Event Time Aggregation (WATT)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#robustness-to-pre-treatment-period-selection">Robustness to Pre-treatment Period Selection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#id3">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#sensitivity-ratio">Sensitivity Ratio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#using-robustness-pre-periods">Using robustness_pre_periods()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#no-anticipation-sensitivity">No-Anticipation Sensitivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#using-exclude-pre-periods-parameter">Using exclude_pre_periods Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#comprehensive-sensitivity-analysis">Comprehensive Sensitivity Analysis</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#references">References</a></li>
-<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#further-reading">Further Reading</a></li>
 </ul>
 </li>
@@ -483,6 +658,11 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
+       <a href="api/preprocessing.html#module-lwdid.preprocessing"><code class="xref">lwdid.preprocessing</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
        <a href="api/randomization.html#module-lwdid.randomization"><code class="xref">lwdid.randomization</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
@@ -493,7 +673,17 @@
      <tr class="cg-1">
        <td></td>
        <td>&#160;&#160;&#160;
+       <a href="api/sensitivity.html#module-lwdid.sensitivity"><code class="xref">lwdid.sensitivity</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
        <a href="api/transformations.html#module-lwdid.transformations"><code class="xref">lwdid.transformations</code></a></td><td>
+       <em></em></td></tr>
+     <tr class="cg-1">
+       <td></td>
+       <td>&#160;&#160;&#160;
+       <a href="api/trend_diagnostics.html#module-lwdid.trend_diagnostics"><code class="xref">lwdid.trend_diagnostics</code></a></td><td>
        <em></em></td></tr>
      <tr class="cg-1">
        <td></td>

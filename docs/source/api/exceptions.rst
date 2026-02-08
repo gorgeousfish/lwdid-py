@@ -35,7 +35,11 @@ Exception Hierarchy
    ├── TimeDiscontinuityError
    ├── MissingRequiredColumnError
    ├── RandomizationError
-   └── VisualizationError
+   ├── VisualizationError
+   ├── UnbalancedPanelError
+   └── AggregationError
+       ├── InvalidAggregationError
+       └── InsufficientCellSizeError
 
 Exception Classes
 -----------------
@@ -141,8 +145,8 @@ InvalidVCETypeError
 ~~~~~~~~~~~~~~~~~~~
 
 Specialized subclass of :class:`InvalidParameterError` raised when the
-``vce`` argument is not one of ``None``, ``'robust'``, ``'hc1'``,
-``'hc3'`` or ``'cluster'``.
+``vce`` argument is not one of ``None``, ``'robust'``, ``'hc0'``,
+``'hc1'``, ``'hc2'``, ``'hc3'``, ``'hc4'``, or ``'cluster'``.
 
 InvalidStaggeredDataError
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -316,6 +320,8 @@ Catch specific exceptions for targeted error handling:
        MissingRequiredColumnError,
        RandomizationError,
        VisualizationError,
+       UnbalancedPanelError,
+       AggregationError,
    )
 
    try:

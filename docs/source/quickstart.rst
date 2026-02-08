@@ -62,11 +62,11 @@ Required Parameters
    - ``demean/demeanq``: Requires at least 1 pre-treatment period (:math:`T_0 \geq 1`)
    - ``detrend/detrendq``: Requires at least 2 pre-treatment periods (:math:`T_0 \geq 2`)
 
-   The ``detrend`` method estimates unit-specific linear trends using pre-treatment
-   data via regression :math:`Y_{it} = A_i + B_i t + \varepsilon_{it}`, which
-   requires at least 2 observations to identify both intercept and slope. This is
-   a transformation step as described in Lee and Wooldridge (2026, Procedure 3.1);
-   statistical inference is conducted in the subsequent cross-sectional regression.
+   The ``demean`` method subtracts the unit-specific pre-treatment mean, as
+   described in Lee and Wooldridge (2026). The ``detrend`` method estimates
+   unit-specific linear trends using pre-treatment data via regression
+   :math:`Y_{it} = A_i + B_i t + \varepsilon_{it}`, which requires at least 2
+   observations to identify both intercept and slope (Lee and Wooldridge, 2026).
 
 Common Options
 --------------
@@ -267,12 +267,15 @@ When units are treated at different times, use the ``gvar`` parameter:
    data = pd.read_csv('castle.csv')
 
    # Estimate with staggered design
+   # Create gvar (first treatment year, NaN -> 0 for never-treated)
+   data['gvar'] = data['effyear'].fillna(0).astype(int)
+
    results = lwdid(
        data,
-       y='l_homicide',           # outcome variable
-       ivar='state',             # unit identifier
+       y='lhomicide',            # outcome variable
+       ivar='sid',               # unit identifier (state ID)
        tvar='year',              # time variable
-       gvar='effyear',           # first treatment period (use inf for never-treated)
+       gvar='gvar',              # first treatment period (0 = never treated)
        rolling='demean',         # transformation method
        aggregate='overall',      # aggregate to overall effect
        control_group='not_yet_treated',  # control group strategy
@@ -302,7 +305,7 @@ Staggered Results
 Key Staggered Parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``gvar``: Column indicating first treatment period (use inf or NaN for never-treated)
+- ``gvar``: Column indicating first treatment period (0, inf, or NaN for never-treated)
 - ``aggregate``: ``'none'``, ``'cohort'``, or ``'overall'``
 - ``control_group``: ``'not_yet_treated'`` or ``'never_treated'``
 - ``estimator``: ``'ra'``, ``'ipw'``, ``'ipwra'``, or ``'psm'``

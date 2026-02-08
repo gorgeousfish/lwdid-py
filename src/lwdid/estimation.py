@@ -446,10 +446,10 @@ def estimate_att(
     if vce_lower is None:
         results = model.fit()
     elif vce_lower == 'hc0':
-        # HC0: White (1980) - no adjustment
+        # HC0: basic heteroskedasticity-robust, no small-sample adjustment
         results = model.fit(cov_type='HC0')
     elif vce_lower in ('hc1', 'robust'):
-        # HC1: degrees-of-freedom correction (Stata default)
+        # HC1: degrees-of-freedom correction n/(n-k)
         n_treated = int((data_sample[d].astype(float).values == 1).sum())
         n_control = int((data_sample[d].astype(float).values == 0).sum())
 
@@ -467,7 +467,7 @@ def estimate_att(
         # HC2: leverage-adjusted
         results = model.fit(cov_type='HC2')
     elif vce_lower == 'hc3':
-        # HC3: small-sample adjusted (recommended by Simonsohn 2021)
+        # HC3: small-sample adjusted, suitable for moderate N
         n_treated = int((data_sample[d].astype(float).values == 1).sum())
         n_control = int((data_sample[d].astype(float).values == 0).sum())
         
@@ -482,8 +482,8 @@ def estimate_att(
         
         results = model.fit(cov_type='HC3')
     elif vce_lower == 'hc4':
-        # HC4: adaptive leverage correction (Cribari-Neto 2004)
-        # statsmodels doesn't support HC4, so we compute it manually
+        # HC4: adaptive leverage correction for high-leverage observations.
+        # statsmodels does not support HC4; compute manually.
         results_ols = model.fit()
         
         # Get OLS estimates
@@ -855,8 +855,8 @@ def estimate_period_effects(
             elif vce_lower == 'hc3':
                 model_t = sm.OLS(data_t[ydot], X_t, missing='drop').fit(cov_type='HC3')
             elif vce_lower == 'hc4':
-                # HC4: adaptive leverage correction (Cribari-Neto 2004)
-                # statsmodels doesn't support HC4, compute manually
+                # HC4: adaptive leverage correction for high-leverage observations.
+                # statsmodels does not support HC4; compute manually.
                 model_ols_t = sm.OLS(data_t[ydot], X_t, missing='drop').fit()
                 
                 n_obs_t = int(model_ols_t.nobs)
@@ -933,7 +933,6 @@ def estimate_period_effects(
             se_t = bse_vals[1]
 
             if se_t == 0 or np.isnan(se_t) or np.isinf(se_t):
-                import warnings
                 period_label = period_labels.get(t, str(t))
                 warnings.warn(
                     f"Period {period_label} (t={t}) regression produced degenerate results "
@@ -964,7 +963,6 @@ def estimate_period_effects(
                 ci_lower = beta_t - t_crit_t * se_t
                 ci_upper = beta_t + t_crit_t * se_t
         except Exception as e:
-            import warnings
             period_label = period_labels.get(t, str(t))
             warnings.warn(
                 f"Period {period_label} (t={t}) regression failed: {str(e)}. "

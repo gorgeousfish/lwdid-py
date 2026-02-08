@@ -104,8 +104,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#detrend-did-with-unit-specific-linear-trends">detrend: DiD with Unit-Specific Linear Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#demeanq-quarterly-data-with-seasonal-fixed-effects">demeanq: Quarterly Data with Seasonal Fixed Effects</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#detrendq-quarterly-data-with-trends-and-seasonal-effects">detrendq: Quarterly Data with Trends and Seasonal Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#demeanq-seasonal-data-with-seasonal-fixed-effects">demeanq: Seasonal Data with Seasonal Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#detrendq-seasonal-data-with-trends-and-seasonal-effects">detrendq: Seasonal Data with Trends and Seasonal Effects</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#variance-estimation">Variance Estimation</a><ul>
@@ -146,10 +146,18 @@
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#missing-data">Missing Data</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#never-treated-unit-data-preparation">Never-Treated Unit Data Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#valid-never-treated-encodings">Valid Never-Treated Encodings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#converting-from-stata-data">Converting from Stata Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#checking-never-treated-status">Checking Never-Treated Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#common-issues-and-solutions">Common Issues and Solutions</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#best-practices">Best Practices</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#sample-size-and-inference-method-selection-matrix">Sample Size and Inference Method Selection Matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
@@ -162,10 +170,21 @@
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#staggered-adoption-design">Staggered Adoption Design</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#id2">Basic Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#robustness-to-no-anticipation-violations">Robustness to No-Anticipation Violations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#accessing-staggered-results">Accessing Staggered Results</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#estimator-selection">Estimator Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#staggered-example">Staggered Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#pre-treatment-dynamics-and-parallel-trends-testing">Pre-treatment Dynamics and Parallel Trends Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#why-pre-treatment-dynamics-matter">Why Pre-treatment Dynamics Matter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#id3">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#accessing-pre-treatment-results">Accessing Pre-treatment Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#interpreting-the-parallel-trends-test">Interpreting the Parallel Trends Test</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#event-study-visualization-with-pre-treatment">Event Study Visualization with Pre-treatment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#complete-workflow-example">Complete Workflow Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../user_guide.html#transformation-methods-for-pre-treatment">Transformation Methods for Pre-treatment</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../user_guide.html#further-reading">Further Reading</a></li>
@@ -179,6 +198,14 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/index.html#quarterly-data">Quarterly Data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../examples/index.html#retail-sales-with-seasonal-patterns">Retail Sales with Seasonal Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/index.html#monthly-data">Monthly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../examples/index.html#monthly-sales-with-seasonal-adjustment-q-12">Monthly Sales with Seasonal Adjustment (Q=12)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/index.html#weekly-data">Weekly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../examples/index.html#weekly-sales-with-seasonal-adjustment-q-52">Weekly Sales with Seasonal Adjustment (Q=52)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../examples/index.html#control-variables">Control Variables</a><ul>
@@ -234,6 +261,15 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/results.html#see-also">See Also</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sensitivity.html">Sensitivity Analysis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sensitivity.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sensitivity.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sensitivity.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sensitivity.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sensitivity.html#interpreting-results">Interpreting Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sensitivity.html#see-also">See Also</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/staggered.html">Staggered DiD Module (staggered)</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#key-concepts">Key Concepts</a></li>
@@ -244,7 +280,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#ipw-estimator">IPW Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#pre-treatment-dynamics">Pre-treatment Dynamics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#examples">Examples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/staggered.html#see-also">See Also</a></li>
 </ul>
@@ -278,14 +316,18 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../api/validation.html">Validation Module (validation)</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_season_diversity"><code class="docutils literal notranslate"><span class="pre">validate_season_diversity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_season_coverage"><code class="docutils literal notranslate"><span class="pre">validate_season_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#lwdid.validation.detect_frequency"><code class="docutils literal notranslate"><span class="pre">detect_frequency()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#never-treated-unit-identification">Never-Treated Unit Identification</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/validation.html#best-practices">Best Practices</a></li>
@@ -321,6 +363,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.InvalidParameterError"><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.InvalidRollingMethodError"><code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.InvalidVCETypeError"><code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.UnbalancedPanelError"><code class="docutils literal notranslate"><span class="pre">UnbalancedPanelError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.InsufficientDataError"><code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.NoTreatedUnitsError"><code class="docutils literal notranslate"><span class="pre">NoTreatedUnitsError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.NoControlUnitsError"><code class="docutils literal notranslate"><span class="pre">NoControlUnitsError</span></code></a></li>
@@ -332,6 +375,9 @@
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.AggregationError"><code class="docutils literal notranslate"><span class="pre">AggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.InvalidAggregationError"><code class="docutils literal notranslate"><span class="pre">InvalidAggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#lwdid.exceptions.InsufficientCellSizeError"><code class="docutils literal notranslate"><span class="pre">InsufficientCellSizeError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../api/exceptions.html#exception-classes">Exception Classes</a></li>
@@ -354,7 +400,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#core-principle">Core Principle</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#demean-transformation-procedure-2-1">Demean Transformation (Procedure 2.1)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#detrend-transformation-procedure-3-1">Detrend Transformation (Procedure 3.1)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#quarterly-transformations">Quarterly Transformations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#seasonal-transformations-demeanq-detrendq">Seasonal Transformations (demeanq/detrendq)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#inference-under-clm-assumptions">Inference Under CLM Assumptions</a><ul>
@@ -369,6 +415,18 @@
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#clustering-at-higher-levels">Clustering at Higher Levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#when-to-cluster-at-higher-levels">When to Cluster at Higher Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#minimum-cluster-requirements">Minimum Cluster Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#id1">Degrees of Freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#diagnosing-clustering-structure">Diagnosing Clustering Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#getting-a-clustering-recommendation">Getting a Clustering Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#checking-clustering-consistency">Checking Clustering Consistency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#clustering-workflow">Clustering Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#references-for-clustering">References for Clustering</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
@@ -377,6 +435,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
@@ -386,7 +445,27 @@
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#comparison-with-other-did-methods">Comparison with Other DiD Methods</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#heterogeneous-trends-and-assumption-cht">Heterogeneous Trends and Assumption CHT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#assumption-cht">Assumption CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#first-difference-under-cht">First Difference Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#choosing-between-demean-and-detrend">Choosing Between Demean and Detrend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#procedure-5-1-detrending-under-cht">Procedure 5.1: Detrending Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#testing-parallel-trends">Testing Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#getting-a-transformation-recommendation">Getting a Transformation Recommendation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#comparison-with-other-did-methods">Comparison with Other DiD Methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#pre-treatment-period-dynamics">Pre-treatment Period Dynamics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#motivation">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#rolling-transformation-for-pre-treatment-periods">Rolling Transformation for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#anchor-point-convention">Anchor Point Convention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#pre-treatment-att-estimation">Pre-treatment ATT Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#control-group-for-pre-treatment-periods">Control Group for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#joint-test-for-parallel-trends">Joint Test for Parallel Trends</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#id2">Comparison with Other DiD Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#two-way-fixed-effects-twfe">Two-Way Fixed Effects (TWFE)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#callaway-and-sant-anna-2021">Callaway and Sant’Anna (2021)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#when-to-use-this-method">When to Use This Method</a></li>
@@ -407,11 +486,20 @@
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#id3">Inference Distribution by Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#aggregation">Aggregation</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#robustness-to-pre-treatment-period-selection">Robustness to Pre-treatment Period Selection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#id4">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#sensitivity-ratio">Sensitivity Ratio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#using-robustness-pre-periods">Using robustness_pre_periods()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#no-anticipation-sensitivity">No-Anticipation Sensitivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#using-exclude-pre-periods-parameter">Using exclude_pre_periods Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../methodological_notes.html#comprehensive-sensitivity-analysis">Comprehensive Sensitivity Analysis</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#references">References</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../methodological_notes.html#further-reading">Further Reading</a></li>
 </ul>
 </li>
@@ -530,7 +618,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">statsmodels.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sm</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InsufficientPrePeriodsError</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_quarter_diversity</span><span class="p">,</span> <span class="n">validate_quarter_coverage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.validation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">validate_quarter_diversity</span><span class="p">,</span>
+    <span class="n">validate_quarter_coverage</span><span class="p">,</span>
+    <span class="n">validate_season_diversity</span><span class="p">,</span>
+    <span class="n">validate_season_coverage</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <span class="c1"># Threshold for detecting degenerate time variance in OLS estimation.</span>
@@ -587,42 +680,48 @@
     <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">pre_tindex</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_validate_quarterly_transform_requirements</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_seasonal_transform_requirements</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">ivar</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">tindex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">post</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">quarter</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">season_var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">y</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">transform_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">min_global_pre_periods</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">Q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Validate data requirements for quarterly seasonal transformations.</span>
+<span class="sd">    Validate data requirements for seasonal transformations.</span>
 
 <span class="sd">    Verifies that data satisfy the requirements for demeanq or detrendq</span>
 <span class="sd">    transformations: sufficient global pre-treatment periods, adequate</span>
-<span class="sd">    per-unit observations for model estimation, and complete quarter</span>
+<span class="sd">    per-unit observations for model estimation, and complete seasonal</span>
 <span class="sd">    coverage in the pre-treatment period.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : pd.DataFrame</span>
-<span class="sd">        Panel data with unit, time, post indicator, and quarter columns.</span>
+<span class="sd">        Panel data with unit, time, post indicator, and seasonal columns.</span>
 <span class="sd">    ivar : str</span>
 <span class="sd">        Column name for unit identifier.</span>
 <span class="sd">    tindex : str</span>
 <span class="sd">        Column name for time index.</span>
 <span class="sd">    post : str</span>
 <span class="sd">        Column name for post-treatment indicator (0=pre, 1=post).</span>
-<span class="sd">    quarter : str</span>
-<span class="sd">        Column name for quarter variable (values in {1, 2, 3, 4}).</span>
+<span class="sd">    season_var : str</span>
+<span class="sd">        Column name for seasonal variable (values in {1, 2, ..., Q}).</span>
 <span class="sd">    y : str</span>
 <span class="sd">        Column name for outcome variable.</span>
 <span class="sd">    transform_type : str</span>
 <span class="sd">        Transformation type: &#39;demeanq&#39; or &#39;detrendq&#39;.</span>
 <span class="sd">    min_global_pre_periods : int</span>
 <span class="sd">        Minimum required unique pre-treatment periods.</span>
+<span class="sd">    Q : int, default 4</span>
+<span class="sd">        Number of seasonal periods per cycle. Common values:</span>
+<span class="sd">        - 4: Quarterly data (default)</span>
+<span class="sd">        - 12: Monthly data</span>
+<span class="sd">        - 52: Weekly data</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -635,16 +734,16 @@
 <span class="sd">        If global pre-period count is below minimum, or if any unit has</span>
 <span class="sd">        insufficient pre-period observations for reliable estimation.</span>
 <span class="sd">    ValueError</span>
-<span class="sd">        If quarter column contains values outside {1, 2, 3, 4}.</span>
+<span class="sd">        If season_var column contains values outside {1, 2, ..., Q}.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
 <span class="sd">    Parameter count differs by transformation type:</span>
 
-<span class="sd">    - demeanq: :math:`Y \\sim 1 + \\text{quarter}` requires :math:`k = Q` parameters</span>
-<span class="sd">    - detrendq: :math:`Y \\sim 1 + t + \\text{quarter}` requires :math:`k = Q + 1`</span>
+<span class="sd">    - demeanq: :math:`Y \\sim 1 + \\text{season}` requires :math:`k = Q` parameters</span>
+<span class="sd">    - detrendq: :math:`Y \\sim 1 + t + \\text{season}` requires :math:`k = Q + 1`</span>
 
-<span class="sd">    where Q is the number of distinct quarters in the unit&#39;s pre-period.</span>
+<span class="sd">    where Q is the number of distinct seasons in the unit&#39;s pre-period.</span>
 <span class="sd">    Reliable estimation requires :math:`n \\geq k + 1` to ensure at least</span>
 <span class="sd">    one residual degree of freedom.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -652,27 +751,28 @@
     <span class="n">n_pre_periods</span> <span class="o">=</span> <span class="n">pre_data</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
     <span class="n">K</span> <span class="o">=</span> <span class="n">_compute_max_pre_tindex</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">)</span>
 
-    <span class="c1"># Validate quarter values are in the expected range {1, 2, 3, 4}.</span>
+    <span class="c1"># Validate season values are in the expected range {1, 2, ..., Q}.</span>
     <span class="c1"># Non-standard values would create incorrect dummy variables in the model.</span>
-    <span class="n">quarter_values</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
-    <span class="n">valid_quarters</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">}</span>
+    <span class="n">season_values</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="n">valid_seasons</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
 
     <span class="c1"># Handle both integer and float representations (e.g., 1.0, 2.0).</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">quarter_int_values</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quarter_values</span> <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">q</span><span class="p">)}</span>
-        <span class="n">invalid_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">quarter_values</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="nb">float</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">quarter_int_values</span><span class="p">}</span>
-        <span class="n">out_of_range</span> <span class="o">=</span> <span class="n">quarter_int_values</span> <span class="o">-</span> <span class="n">valid_quarters</span>
+        <span class="n">season_int_values</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">season_values</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)}</span>
+        <span class="n">invalid_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">season_values</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">season_int_values</span><span class="p">}</span>
+        <span class="n">out_of_range</span> <span class="o">=</span> <span class="n">season_int_values</span> <span class="o">-</span> <span class="n">valid_seasons</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-        <span class="n">invalid_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">quarter_values</span><span class="p">)</span>
+        <span class="n">invalid_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">season_values</span><span class="p">)</span>
         <span class="n">out_of_range</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     
     <span class="k">if</span> <span class="n">invalid_values</span> <span class="ow">or</span> <span class="n">out_of_range</span><span class="p">:</span>
-        <span class="n">all_invalid</span> <span class="o">=</span> <span class="n">invalid_values</span> <span class="o">|</span> <span class="p">{</span><span class="nb">float</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">out_of_range</span><span class="p">}</span>
+        <span class="n">all_invalid</span> <span class="o">=</span> <span class="n">invalid_values</span> <span class="o">|</span> <span class="p">{</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">out_of_range</span><span class="p">}</span>
+        <span class="n">freq_label</span> <span class="o">=</span> <span class="p">{</span><span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;quarters&#39;</span><span class="p">,</span> <span class="mi">12</span><span class="p">:</span> <span class="s1">&#39;months&#39;</span><span class="p">,</span> <span class="mi">52</span><span class="p">:</span> <span class="s1">&#39;weeks&#39;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;seasons (1-</span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Quarter column &#39;</span><span class="si">{</span><span class="n">quarter</span><span class="si">}</span><span class="s2">&#39; contains invalid values: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">all_invalid</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Expected integer values in </span><span class="se">{{</span><span class="s2">1, 2, 3, 4</span><span class="se">}}</span><span class="s2"> representing calendar quarters.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;If your quarter values use a different encoding (e.g., 0-3 or &#39;Q1&#39;-&#39;Q4&#39;), &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;please recode them to 1-4 before calling lwdid().&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Seasonal column &#39;</span><span class="si">{</span><span class="n">season_var</span><span class="si">}</span><span class="s2">&#39; contains invalid values: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">all_invalid</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Expected integer values in </span><span class="se">{{</span><span class="s2">1, 2, ..., </span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="se">}}</span><span class="s2"> representing </span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2">.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;If your seasonal values use a different encoding (e.g., 0-</span><span class="si">{</span><span class="n">Q</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">), &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;please recode them to 1-</span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="s2"> before calling lwdid().&quot;</span>
         <span class="p">)</span>
     
     <span class="k">if</span> <span class="n">n_pre_periods</span> <span class="o">&lt;</span> <span class="n">min_global_pre_periods</span><span class="p">:</span>
@@ -700,33 +800,51 @@
         
         <span class="c1"># Build valid_mask to match OLS estimation (missing=&#39;drop&#39;).</span>
         <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="s1">&#39;demeanq&#39;</span><span class="p">:</span>
-            <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+            <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+            <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
         
         <span class="n">n_valid</span> <span class="o">=</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-        <span class="n">n_unique_quarters</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">,</span> <span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="k">if</span> <span class="n">n_valid</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-        <span class="n">n_params</span> <span class="o">=</span> <span class="n">n_unique_quarters</span> <span class="o">+</span> <span class="n">param_offset</span>
+        <span class="n">n_unique_seasons</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">,</span> <span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="k">if</span> <span class="n">n_valid</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">n_params</span> <span class="o">=</span> <span class="n">n_unique_seasons</span> <span class="o">+</span> <span class="n">param_offset</span>
         <span class="n">min_required</span> <span class="o">=</span> <span class="n">n_params</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># Require at least df = 1</span>
         
         <span class="k">if</span> <span class="n">unit_pre_count</span> <span class="o">&lt;</span> <span class="n">min_required</span><span class="p">:</span>
+            <span class="n">freq_label</span> <span class="o">=</span> <span class="p">{</span><span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;quarter&#39;</span><span class="p">,</span> <span class="mi">12</span><span class="p">:</span> <span class="s1">&#39;month&#39;</span><span class="p">,</span> <span class="mi">52</span><span class="p">:</span> <span class="s1">&#39;week&#39;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="s1">&#39;season&#39;</span><span class="p">)</span>
             <span class="n">model_desc</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;y ~ 1 + i.quarter with k = </span><span class="si">{</span><span class="n">n_unique_quarters</span><span class="si">}</span><span class="s2"> parameters &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;(1 constant + </span><span class="si">{</span><span class="n">n_unique_quarters</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2"> quarter dummies)&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;y ~ 1 + i.</span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2"> with k = </span><span class="si">{</span><span class="n">n_unique_seasons</span><span class="si">}</span><span class="s2"> parameters &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(1 constant + </span><span class="si">{</span><span class="n">n_unique_seasons</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2"> dummies)&quot;</span>
                 <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="s1">&#39;demeanq&#39;</span> <span class="k">else</span>
-                <span class="sa">f</span><span class="s2">&quot;y ~ 1 + tindex + i.quarter with k = 1 + 1 + (</span><span class="si">{</span><span class="n">n_unique_quarters</span><span class="si">}</span><span class="s2">-1) = </span><span class="si">{</span><span class="n">n_params</span><span class="si">}</span><span class="s2"> parameters&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;y ~ 1 + tindex + i.</span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2"> with k = 1 + 1 + (</span><span class="si">{</span><span class="n">n_unique_seasons</span><span class="si">}</span><span class="s2">-1) = </span><span class="si">{</span><span class="n">n_params</span><span class="si">}</span><span class="s2"> parameters&quot;</span>
             <span class="p">)</span>
             <span class="k">raise</span> <span class="n">InsufficientPrePeriodsError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Unit </span><span class="si">{</span><span class="n">unit_id</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">unit_pre_count</span><span class="si">}</span><span class="s2"> pre-period observation(s) &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;with </span><span class="si">{</span><span class="n">n_unique_quarters</span><span class="si">}</span><span class="s2"> distinct quarter(s). &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;with </span><span class="si">{</span><span class="n">n_unique_seasons</span><span class="si">}</span><span class="s2"> distinct </span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2">(s). &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;rolling(&#39;</span><span class="si">{</span><span class="n">transform_type</span><span class="si">}</span><span class="s2">&#39;) requires at least </span><span class="si">{</span><span class="n">min_required</span><span class="si">}</span><span class="s2"> observations &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;to ensure df = n - k ≥ 1 for reliable statistical inference. &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;The </span><span class="si">{</span><span class="n">transform_type</span><span class="si">}</span><span class="s2"> method estimates a model </span><span class="si">{</span><span class="n">model_desc</span><span class="si">}</span><span class="s2">.&quot;</span>
             <span class="p">)</span>
     
-    <span class="n">validate_quarter_coverage</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">quarter</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span>
+    <span class="n">validate_season_coverage</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">season_var</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">Q</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="n">K</span>
+
+
+<span class="c1"># Backward compatibility alias</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_quarterly_transform_requirements</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">ivar</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">tindex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">post</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">quarter</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">transform_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">min_global_pre_periods</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Backward compatibility wrapper for _validate_seasonal_transform_requirements.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_validate_seasonal_transform_requirements</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">quarter</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">,</span> <span class="n">min_global_pre_periods</span><span class="p">,</span> <span class="n">Q</span><span class="o">=</span><span class="mi">4</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="apply_rolling_transform">
@@ -740,6 +858,9 @@
     <span class="n">rolling</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">tpost1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">quarter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">season_var</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">Q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">exclude_pre_periods</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Apply unit-specific transformation to panel data.</span>
@@ -771,7 +892,22 @@
 <span class="sd">        regression sample (firstpost=True for observations at tindex==tpost1).</span>
 <span class="sd">    quarter : str, optional</span>
 <span class="sd">        Column name of quarter indicator (values in {1, 2, 3, 4}).</span>
-<span class="sd">        Required for quarterly methods (demeanq, detrendq).</span>
+<span class="sd">        Required for quarterly methods (demeanq, detrendq) when Q=4.</span>
+<span class="sd">        Deprecated: use season_var instead for non-quarterly data.</span>
+<span class="sd">    season_var : str, optional</span>
+<span class="sd">        Column name of seasonal indicator variable. Values should be integers</span>
+<span class="sd">        from 1 to Q. This is the preferred parameter for seasonal methods.</span>
+<span class="sd">        If both quarter and season_var are provided, season_var takes precedence.</span>
+<span class="sd">    Q : int, default 4</span>
+<span class="sd">        Number of seasonal periods per cycle. Common values:</span>
+<span class="sd">        - 4: Quarterly data (default)</span>
+<span class="sd">        - 12: Monthly data</span>
+<span class="sd">        - 52: Weekly data</span>
+<span class="sd">    exclude_pre_periods : int, default 0</span>
+<span class="sd">        Number of pre-treatment periods to exclude immediately before treatment.</span>
+<span class="sd">        Used to address potential anticipation effects. When &gt; 0, the last</span>
+<span class="sd">        ``exclude_pre_periods`` pre-treatment periods are excluded from the</span>
+<span class="sd">        sample used for estimating transformation parameters.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -788,7 +924,7 @@
 <span class="sd">        If any unit has insufficient pre-treatment observations for the</span>
 <span class="sd">        chosen transformation method.</span>
 <span class="sd">    ValueError</span>
-<span class="sd">        If rolling method is invalid or quarterly method lacks quarter column.</span>
+<span class="sd">        If rolling method is invalid or seasonal method lacks season_var/quarter.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -799,66 +935,120 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     
+    <span class="c1"># Handle exclude_pre_periods: create modified post indicator that excludes</span>
+    <span class="c1"># the specified number of pre-treatment periods immediately before treatment.</span>
+    <span class="c1"># These excluded periods will not be used for estimating transformation parameters.</span>
+    <span class="k">if</span> <span class="n">exclude_pre_periods</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Create a working copy of post indicator</span>
+        <span class="n">data</span><span class="p">[</span><span class="s1">&#39;_post_for_transform&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">post</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        
+        <span class="c1"># For each unit, mark the last `exclude_pre_periods` pre-treatment periods</span>
+        <span class="c1"># as post=1 so they are excluded from transformation parameter estimation.</span>
+        <span class="k">for</span> <span class="n">unit_id</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">ivar</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+            <span class="n">unit_mask</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ivar</span><span class="p">]</span> <span class="o">==</span> <span class="n">unit_id</span>
+            <span class="n">unit_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">unit_mask</span><span class="p">]</span>
+            
+            <span class="c1"># Get pre-treatment periods for this unit, sorted by time</span>
+            <span class="n">pre_mask</span> <span class="o">=</span> <span class="n">unit_data</span><span class="p">[</span><span class="n">post</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="n">pre_times</span> <span class="o">=</span> <span class="n">unit_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pre_mask</span><span class="p">,</span> <span class="n">tindex</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pre_times</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">exclude_pre_periods</span><span class="p">:</span>
+                <span class="c1"># Mark the last `exclude_pre_periods` pre-treatment periods as excluded</span>
+                <span class="n">times_to_exclude</span> <span class="o">=</span> <span class="n">pre_times</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="n">exclude_pre_periods</span><span class="p">:]</span>
+                <span class="n">exclude_mask</span> <span class="o">=</span> <span class="n">unit_mask</span> <span class="o">&amp;</span> <span class="n">data</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">times_to_exclude</span><span class="p">)</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">exclude_mask</span><span class="p">,</span> <span class="s1">&#39;_post_for_transform&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="c1"># If not enough pre-periods, we don&#39;t exclude any (will be caught by</span>
+            <span class="c1"># insufficient pre-periods check in transformation functions)</span>
+        
+        <span class="c1"># Use the modified post indicator for transformation</span>
+        <span class="n">post_for_transform</span> <span class="o">=</span> <span class="s1">&#39;_post_for_transform&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">post_for_transform</span> <span class="o">=</span> <span class="n">post</span>
+    
+    <span class="c1"># Resolve season_var: prefer season_var over quarter for backward compatibility</span>
+    <span class="n">effective_season_var</span> <span class="o">=</span> <span class="n">season_var</span> <span class="k">if</span> <span class="n">season_var</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">quarter</span>
+    
     <span class="k">if</span> <span class="n">rolling</span> <span class="o">==</span> <span class="s1">&#39;demean&#39;</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">_demean_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">_demean_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">post_for_transform</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">rolling</span> <span class="o">==</span> <span class="s1">&#39;detrend&#39;</span><span class="p">:</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">_detrend_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">_detrend_transform</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">post_for_transform</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">rolling</span> <span class="o">==</span> <span class="s1">&#39;demeanq&#39;</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">quarter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">effective_season_var</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">freq_label</span> <span class="o">=</span> <span class="p">{</span><span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;quarter&#39;</span><span class="p">,</span> <span class="mi">12</span><span class="p">:</span> <span class="s1">&#39;month&#39;</span><span class="p">,</span> <span class="mi">52</span><span class="p">:</span> <span class="s1">&#39;week&#39;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="s1">&#39;season&#39;</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;rolling=&#39;demeanq&#39; requires the &#39;quarter&#39; parameter. &quot;</span>
-                <span class="s2">&quot;Please specify the column name containing quarter values (1-4).</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-                <span class="s2">&quot;Example: lwdid(..., rolling=&#39;demeanq&#39;, quarter=&#39;qtr&#39;)&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;rolling=&#39;demeanq&#39; requires the &#39;season_var&#39; (or &#39;quarter&#39;) parameter. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Please specify the column name containing </span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2"> values (1-</span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="s2">).</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Example: lwdid(..., rolling=&#39;demeanq&#39;, season_var=&#39;</span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2">&#39;, Q=</span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
 
-        <span class="c1"># Seasonal dummy coding requires standard quarter values for proper identification.</span>
-        <span class="n">quarter_values</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
-        <span class="n">valid_quarters</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">}</span>
-        <span class="n">invalid_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">quarter_values</span><span class="p">)</span> <span class="o">-</span> <span class="n">valid_quarters</span>
-        <span class="k">if</span> <span class="n">invalid_values</span><span class="p">:</span>
+        <span class="c1"># Validate seasonal values are in the expected range {1, 2, ..., Q}.</span>
+        <span class="n">season_values</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">effective_season_var</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+        <span class="n">valid_seasons</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">Q</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Handle both integer and float representations</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">season_int_values</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">season_values</span> <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)}</span>
+            <span class="n">invalid_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">season_values</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">s</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+                            <span class="n">invalid_values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                        <span class="n">invalid_values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">out_of_range</span> <span class="o">=</span> <span class="n">season_int_values</span> <span class="o">-</span> <span class="n">valid_seasons</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="n">invalid_values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">season_values</span><span class="p">)</span>
+            <span class="n">out_of_range</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="n">invalid_values</span> <span class="ow">or</span> <span class="n">out_of_range</span><span class="p">:</span>
+            <span class="n">all_invalid</span> <span class="o">=</span> <span class="n">invalid_values</span> <span class="o">|</span> <span class="p">{</span><span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">out_of_range</span><span class="p">}</span>
+            <span class="n">freq_label</span> <span class="o">=</span> <span class="p">{</span><span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;quarters&#39;</span><span class="p">,</span> <span class="mi">12</span><span class="p">:</span> <span class="s1">&#39;months&#39;</span><span class="p">,</span> <span class="mi">52</span><span class="p">:</span> <span class="s1">&#39;weeks&#39;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;seasons&#39;</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Quarter column &#39;</span><span class="si">{</span><span class="n">quarter</span><span class="si">}</span><span class="s2">&#39; contains invalid values: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">invalid_values</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;Expected values in </span><span class="se">{{</span><span class="s2">1, 2, 3, 4</span><span class="se">}}</span><span class="s2">.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;If your quarter column uses different encoding (e.g., 0-3 or &#39;Q1&#39;-&#39;Q4&#39;), &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;please recode it to 1-4 before calling lwdid().&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Seasonal column &#39;</span><span class="si">{</span><span class="n">effective_season_var</span><span class="si">}</span><span class="s2">&#39; contains invalid values: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">all_invalid</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected values in </span><span class="se">{{</span><span class="s2">1, 2, ..., </span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="se">}}</span><span class="s2"> for </span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2">.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;If your seasonal column uses different encoding (e.g., 0-</span><span class="si">{</span><span class="n">Q</span><span class="o">-</span><span class="mi">1</span><span class="si">}</span><span class="s2">), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;please recode it to 1-</span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="s2"> before calling lwdid().&quot;</span>
             <span class="p">)</span>
 
-        <span class="n">_validate_quarterly_transform_requirements</span><span class="p">(</span>
-            <span class="n">data</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">quarter</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
-            <span class="n">transform_type</span><span class="o">=</span><span class="s1">&#39;demeanq&#39;</span><span class="p">,</span> <span class="n">min_global_pre_periods</span><span class="o">=</span><span class="mi">1</span>
+        <span class="n">_validate_seasonal_transform_requirements</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">post_for_transform</span><span class="p">,</span> <span class="n">effective_season_var</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+            <span class="n">transform_type</span><span class="o">=</span><span class="s1">&#39;demeanq&#39;</span><span class="p">,</span> <span class="n">min_global_pre_periods</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Q</span><span class="o">=</span><span class="n">Q</span>
         <span class="p">)</span>
 
         <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ydot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
         <span class="k">for</span> <span class="n">unit_id</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">ivar</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
             <span class="n">unit_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">ivar</span><span class="p">]</span> <span class="o">==</span> <span class="n">unit_id</span><span class="p">)</span>
             <span class="n">unit_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">unit_mask</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">ydot</span> <span class="o">=</span> <span class="n">demeanq_unit</span><span class="p">(</span><span class="n">unit_data</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">quarter</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">ydot</span> <span class="o">=</span> <span class="n">demeanq_unit</span><span class="p">(</span><span class="n">unit_data</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">effective_season_var</span><span class="p">,</span> <span class="n">post_for_transform</span><span class="p">,</span> <span class="n">Q</span><span class="o">=</span><span class="n">Q</span><span class="p">)</span>
             <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">unit_mask</span><span class="p">,</span> <span class="s1">&#39;ydot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ydot</span>
 
     <span class="k">elif</span> <span class="n">rolling</span> <span class="o">==</span> <span class="s1">&#39;detrendq&#39;</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">quarter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">effective_season_var</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">freq_label</span> <span class="o">=</span> <span class="p">{</span><span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;quarter&#39;</span><span class="p">,</span> <span class="mi">12</span><span class="p">:</span> <span class="s1">&#39;month&#39;</span><span class="p">,</span> <span class="mi">52</span><span class="p">:</span> <span class="s1">&#39;week&#39;</span><span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Q</span><span class="p">,</span> <span class="s1">&#39;season&#39;</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;rolling=&#39;detrendq&#39; requires the &#39;quarter&#39; parameter. &quot;</span>
-                <span class="s2">&quot;Please specify the column name containing quarter values (1-4).</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-                <span class="s2">&quot;Example: lwdid(..., rolling=&#39;detrendq&#39;, quarter=&#39;qtr&#39;)&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;rolling=&#39;detrendq&#39; requires the &#39;season_var&#39; (or &#39;quarter&#39;) parameter. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Please specify the column name containing </span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2"> values (1-</span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="s2">).</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Example: lwdid(..., rolling=&#39;detrendq&#39;, season_var=&#39;</span><span class="si">{</span><span class="n">freq_label</span><span class="si">}</span><span class="s2">&#39;, Q=</span><span class="si">{</span><span class="n">Q</span><span class="si">}</span><span class="s2">)&quot;</span>
             <span class="p">)</span>
 
-        <span class="n">_validate_quarterly_transform_requirements</span><span class="p">(</span>
-            <span class="n">data</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">quarter</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
-            <span class="n">transform_type</span><span class="o">=</span><span class="s1">&#39;detrendq&#39;</span><span class="p">,</span> <span class="n">min_global_pre_periods</span><span class="o">=</span><span class="mi">2</span>
+        <span class="n">_validate_seasonal_transform_requirements</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">ivar</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">post_for_transform</span><span class="p">,</span> <span class="n">effective_season_var</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span>
+            <span class="n">transform_type</span><span class="o">=</span><span class="s1">&#39;detrendq&#39;</span><span class="p">,</span> <span class="n">min_global_pre_periods</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">Q</span><span class="o">=</span><span class="n">Q</span>
         <span class="p">)</span>
 
         <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ydot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
         <span class="k">for</span> <span class="n">unit_id</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">ivar</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
             <span class="n">unit_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">ivar</span><span class="p">]</span> <span class="o">==</span> <span class="n">unit_id</span><span class="p">)</span>
             <span class="n">unit_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">unit_mask</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">ydot</span> <span class="o">=</span> <span class="n">detrendq_unit</span><span class="p">(</span><span class="n">unit_data</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">quarter</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">ydot</span> <span class="o">=</span> <span class="n">detrendq_unit</span><span class="p">(</span><span class="n">unit_data</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">tindex</span><span class="p">,</span> <span class="n">effective_season_var</span><span class="p">,</span> <span class="n">post_for_transform</span><span class="p">,</span> <span class="n">Q</span><span class="o">=</span><span class="n">Q</span><span class="p">)</span>
             <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">unit_mask</span><span class="p">,</span> <span class="s1">&#39;ydot&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ydot</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid rolling method: </span><span class="si">{</span><span class="n">rolling</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># Post-treatment average aggregates period-specific effects into a single ATT.</span>
+    <span class="c1"># Note: Use original post indicator, not post_for_transform, for post-treatment average.</span>
     <span class="n">post_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="n">post</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
     <span class="n">ydot_postavg_map</span> <span class="o">=</span> <span class="n">post_data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">ivar</span><span class="p">)[</span><span class="s1">&#39;ydot&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
     <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ydot_postavg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ivar</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">ydot_postavg_map</span><span class="p">)</span>
@@ -869,6 +1059,10 @@
         <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span> <span class="o">==</span> <span class="n">tpost1</span><span class="p">)</span> <span class="o">&amp;</span>
         <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ydot_postavg&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
     <span class="p">)</span>
+
+    <span class="c1"># Clean up temporary column if created</span>
+    <span class="k">if</span> <span class="s1">&#39;_post_for_transform&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;_post_for_transform&#39;</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">data</span></div>
 
@@ -1059,11 +1253,12 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">demeanq_unit</span><span class="p">(</span>
     <span class="n">unit_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">y</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">quarter</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">post</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">season_var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">post</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">Q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Remove unit-specific mean with quarterly seasonal fixed effects.</span>
+<span class="sd">    Remove unit-specific mean with seasonal fixed effects.</span>
 
 <span class="sd">    Estimates a seasonal mean model using pre-treatment observations:</span>
 
@@ -1071,7 +1266,7 @@
 
 <span class="sd">        Y_{it} = \\mu + \\sum_{q=2}^{Q} \\gamma_q D_q + \\varepsilon_{it}</span>
 
-<span class="sd">    where :math:`D_q` are quarter dummies. The smallest observed quarter serves</span>
+<span class="sd">    where :math:`D_q` are seasonal dummies. The smallest observed season serves</span>
 <span class="sd">    as the reference category for identification.</span>
 
 <span class="sd">    Parameters</span>
@@ -1080,10 +1275,17 @@
 <span class="sd">        Data for a single unit containing all time periods.</span>
 <span class="sd">    y : str</span>
 <span class="sd">        Column name of outcome variable.</span>
-<span class="sd">    quarter : str</span>
-<span class="sd">        Column name of quarter indicator (values in {1, 2, 3, 4}).</span>
+<span class="sd">    season_var : str</span>
+<span class="sd">        Column name of seasonal indicator variable. Values should be integers</span>
+<span class="sd">        from 1 to Q representing seasonal periods (e.g., quarters 1-4, months</span>
+<span class="sd">        1-12, or weeks 1-52).</span>
 <span class="sd">    post : str</span>
 <span class="sd">        Column name of binary post-treatment indicator (0=pre, 1=post).</span>
+<span class="sd">    Q : int, default 4</span>
+<span class="sd">        Number of seasonal periods per cycle. Common values:</span>
+<span class="sd">        - 4: Quarterly data (default)</span>
+<span class="sd">        - 12: Monthly data</span>
+<span class="sd">        - 52: Weekly data</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1096,9 +1298,12 @@
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    Using observed quarters rather than all four quarters as categories</span>
-<span class="sd">    prevents rank-deficient design matrices when some quarters are absent</span>
+<span class="sd">    Using observed seasons rather than all Q seasons as categories</span>
+<span class="sd">    prevents rank-deficient design matrices when some seasons are absent</span>
 <span class="sd">    from pre-treatment data.</span>
+
+<span class="sd">    The minimum required pre-treatment observations is Q + 1 to ensure</span>
+<span class="sd">    at least one residual degree of freedom for OLS estimation.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -1108,27 +1313,28 @@
     <span class="n">n_obs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unit_data</span><span class="p">)</span>
 
     <span class="c1"># OLS requires n &gt; k for positive residual degrees of freedom.</span>
-    <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+    <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
     <span class="n">n_valid</span> <span class="o">=</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    <span class="n">n_quarters</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">,</span> <span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="k">if</span> <span class="n">n_valid</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="n">n_params</span> <span class="o">=</span> <span class="n">n_quarters</span>  <span class="c1"># intercept + (n_quarters - 1) dummies</span>
+    <span class="n">n_seasons</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">,</span> <span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="k">if</span> <span class="n">n_valid</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">n_params</span> <span class="o">=</span> <span class="n">n_seasons</span>  <span class="c1"># intercept + (n_seasons - 1) dummies</span>
 
     <span class="k">if</span> <span class="n">n_valid</span> <span class="o">&lt;=</span> <span class="n">n_params</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Insufficient valid pre-treatment observations for OLS seasonal demeaning: &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;found </span><span class="si">{</span><span class="n">n_valid</span><span class="si">}</span><span class="s2"> valid observations, require at least </span><span class="si">{</span><span class="n">n_params</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;(more than number of parameters). Returning NaN.&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;found </span><span class="si">{</span><span class="n">n_valid</span><span class="si">}</span><span class="s2"> valid observations with </span><span class="si">{</span><span class="n">n_seasons</span><span class="si">}</span><span class="s2"> distinct season(s), &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;require at least </span><span class="si">{</span><span class="n">n_params</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> (more than </span><span class="si">{</span><span class="n">n_params</span><span class="si">}</span><span class="s2"> parameters). &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Returning NaN.&quot;</span><span class="p">,</span>
             <span class="ne">UserWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
-    <span class="c1"># Restrict dummy coding to observed quarters to avoid rank deficiency.</span>
+    <span class="c1"># Restrict dummy coding to observed seasons to avoid rank deficiency.</span>
     <span class="n">valid_pre</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
-    <span class="n">observed_quarters_pre</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">valid_pre</span><span class="p">[</span><span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
-    <span class="n">q_categorical</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">unit_pre</span><span class="p">[</span><span class="n">quarter</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="n">observed_quarters_pre</span><span class="p">)</span>
-    <span class="n">q_dummies_pre</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">q_categorical</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">observed_seasons_pre</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">valid_pre</span><span class="p">[</span><span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+    <span class="n">s_categorical</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">unit_pre</span><span class="p">[</span><span class="n">season_var</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="n">observed_seasons_pre</span><span class="p">)</span>
+    <span class="n">s_dummies_pre</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">s_categorical</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
-    <span class="n">X_pre</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">q_dummies_pre</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">X_pre</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">s_dummies_pre</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
     <span class="n">y_pre</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span><span class="p">(</span><span class="n">y_pre</span><span class="p">,</span> <span class="n">X_pre</span><span class="p">,</span> <span class="n">missing</span><span class="o">=</span><span class="s1">&#39;drop&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
 
@@ -1143,21 +1349,21 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
     <span class="c1"># Prediction design matrix must match estimation design matrix structure.</span>
-    <span class="n">q_categorical_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">unit_data</span><span class="p">[</span><span class="n">quarter</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="n">observed_quarters_pre</span><span class="p">)</span>
-    <span class="n">q_dummies_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">q_categorical_all</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">s_categorical_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">unit_data</span><span class="p">[</span><span class="n">season_var</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="n">observed_seasons_pre</span><span class="p">)</span>
+    <span class="n">s_dummies_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">s_categorical_all</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     
-    <span class="c1"># Handle quarter mismatch between pre and post periods:</span>
-    <span class="c1"># - Post-period new quarters get zero coefficients (extrapolation from model).</span>
-    <span class="c1"># - Post-period missing quarters require column alignment.</span>
-    <span class="n">missing_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">q_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">q_dummies_all</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="c1"># Handle season mismatch between pre and post periods:</span>
+    <span class="c1"># - Post-period new seasons get zero coefficients (extrapolation from model).</span>
+    <span class="c1"># - Post-period missing seasons require column alignment.</span>
+    <span class="n">missing_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">s_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">s_dummies_all</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">missing_cols</span><span class="p">:</span>
-        <span class="n">q_dummies_all</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">extra_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">q_dummies_all</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">q_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">s_dummies_all</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">extra_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">s_dummies_all</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">s_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">extra_cols</span><span class="p">:</span>
-        <span class="n">q_dummies_all</span> <span class="o">=</span> <span class="n">q_dummies_all</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">extra_cols</span><span class="p">))</span>
-    <span class="n">q_dummies_all</span> <span class="o">=</span> <span class="n">q_dummies_all</span><span class="p">[</span><span class="n">q_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="n">s_dummies_all</span> <span class="o">=</span> <span class="n">s_dummies_all</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">extra_cols</span><span class="p">))</span>
+    <span class="n">s_dummies_all</span> <span class="o">=</span> <span class="n">s_dummies_all</span><span class="p">[</span><span class="n">s_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
 
-    <span class="n">X_all</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">q_dummies_all</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">X_all</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">s_dummies_all</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
     <span class="n">yhat_all</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_all</span><span class="p">)</span>
     <span class="n">ydot</span> <span class="o">=</span> <span class="n">unit_data</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">yhat_all</span>
 
@@ -1171,11 +1377,12 @@
     <span class="n">unit_data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">y</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">tindex</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">quarter</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">post</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">season_var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">post</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">Q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Remove unit-specific linear trend with quarterly seasonal fixed effects.</span>
+<span class="sd">    Remove unit-specific linear trend with seasonal fixed effects.</span>
 
 <span class="sd">    Estimates a combined trend and seasonal model using pre-treatment data:</span>
 
@@ -1183,7 +1390,7 @@
 
 <span class="sd">        Y_{it} = \\alpha + \\beta t + \\sum_{q=2}^{Q} \\gamma_q D_q + \\varepsilon_{it}</span>
 
-<span class="sd">    The smallest observed quarter serves as the reference category. Time is</span>
+<span class="sd">    The smallest observed season serves as the reference category. Time is</span>
 <span class="sd">    centered at its pre-treatment mean for numerical stability.</span>
 
 <span class="sd">    Parameters</span>
@@ -1194,10 +1401,17 @@
 <span class="sd">        Column name of outcome variable.</span>
 <span class="sd">    tindex : str</span>
 <span class="sd">        Column name of time index.</span>
-<span class="sd">    quarter : str</span>
-<span class="sd">        Column name of quarter indicator (values in {1, 2, 3, 4}).</span>
+<span class="sd">    season_var : str</span>
+<span class="sd">        Column name of seasonal indicator variable. Values should be integers</span>
+<span class="sd">        from 1 to Q representing seasonal periods (e.g., quarters 1-4, months</span>
+<span class="sd">        1-12, or weeks 1-52).</span>
 <span class="sd">    post : str</span>
 <span class="sd">        Column name of binary post-treatment indicator (0=pre, 1=post).</span>
+<span class="sd">    Q : int, default 4</span>
+<span class="sd">        Number of seasonal periods per cycle. Common values:</span>
+<span class="sd">        - 4: Quarterly data (default)</span>
+<span class="sd">        - 12: Monthly data</span>
+<span class="sd">        - 52: Weekly data</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1210,9 +1424,13 @@
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
 <span class="sd">    This transformation combines trend removal and seasonal adjustment,</span>
-<span class="sd">    accounting for both unit-specific growth patterns and quarterly cycles.</span>
+<span class="sd">    accounting for both unit-specific growth patterns and seasonal cycles.</span>
 <span class="sd">    Time centering reduces the condition number of the design matrix without</span>
 <span class="sd">    affecting predicted values.</span>
+
+<span class="sd">    The minimum required pre-treatment observations is Q + 2 to ensure</span>
+<span class="sd">    at least one residual degree of freedom for OLS estimation (intercept +</span>
+<span class="sd">    slope + Q-1 seasonal dummies = Q+1 parameters).</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -1236,16 +1454,17 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
 
     <span class="c1"># OLS requires n &gt; k for positive residual degrees of freedom.</span>
-    <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
+    <span class="n">valid_mask</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span>
     <span class="n">n_valid</span> <span class="o">=</span> <span class="n">valid_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-    <span class="n">n_quarters</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">,</span> <span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="k">if</span> <span class="n">n_valid</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
-    <span class="n">n_params</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">n_quarters</span>  <span class="c1"># intercept + slope + (n_quarters - 1) dummies</span>
+    <span class="n">n_seasons</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">,</span> <span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="k">if</span> <span class="n">n_valid</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="n">n_params</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">n_seasons</span>  <span class="c1"># intercept + slope + (n_seasons - 1) dummies</span>
 
     <span class="k">if</span> <span class="n">n_valid</span> <span class="o">&lt;=</span> <span class="n">n_params</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Insufficient valid pre-treatment observations for OLS seasonal detrending: &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;found </span><span class="si">{</span><span class="n">n_valid</span><span class="si">}</span><span class="s2"> valid observations, require at least </span><span class="si">{</span><span class="n">n_params</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;(more than </span><span class="si">{</span><span class="n">n_params</span><span class="si">}</span><span class="s2"> parameters to ensure df &gt;= 1). Returning NaN.&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;found </span><span class="si">{</span><span class="n">n_valid</span><span class="si">}</span><span class="s2"> valid observations with </span><span class="si">{</span><span class="n">n_seasons</span><span class="si">}</span><span class="s2"> distinct season(s), &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;require at least </span><span class="si">{</span><span class="n">n_params</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> (more than </span><span class="si">{</span><span class="n">n_params</span><span class="si">}</span><span class="s2"> parameters to ensure &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;df &gt;= 1). Returning NaN.&quot;</span><span class="p">,</span>
             <span class="ne">UserWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n_obs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
@@ -1255,17 +1474,17 @@
     <span class="n">t_mean</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
     <span class="n">t_centered_pre</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span> <span class="o">-</span> <span class="n">t_mean</span>
 
-    <span class="c1"># Restrict dummy coding to observed quarters to avoid rank deficiency.</span>
-    <span class="c1"># Unobserved quarters would create all-zero columns in the design matrix.</span>
+    <span class="c1"># Restrict dummy coding to observed seasons to avoid rank deficiency.</span>
+    <span class="c1"># Unobserved seasons would create all-zero columns in the design matrix.</span>
     <span class="n">valid_pre</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
-    <span class="n">observed_quarters_pre</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">valid_pre</span><span class="p">[</span><span class="n">quarter</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
-    <span class="n">q_categorical</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">unit_pre</span><span class="p">[</span><span class="n">quarter</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="n">observed_quarters_pre</span><span class="p">)</span>
-    <span class="n">q_dummies_pre</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">q_categorical</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">observed_seasons_pre</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">valid_pre</span><span class="p">[</span><span class="n">season_var</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+    <span class="n">s_categorical</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">unit_pre</span><span class="p">[</span><span class="n">season_var</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="n">observed_seasons_pre</span><span class="p">)</span>
+    <span class="n">s_dummies_pre</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">s_categorical</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
 
     <span class="n">X_pre</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unit_pre</span><span class="p">)),</span>
         <span class="n">t_centered_pre</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
-        <span class="n">q_dummies_pre</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">s_dummies_pre</span><span class="o">.</span><span class="n">values</span>
     <span class="p">])</span>
     <span class="n">y_pre</span> <span class="o">=</span> <span class="n">unit_pre</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span><span class="p">(</span><span class="n">y_pre</span><span class="p">,</span> <span class="n">X_pre</span><span class="p">,</span> <span class="n">missing</span><span class="o">=</span><span class="s1">&#39;drop&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
@@ -1285,24 +1504,24 @@
     <span class="n">t_centered_all</span> <span class="o">=</span> <span class="n">unit_data</span><span class="p">[</span><span class="n">tindex</span><span class="p">]</span> <span class="o">-</span> <span class="n">t_mean</span>
 
     <span class="c1"># Prediction design matrix must match estimation design matrix structure.</span>
-    <span class="n">q_categorical_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">unit_data</span><span class="p">[</span><span class="n">quarter</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="n">observed_quarters_pre</span><span class="p">)</span>
-    <span class="n">q_dummies_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">q_categorical_all</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">s_categorical_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">unit_data</span><span class="p">[</span><span class="n">season_var</span><span class="p">],</span> <span class="n">categories</span><span class="o">=</span><span class="n">observed_seasons_pre</span><span class="p">)</span>
+    <span class="n">s_dummies_all</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">s_categorical_all</span><span class="p">,</span> <span class="n">drop_first</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     
-    <span class="c1"># Handle quarter mismatch between pre and post periods:</span>
-    <span class="c1"># - Post-period new quarters get zero coefficients (extrapolation from model).</span>
-    <span class="c1"># - Post-period missing quarters require column alignment.</span>
-    <span class="n">missing_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">q_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">q_dummies_all</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+    <span class="c1"># Handle season mismatch between pre and post periods:</span>
+    <span class="c1"># - Post-period new seasons get zero coefficients (extrapolation from model).</span>
+    <span class="c1"># - Post-period missing seasons require column alignment.</span>
+    <span class="n">missing_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">s_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">s_dummies_all</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">missing_cols</span><span class="p">:</span>
-        <span class="n">q_dummies_all</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-    <span class="n">extra_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">q_dummies_all</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">q_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">s_dummies_all</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">extra_cols</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">s_dummies_all</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">s_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">extra_cols</span><span class="p">:</span>
-        <span class="n">q_dummies_all</span> <span class="o">=</span> <span class="n">q_dummies_all</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">extra_cols</span><span class="p">))</span>
-    <span class="n">q_dummies_all</span> <span class="o">=</span> <span class="n">q_dummies_all</span><span class="p">[</span><span class="n">q_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="n">s_dummies_all</span> <span class="o">=</span> <span class="n">s_dummies_all</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">extra_cols</span><span class="p">))</span>
+    <span class="n">s_dummies_all</span> <span class="o">=</span> <span class="n">s_dummies_all</span><span class="p">[</span><span class="n">s_dummies_pre</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
 
     <span class="n">X_all</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">([</span>
         <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unit_data</span><span class="p">)),</span>
         <span class="n">t_centered_all</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
-        <span class="n">q_dummies_all</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">s_dummies_all</span><span class="o">.</span><span class="n">values</span>
     <span class="p">])</span>
     <span class="n">yhat_all</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_all</span><span class="p">)</span>
     <span class="n">ydot</span> <span class="o">=</span> <span class="n">unit_data</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">values</span> <span class="o">-</span> <span class="n">yhat_all</span>

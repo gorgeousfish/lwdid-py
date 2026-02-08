@@ -55,34 +55,42 @@ may follow different linear growth paths.
 demeanq
 ~~~~~~~
 
-Removes unit-specific mean with quarterly seasonal fixed effects:
+Removes unit-specific mean with seasonal fixed effects:
 
 .. math::
 
-   \dot{Y}_{it} = Y_{it} - \hat{\mu}_i - \sum_{q=2}^{4} \hat{\gamma}_q D_q
+   \dot{Y}_{it} = Y_{it} - \hat{\mu}_i - \sum_{q=2}^{Q} \hat{\gamma}_q D_q
 
-where :math:`D_q` are quarter dummies with the smallest observed quarter
-as reference category.
+where :math:`D_q` are seasonal dummies with the smallest observed season as
+reference category and :math:`Q` is the number of seasons per cycle.
 
-**Requirements**: Quarterly data with quarter values in {1, 2, 3, 4}. Each
-unit needs sufficient pre-treatment observations for seasonal pattern estimation.
+**Supported seasonal periods**: Q=4 (quarterly, default), Q=12 (monthly),
+Q=52 (weekly).
 
-**Use case**: Quarterly data with seasonal patterns.
+**Requirements**: At least Q+1 pre-treatment observations per unit. Each
+season appearing in the post-treatment period must also appear in the
+pre-treatment period.
+
+**Use case**: Periodic data with seasonal patterns.
 
 detrendq
 ~~~~~~~~
 
-Removes unit-specific linear trend with quarterly seasonal effects:
+Removes unit-specific linear trend with seasonal effects:
 
 .. math::
 
    \dot{Y}_{it} = Y_{it} - \hat{\alpha}_i - \hat{\beta}_i t
-                  - \sum_{q=2}^{4} \hat{\gamma}_q D_q
+                  - \sum_{q=2}^{Q} \hat{\gamma}_q D_q
 
-**Requirements**: At least 2 pre-treatment periods per unit plus adequate
-quarter diversity for seasonal estimation.
+**Supported seasonal periods**: Q=4 (quarterly, default), Q=12 (monthly),
+Q=52 (weekly).
 
-**Use case**: Quarterly data with both trends and seasonal patterns.
+**Requirements**: At least Q+2 pre-treatment observations per unit. Each
+season appearing in the post-treatment period must also appear in the
+pre-treatment period.
+
+**Use case**: Periodic data with both trends and seasonal patterns.
 
 Main Function
 -------------
@@ -139,17 +147,17 @@ Transformation Selection Guide
   levels (common trends).
 - **detrend**: Pre-periods required >= 2. No seasonal support. Allows
   heterogeneous linear trends.
-- **demeanq**: Pre-periods required >= 1. Quarterly seasonal support. Assumes
-  parallel levels (common trends).
-- **detrendq**: Pre-periods required >= 2. Quarterly seasonal support. Allows
-  heterogeneous linear trends.
+- **demeanq**: Pre-periods required >= Q+1. Seasonal support (Q=4/12/52).
+  Assumes parallel levels (common trends).
+- **detrendq**: Pre-periods required >= Q+2. Seasonal support (Q=4/12/52).
+  Allows heterogeneous linear trends.
 
 Staggered Adoption Transformations
 ----------------------------------
 
 For staggered adoption designs, transformations are applied separately for each
 treatment cohort :math:`g`, using cohort-specific pre-treatment periods. This
-approach follows Lee and Wooldridge (2025, Section 4).
+approach follows Lee and Wooldridge (2025).
 
 Cohort-Specific Demeaning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -229,30 +237,44 @@ parameter is specified in ``lwdid()``:
        rolling='detrend'
    )
 
-Staggered Transformation Limitations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Staggered Seasonal Transformations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Quarterly transformations are not supported in staggered mode.**
+**Seasonal transformations are fully supported in staggered mode.**
 
-The ``demeanq`` and ``detrendq`` transformations are only available for common
-timing designs and cannot be used with staggered adoption (``gvar`` parameter).
-This is a design decision based on the following considerations:
+The ``demeanq`` and ``detrendq`` transformations can be used with staggered
+adoption designs (``gvar`` parameter). For each cohort :math:`g`, seasonal
+parameters are estimated using only the cohort-specific pre-treatment periods
+:math:`\{1, 2, \ldots, g-1\}`.
 
-1. **Complexity**: Cohort-specific quarterly fixed effects would require
-   estimating separate seasonal patterns for each cohort's pre-treatment
-   period, which may have insufficient quarter diversity for reliable
-   estimation.
+**Key considerations for staggered seasonal methods:**
 
-2. **Identification**: With staggered timing, the number of pre-treatment
-   quarters varies by cohort, making it difficult to ensure consistent
-   seasonal adjustment across cohorts.
+1. **Pre-treatment requirements**: Each cohort must have sufficient pre-treatment
+   observations spanning enough seasonal periods for reliable parameter estimation.
+   Early cohorts with limited pre-treatment data may be excluded automatically.
 
-3. **Practical relevance**: Most staggered adoption studies use annual data
-   (e.g., policy adoption year), where quarterly adjustments are not needed.
+2. **Seasonal coverage**: For accurate seasonal adjustment, pre-treatment periods
+   should ideally cover at least one complete seasonal cycle (e.g., 4 quarters for
+   quarterly data, 12 months for monthly data).
 
-If quarterly seasonal adjustment is required for staggered designs, users
-should pre-process the data to remove seasonal patterns before applying
-``lwdid()`` with ``demean`` or ``detrend``.
+3. **Data frequency**: Seasonal transformations are most relevant for sub-annual
+   data (quarterly, monthly, weekly) where seasonal patterns affect outcomes.
+
+**Usage example:**
+
+.. code-block:: python
+
+   # Staggered design with quarterly seasonal adjustment
+   results = lwdid(
+       data,
+       y='outcome',
+       ivar='unit',
+       tvar='quarter_index',
+       gvar='first_treat_quarter',
+       rolling='demeanq',
+       Q=4,                      # Quarterly data
+       season_var='quarter'      # Quarter indicator (1-4)
+   )
 
 Staggered Transformation Selection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,8 +283,10 @@ Staggered Transformation Selection
   :math:`g - 1 \geq 1` per cohort.
 - **detrend**: Staggered support = Yes. Pre-periods required:
   :math:`g - 1 \geq 2` per cohort.
-- **demeanq**: Staggered support = No. Not available for staggered designs.
-- **detrendq**: Staggered support = No. Not available for staggered designs.
+- **demeanq**: Staggered support = Yes. Pre-periods required:
+  :math:`g - 1 \geq Q + 1` per cohort (where Q = number of seasons).
+- **detrendq**: Staggered support = Yes. Pre-periods required:
+  :math:`g - 1 \geq Q + 2` per cohort (where Q = number of seasons).
 
 See Also
 --------

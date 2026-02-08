@@ -8,21 +8,22 @@ unit level, enabling application of standard treatment effect estimators.
 
 Four transformation methods are provided:
 
-- **Demeaning** (``transform_staggered_demean``): Subtracts the unit-specific
-  pre-treatment mean from post-treatment outcomes. Requires at least one
-  pre-treatment period.
+Demeaning (``transform_staggered_demean``)
+    Subtracts the unit-specific pre-treatment mean from post-treatment
+    outcomes. Requires at least one pre-treatment period.
 
-- **Detrending** (``transform_staggered_detrend``): Removes unit-specific
-  linear trends estimated from pre-treatment data. Requires at least two
-  pre-treatment periods to identify intercept and slope parameters.
+Detrending (``transform_staggered_detrend``)
+    Removes unit-specific linear trends estimated from pre-treatment data.
+    Requires at least two pre-treatment periods to identify intercept and
+    slope parameters.
 
-- **Seasonal Demeaning** (``transform_staggered_demeanq``): Extends demeaning
-  to account for seasonal fixed effects. Suitable for quarterly, monthly,
-  or weekly data with regular seasonal patterns.
+Seasonal demeaning (``transform_staggered_demeanq``)
+    Extends demeaning to account for seasonal fixed effects. Suitable for
+    quarterly, monthly, or weekly data with regular seasonal patterns.
 
-- **Seasonal Detrending** (``transform_staggered_detrendq``): Combines linear
-  detrending with seasonal adjustment. Requires sufficient pre-treatment
-  observations to estimate trend and seasonal parameters.
+Seasonal detrending (``transform_staggered_detrendq``)
+    Combines linear detrending with seasonal adjustment. Requires sufficient
+    pre-treatment observations to estimate trend and seasonal parameters.
 
 For treatment cohort g in calendar time r, transformations use all periods
 strictly prior to g as the pre-treatment window. This cohort-specific
@@ -317,7 +318,7 @@ def transform_staggered_demean(
     identification strategy where each cohort defines its own baseline.
     """
     from ..exceptions import InsufficientPrePeriodsError
-    
+
     # =========================================================================
     # Data Validation
     # =========================================================================
@@ -511,7 +512,7 @@ def transform_staggered_detrend(
     appear approximately parallel.
     """
     from ..exceptions import InsufficientPrePeriodsError
-    
+
     # =========================================================================
     # Data Validation
     # =========================================================================
@@ -589,10 +590,10 @@ def transform_staggered_detrend(
     for g in cohorts:
         # Compute effective pre-treatment upper bound with exclusion.
         pre_upper_bound = g - exclude_pre_periods
-        
+
         post_periods = get_valid_periods_for_cohort(g, T_max)
 
-        # Pre-allocate columns to avoid repeated DataFrame modifications.
+        # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
         for r in post_periods:
             col_name = f'ycheck_g{int(g)}_r{r}'
             result[col_name] = np.nan
@@ -601,24 +602,24 @@ def transform_staggered_detrend(
             unit_mask = result[ivar] == unit_id
             unit_data = result[unit_mask]
 
-            # Use strict inequality with exclusion for consistent pre-treatment definition.
+            # Strict inequality ensures pre-treatment window excludes treatment onset.
             pre_data = unit_data[unit_data[tvar] < pre_upper_bound].dropna(subset=[y])
 
             if len(pre_data) < 2:
-                # Skip units without enough data for trend identification.
+                # OLS requires at least 2 points to identify intercept and slope.
                 continue
 
             t_vals = pre_data[tvar].values.astype(float)
             y_vals = pre_data[y].values.astype(float)
 
             try:
-                # np.polyfit returns [slope, intercept] for degree 1.
+                # polyfit returns [slope, intercept] in descending degree order.
                 B, A = np.polyfit(t_vals, y_vals, deg=1)
             except (np.linalg.LinAlgError, ValueError):
-                # Collinearity or other numerical issues prevent estimation.
+                # Collinearity or ill-conditioned design matrix prevents estimation.
                 continue
 
-            # Compute out-of-sample prediction errors for causal identification.
+            # Out-of-sample residuals identify treatment effects under parallel trends.
             for r in post_periods:
                 col_name = f'ycheck_g{int(g)}_r{r}'
                 period_mask = unit_mask & (result[tvar] == r)
@@ -644,9 +645,9 @@ def _compute_pre_treatment_seasonal_mean(
     Compute seasonal mean parameters for a single unit using pre-treatment data.
 
     Estimates a seasonal mean model:
-    
+
     .. math::
-    
+
         Y_{it} = \\mu + \\sum_{q=2}^{Q} \\gamma_q D_q + \\varepsilon_{it}
 
     Parameters
@@ -674,51 +675,52 @@ def _compute_pre_treatment_seasonal_mean(
         Seasonal dummy coefficients (length Q-1 or fewer if not all seasons observed).
     observed_seasons : list
         List of observed seasons in pre-treatment period (sorted).
-        
+
     Notes
     -----
     Returns (NaN, empty array, empty list) if insufficient pre-treatment data.
     """
     import statsmodels.api as sm
-    
-    # Apply exclude_pre_periods to pre-treatment cutoff
+
+    # Adjust pre-treatment window to exclude periods near treatment onset.
     pre_upper_bound = cohort - exclude_pre_periods
     pre_data = unit_data[unit_data[tvar] < pre_upper_bound].copy()
-    
-    # Check for valid observations
+
+    # Require non-missing outcome and season for valid estimation.
     valid_mask = pre_data[y].notna() & pre_data[season_var].notna()
     n_valid = valid_mask.sum()
-    
+
     if n_valid == 0:
         return np.nan, np.array([]), []
-    
+
     valid_pre = pre_data[valid_mask]
     observed_seasons = sorted(valid_pre[season_var].unique())
     n_seasons = len(observed_seasons)
-    n_params = n_seasons  # intercept + (n_seasons - 1) dummies
-    
-    # Need at least n_params + 1 observations for df >= 1
+    # Total parameters: intercept + (n_seasons - 1) seasonal dummies.
+    n_params = n_seasons
+
+    # OLS requires residual degrees of freedom > 0 for valid inference.
     if n_valid <= n_params:
         return np.nan, np.array([]), []
-    
-    # Create seasonal dummies with smallest season as reference
+
+    # Use smallest observed season as reference to avoid dummy trap.
     s_categorical = pd.Categorical(pre_data[season_var], categories=observed_seasons)
     s_dummies = pd.get_dummies(s_categorical, drop_first=True, prefix='s', dtype=float)
-    
+
     X = sm.add_constant(s_dummies.values)
     y_vals = pre_data[y].values
-    
+
     try:
         model = sm.OLS(y_vals, X, missing='drop').fit()
-        
+
         if np.isnan(model.params).any() or np.isinf(model.params).any():
             return np.nan, np.array([]), []
-        
+
         mu = model.params[0]
         gamma = model.params[1:] if len(model.params) > 1 else np.array([])
-        
+
         return mu, gamma, observed_seasons
-        
+
     except Exception:
         return np.nan, np.array([]), []
 
@@ -736,9 +738,9 @@ def _compute_pre_treatment_seasonal_trend(
     Compute seasonal trend parameters for a single unit using pre-treatment data.
 
     Estimates a combined trend and seasonal model:
-    
+
     .. math::
-    
+
         Y_{it} = \\alpha + \\beta t + \\sum_{q=2}^{Q} \\gamma_q D_q + \\varepsilon_{it}
 
     Parameters
@@ -770,66 +772,67 @@ def _compute_pre_treatment_seasonal_trend(
         List of observed seasons in pre-treatment period (sorted).
     t_mean : float
         Mean of time variable in pre-treatment period (for centering).
-        
+
     Notes
     -----
     Returns (NaN, NaN, empty array, empty list, NaN) if insufficient data.
     Time is centered at pre-treatment mean for numerical stability.
     """
     import statsmodels.api as sm
-    
-    # Apply exclude_pre_periods to pre-treatment cutoff
+
+    # Adjust pre-treatment window to exclude periods near treatment onset.
     pre_upper_bound = cohort - exclude_pre_periods
     pre_data = unit_data[unit_data[tvar] < pre_upper_bound].copy()
-    
-    # Check for valid observations
+
+    # Require non-missing outcome, time, and season for valid estimation.
     valid_mask = pre_data[y].notna() & pre_data[tvar].notna() & pre_data[season_var].notna()
     n_valid = valid_mask.sum()
-    
+
     if n_valid == 0:
         return np.nan, np.nan, np.array([]), [], np.nan
-    
+
     valid_pre = pre_data[valid_mask]
     observed_seasons = sorted(valid_pre[season_var].unique())
     n_seasons = len(observed_seasons)
-    n_params = 1 + n_seasons  # intercept + slope + (n_seasons - 1) dummies
-    
-    # Need at least n_params + 1 observations for df >= 1
+    # Total parameters: intercept + slope + (n_seasons - 1) seasonal dummies.
+    n_params = 1 + n_seasons
+
+    # OLS requires residual degrees of freedom > 0 for valid inference.
     if n_valid <= n_params:
         return np.nan, np.nan, np.array([]), [], np.nan
-    
-    # Check for time variance
+
+    # Constant time values prevent trend identification.
     t_variance = pre_data[tvar].var(ddof=0)
     if t_variance < 1e-10:
         return np.nan, np.nan, np.array([]), [], np.nan
-    
-    # Center time for numerical stability
+
+    # Center time at pre-treatment mean to reduce numerical condition number.
     t_mean = pre_data[tvar].mean()
     t_centered = pre_data[tvar] - t_mean
-    
-    # Create seasonal dummies with smallest season as reference
+
+    # Use smallest observed season as reference to avoid dummy trap.
     s_categorical = pd.Categorical(pre_data[season_var], categories=observed_seasons)
     s_dummies = pd.get_dummies(s_categorical, drop_first=True, prefix='s', dtype=float)
-    
+
     X = np.column_stack([
         np.ones(len(pre_data)),
         t_centered.values,
         s_dummies.values
     ])
     y_vals = pre_data[y].values
-    
+
     try:
         model = sm.OLS(y_vals, X, missing='drop').fit()
-        
+
         if np.isnan(model.params).any() or np.isinf(model.params).any():
             return np.nan, np.nan, np.array([]), [], np.nan
-        
+
         alpha = model.params[0]
         beta = model.params[1]
         gamma = model.params[2:] if len(model.params) > 2 else np.array([])
-        
+
         return alpha, beta, gamma, observed_seasons, t_mean
-        
+
     except Exception:
         return np.nan, np.nan, np.array([]), [], np.nan
 
@@ -925,7 +928,7 @@ def transform_staggered_demeanq(
     at least one residual degree of freedom for OLS estimation.
     """
     from ..exceptions import InsufficientPrePeriodsError
-    
+
     # =========================================================================
     # Data Validation
     # =========================================================================
@@ -950,13 +953,13 @@ def transform_staggered_demeanq(
     # Validate seasonal indicator values are within expected range.
     season_values = result[season_var].dropna().unique()
     valid_seasons = set(range(1, Q + 1))
-    
+
     try:
         season_int_values = {int(s) for s in season_values if pd.notna(s) and s == int(s)}
         out_of_range = season_int_values - valid_seasons
     except (ValueError, TypeError):
         out_of_range = set(season_values)
-    
+
     if out_of_range:
         freq_label = {4: 'quarters', 12: 'months', 52: 'weeks'}.get(Q, 'seasons')
         raise ValueError(
@@ -990,7 +993,7 @@ def transform_staggered_demeanq(
                 f"Cohort {g} has no pre-treatment periods: "
                 f"earliest time period is {T_min}. Cohort must be > T_min."
             )
-        
+
         # Check after exclusion
         pre_upper_bound = g - exclude_pre_periods
         n_pre_periods = pre_upper_bound - T_min
@@ -1028,7 +1031,7 @@ def transform_staggered_demeanq(
     for g in cohorts:
         post_periods = get_valid_periods_for_cohort(g, T_max)
 
-        # Pre-allocate columns
+        # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
         for r in post_periods:
             col_name = f'ydot_g{int(g)}_r{r}'
             result[col_name] = np.nan
@@ -1037,16 +1040,16 @@ def transform_staggered_demeanq(
             unit_mask = result[ivar] == unit_id
             unit_data = result[unit_mask]
 
-            # Compute seasonal parameters from pre-treatment data (with exclusion)
+            # Estimate seasonal intercept and dummy coefficients from pre-treatment data.
             mu, gamma, observed_seasons = _compute_pre_treatment_seasonal_mean(
                 unit_data, y, tvar, season_var, g, Q, exclude_pre_periods
             )
 
             if np.isnan(mu):
-                # Skip units without enough data
+                # Insufficient pre-treatment data for seasonal parameter estimation.
                 continue
 
-            # Apply transformation to post-treatment periods
+            # Apply transformation using fixed pre-treatment parameters.
             for r in post_periods:
                 col_name = f'ydot_g{int(g)}_r{r}'
                 period_mask = unit_mask & (result[tvar] == r)
@@ -1054,14 +1057,15 @@ def transform_staggered_demeanq(
                 if period_mask.any():
                     y_r = result.loc[period_mask, y].values[0]
                     season_r = result.loc[period_mask, season_var].values[0]
-                    
-                    # Compute predicted value
+
+                    # Seasonal prediction: mu + gamma_q for season q.
                     predicted = mu
                     if len(gamma) > 0 and season_r in observed_seasons:
                         season_idx = observed_seasons.index(season_r)
-                        if season_idx > 0:  # Not the reference category
+                        # Reference season (index 0) has gamma=0 by construction.
+                        if season_idx > 0:
                             predicted += gamma[season_idx - 1]
-                    
+
                     result.loc[period_mask, col_name] = y_r - predicted
 
     return result
@@ -1160,7 +1164,7 @@ def transform_staggered_detrendq(
     slope + Q-1 seasonal dummies = Q+1 parameters).
     """
     from ..exceptions import InsufficientPrePeriodsError
-    
+
     # =========================================================================
     # Data Validation
     # =========================================================================
@@ -1185,13 +1189,13 @@ def transform_staggered_detrendq(
     # Validate seasonal indicator values are within expected range.
     season_values = result[season_var].dropna().unique()
     valid_seasons = set(range(1, Q + 1))
-    
+
     try:
         season_int_values = {int(s) for s in season_values if pd.notna(s) and s == int(s)}
         out_of_range = season_int_values - valid_seasons
     except (ValueError, TypeError):
         out_of_range = set(season_values)
-    
+
     if out_of_range:
         freq_label = {4: 'quarters', 12: 'months', 52: 'weeks'}.get(Q, 'seasons')
         raise ValueError(
@@ -1226,7 +1230,7 @@ def transform_staggered_detrendq(
                 f"Seasonal detrending requires at least 2 pre-treatment "
                 f"periods to estimate linear trend. Consider using demeanq instead."
             )
-        
+
         # Check after exclusion
         pre_upper_bound = g - exclude_pre_periods
         n_pre_periods = pre_upper_bound - T_min
@@ -1264,7 +1268,7 @@ def transform_staggered_detrendq(
     for g in cohorts:
         post_periods = get_valid_periods_for_cohort(g, T_max)
 
-        # Pre-allocate columns
+        # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
         for r in post_periods:
             col_name = f'ycheck_g{int(g)}_r{r}'
             result[col_name] = np.nan
@@ -1273,16 +1277,16 @@ def transform_staggered_detrendq(
             unit_mask = result[ivar] == unit_id
             unit_data = result[unit_mask]
 
-            # Compute seasonal trend parameters from pre-treatment data (with exclusion)
+            # Estimate trend and seasonal parameters from pre-treatment data.
             alpha, beta, gamma, observed_seasons, t_mean = _compute_pre_treatment_seasonal_trend(
                 unit_data, y, tvar, season_var, g, Q, exclude_pre_periods
             )
 
             if np.isnan(alpha) or np.isnan(beta):
-                # Skip units without enough data
+                # Insufficient pre-treatment data for trend parameter estimation.
                 continue
 
-            # Apply transformation to post-treatment periods
+            # Apply transformation using fixed pre-treatment parameters.
             for r in post_periods:
                 col_name = f'ycheck_g{int(g)}_r{r}'
                 period_mask = unit_mask & (result[tvar] == r)
@@ -1290,17 +1294,18 @@ def transform_staggered_detrendq(
                 if period_mask.any():
                     y_r = result.loc[period_mask, y].values[0]
                     season_r = result.loc[period_mask, season_var].values[0]
-                    
-                    # Compute predicted value (using centered time)
+
+                    # Center time at pre-treatment mean for numerical stability.
                     t_centered = r - t_mean
                     predicted = alpha + beta * t_centered
-                    
-                    # Add seasonal effect if applicable
+
+                    # Add seasonal effect: gamma_q for season q.
                     if len(gamma) > 0 and season_r in observed_seasons:
                         season_idx = observed_seasons.index(season_r)
-                        if season_idx > 0:  # Not the reference category
+                        # Reference season (index 0) has gamma=0 by construction.
+                        if season_idx > 0:
                             predicted += gamma[season_idx - 1]
-                    
+
                     result.loc[period_mask, col_name] = y_r - predicted
 
     return result

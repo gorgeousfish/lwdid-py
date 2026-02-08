@@ -33,7 +33,8 @@ Four unit-specific transformation methods remove pre-treatment patterns:
 - ``demeanq`` : Quarterly demeaning with seasonal fixed effects.
 - ``detrendq`` : Quarterly detrending with seasonal effects and trends.
 
-Staggered adoption designs support only ``demean`` and ``detrend``.
+All four transformation methods are supported for both common timing and
+staggered adoption designs.
 
 Estimation Methods
 ------------------

@@ -24,7 +24,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Randomization Inference Module" href="randomization.html" />
-    <link rel="prev" title="Estimation Module (estimation)" href="estimation.html" /> 
+    <link rel="prev" title="Preprocessing Module (preprocessing)" href="preprocessing.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -108,8 +108,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrend-did-with-unit-specific-linear-trends">detrend: DiD with Unit-Specific Linear Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demeanq-quarterly-data-with-seasonal-fixed-effects">demeanq: Quarterly Data with Seasonal Fixed Effects</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrendq-quarterly-data-with-trends-and-seasonal-effects">detrendq: Quarterly Data with Trends and Seasonal Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#demeanq-seasonal-data-with-seasonal-fixed-effects">demeanq: Seasonal Data with Seasonal Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#detrendq-seasonal-data-with-trends-and-seasonal-effects">detrendq: Seasonal Data with Trends and Seasonal Effects</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#variance-estimation">Variance Estimation</a><ul>
@@ -150,10 +150,18 @@
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#missing-data">Missing Data</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#never-treated-unit-data-preparation">Never-Treated Unit Data Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#valid-never-treated-encodings">Valid Never-Treated Encodings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#converting-from-stata-data">Converting from Stata Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#checking-never-treated-status">Checking Never-Treated Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#common-issues-and-solutions">Common Issues and Solutions</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#best-practices">Best Practices</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#sample-size-and-inference-method-selection-matrix">Sample Size and Inference Method Selection Matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
@@ -166,10 +174,28 @@
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#staggered-adoption-design">Staggered Adoption Design</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#id2">Basic Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#robustness-to-no-anticipation-violations">Robustness to No-Anticipation Violations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#accessing-staggered-results">Accessing Staggered Results</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#estimator-selection">Estimator Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../user_guide.html#staggered-example">Staggered Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#pre-treatment-dynamics-and-parallel-trends-testing">Pre-treatment Dynamics and Parallel Trends Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#why-pre-treatment-dynamics-matter">Why Pre-treatment Dynamics Matter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#id3">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#accessing-pre-treatment-results">Accessing Pre-treatment Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#interpreting-the-parallel-trends-test">Interpreting the Parallel Trends Test</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#event-study-visualization-with-pre-treatment">Event Study Visualization with Pre-treatment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#complete-workflow-example">Complete Workflow Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#transformation-methods-for-pre-treatment">Transformation Methods for Pre-treatment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide.html#trend-diagnostics-tools">Trend Diagnostics Tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#testing-parallel-trends-with-standalone-function">Testing Parallel Trends with Standalone Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#getting-automated-transformation-recommendation">Getting Automated Transformation Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide.html#visualizing-cohort-trends">Visualizing Cohort Trends</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../user_guide.html#further-reading">Further Reading</a></li>
@@ -183,6 +209,14 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../examples/index.html#quarterly-data">Quarterly Data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../examples/index.html#retail-sales-with-seasonal-patterns">Retail Sales with Seasonal Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#monthly-data">Monthly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#monthly-sales-with-seasonal-adjustment-q-12">Monthly Sales with Seasonal Adjustment (Q=12)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../examples/index.html#weekly-data">Weekly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../examples/index.html#weekly-sales-with-seasonal-adjustment-q-52">Weekly Sales with Seasonal Adjustment (Q=52)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../examples/index.html#control-variables">Control Variables</a><ul>
@@ -222,7 +256,7 @@
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">API Reference</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-modules">Core Modules</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-modules">Core Modules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="core.html">Core Module (core)</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="core.html#main-function">Main Function</a></li>
 <li class="toctree-l4"><a class="reference internal" href="core.html#examples">Examples</a></li>
@@ -248,7 +282,9 @@
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#ipw-estimator">IPW Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="staggered.html#pre-treatment-dynamics">Pre-treatment Dynamics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#examples">Examples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="staggered.html#see-also">See Also</a></li>
 </ul>
@@ -280,16 +316,102 @@
 <li class="toctree-l4"><a class="reference internal" href="estimation.html#see-also">See Also</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#inference-and-diagnostics">Inference and Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="inference.html">Inference Module (inference)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#methodological-notes">Methodological Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="inference.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="clustering_diagnostics.html">Clustering Diagnostics Module (clustering_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#enums">Enums</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#data-classes">Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="clustering_diagnostics.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trend_diagnostics.html">Trend Diagnostics Module (trend_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod"><code class="docutils literal notranslate"><span class="pre">TrendTestMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod"><code class="docutils literal notranslate"><span class="pre">TransformationMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.RecommendationConfidence"><code class="docutils literal notranslate"><span class="pre">RecommendationConfidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate"><code class="docutils literal notranslate"><span class="pre">PreTrendEstimate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate"><code class="docutils literal notranslate"><span class="pre">CohortTrendEstimate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference"><code class="docutils literal notranslate"><span class="pre">TrendDifference</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult"><code class="docutils literal notranslate"><span class="pre">ParallelTrendsTestResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics"><code class="docutils literal notranslate"><span class="pre">HeterogeneousTrendsDiagnostics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation"><code class="docutils literal notranslate"><span class="pre">TransformationRecommendation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.test_parallel_trends"><code class="docutils literal notranslate"><span class="pre">test_parallel_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.diagnose_heterogeneous_trends"><code class="docutils literal notranslate"><span class="pre">diagnose_heterogeneous_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.recommend_transformation"><code class="docutils literal notranslate"><span class="pre">recommend_transformation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#lwdid.trend_diagnostics.plot_cohort_trends"><code class="docutils literal notranslate"><span class="pre">plot_cohort_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#testing-functions">Testing Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#visualization">Visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#supporting-data-classes">Supporting Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trend_diagnostics.html#methodological-background">Methodological Background</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="selection_diagnostics.html">Selection Diagnostics Module (selection_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#enums">Enums</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#data-classes">Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#interpretation-guide">Interpretation Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="selection_diagnostics.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sensitivity.html">Sensitivity Analysis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#interpreting-results">Interpreting Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sensitivity.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#data-processing">Data Processing</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="preprocessing.html">Preprocessing Module (preprocessing)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#key-functions">Key Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#key-classes">Key Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#lwdid.preprocessing.aggregate_to_panel"><code class="docutils literal notranslate"><span class="pre">aggregate_to_panel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#lwdid.preprocessing.AggregationResult"><code class="docutils literal notranslate"><span class="pre">AggregationResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#lwdid.preprocessing.CellStatistics"><code class="docutils literal notranslate"><span class="pre">CellStatistics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#methodological-notes">Methodological Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocessing.html#data-requirements">Data Requirements</a></li>
+</ul>
+</li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Validation Module (validation)</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.validate_season_diversity"><code class="docutils literal notranslate"><span class="pre">validate_season_diversity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.validate_season_coverage"><code class="docutils literal notranslate"><span class="pre">validate_season_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lwdid.validation.detect_frequency"><code class="docutils literal notranslate"><span class="pre">detect_frequency()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#never-treated-unit-identification">Never-Treated Unit Identification</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#best-practices">Best Practices</a></li>
@@ -325,6 +447,7 @@
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidParameterError"><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidRollingMethodError"><code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidVCETypeError"><code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.UnbalancedPanelError"><code class="docutils literal notranslate"><span class="pre">UnbalancedPanelError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientDataError"><code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoTreatedUnitsError"><code class="docutils literal notranslate"><span class="pre">NoTreatedUnitsError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoControlUnitsError"><code class="docutils literal notranslate"><span class="pre">NoControlUnitsError</span></code></a></li>
@@ -336,6 +459,9 @@
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.AggregationError"><code class="docutils literal notranslate"><span class="pre">AggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidAggregationError"><code class="docutils literal notranslate"><span class="pre">InvalidAggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientCellSizeError"><code class="docutils literal notranslate"><span class="pre">InsufficientCellSizeError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="exceptions.html#exception-classes">Exception Classes</a></li>
@@ -358,7 +484,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#core-principle">Core Principle</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#demean-transformation-procedure-2-1">Demean Transformation (Procedure 2.1)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#detrend-transformation-procedure-3-1">Detrend Transformation (Procedure 3.1)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#quarterly-transformations">Quarterly Transformations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#seasonal-transformations-demeanq-detrendq">Seasonal Transformations (demeanq/detrendq)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#inference-under-clm-assumptions">Inference Under CLM Assumptions</a><ul>
@@ -373,6 +499,18 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#clustering-at-higher-levels">Clustering at Higher Levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#when-to-cluster-at-higher-levels">When to Cluster at Higher Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#minimum-cluster-requirements">Minimum Cluster Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#id1">Degrees of Freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#diagnosing-clustering-structure">Diagnosing Clustering Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#getting-a-clustering-recommendation">Getting a Clustering Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#checking-clustering-consistency">Checking Clustering Consistency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#clustering-workflow">Clustering Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#references-for-clustering">References for Clustering</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
@@ -381,6 +519,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
@@ -388,6 +527,25 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#parallel-trends">Parallel Trends</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#common-treatment-timing-common-timing-mode">Common Treatment Timing (Common Timing Mode)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#heterogeneous-trends-and-assumption-cht">Heterogeneous Trends and Assumption CHT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#assumption-cht">Assumption CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#first-difference-under-cht">First Difference Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#choosing-between-demean-and-detrend">Choosing Between Demean and Detrend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#procedure-5-1-detrending-under-cht">Procedure 5.1: Detrending Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#testing-parallel-trends">Testing Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#getting-a-transformation-recommendation">Getting a Transformation Recommendation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#pre-treatment-period-dynamics">Pre-treatment Period Dynamics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#motivation">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#rolling-transformation-for-pre-treatment-periods">Rolling Transformation for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#anchor-point-convention">Anchor Point Convention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#pre-treatment-att-estimation">Pre-treatment ATT Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#control-group-for-pre-treatment-periods">Control Group for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#joint-test-for-parallel-trends">Joint Test for Parallel Trends</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#comparison-with-other-did-methods">Comparison with Other DiD Methods</a><ul>
@@ -411,11 +569,21 @@
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#id2">Inference Distribution by Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#aggregation">Aggregation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#event-time-aggregation-watt">Event Time Aggregation (WATT)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#robustness-to-pre-treatment-period-selection">Robustness to Pre-treatment Period Selection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#id3">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#sensitivity-ratio">Sensitivity Ratio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#using-robustness-pre-periods">Using robustness_pre_periods()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#no-anticipation-sensitivity">No-Anticipation Sensitivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#using-exclude-pre-periods-parameter">Using exclude_pre_periods Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../methodological_notes.html#comprehensive-sensitivity-analysis">Comprehensive Sensitivity Analysis</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#references">References</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../methodological_notes.html#further-reading">Further Reading</a></li>
 </ul>
 </li>
@@ -460,139 +628,89 @@
 <h1>Validation Module (validation)<a class="headerlink" href="#validation-module-validation" title="Link to this heading"></a></h1>
 <p>The validation module ensures data quality and assumption compliance before
 estimation. It checks panel structure, treatment timing, and data requirements.</p>
-<p id="module-lwdid.validation">Input validation and data preparation for difference-in-differences estimation.</p>
-<p>This module provides comprehensive validation utilities for panel data used in
-difference-in-differences analysis. It ensures data integrity, validates
-structural assumptions (time-invariance, continuity), and prepares data for
-downstream transformation and estimation.</p>
-<p>The module supports both common timing designs (all units treated simultaneously)
-and staggered adoption designs (treatment timing varies by cohort). Validation
-checks include column existence, data types, time-invariance of treatment
-indicators and controls, time continuity, and treatment/control group adequacy.</p>
+<p id="module-lwdid.validation">Input validation and data preparation for difference-in-differences.</p>
+<p>This module provides comprehensive validation utilities for panel data
+used in difference-in-differences analysis. It ensures data integrity,
+validates structural assumptions (time-invariance, continuity), and
+prepares data for downstream transformation and estimation.</p>
+<p>The module supports both common timing designs (all units treated
+simultaneously) and staggered adoption designs (treatment timing varies
+by cohort). Validation checks include column existence, data types,
+time-invariance of treatment indicators and controls, time continuity,
+and treatment/control group adequacy.</p>
 <p class="rubric">Notes</p>
-<p>Reserved column names created internally (<code class="docutils literal notranslate"><span class="pre">d_</span></code>, <code class="docutils literal notranslate"><span class="pre">post_</span></code>, <code class="docutils literal notranslate"><span class="pre">tindex</span></code>, <code class="docutils literal notranslate"><span class="pre">tq</span></code>, <code class="docutils literal notranslate"><span class="pre">ydot</span></code>,
-<code class="docutils literal notranslate"><span class="pre">ydot_postavg</span></code>, <code class="docutils literal notranslate"><span class="pre">firstpost</span></code>) should not exist in input data to avoid conflicts.</p>
+<p>Reserved column names created internally should not exist in input
+data to avoid conflicts:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">d_</span></code> : Binary treatment indicator</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">post_</span></code> : Binary post-period indicator</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tindex</span></code> : Sequential time index</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tq</span></code> : Quarter index for quarterly data</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ydot</span></code> : Residualized outcome</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ydot_postavg</span></code> : Post-period average of residualized outcome</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">firstpost</span></code> : Main regression sample indicator</p></li>
+</ul>
 <dl class="py function">
 <dt class="sig sig-object py" id="lwdid.validation.validate_and_prepare_data">
-<span class="sig-prename descclassname"><span class="pre">lwdid.validation.</span></span><span class="sig-name descname"><span class="pre">validate_and_prepare_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/validation.html#validate_and_prepare_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.validation.validate_and_prepare_data" title="Link to this definition"></a></dt>
-<dd><p>Validate input data and execute data preparation pipeline (Steps 0-6).</p>
-<p>This is the main entry point for all data validation and preparation in the
-lwdid package. It performs comprehensive checks and transformations to ensure
-data integrity before transformation and estimation.</p>
-<section id="pipeline-steps">
-<h2>Pipeline Steps<a class="headerlink" href="#pipeline-steps" title="Link to this heading"></a></h2>
+<span class="sig-prename descclassname"><span class="pre">lwdid.validation.</span></span><span class="sig-name descname"><span class="pre">validate_and_prepare_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">season_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/validation.html#validate_and_prepare_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.validation.validate_and_prepare_data" title="Link to this definition"></a></dt>
+<dd><p>Validate input data and execute data preparation pipeline.</p>
+<p>This is the main entry point for all data validation and preparation
+in the lwdid package. It performs comprehensive checks and
+transformations to ensure data integrity before transformation and
+estimation.</p>
+<p>The validation pipeline consists of five stages:</p>
 <ol class="arabic simple">
-<li><p><strong>Input validation</strong>:
-- DataFrame type check
-- Reserved column names check
-- Required columns existence check
-- Rolling parameter validation</p></li>
-<li><p><strong>Data type validation</strong>:
-- Outcome variable numeric type check
-- Control variables numeric type check</p></li>
-<li><p><strong>Time-invariance validation</strong>:
-- Treatment indicator time-invariance check
-- Control variables time-invariance check</p></li>
-<li><p><strong>Data preparation</strong>:
-- String ID conversion to numeric codes
-- Time index creation (<code class="docutils literal notranslate"><span class="pre">tindex</span></code>)
-- Binary treatment/post indicator creation (<code class="docutils literal notranslate"><span class="pre">d_</span></code>, <code class="docutils literal notranslate"><span class="pre">post_</span></code>)
-- Missing value handling</p></li>
-<li><p><strong>Time structure validation</strong>:
-- Time continuity validation
-- Post-treatment monotonicity check</p></li>
+<li><p><strong>Input validation</strong>: DataFrame type check, reserved column names
+check, required columns existence check, rolling parameter
+validation.</p></li>
+<li><p><strong>Data type validation</strong>: Outcome variable numeric type check,
+control variables numeric type check.</p></li>
+<li><p><strong>Time-invariance validation</strong>: Treatment indicator time-invariance
+check, control variables time-invariance check.</p></li>
+<li><p><strong>Data preparation</strong>: String ID conversion to numeric codes, time
+index creation (<code class="docutils literal notranslate"><span class="pre">tindex</span></code>), binary treatment/post indicator
+creation (<code class="docutils literal notranslate"><span class="pre">d_</span></code>, <code class="docutils literal notranslate"><span class="pre">post_</span></code>), missing value handling.</p></li>
+<li><p><strong>Time structure validation</strong>: Time continuity validation,
+post-treatment monotonicity check.</p></li>
 </ol>
 <dl class="field-list simple">
-<dt class="field-odd">type data<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
-</dd>
-<dt class="field-even">param data<span class="colon">:</span></dt>
-<dd class="field-even"><p>Long-format panel data with one row per unit-time observation.</p>
-</dd>
-<dt class="field-odd">type data<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
-</dd>
-<dt class="field-even">type y<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-odd">param y<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Outcome variable column name. Must be numeric.</p>
-</dd>
-<dt class="field-even">type y<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
-</dd>
-<dt class="field-odd">type d<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-even">param d<span class="colon">:</span></dt>
-<dd class="field-even"><p>Treatment indicator column name. Must be time-invariant (constant within unit).
-d=1 for treated units, d=0 for control units.</p>
-</dd>
-<dt class="field-odd">type d<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-<dt class="field-even">type ivar<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-odd">param ivar<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Unit identifier column name. Can be string or numeric.</p>
-</dd>
-<dt class="field-even">type ivar<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
-</dd>
-<dt class="field-odd">type tvar<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
-</dd>
-<dt class="field-even">param tvar<span class="colon">:</span></dt>
-<dd class="field-even"><p>Time variable column name(s):</p>
-<ul class="simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Long-format panel data with one row per unit-time observation.</p></li>
+<li><p><strong>y</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Outcome variable column name. Must be numeric.</p></li>
+<li><p><strong>d</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Treatment indicator column name. Must be time-invariant (constant within unit).
+d=1 for treated units, d=0 for control units.</p></li>
+<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Unit identifier column name. Can be string or numeric.</p></li>
+<li><p><strong>tvar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Time variable column name(s):</p>
+<ul>
 <li><p>str: Annual data (e.g., ‘year’)</p></li>
 <li><p>[str, str]: Quarterly data (e.g., [‘year’, ‘quarter’])</p></li>
 </ul>
-</dd>
-<dt class="field-odd">type tvar<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str or list of str</p>
-</dd>
-<dt class="field-even">type post<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-odd">param post<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Post-treatment indicator column name. Must be monotone non-decreasing in time.
-post=0 for pre-treatment periods, post=1 for post-treatment periods.</p>
-</dd>
-<dt class="field-even">type post<span class="colon">:</span></dt>
-<dd class="field-even"><p>str</p>
-</dd>
-<dt class="field-odd">type rolling<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-<dt class="field-even">param rolling<span class="colon">:</span></dt>
-<dd class="field-even"><p>Transformation method. Must be one of:</p>
-<ul class="simple">
-<li><p>‘demean’: Unit-specific demeaning</p></li>
-<li><p>‘detrend’: Unit-specific detrending</p></li>
-<li><p>‘demeanq’: Quarterly demeaning with seasonal effects</p></li>
-<li><p>‘detrendq’: Quarterly detrending with seasonal effects</p></li>
+</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Post-treatment indicator column name. Must be monotone non-decreasing in time.
+post=0 for pre-treatment periods, post=1 for post-treatment periods.</p></li>
+<li><p><strong>rolling</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – <p>Transformation method. Must be one of:</p>
+<ul>
+<li><p>’demean’: Unit-specific demeaning</p></li>
+<li><p>’detrend’: Unit-specific detrending</p></li>
+<li><p>’demeanq’: Quarterly demeaning with seasonal effects</p></li>
+<li><p>’detrendq’: Quarterly detrending with seasonal effects</p></li>
+</ul>
+</p></li>
+<li><p><strong>controls</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Control variable column names. Must be numeric and time-invariant.
+Default: None (no controls).</p></li>
+<li><p><strong>season_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Column name of seasonal indicator variable for seasonal transformations
+(demeanq, detrendq). Values should be integers from 1 to Q representing
+seasonal periods (e.g., quarters 1-4, months 1-12, or weeks 1-52).
+If provided, allows demeanq/detrendq to work with a single tvar column.
+Default: None (uses tvar[1] for legacy quarterly data format).</p></li>
 </ul>
 </dd>
-<dt class="field-odd">type rolling<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]</span></p>
 </dd>
-<dt class="field-even">type controls<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>] | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-<dt class="field-odd">param controls<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Control variable column names. Must be numeric and time-invariant.
-Default: None (no controls).</p>
-</dd>
-<dt class="field-even">type controls<span class="colon">:</span></dt>
-<dd class="field-even"><p>list of str, optional</p>
-</dd>
-<dt class="field-odd">rtype<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]</span></p>
-</dd>
-<dt class="field-even">returns<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
 <li><p><strong>data_clean</strong> (<em>pd.DataFrame</em>) – Cleaned and prepared data with the following modifications:</p>
 <ul>
 <li><p>Original columns preserved</p></li>
@@ -605,52 +723,36 @@ handled later at the estimation stage)</p></li>
 </li>
 <li><p><strong>metadata</strong> (<em>dict</em>) – Metadata dictionary containing:</p>
 <ul>
-<li><p>‘N’: Total number of units</p></li>
-<li><p>‘N_treated’: Number of treated units (<code class="docutils literal notranslate"><span class="pre">d_</span></code> = 1)</p></li>
-<li><p>‘N_control’: Number of control units (<code class="docutils literal notranslate"><span class="pre">d_</span></code> = 0)</p></li>
-<li><p>‘T’: Total number of time periods</p></li>
-<li><p>‘K’: Number of pre-treatment periods</p></li>
-<li><p>‘tpost1’: First post-treatment period index</p></li>
-<li><p>‘is_quarterly’: Boolean indicating quarterly data</p></li>
-<li><p>‘id_mapping’: Dict mapping original string IDs to numeric codes (if applicable)</p></li>
+<li><p>’N’: Total number of units</p></li>
+<li><p>’N_treated’: Number of treated units (<code class="docutils literal notranslate"><span class="pre">d_</span></code> = 1)</p></li>
+<li><p>’N_control’: Number of control units (<code class="docutils literal notranslate"><span class="pre">d_</span></code> = 0)</p></li>
+<li><p>’T’: Total number of time periods</p></li>
+<li><p>’K’: Number of pre-treatment periods</p></li>
+<li><p>’tpost1’: First post-treatment period index</p></li>
+<li><p>’is_quarterly’: Boolean indicating quarterly data</p></li>
+<li><p>’id_mapping’: Dict mapping original string IDs to numeric codes (if applicable)</p></li>
 </ul>
 </li>
 </ul>
+</p>
 </dd>
-<dt class="field-odd">raises TypeError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If data is not a pandas DataFrame.</p>
-</dd>
-<dt class="field-even">raises MissingRequiredColumnError<span class="colon">:</span></dt>
-<dd class="field-even"><p>If required columns are missing from data.</p>
-</dd>
-<dt class="field-odd">raises InvalidParameterError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If reserved column names exist in data.</p>
-</dd>
-<dt class="field-even">raises InvalidRollingMethodError<span class="colon">:</span></dt>
-<dd class="field-even"><p>If rolling parameter is not one of the four valid methods.</p>
-</dd>
-<dt class="field-odd">raises InsufficientDataError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If sample size is insufficient (no treated/control units).</p>
-</dd>
-<dt class="field-even">raises TimeDiscontinuityError<span class="colon">:</span></dt>
-<dd class="field-even"><p>If time series has gaps or post variable is non-monotone.</p>
-</dd>
-<dt class="field-odd">raises InsufficientQuarterDiversityError<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If quarterly helper checks for demeanq/detrendq detect invalid quarter
-    patterns (raised indirectly via quarterly validation utilities).</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a> – If data is not a pandas DataFrame.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.MissingRequiredColumnError" title="lwdid.exceptions.MissingRequiredColumnError"><strong>MissingRequiredColumnError</strong></a> – If required columns are missing from data.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidParameterError" title="lwdid.exceptions.InvalidParameterError"><strong>InvalidParameterError</strong></a> – If reserved column names exist in data.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidRollingMethodError" title="lwdid.exceptions.InvalidRollingMethodError"><strong>InvalidRollingMethodError</strong></a> – If rolling parameter is not one of the four valid methods.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientDataError" title="lwdid.exceptions.InsufficientDataError"><strong>InsufficientDataError</strong></a> – If sample size is insufficient (no treated/control units).</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.TimeDiscontinuityError" title="lwdid.exceptions.TimeDiscontinuityError"><strong>TimeDiscontinuityError</strong></a> – If time series has gaps or post variable is non-monotone.</p></li>
+<li><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientQuarterDiversityError" title="lwdid.exceptions.InsufficientQuarterDiversityError"><strong>InsufficientQuarterDiversityError</strong></a> – If quarterly helper checks for demeanq/detrendq detect invalid quarter
+    patterns (raised indirectly via quarterly validation utilities).</p></li>
+</ul>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>Reserved column names that cannot exist in input data:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">d_</span></code>: Binary treatment indicator (created internally)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">post_</span></code>: Binary post indicator (created internally)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">tindex</span></code>: Time index (created internally)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">tq</span></code> : Quarter index (created internally for quarterly data)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ydot</span></code> : Residualized outcome (created in transformation)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">ydot_postavg</span></code> : Post-period average of ydot (created in transformation)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">firstpost</span></code> : Main regression sample indicator (created in transformation)</p></li>
-</ul>
+<p>This function creates several internal columns (<code class="docutils literal notranslate"><span class="pre">d_</span></code>, <code class="docutils literal notranslate"><span class="pre">post_</span></code>,
+<code class="docutils literal notranslate"><span class="pre">tindex</span></code>, <code class="docutils literal notranslate"><span class="pre">tq</span></code>, <code class="docutils literal notranslate"><span class="pre">ydot</span></code>, <code class="docutils literal notranslate"><span class="pre">ydot_postavg</span></code>, <code class="docutils literal notranslate"><span class="pre">firstpost</span></code>).
+Input data must not contain columns with these names.</p>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <dl class="simple">
@@ -662,9 +764,80 @@ handled later at the estimation stage)</p></li>
 </dd>
 </dl>
 </div>
-</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lwdid.validation.validate_season_diversity">
+<span class="sig-prename descclassname"><span class="pre">lwdid.validation.</span></span><span class="sig-name descname"><span class="pre">validate_season_diversity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">season_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/validation.html#validate_season_diversity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.validation.validate_season_diversity" title="Link to this definition"></a></dt>
+<dd><p>Validate seasonal diversity and coverage for seasonal effects identification.</p>
+<p>Ensures each unit has at least two distinct seasons in the pre-treatment
+period (required to identify seasonal effects) and that all post-period
+seasons also appear in the pre-period.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Panel data in long format.</p></li>
+<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Unit identifier column name.</p></li>
+<li><p><strong>season_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Seasonal variable column name (values should be 1 to Q).</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Post-treatment indicator column name.</p></li>
+<li><p><strong>Q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>default 4</em>) – Number of seasonal periods per cycle. Common values:
+- 4: Quarterly data (default)
+- 12: Monthly data
+- 52: Weekly data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientQuarterDiversityError" title="lwdid.exceptions.InsufficientQuarterDiversityError"><strong>InsufficientQuarterDiversityError</strong></a> – If any unit has fewer than 2 distinct seasons in pre-period, or
+    if any post-period season does not appear in the pre-period.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.validation.validate_season_coverage" title="lwdid.validation.validate_season_coverage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_season_coverage</span></code></a></dt><dd><p>Validates only seasonal coverage.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lwdid.validation.validate_season_coverage">
+<span class="sig-prename descclassname"><span class="pre">lwdid.validation.</span></span><span class="sig-name descname"><span class="pre">validate_season_coverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">season_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/validation.html#validate_season_coverage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.validation.validate_season_coverage" title="Link to this definition"></a></dt>
+<dd><p>Validate that post-period seasons appear in pre-period for each unit.</p>
+<p>Seasonal transformation methods assume seasonal effects are constant
+over time. Each post-period season must appear in the pre-period to
+identify its seasonal coefficient.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Panel data in long format.</p></li>
+<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Unit identifier column name.</p></li>
+<li><p><strong>season_var</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Seasonal variable column name (values should be 1 to Q).</p></li>
+<li><p><strong>post</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Post-treatment indicator column name.</p></li>
+<li><p><strong>Q</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>default 4</em>) – Number of seasonal periods per cycle. Common values:
+- 4: Quarterly data (default)
+- 12: Monthly data
+- 52: Weekly data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InsufficientQuarterDiversityError" title="lwdid.exceptions.InsufficientQuarterDiversityError"><strong>InsufficientQuarterDiversityError</strong></a> – If any unit has a post-period season that does not appear in its
+    pre-period data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#lwdid.validation.validate_season_diversity" title="lwdid.validation.validate_season_diversity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_season_diversity</span></code></a></dt><dd><p>Also validates minimum seasonal diversity.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -698,6 +871,8 @@ quarters also appear in the pre-period.</p>
 </dd>
 </dl>
 </div>
+<p class="rubric">Notes</p>
+<p>This is a backward-compatible wrapper for validate_season_diversity with Q=4.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -731,6 +906,8 @@ identify its seasonal coefficient.</p>
 </dd>
 </dl>
 </div>
+<p class="rubric">Notes</p>
+<p>This is a backward-compatible wrapper for validate_season_coverage with Q=4.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -777,13 +954,17 @@ to ensure consistent never-treated determination.</p>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
 </dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="exceptions.html#lwdid.exceptions.InvalidStaggeredDataError" title="lwdid.exceptions.InvalidStaggeredDataError"><strong>InvalidStaggeredDataError</strong></a> – If gvar_value is negative infinity (-np.inf), which is not a valid
+    gvar value.</p>
+</dd>
 </dl>
 <p class="rubric">Notes</p>
 <p>A unit is considered never treated if its gvar value is:</p>
 <ul class="simple">
 <li><p>NaN or None (missing value)</p></li>
 <li><p>0 (explicitly coded as never treated)</p></li>
-<li><p>np.inf (infinity, explicitly coded as never treated)</p></li>
+<li><p>np.inf (positive infinity, explicitly coded as never treated)</p></li>
 </ul>
 <p>Positive integers indicate the first treatment period (cohort membership).
 Negative values are invalid and should be caught by validate_staggered_data().</p>
@@ -850,6 +1031,88 @@ list of two strings for quarterly data (year, quarter).</p></li>
 <dt><a class="reference internal" href="#lwdid.validation.is_never_treated" title="lwdid.validation.is_never_treated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_never_treated</span></code></a></dt><dd><p>Determines never-treated status from gvar value.</p>
 </dd>
 <dt><a class="reference internal" href="#lwdid.validation.validate_and_prepare_data" title="lwdid.validation.validate_and_prepare_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_and_prepare_data</span></code></a></dt><dd><p>Validation for common timing designs.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lwdid.validation.detect_frequency">
+<span class="sig-prename descclassname"><span class="pre">lwdid.validation.</span></span><span class="sig-name descname"><span class="pre">detect_frequency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tvar</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ivar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lwdid/validation.html#detect_frequency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lwdid.validation.detect_frequency" title="Link to this definition"></a></dt>
+<dd><p>Detect data frequency (quarterly, monthly, weekly) from time variable.</p>
+<p>Analyzes the time variable to determine the most likely data frequency.
+Uses multiple heuristics including time interval analysis and observations
+per year counting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>pd.DataFrame</em>) – Panel data containing the time variable.</p></li>
+<li><p><strong>tvar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Column name of the time variable. Can be:
+- Integer time index (e.g., 1, 2, 3, …)
+- Year values (e.g., 2020, 2021, …)
+- Datetime values</p></li>
+<li><p><strong>ivar</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – Column name of the unit identifier. If provided, frequency detection
+is performed per-unit and aggregated for more robust estimation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Detection results with keys:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">frequency</span></code><span class="classifier">str or None</span></dt><dd><p>Detected frequency: ‘quarterly’, ‘monthly’, ‘weekly’, ‘annual’,
+or None if detection failed.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Q</span></code><span class="classifier">int or None</span></dt><dd><p>Corresponding Q value: 4 (quarterly), 12 (monthly), 52 (weekly),
+1 (annual), or None if detection failed.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">confidence</span></code><span class="classifier">float</span></dt><dd><p>Confidence score in [0, 1] indicating detection reliability.
+Higher values indicate more consistent patterns.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">method</span></code><span class="classifier">str</span></dt><dd><p>Detection method used: ‘interval’, ‘obs_per_year’, or ‘heuristic’.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">details</span></code><span class="classifier">dict</span></dt><dd><p>Additional diagnostic information including:
+- <code class="docutils literal notranslate"><span class="pre">median_interval</span></code>: Median time interval between observations
+- <code class="docutils literal notranslate"><span class="pre">obs_per_year</span></code>: Average observations per year (if applicable)
+- <code class="docutils literal notranslate"><span class="pre">n_units_analyzed</span></code>: Number of units used in detection</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Detection heuristics:</p>
+<ol class="arabic simple">
+<li><p><strong>Interval-based</strong>: Analyzes median time interval between consecutive
+observations. Works best with datetime or continuous time indices.</p></li>
+<li><p><strong>Observations per year</strong>: Counts average observations per calendar
+year. Works best with year-based time variables.</p></li>
+<li><p><strong>Value range</strong>: Examines the range of time values to infer frequency.</p></li>
+</ol>
+<p>The function returns <code class="docutils literal notranslate"><span class="pre">frequency=None</span></code> when:
+- Time variable has insufficient variation
+- Multiple frequencies are equally likely
+- Data pattern is irregular or ambiguous</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">lwdid</span></code></dt><dd><p>Main estimation function with <code class="docutils literal notranslate"><span class="pre">auto_detect_frequency</span></code> parameter.</p>
 </dd>
 </dl>
 </div>
@@ -1045,6 +1308,73 @@ pre-check seasonal coverage requirements for <code class="docutils literal notra
 In typical usage these helpers are called indirectly by
 <a class="reference internal" href="core.html#lwdid.lwdid" title="lwdid.lwdid"><code class="xref py py-func docutils literal notranslate"><span class="pre">lwdid.lwdid()</span></code></a> via the transformation module rather than being
 used directly.</p>
+</section>
+</section>
+<section id="never-treated-unit-identification">
+<h2>Never-Treated Unit Identification<a class="headerlink" href="#never-treated-unit-identification" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code> function provides a standardized way to identify
+never-treated units in staggered adoption designs. This function is the
+single source of truth for never-treated identification across all modules.</p>
+<section id="is-never-treated-function">
+<h3>is_never_treated() Function<a class="headerlink" href="#is-never-treated-function" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_never_treated</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="c1"># Check individual values</span>
+<span class="n">is_never_treated</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>        <span class="c1"># True - zero indicates never-treated</span>
+<span class="n">is_never_treated</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>   <span class="c1"># True - infinity indicates never-treated</span>
+<span class="n">is_never_treated</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>   <span class="c1"># True - NaN indicates never-treated</span>
+<span class="n">is_never_treated</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>     <span class="c1"># True - None indicates never-treated</span>
+<span class="n">is_never_treated</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">NA</span><span class="p">)</span>    <span class="c1"># True - pandas NA indicates never-treated</span>
+<span class="n">is_never_treated</span><span class="p">(</span><span class="mi">2005</span><span class="p">)</span>     <span class="c1"># False - positive integer is treatment cohort</span>
+<span class="n">is_never_treated</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>  <span class="c1"># Raises InvalidStaggeredDataError</span>
+</pre></div>
+</div>
+<p><strong>Valid Never-Treated Encodings:</strong></p>
+<p>The following values are recognized as never-treated:</p>
+<ol class="arabic simple">
+<li><p><strong>Zero (0 or 0.0)</strong>: Common encoding in Stata and other software</p></li>
+<li><p><strong>Positive infinity (np.inf)</strong>: Represents “treated at infinity” (never)</p></li>
+<li><p><strong>NaN/NA/None</strong>: Missing treatment time indicates never-treated</p></li>
+<li><p><strong>Near-zero values</strong>: Values within floating-point tolerance (<span class="math notranslate nohighlight">\(|x| &lt; 10^{-10}\)</span>)</p></li>
+</ol>
+<p><strong>Invalid Values:</strong></p>
+<ul class="simple">
+<li><p><strong>Negative infinity (-np.inf)</strong>: Raises <code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></p></li>
+<li><p><strong>Negative numbers</strong>: Should be caught by <code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></p></li>
+</ul>
+<p><strong>Usage with DataFrames:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">lwdid.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_never_treated</span>
+
+<span class="c1"># Create sample data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">2001</span><span class="p">,</span> <span class="mi">2002</span><span class="p">]</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">15</span><span class="p">),</span>
+    <span class="s1">&#39;gvar&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="mi">2001</span><span class="p">,</span> <span class="mi">2002</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span>
+<span class="p">})</span>
+
+<span class="c1"># Identify never-treated units</span>
+<span class="n">unit_gvar</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)[</span><span class="s1">&#39;gvar&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+<span class="n">nt_mask</span> <span class="o">=</span> <span class="n">unit_gvar</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">is_never_treated</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Never-treated units: </span><span class="si">{</span><span class="n">nt_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Output: 3</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;NT unit IDs: </span><span class="si">{</span><span class="n">unit_gvar</span><span class="p">[</span><span class="n">nt_mask</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># [1, 2, 3]</span>
+</pre></div>
+</div>
+<p><strong>Cross-Module Consistency:</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code> function is used consistently across all modules:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">lwdid.validation</span></code>: Primary definition</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lwdid.staggered.control_groups</span></code>: Control group selection</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lwdid.staggered.aggregation</span></code>: Weight calculations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lwdid.staggered.randomization</span></code>: Randomization inference</p></li>
+</ul>
+<p>This ensures that never-treated identification is consistent throughout
+the estimation pipeline.</p>
 </section>
 </section>
 <section id="staggered-adoption-validation">
@@ -1266,9 +1596,8 @@ chosen transformation.</p>
 <section id="error-time-varying-controls">
 <h3>Error: Time-Varying Controls<a class="headerlink" href="#error-time-varying-controls" title="Link to this heading"></a></h3>
 <p><strong>Problem (conceptual):</strong></p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>  InvalidParameterError indicating that control variable &#39;income&#39; is
-  not time-invariant.
-(constant within each unit).
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>InvalidParameterError indicating that control variable &#39;income&#39; is
+not time-invariant (constant within each unit).
 </pre></div>
 </div>
 <p><strong>Cause:</strong> Control variable changes over time for some units.</p>
@@ -1380,7 +1709,7 @@ chosen transformation.</p>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="estimation.html" class="btn btn-neutral float-left" title="Estimation Module (estimation)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="preprocessing.html" class="btn btn-neutral float-left" title="Preprocessing Module (preprocessing)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="randomization.html" class="btn btn-neutral float-right" title="Randomization Inference Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

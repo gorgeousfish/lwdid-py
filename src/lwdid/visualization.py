@@ -8,14 +8,12 @@ comparing the trajectory of residualized outcomes between treated units
 
 The visualization functions support both single treated unit analysis and
 aggregated treatment group comparisons. Plots display pre-treatment fit
-quality and post-intervention treatment effect gaps, with customizable
-appearance options.
+quality and post-intervention treatment effect gaps.
 
 Notes
 -----
-Requires matplotlib >= 3.3 for plotting functionality. The module raises
-VisualizationError if matplotlib is not installed when plot generation
-is requested.
+Requires matplotlib >= 3.3. Raises VisualizationError if matplotlib is
+not available when plot generation is requested.
 """
 
 from __future__ import annotations
@@ -49,32 +47,45 @@ def _resolve_gid(
     data : pd.DataFrame
         Panel data containing the unit identifier column.
     ivar_var : str
-        Name of the unit identifier column.
+        Name of the unit identifier column in the DataFrame.
     d_var : str
         Name of the binary treatment indicator column (1 = treated).
     gid : str or int
-        User-specified unit identifier to resolve.
+        User-specified unit identifier to resolve. Accepts both string
+        and numeric formats.
 
     Returns
     -------
-    int
-        Internal unit identifier corresponding to the input.
+    int or str
+        Resolved unit identifier matching the dtype of the ivar column.
 
     Raises
     ------
     InvalidParameterError
         If the unit identifier is not found in the data or does not
         correspond to a treated unit.
+
+    Notes
+    -----
+    The resolution process handles two scenarios: (1) when an id_mapping
+    dictionary exists in data.attrs (from string-to-numeric conversion
+    during preprocessing), and (2) direct matching against the ivar column.
+    Type coercion is applied when the input type differs from the column dtype.
     """
     original_gid = gid
+    
+    # Check for id_mapping from preprocessing (string IDs converted to numeric)
     mapping = data.attrs.get('id_mapping', None)
     if mapping and 'original_to_numeric' in mapping:
+        # Attempt lookup in the original-to-numeric mapping first
         gid_str = str(gid) if not isinstance(gid, str) else gid
         gid_num = mapping['original_to_numeric'].get(gid_str)
         if gid_num is not None:
             gid_resolved = gid_num
         else:
+            # Mapping lookup failed; fall back to direct column matching
             gid_to_match = gid
+            # Coerce type to match column dtype for comparison
             if isinstance(gid, str) and pd.api.types.is_numeric_dtype(data[ivar_var]):
                 try:
                     gid_to_match = pd.to_numeric(gid)
@@ -88,7 +99,9 @@ def _resolve_gid(
                 raise InvalidParameterError(f"gid '{original_gid}' not found")
             gid_resolved = data.loc[mask, ivar_var].iloc[0]
     else:
+        # No id_mapping; match directly against the ivar column
         gid_to_match = gid
+        # Coerce type to match column dtype for comparison
         if isinstance(gid, str) and pd.api.types.is_numeric_dtype(data[ivar_var]):
             try:
                 gid_to_match = pd.to_numeric(gid)
@@ -102,6 +115,7 @@ def _resolve_gid(
             raise InvalidParameterError(f"gid '{original_gid}' not found")
         gid_resolved = data.loc[mask, ivar_var].iloc[0]
 
+    # Validate that the resolved unit is a treated unit (d=1)
     unit_rows = data[data[ivar_var] == gid_resolved]
     if len(unit_rows) == 0:
         raise InvalidParameterError(f"gid '{original_gid}' not found")
@@ -177,14 +191,28 @@ def prepare_plot_data(
         If required columns are missing from the data.
     InvalidParameterError
         If gid is specified but not found or not a treated unit.
+
+    Notes
+    -----
+    The returned dictionary provides all data needed by :func:`plot_results`.
+    Control group means are computed by averaging the residualized outcome
+    across all units with d=0 in each period. Treated series is either a
+    single unit trajectory or the group average across all units with d=1.
+
+    See Also
+    --------
+    plot_results : Generate the visualization from prepared data.
     """
+    # Validate that all required columns exist
     required = {ydot_var, d_var, tindex_var, ivar_var}
     missing = required - set(data.columns)
     if missing:
         raise VisualizationError(f"Missing required columns: {sorted(missing)}")
 
+    # Create time index sequence (1-indexed to match tindex convention)
     time = list(range(1, int(Tmax) + 1))
 
+    # Compute period-wise mean of residualized outcome for control units
     control_mean_series = (
         data[data[d_var] == 0]
         .groupby(tindex_var)[ydot_var]
@@ -193,6 +221,7 @@ def prepare_plot_data(
     )
 
     if gid is not None:
+        # Plot single treated unit trajectory
         gid_resolved = _resolve_gid(data, ivar_var, d_var, gid)
         unit = data[data[ivar_var] == gid_resolved]
         treated_series = (
@@ -201,6 +230,7 @@ def prepare_plot_data(
         )
         treated_label = f"Unit {gid}"
     else:
+        # Plot average across all treated units
         treated_series = (
             data[data[d_var] == 1]
             .groupby(tindex_var)[ydot_var]
@@ -259,15 +289,26 @@ def plot_results(
     See Also
     --------
     prepare_plot_data : Prepare the data dictionary for plotting.
+
+    Notes
+    -----
+    The plot displays three visual elements: (1) a dashed blue line for
+    control group mean trajectory, (2) a solid red line for treated unit
+    or group average trajectory, and (3) a vertical dashed black line
+    marking the intervention point. Pre-treatment periods appear to the
+    left of the intervention line, enabling visual assessment of parallel
+    trends and pre-treatment fit quality.
     """
+    # Lazy import to allow package usage without matplotlib
     try:
         import matplotlib.pyplot as plt
         from matplotlib.ticker import MaxNLocator
-    except Exception as exc:
+    except ImportError as exc:
         raise VisualizationError(
             'Install required dependencies: matplotlib>=3.3.'
         ) from exc
 
+    # Default plot configuration
     opts = {
         'figsize': (10, 6),
         'title': None,
@@ -280,6 +321,7 @@ def plot_results(
     if graph_options:
         opts.update(graph_options)
 
+    # Extract plot data components
     time = plot_data['time']
     ctrl = plot_data['control_mean']
     trt = plot_data['treated_series']
@@ -289,10 +331,12 @@ def plot_results(
 
     fig, ax = plt.subplots(figsize=opts['figsize'], dpi=opts['dpi'])
 
+    # Plot outcome trajectories
     ax.plot(time, ctrl, linestyle='--', color='blue', linewidth=1.5, label='Control')
     ax.plot(time, trt, linestyle='-', color='red', linewidth=2.0, label=tlabel)
     ax.axvline(x=tpost1, linestyle='--', color='black', linewidth=1.0, alpha=0.7, label='Intervention')
 
+    # Configure x-axis with period labels (rotated for readability)
     ax.set_xticks(time)
     ax.set_xticklabels([period_labels.get(t, str(t)) for t in time], rotation=45, ha='right')
     if opts['xlabel'] is not None:

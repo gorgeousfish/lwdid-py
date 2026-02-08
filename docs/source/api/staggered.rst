@@ -13,7 +13,7 @@ This module provides:
 - **Data transformations**: Cohort-specific demeaning and detrending
 - **Control group selection**: Never-treated or not-yet-treated units
 - **Effect estimation**: (g,r)-specific, cohort, and overall effects
-- **Multiple estimators**: RA (regression adjustment), IPWRA, PSM
+- **Multiple estimators**: RA (regression adjustment), IPW, IPWRA, PSM
 - **Randomization inference**: Bootstrap and permutation tests
 
 Key Concepts
@@ -21,7 +21,8 @@ Key Concepts
 
 Cohort (g)
     The period when a unit first receives treatment. Units that are never treated
-    have gvar=0 or gvar=NaN (internally mapped to :math:`\infty`).
+    can be encoded as gvar=0, gvar=NaN, or gvar=inf (all internally mapped to
+    :math:`\infty`).
 
 (g, r) Effect
     The treatment effect :math:`\tau_{gr}` for cohort :math:`g` at calendar time
@@ -29,8 +30,8 @@ Cohort (g)
     in period :math:`g`, evaluated at time :math:`r`.
 
 Control Group Strategies
-    Lee and Wooldridge (2025, Section 4.1) establishes that under no anticipation
-    and conditional parallel trends, both never-treated and not-yet-treated units
+    Lee and Wooldridge (2025) establishes that under no anticipation and
+    conditional parallel trends, both never-treated and not-yet-treated units
     provide valid counterfactuals:
 
     - ``never_treated``: Only units with :math:`D_\infty = 1` (never treated during
@@ -40,9 +41,9 @@ Control Group Strategies
       after period r). Uses more control observations, potentially improving
       efficiency.
 
-    The theoretical justification (Theorem 4.1 in the paper) shows that the cohort
-    assignments are unconfounded with respect to the transformed potential outcome
-    conditional on covariates.
+    The theoretical justification shows that the cohort assignments are
+    unconfounded with respect to the transformed potential outcome conditional
+    on covariates.
 
 Aggregation Levels
     - ``none``: Returns all :math:`(g, r)`-specific effects
@@ -67,6 +68,10 @@ Transformations
 
 .. autofunction:: lwdid.staggered.transform_staggered_detrend
 
+.. autofunction:: lwdid.staggered.transform_staggered_demeanq
+
+.. autofunction:: lwdid.staggered.transform_staggered_detrendq
+
 .. autofunction:: lwdid.staggered.get_cohorts
 
 .. autofunction:: lwdid.staggered.get_valid_periods_for_cohort
@@ -82,6 +87,8 @@ Control Groups
 .. autofunction:: lwdid.staggered.get_valid_control_units
 
 .. autofunction:: lwdid.staggered.get_all_control_masks
+
+.. autofunction:: lwdid.staggered.get_all_control_masks_pre
 
 .. autofunction:: lwdid.staggered.validate_control_group
 
@@ -167,6 +174,60 @@ PSM Estimator
 
 .. autofunction:: lwdid.staggered.estimate_psm
 
+Inference Distribution by Estimator
+-----------------------------------
+
+The reference distribution used for constructing confidence intervals and
+computing p-values varies by estimator. The following table summarizes the
+inference approach for each estimator in the staggered module:
+
+**Summary Table:**
+
+- **RA (Regression Adjustment)**: t-distribution with df = N_treated + N_control - k
+- **IPW (Inverse Probability Weighting)**: Normal distribution (asymptotic inference)
+- **IPWRA (Doubly Robust)**: Normal distribution (asymptotic inference)
+- **PSM (Propensity Score Matching)**: Normal distribution (asymptotic inference)
+
+**Detailed Explanation:**
+
+RA (Regression Adjustment)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The regression adjustment estimator uses the t-distribution for inference,
+following Lee and Wooldridge (2026). Under classical linear model
+assumptions (normality and homoskedasticity), this provides exact finite-sample
+inference. With heteroskedasticity-robust standard errors (HC0-HC4), the
+t-distribution provides a conservative approximation that improves upon normal
+approximations in small samples.
+
+IPW, IPWRA, and PSM
+~~~~~~~~~~~~~~~~~~~
+
+The IPW, IPWRA, and PSM estimators use the normal distribution for asymptotic
+inference because:
+
+1. These estimators rely on influence function-based variance estimation
+2. Asymptotic theory justifies normal approximations for these methods
+3. For large samples, the normal distribution provides valid inference
+
+For small samples where exact inference is desired, consider using RA with
+``vce=None`` instead of IPW/IPWRA/PSM.
+
+**Practical Recommendations:**
+
+1. **Small samples** (N < 50): Use RA with ``vce=None`` for exact t-based
+   inference, or use randomization inference (``ri=True``) for assumption-free
+   testing.
+
+2. **Moderate samples** (50 ≤ N < 200): Use RA or IPWRA with HC3 standard errors
+   (``vce='hc3'``).
+
+3. **Large samples** (N ≥ 200): All estimators with asymptotic inference are
+   appropriate; IPWRA is recommended when functional form assumptions are
+   uncertain due to its double robustness property.
+
+See :doc:`../methodological_notes` for detailed theoretical foundations.
+
 Randomization Inference
 -----------------------
 
@@ -184,7 +245,7 @@ Pre-treatment Dynamics
 ----------------------
 
 The pre-treatment dynamics module implements estimation and testing for
-pre-treatment periods, following Lee & Wooldridge (2025) Appendix D.
+pre-treatment periods, following Lee and Wooldridge (2025).
 
 Pre-treatment Transformations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -396,7 +457,7 @@ Pre-treatment Dynamics and Parallel Trends Testing
 Low-Level API Usage
 ~~~~~~~~~~~~~~~~~~~
 
-For more control, you can use the staggered module directly:
+For more control, the staggered module can be used directly:
 
 .. code-block:: python
 

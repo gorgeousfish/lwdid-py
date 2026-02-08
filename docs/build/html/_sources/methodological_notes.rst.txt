@@ -160,17 +160,68 @@ pre-treatment observations so that its trend can be estimated. Units without any
 post-treatment observations remain in the panel but do not contribute to the main
 ATT regression because their post-treatment average is undefined.
 
-Quarterly Transformations
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Seasonal Transformations (demeanq/detrendq)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**demeanq**: Extends Procedure 2.1 to include quarter-of-year fixed effects,
-removing seasonal patterns in quarterly data.
+**demeanq**: Extends Procedure 2.1 to include seasonal fixed effects,
+removing seasonal patterns in periodic data.
 
 **detrendq**: Extends Procedure 3.1 to include both linear trends and
-quarter-of-year fixed effects.
+seasonal fixed effects.
 
-Both methods include quarter dummies in the pre-treatment regression to remove
+Both methods include seasonal dummies in the pre-treatment regression to remove
 seasonal variation before computing post-treatment residuals.
+
+**Generalized Q Parameter**
+
+The seasonal transformations support arbitrary seasonal periods through the ``Q``
+parameter:
+
+- **Q=4** (default): Quarterly data with 4 seasons per year
+- **Q=12**: Monthly data with 12 seasons per year
+- **Q=52**: Weekly data with 52 seasons per year
+
+The mathematical formulation generalizes to Q seasons. For demeanq, the
+pre-treatment regression for each unit i is:
+
+.. math::
+
+   Y_{it} = \alpha_i + \sum_{q=2}^{Q} \gamma_q S_{itq} + \varepsilon_{it}
+
+where :math:`S_{itq}` is a dummy variable equal to 1 if observation t falls in
+season q (with season 1 as the reference category).
+
+For detrendq, the pre-treatment regression includes both trend and seasonal terms:
+
+.. math::
+
+   Y_{it} = \alpha_i + \beta_i t + \sum_{q=2}^{Q} \gamma_q S_{itq} + \varepsilon_{it}
+
+**Minimum Pre-Treatment Requirements**
+
+The minimum number of pre-treatment observations per unit depends on Q:
+
+- **demeanq**: :math:`n_{pre} \geq Q + 1` (to estimate intercept + Q-1 seasonal dummies)
+- **detrendq**: :math:`n_{pre} \geq Q + 2` (to estimate intercept + trend + Q-1 seasonal dummies)
+
+For monthly data (Q=12), this means at least 13 pre-treatment observations for
+demeanq and 14 for detrendq. For weekly data (Q=52), at least 53 and 54
+observations respectively.
+
+**Season Coverage Requirement**
+
+For each unit, every season that appears in the post-treatment period must also
+appear in the pre-treatment period. This ensures that seasonal effects can be
+properly removed from post-treatment observations.
+
+**Numerical Stability**
+
+For high-dimensional seasonal adjustments (especially Q=52), the implementation
+includes numerical stability checks:
+
+- Condition number monitoring for the design matrix
+- Warnings when the design matrix approaches singularity
+- Robust OLS estimation using QR decomposition
 
 Inference Under CLM Assumptions
 --------------------------------
@@ -315,6 +366,245 @@ is generally recommended for design-based randomization inference.
 
 - Computationally intensive for large numbers of replications
 - Tests only the sharp null hypothesis (zero treatment effect for all units)
+
+Clustering at Higher Levels
+---------------------------
+
+When the policy or treatment varies at a level higher than the unit of observation,
+cluster standard errors at the policy variation level (Lee and Wooldridge, 2026,
+Section 8.2). This section provides guidance on choosing the appropriate clustering
+level and tools for diagnosing clustering structure.
+
+When to Cluster at Higher Levels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Principle**: Cluster at the level where treatment is assigned or varies.
+
+**Example**: If studying a state-level policy using county-level data, cluster at
+the state level because the policy varies across states, not counties::
+
+    result = lwdid(
+        data, y='outcome', ivar='county', tvar='year',
+        gvar='first_treat',
+        vce='cluster', cluster_var='state'
+    )
+
+**Rationale**: When treatment is assigned at a higher level (e.g., state), errors
+are likely correlated within that level. Clustering at the unit level (county)
+would understate standard errors because it ignores this correlation.
+
+Minimum Cluster Requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The reliability of cluster-robust inference depends on the number of clusters:
+
+- **Recommended**: ≥ 20-30 clusters for reliable asymptotic inference
+- **Warning threshold**: < 10 clusters may produce unreliable inference
+- **Alternative**: Use wild cluster bootstrap when clusters are few
+
+``lwdid`` automatically warns when the number of clusters is small:
+
+- **< 10 clusters**: Warning with recommendation to use wild cluster bootstrap
+- **10-19 clusters**: Informational message suggesting wild cluster bootstrap
+- **Cluster size imbalance** (CV > 1.0): Warning about potential reliability issues
+
+Degrees of Freedom
+~~~~~~~~~~~~~~~~~~
+
+With cluster-robust standard errors, degrees of freedom are:
+
+.. math::
+
+   df = G - 1
+
+where :math:`G` is the number of clusters. This is more conservative than the
+usual :math:`N - k` degrees of freedom, reflecting the effective sample size
+being the number of clusters rather than the number of observations.
+
+Diagnosing Clustering Structure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``diagnose_clustering()`` to analyze potential clustering options and get
+recommendations::
+
+    from lwdid import diagnose_clustering
+
+    diag = diagnose_clustering(
+        data, ivar='county',
+        potential_cluster_vars=['state', 'region', 'county'],
+        gvar='first_treat'
+    )
+    print(diag.summary())
+
+The diagnostics include:
+
+- **Cluster counts**: Total, treated, and control clusters for each variable
+- **Cluster sizes**: Min, max, mean, median, and coefficient of variation
+- **Level detection**: Whether each variable is at a higher/same/lower level than unit
+- **Treatment variation**: Whether treatment varies within clusters
+- **Recommendation**: Suggested clustering variable with explanation
+
+Getting a Clustering Recommendation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a detailed recommendation with confidence scores and alternatives::
+
+    from lwdid import recommend_clustering_level
+
+    rec = recommend_clustering_level(
+        data, ivar='county', tvar='year',
+        potential_cluster_vars=['state', 'region', 'county'],
+        gvar='first_treat',
+        min_clusters=20
+    )
+    print(rec.summary())
+
+    if rec.use_wild_bootstrap:
+        print("Consider using wild_cluster_bootstrap() for inference")
+
+The recommendation considers:
+
+- Treatment variation level (cluster at this level when possible)
+- Number of clusters (more is better, ≥20 recommended)
+- Balance between treated and control clusters
+- Cluster size variation (lower CV is better)
+
+Checking Clustering Consistency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Verify that your chosen clustering level is consistent with the treatment
+assignment mechanism::
+
+    from lwdid import check_clustering_consistency
+
+    result = check_clustering_consistency(
+        data, ivar='county', cluster_var='state',
+        gvar='first_treat'
+    )
+
+    if not result.is_consistent:
+        print(f"Warning: {result.recommendation}")
+
+A clustering choice is consistent when:
+
+- Treatment does not vary within clusters (or varies minimally, < 5%)
+- Cluster level is at or above the treatment variation level
+
+If treatment varies within clusters, standard errors may be conservative
+(too large), leading to under-rejection of the null hypothesis.
+
+Wild Cluster Bootstrap
+~~~~~~~~~~~~~~~~~~~~~~
+
+When the number of clusters is small (< 20), the wild cluster bootstrap provides
+more reliable inference than asymptotic cluster-robust standard errors. This
+method, developed by Cameron, Gelbach, and Miller (2008), constructs a bootstrap
+distribution by:
+
+1. Estimating the original model and obtaining residuals
+2. Generating cluster-level random weights
+3. Creating bootstrap residuals by multiplying original residuals by weights
+4. Re-estimating the model with bootstrap outcomes
+5. Computing the bootstrap distribution of t-statistics
+
+**Basic usage**::
+
+    from lwdid.inference import wild_cluster_bootstrap
+
+    result = wild_cluster_bootstrap(
+        data, y_transformed='ydot', d='d_',
+        cluster_var='state', n_bootstrap=999
+    )
+    print(f"ATT: {result.att:.4f}")
+    print(f"Bootstrap SE: {result.se_bootstrap:.4f}")
+    print(f"Bootstrap p-value: {result.pvalue:.4f}")
+    print(f"95% CI: [{result.ci_lower:.4f}, {result.ci_upper:.4f}]")
+
+**Weight types**:
+
+- **rademacher** (default): P(w=1) = P(w=-1) = 0.5. Simplest and most common.
+- **mammen**: Two-point distribution matching first three moments. Better for
+  asymmetric error distributions.
+- **webb**: Six-point distribution (Webb 2014). Recommended for very few clusters
+  (G < 10).
+
+**Example with Webb weights for few clusters**::
+
+    result = wild_cluster_bootstrap(
+        data, y_transformed='ydot', d='d_',
+        cluster_var='state',
+        weight_type='webb',  # Better for very few clusters
+        n_bootstrap=999,
+        seed=42  # For reproducibility
+    )
+
+**Null hypothesis imposition**:
+
+By default (``impose_null=True``), the bootstrap constructs samples under the
+null hypothesis that the treatment effect is zero. This provides better size
+control for hypothesis testing. Set ``impose_null=False`` for confidence interval
+construction when the null may not hold.
+
+Clustering Workflow
+~~~~~~~~~~~~~~~~~~~
+
+A recommended workflow for choosing and validating clustering:
+
+1. **Diagnose**: Use ``diagnose_clustering()`` to understand the data structure
+2. **Recommend**: Use ``recommend_clustering_level()`` to get a recommendation
+3. **Check**: Use ``check_clustering_consistency()`` to validate the choice
+4. **Estimate**: Run ``lwdid()`` with the chosen ``cluster_var``
+5. **Bootstrap**: If clusters < 20, use ``wild_cluster_bootstrap()`` for inference
+
+**Complete example**::
+
+    import pandas as pd
+    from lwdid import (
+        lwdid, diagnose_clustering, recommend_clustering_level,
+        check_clustering_consistency
+    )
+    from lwdid.inference import wild_cluster_bootstrap
+
+    # Step 1-2: Diagnose and get recommendation
+    rec = recommend_clustering_level(
+        data, ivar='county', tvar='year',
+        potential_cluster_vars=['state', 'region'],
+        gvar='first_treat'
+    )
+
+    # Step 3: Check consistency
+    consistency = check_clustering_consistency(
+        data, ivar='county', cluster_var=rec.recommended_var,
+        gvar='first_treat'
+    )
+
+    # Step 4: Estimate with cluster-robust SE
+    result = lwdid(
+        data, y='outcome', ivar='county', tvar='year',
+        gvar='first_treat',
+        vce='cluster', cluster_var=rec.recommended_var
+    )
+
+    # Step 5: Wild bootstrap if few clusters
+    if rec.use_wild_bootstrap:
+        boot_result = wild_cluster_bootstrap(
+            result.data_transformed, y_transformed='ydot', d='d_',
+            cluster_var=rec.recommended_var, n_bootstrap=999
+        )
+        print(f"Bootstrap p-value: {boot_result.pvalue:.4f}")
+
+References for Clustering
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Cameron, A.C. & Miller, D.L. (2015). "A Practitioner's Guide to Cluster-Robust
+  Inference." *Journal of Human Resources*, 50(2), 317-372.
+
+- Cameron, A.C., Gelbach, J.B., & Miller, D.L. (2008). "Bootstrap-based
+  improvements for inference with clustered errors." *Review of Economics and
+  Statistics*, 90(3), 414-427.
+
+- Webb, M.D. (2014). "Reworking wild bootstrap based inference for clustered
+  errors." *Queen's Economics Department Working Paper No. 1315*.
 
 Large-Sample Asymptotic Inference
 ---------------------------------
@@ -467,6 +757,52 @@ Large-sample asymptotic inference is appropriate when:
 For small samples where CLM assumptions (normality and homoskedasticity) are
 plausible, exact t-based inference with ``vce=None`` remains appropriate.
 
+Inference Distribution by Estimator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``lwdid`` package uses different reference distributions for statistical
+inference depending on the estimator and sample size considerations:
+
+**Regression Adjustment (RA)**:
+
+- Uses the t-distribution with degrees of freedom :math:`df = N - k`, where
+  :math:`N` is the cross-sectional sample size and :math:`k` is the number of
+  regression parameters
+- Under CLM assumptions (homoskedasticity and normality), this provides exact
+  finite-sample inference
+- With robust standard errors (HC0-HC4), inference is asymptotically valid
+
+**Inverse Probability Weighting (IPW)**:
+
+- Uses the normal distribution for asymptotic inference
+- This follows the standard inverse probability weighting framework
+- Valid for moderate to large samples where asymptotic approximations hold
+
+**Inverse Probability Weighted Regression Adjustment (IPWRA)**:
+
+- Uses the normal distribution for asymptotic inference
+- This is consistent with Lee and Wooldridge (2025), which develops the
+  asymptotic theory for doubly robust estimators in the rolling transformation
+  framework
+- For small samples, consider using RA with ``vce=None`` for exact t-based
+  inference instead
+
+**Propensity Score Matching (PSM)**:
+
+- Uses the normal distribution for asymptotic inference
+- Standard errors are computed analytically following Abadie and Imbens (2006)
+- PSM inference is generally valid for moderate to large samples
+
+**Practical Guidance**:
+
+- **Small samples** (:math:`N < 50`): Use RA (``estimator='ra'``) with
+  ``vce=None`` for exact t-based inference under CLM assumptions, or use
+  randomization inference (``ri=True``) for assumption-free testing
+- **Moderate samples** (:math:`50 \leq N < 200`): Use RA or IPWRA with HC3
+  standard errors (``vce='hc3'``)
+- **Large samples** (:math:`N \geq 200`): All estimators with asymptotic
+  inference are appropriate; IPWRA provides robustness to model misspecification
+
 Identification Assumptions
 ---------------------------
 
@@ -515,6 +851,440 @@ indicator must be monotone non-decreasing in the time index (once ``post`` switc
 from 0 to 1, it cannot revert to 0). Treatment reversals or temporary treatments
 are therefore not permitted.
 
+Unbalanced Panels and Selection Mechanism
+-----------------------------------------
+
+Lee and Wooldridge (2025, Section 4.4) addresses the treatment of unbalanced panels,
+where not all units are observed in all time periods. This section describes the
+selection mechanism assumption and guidance for working with incomplete panel data.
+
+Selection Mechanism Assumption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The key assumption for unbalanced panels is that selection into the sample may depend
+on unobserved time-invariant heterogeneity (which is removed by the transformation),
+but cannot systematically depend on the shocks to :math:`Y_{it}(\infty)`.
+
+Formally, if :math:`S_{it}` indicates whether unit :math:`i` is observed at time :math:`t`:
+
+.. math::
+
+   E[Y_{it}(\infty) | S_{it} = 1, D_i, X_i] = E[Y_{it}(\infty) | D_i, X_i]
+
+This means that, conditional on treatment status and covariates, being observed does
+not systematically predict the untreated potential outcome.
+
+**Analogy to Fixed Effects**: This assumption is analogous to the standard fixed effects
+assumption where the error term may be correlated with time-invariant characteristics
+but not with idiosyncratic shocks. The rolling transformation removes the time-invariant
+component, so selection based on permanent characteristics does not cause bias.
+
+Acceptable Missing Data Patterns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Missing data is acceptable when it depends on:
+
+1. **Time-invariant characteristics**: Units that are always high or low performers
+   may be more or less likely to remain in the sample
+2. **Observable covariates**: Missingness related to baseline characteristics that
+   are controlled for in the analysis
+3. **Random factors**: Missing completely at random (MCAR)
+4. **Deterministic patterns**: Units observed only in certain calendar time periods
+   due to sample design
+
+**Examples of acceptable patterns**:
+
+- A panel of firms where smaller firms are less likely to survive (selection on
+  time-invariant firm quality)
+- A survey where certain regions are only surveyed in specific years
+- Administrative data where units enter and exit based on observable eligibility
+
+Problematic Missing Data Patterns
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Missing data is problematic when it depends on:
+
+1. **Outcome shocks**: Units experiencing negative shocks being more likely to
+   leave the sample
+2. **Treatment anticipation**: Units selecting out based on expected treatment
+   effects
+3. **Unobserved time-varying factors**: Missingness correlated with transitory
+   components of the outcome
+
+**Examples of problematic patterns**:
+
+- Firms exiting the sample after experiencing losses (selection on outcome shocks)
+- Workers leaving a survey after job loss, where job loss is correlated with
+   outcomes of interest
+- Treatment group units dropping out more frequently than control units
+   in a pattern correlated with outcomes
+
+Detrending for Robustness
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lee and Wooldridge (2025, Section 5) notes that detrending provides additional
+robustness to unbalanced panels:
+
+    "Removing unit-specific trends provides additional resiliency to unbalanced
+    panels, as we are now allowing for two sources of heterogeneity—level and
+    trend—to be correlated with selection into the sample."
+
+When selection may depend on both the level and growth rate of the outcome, detrending
+removes both sources of heterogeneity, making the estimates more robust to selection
+bias.
+
+**Recommendation**: When panel imbalance is substantial or selection mechanisms are
+uncertain, consider using ``rolling='detrend'`` for additional robustness.
+
+Diagnosing Selection Risk
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``lwdid`` package provides diagnostic tools for assessing selection risk:
+
+.. code-block:: python
+
+   from lwdid import diagnose_selection_mechanism
+
+   diagnostics = diagnose_selection_mechanism(
+       data, ivar='unit', tvar='year', gvar='first_treat'
+   )
+
+   print(diagnostics.summary())
+
+The diagnostics include:
+
+- **Balance statistics**: Panel balance ratio, observation counts
+- **Attrition analysis**: Dropout rates by cohort and period
+- **Missing pattern classification**: MCAR, MAR, or MNAR assessment
+- **Risk level**: LOW, MEDIUM, or HIGH selection risk
+- **Recommendations**: Suggested actions based on diagnostics
+
+**Interpreting risk levels**:
+
+- **LOW**: Proceed with estimation; selection mechanism likely satisfied
+- **MEDIUM**: Consider using detrending; perform sensitivity analysis
+- **HIGH**: Results should be interpreted with caution; consider balanced subsample
+
+Controlling Panel Balance
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``balanced_panel`` parameter in ``lwdid()`` controls behavior when unbalanced
+panels are detected:
+
+- ``balanced_panel='warn'`` (default): Issue warning and continue estimation
+- ``balanced_panel='error'``: Raise exception; require balanced panel
+- ``balanced_panel='ignore'``: Silently proceed with unbalanced panel
+
+.. code-block:: python
+
+   # Strict balanced panel requirement
+   result = lwdid(
+       data, y='outcome', ivar='unit', tvar='year',
+       gvar='first_treat',
+       balanced_panel='error'  # Raises exception if unbalanced
+   )
+
+See :doc:`api/selection_diagnostics` for detailed documentation of the diagnostic
+functions.
+
+Heterogeneous Trends and Assumption CHT
+----------------------------------------
+
+Lee and Wooldridge (2025, Section 5) introduces Assumption CHT (Cohort-specific
+Heterogeneous Trends), which relaxes the standard parallel trends assumption to
+allow for cohort-specific linear trends.
+
+Assumption CHT
+~~~~~~~~~~~~~~
+
+Under Assumption CHT, the potential outcome without treatment follows:
+
+.. math::
+
+   E[Y_t(\infty)|D, X] = \eta_S(D_S \cdot t) + \cdots + \eta_T(D_T \cdot t) + q_\infty(X) + \sum_g D_g q_g(X) + m_t(X)
+
+where:
+
+- :math:`\eta_g` is the cohort-specific linear trend for cohort :math:`g`
+- :math:`D_g = 1` indicates membership in cohort :math:`g`
+- :math:`q_\infty(X)` is the baseline level for never-treated units
+- :math:`q_g(X)` is the cohort-specific level shift
+- :math:`m_t(X)` is the common time effect
+
+The key implication is that different cohorts may have different pre-treatment
+trends, violating the standard parallel trends assumption but still allowing
+valid causal inference through detrending.
+
+First Difference Under CHT
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Taking first differences under Assumption CHT:
+
+.. math::
+
+   E[Y_t(\infty) - Y_{t-1}(\infty)|D, X] = \eta_g D_g + \cdots + [m_t(X) - m_{t-1}(X)]
+
+The first difference depends on cohort membership through the :math:`\eta_g` terms.
+This means that if cohorts have different trends (:math:`\eta_g \neq \eta_h`),
+the standard parallel trends assumption fails, but detrending can remove these
+cohort-specific trends.
+
+Choosing Between Demean and Detrend
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The choice between ``demean`` and ``detrend`` depends on whether the parallel
+trends assumption holds:
+
+**Use demean when**:
+
+- Pre-treatment trends are parallel across treatment groups
+- The number of pre-treatment periods is limited (:math:`T_0 < 3`)
+- More efficient estimates are desired (demean is more efficient when PT holds)
+
+**Use detrend when**:
+
+- Pre-treatment trends differ across treatment groups
+- Sufficient pre-treatment periods are available (:math:`T_0 \geq 2`, preferably :math:`\geq 3`)
+- Visual inspection or formal tests suggest heterogeneous trends
+
+**Decision procedure**:
+
+1. Examine pre-treatment trends visually using ``plot_cohort_trends()``
+2. Test parallel trends formally using ``test_parallel_trends()``
+3. Diagnose trend heterogeneity using ``diagnose_heterogeneous_trends()``
+4. Get a recommendation using ``recommend_transformation()``
+
+Procedure 5.1: Detrending Under CHT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Lee and Wooldridge (2025, Procedure 5.1) describes the detrending procedure for
+staggered adoption under Assumption CHT:
+
+**Step 1**: For each cohort :math:`g \in \{S, \ldots, T\}`, run unit-specific
+regressions using only pre-treatment periods:
+
+.. math::
+
+   Y_{it} \text{ on } 1, t \quad \text{for } t = 1, \ldots, g-1
+
+This estimates unit-specific intercept :math:`\hat{A}_i` and slope :math:`\hat{B}_i`.
+
+**Step 2**: For post-treatment periods :math:`r \in \{g, \ldots, T\}`, compute
+out-of-sample predictions:
+
+.. math::
+
+   \hat{Y}_{irg} = \hat{A}_i + \hat{B}_i \cdot r
+
+**Step 3**: Compute detrended residuals:
+
+.. math::
+
+   \ddot{Y}_{irg} = Y_{ir} - \hat{Y}_{irg}
+
+The detrended outcome :math:`\ddot{Y}_{irg}` removes the unit-specific linear
+trend, allowing valid estimation of treatment effects even when cohorts have
+different pre-treatment trends.
+
+Testing Parallel Trends
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``lwdid`` package provides tools for testing the parallel trends assumption:
+
+**Placebo test**: Estimate treatment effects in pre-treatment periods. Under
+parallel trends, these "placebo" effects should be zero:
+
+.. code-block:: python
+
+   from lwdid.trend_diagnostics import test_parallel_trends
+
+   result = test_parallel_trends(
+       data, y='outcome', ivar='unit', tvar='time',
+       gvar='first_treat', method='placebo'
+   )
+   print(result.summary())
+
+**Interpretation**:
+
+- If ``reject_null=False``: No evidence against parallel trends; ``demean`` is appropriate
+- If ``reject_null=True``: Evidence of pre-treatment differences; consider ``detrend``
+
+Diagnosing Heterogeneous Trends
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To diagnose whether cohorts have different pre-treatment trends:
+
+.. code-block:: python
+
+   from lwdid.trend_diagnostics import diagnose_heterogeneous_trends
+
+   diag = diagnose_heterogeneous_trends(
+       data, y='outcome', ivar='unit', tvar='time',
+       gvar='first_treat'
+   )
+   print(diag.summary())
+
+The diagnostics include:
+
+- Estimated trend slope for each cohort
+- F-test for trend heterogeneity across cohorts
+- Pairwise trend difference tests
+- Recommendation for transformation method
+
+Getting a Transformation Recommendation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For an automated recommendation:
+
+.. code-block:: python
+
+   from lwdid.trend_diagnostics import recommend_transformation
+
+   rec = recommend_transformation(
+       data, y='outcome', ivar='unit', tvar='time',
+       gvar='first_treat'
+   )
+   print(rec.summary())
+
+The recommendation considers:
+
+- Parallel trends test results
+- Trend heterogeneity diagnostics
+- Number of pre-treatment periods
+- Panel balance
+- Seasonal patterns (for quarterly data)
+
+Pre-treatment Period Dynamics
+-----------------------------
+
+Lee and Wooldridge (2025) Appendix D develops a methodology for estimating treatment
+effects in pre-treatment periods to assess the validity of the parallel trends
+assumption. This section describes the theoretical foundation and implementation.
+
+Motivation
+~~~~~~~~~~
+
+The parallel trends assumption is fundamental to difference-in-differences
+identification but cannot be directly tested because it concerns counterfactual
+outcomes. However, examining pre-treatment dynamics provides indirect evidence:
+
+- Under parallel trends, the transformed outcome difference between treated and
+  control groups should be zero in all pre-treatment periods
+- Systematic non-zero pre-treatment effects suggest potential violations
+
+Rolling Transformation for Pre-treatment Periods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For pre-treatment periods, the transformation uses future pre-treatment periods
+rather than past periods. This ensures the transformation is well-defined for
+all pre-treatment periods.
+
+**Pre-treatment Demeaning (Formula D.1)**
+
+For cohort :math:`g` and pre-treatment period :math:`t < g`, the demeaned outcome is:
+
+.. math::
+
+   \dot{Y}_{itg} = Y_{it} - \frac{1}{g-1-t} \sum_{q=t+1}^{g-1} Y_{iq}
+
+where the sum is over future pre-treatment periods :math:`\{t+1, \ldots, g-1\}`.
+
+Key properties:
+
+- Uses only pre-treatment data (periods before :math:`g`)
+- Rolling window looks forward, not backward
+- Window size decreases as :math:`t` approaches :math:`g-1`
+
+**Pre-treatment Detrending (Formula D.2)**
+
+For cohort :math:`g` and pre-treatment period :math:`t < g`, fit an OLS regression:
+
+.. math::
+
+   Y_{iq} = A + B \cdot q + \varepsilon_{iq} \quad \text{for } q \in \{t+1, \ldots, g-1\}
+
+Then compute the detrended outcome:
+
+.. math::
+
+   \ddot{Y}_{itg} = Y_{it} - (\hat{A} + \hat{B} \cdot t)
+
+This requires at least 2 future pre-treatment periods for OLS estimation.
+
+Anchor Point Convention
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The period immediately before treatment (:math:`t = g-1`, event time :math:`e = -1`)
+serves as the anchor point:
+
+.. math::
+
+   \dot{Y}_{i,g-1,g} = 0 \quad \text{(by construction)}
+
+This occurs because the rolling window :math:`\{g, \ldots, g-1\}` is empty, and
+by convention the transformation returns zero.
+
+The anchor point provides:
+
+1. A reference point for interpreting other pre-treatment effects
+2. Normalization that facilitates comparison across cohorts
+3. Consistency with event study visualization conventions
+
+Pre-treatment ATT Estimation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For each cohort :math:`g` and pre-treatment period :math:`t < g`, the pre-treatment
+ATT is estimated by regressing the transformed outcome on treatment status:
+
+.. math::
+
+   \dot{Y}_{itg} = \alpha + \tau_{gt}^{pre} D_i + U_i
+
+where :math:`D_i = 1` for units in cohort :math:`g` and :math:`D_i = 0` for control
+units (never-treated or not-yet-treated at time :math:`t`).
+
+Under parallel trends, :math:`E[\tau_{gt}^{pre}] = 0` for all :math:`t < g`.
+
+Control Group for Pre-treatment Periods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For pre-treatment period :math:`t < g`, valid control units are:
+
+- **Never-treated**: Units with :math:`D_\infty = 1`
+- **Not-yet-treated at t**: Units with first treatment after :math:`t`
+  (cohorts :math:`h > t`)
+
+This differs from post-treatment control groups because units must be
+untreated at time :math:`t`, not just at time :math:`r \geq g`.
+
+Joint Test for Parallel Trends
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The parallel trends test performs a joint F-test of the null hypothesis:
+
+.. math::
+
+   H_0: \tau_{gt}^{pre} = 0 \quad \text{for all } t < g-1
+
+The anchor point (:math:`t = g-1`) is excluded because it is zero by construction.
+
+**Test statistic**:
+
+.. math::
+
+   F = \frac{1}{K} \sum_{k=1}^{K} \left(\frac{\hat{\tau}_k}{\text{SE}(\hat{\tau}_k)}\right)^2
+
+where :math:`K` is the number of pre-treatment periods tested (excluding anchor).
+
+Under :math:`H_0`, the F-statistic follows an :math:`F(K, \nu)` distribution,
+where :math:`\nu` is the degrees of freedom from the estimation.
+
+**Interpretation**:
+
+- Rejection suggests evidence against parallel trends
+- Non-rejection does not prove parallel trends holds
+- Consider effect sizes, not just statistical significance
+
 Comparison with Other DiD Methods
 ----------------------------------
 
@@ -540,8 +1310,6 @@ using doubly robust estimators (IPWRA). Lee and Wooldridge (2026) focuses
 on small cross-sectional sample sizes in common timing settings, showing
 that exact t-based inference is available under classical linear model
 assumptions (normality and homoskedasticity).
-
-
 
 When to Use This Method
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -619,13 +1387,15 @@ Pre-Treatment Periods
 - ``detrend``: At least two pre-treatment periods overall (:math:`T_0 \geq 2`),
   and each unit must have at least two pre-treatment observations so that a
   unit-specific linear trend can be estimated.
-- ``demeanq`` and ``detrendq``: The same minimum numbers of pre-treatment
-  periods as above, plus additional quarterly coverage conditions. For each
-  unit, every quarter that appears in the post-treatment period must also appear
-  in the pre-treatment period; otherwise seasonal effects for that quarter
-  cannot be removed. To avoid rank-deficient seasonal/trend regressions, the
-  implementation also enforces simple per-unit degrees-of-freedom checks based
-  on the number of distinct quarters observed in the pre-treatment period.
+- ``demeanq`` and ``detrendq``: The minimum number of pre-treatment observations
+  depends on the seasonal period Q:
+
+  - **demeanq**: :math:`n_{pre} \geq Q + 1` per unit (e.g., 5 for quarterly, 13 for monthly, 53 for weekly)
+  - **detrendq**: :math:`n_{pre} \geq Q + 2` per unit (e.g., 6 for quarterly, 14 for monthly, 54 for weekly)
+
+  Additionally, for each unit, every season that appears in the post-treatment
+  period must also appear in the pre-treatment period; otherwise seasonal effects
+  for that season cannot be removed.
 
 **Practical recommendations**:
 
@@ -677,8 +1447,10 @@ This implementation has the following limitations:
 1. **Binary treatment**: Treatment is either on or off (no continuous treatment intensity)
 2. **Time-invariant controls**: Controls must not vary over time
 3. **Treatment persistence**: Once treated, units must remain treated
-4. **Quarterly methods in staggered mode**: The ``demeanq`` and ``detrendq``
-   transformations are only available for common timing designs
+4. **Seasonal methods data requirements**: The ``demeanq`` and ``detrendq``
+   transformations require sufficient pre-treatment observations for seasonal
+   parameter estimation. In staggered designs, early cohorts with limited
+   pre-treatment data may be excluded if they lack the required observations
 
 Staggered Adoption
 ------------------
@@ -786,6 +1558,51 @@ The doubly robust IPWRA estimator is consistent if either the outcome model or
 propensity score model is correctly specified, making it particularly attractive
 when functional form assumptions are uncertain.
 
+Inference Distribution by Estimator
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Different estimators use different reference distributions for inference:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 20 60
+
+   * - Estimator
+     - Distribution
+     - Rationale
+   * - RA (OLS)
+     - t-distribution
+     - Exact inference under CLM assumptions; df = N - k
+   * - IPW
+     - Normal
+     - Asymptotic inference based on influence functions
+   * - IPWRA
+     - Normal
+     - Asymptotic inference based on influence functions
+   * - PSM
+     - Normal
+     - Asymptotic inference; SE based on Abadie-Imbens formula
+
+**Comparison with Stata**
+
+This package follows the same inference approach as Stata's ``teffects`` commands:
+
+- **RA**: Uses t-distribution (exact under CLM assumptions)
+- **IPW**: Uses normal distribution (asymptotic inference)
+- **IPWRA**: Uses normal distribution (asymptotic inference)
+- **PSM**: Uses normal distribution (asymptotic inference)
+
+The rationale for this design:
+
+1. **RA** uses t-distribution following Lee and Wooldridge (2026, Eq. 2.10),
+   which provides exact finite-sample inference under classical linear model
+   assumptions
+2. **IPW, IPWRA, PSM** use normal distribution because these estimators rely on
+   asymptotic theory (influence functions or matching-based variance estimators)
+   where t-distribution adjustments are not directly applicable
+3. For large samples (N > 50), the practical difference between t and normal
+   distributions is negligible in any case
+
 Aggregation
 ~~~~~~~~~~~
 
@@ -804,6 +1621,202 @@ Cohort-time specific effects :math:`\tau_{gr}` can be aggregated:
 
      \tau_\omega = \sum_g \omega_g \tau_g \quad \text{where } \omega_g = N_g/N_{treat}
 
+Event Time Aggregation (WATT)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The weighted average treatment effect on the treated (WATT) by event time provides
+an aggregation of cohort-time specific effects :math:`\tau_{gr}` across cohorts
+sharing the same relative time since treatment onset. This follows Lee and
+Wooldridge (2025, Section 6.2).
+
+For event time :math:`e = r - g` (relative time since treatment), the WATT is:
+
+.. math::
+
+   \text{WATT}(e) = \sum_{g \in G_e} w(g,e) \cdot \tau_{g, g+e}
+
+where :math:`G_e` is the set of cohorts with a valid ATT estimate at event time
+:math:`e`, and the weights are cohort-size proportions:
+
+.. math::
+
+   w(g,e) = \frac{N_g}{\sum_{g' \in G_e} N_{g'}}
+
+**Standard Error Computation**
+
+The standard error for the WATT at event time :math:`e` is computed as:
+
+.. math::
+
+   SE(\text{WATT}(e)) = \sqrt{\sum_{g \in G_e} [w(g,e)]^2 \cdot [SE(\tau_{g,g+e})]^2}
+
+This formula assumes independence across cohorts and uses the normalized weights.
+
+**Degrees of Freedom**
+
+For t-distribution inference on event-time aggregated effects, the degrees of
+freedom are chosen conservatively as the minimum across contributing cohorts:
+
+.. math::
+
+   df(e) = \min_{g \in G_e} df_g
+
+This provides conservative coverage that accounts for finite-sample uncertainty.
+
+**Event Study Visualization**
+
+Event time aggregation is particularly useful for event study plots, which display
+treatment effects as a function of relative time. The pre-treatment effects
+(negative event times) serve as placebo tests for the parallel trends assumption,
+while post-treatment effects reveal the dynamic treatment response.
+
+The anchor point at event time :math:`e = -1` is set to zero by convention,
+serving as the reference baseline for interpreting other effects.
+
+Robustness to Pre-treatment Period Selection
+--------------------------------------------
+
+Lee and Wooldridge (2026) Section 8.1 recommends studying the robustness of DiD
+estimates by varying the number of pre-treatment periods used in the transformation.
+This section describes the sensitivity analysis tools implemented in ``lwdid``.
+
+Motivation
+~~~~~~~~~~
+
+The rolling transformation approach uses pre-treatment periods to estimate
+unit-specific means or trends. The choice of how many pre-treatment periods to
+include can affect the estimates:
+
+- **Too few periods**: May not adequately capture unit-specific patterns
+- **Too many periods**: May include periods where parallel trends do not hold
+
+From Lee and Wooldridge (2026):
+
+    "With synthetic control-type approaches and the approaches we suggest here,
+    one can study the robustness of the findings by adjusting the number of
+    pre-treatment time periods."
+
+Sensitivity Ratio
+~~~~~~~~~~~~~~~~~
+
+The sensitivity ratio measures how much ATT estimates vary across specifications
+with different numbers of pre-treatment periods:
+
+.. math::
+
+   \text{Sensitivity Ratio} = \frac{\max_k \hat{\tau}_k - \min_k \hat{\tau}_k}{|\hat{\tau}_{\text{baseline}}|}
+
+where :math:`\hat{\tau}_k` is the ATT estimate using :math:`k` pre-treatment periods,
+and :math:`\hat{\tau}_{\text{baseline}}` is the estimate using all available
+pre-treatment periods.
+
+**Interpretation**:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 25 55
+
+   * - Sensitivity Ratio
+     - Robustness Level
+     - Interpretation
+   * - < 10%
+     - Highly Robust
+     - Estimates stable across specifications
+   * - 10-25%
+     - Moderately Robust
+     - Some sensitivity, generally acceptable
+   * - 25-50%
+     - Sensitive
+     - Interpret with caution
+   * - ≥ 50%
+     - Highly Sensitive
+     - Results depend heavily on specification
+
+Using robustness_pre_periods()
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``robustness_pre_periods()`` function implements this sensitivity analysis::
+
+    from lwdid import robustness_pre_periods
+
+    result = robustness_pre_periods(
+        data, y='outcome', ivar='unit', tvar='year',
+        gvar='first_treat', rolling='detrend',
+        pre_period_range=(3, 10)
+    )
+
+    print(result.summary())
+    result.plot()
+
+The function:
+
+1. Estimates ATT using different numbers of pre-treatment periods
+2. Computes the sensitivity ratio
+3. Assesses robustness level
+4. Generates recommendations
+
+No-Anticipation Sensitivity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When policy is announced before implementation, units may adjust behavior in
+anticipation. The ``sensitivity_no_anticipation()`` function tests robustness
+by excluding periods immediately before treatment::
+
+    from lwdid import sensitivity_no_anticipation
+
+    result = sensitivity_no_anticipation(
+        data, y='outcome', ivar='unit', tvar='year',
+        gvar='first_treat', max_anticipation=3
+    )
+
+    if result.anticipation_detected:
+        print(f"Consider excluding {result.recommended_exclusion} periods")
+
+The function:
+
+1. Estimates ATT excluding 0, 1, 2, ... periods before treatment
+2. Detects significant changes in estimates
+3. Recommends how many periods to exclude
+
+Using exclude_pre_periods Parameter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Based on sensitivity analysis results, periods can be excluded in the main
+estimation using the ``exclude_pre_periods`` parameter::
+
+    from lwdid import lwdid
+
+    # Exclude 2 periods immediately before treatment
+    result = lwdid(
+        data, y='outcome', d='d', ivar='unit', tvar='year', post='post',
+        rolling='demean', exclude_pre_periods=2
+    )
+
+This parameter:
+
+- Excludes the specified number of pre-treatment periods from transformation
+- Addresses potential anticipation effects
+- Implements the robustness check from Lee and Wooldridge (2026) Section 8.1
+
+Comprehensive Sensitivity Analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``sensitivity_analysis()`` function provides a comprehensive assessment::
+
+    from lwdid import sensitivity_analysis
+
+    result = sensitivity_analysis(
+        data, y='outcome', ivar='unit', tvar='year',
+        gvar='first_treat',
+        analyses=['pre_periods', 'anticipation']
+    )
+
+    print(result.summary())
+    result.plot_all()
+
+This function combines multiple sensitivity analyses and provides an overall
+assessment of estimate robustness.
+
 References
 ----------
 
@@ -814,11 +1827,6 @@ Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes.
 Lee, S. J., and Wooldridge, J. M. (2025). A Simple Transformation Approach to
 Difference-in-Differences Estimation for Panel Data.
 *Available at SSRN 4516518*.
-
-Authors
--------
-
-Xuanyu Cai, Wenli Xu
 
 Further Reading
 ---------------

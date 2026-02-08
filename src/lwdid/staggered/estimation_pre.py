@@ -11,26 +11,23 @@ in staggered adoption settings. Pre-treatment ATT estimates are used for:
 Under the parallel trends assumption and no anticipation, pre-treatment
 ATT estimates should be statistically indistinguishable from zero.
 
-The estimation follows Lee & Wooldridge (2025) Appendix D methodology:
-- Uses rolling transformations that employ future pre-treatment periods
-- Anchor point at t = g-1 (event time e = -1) is set to exactly 0
-- Control groups are dynamically defined based on treatment timing
+The estimation methodology uses rolling transformations:
 
-References
-----------
-Lee, S. J., & Wooldridge, J. M. (2025). A Simple Transformation Approach
-to Difference-in-Differences Estimation for Panel Data. Appendix D.
+- For each cohort g and pre-treatment period t < g, the transformation
+  uses future pre-treatment periods {t+1, ..., g-1} to compute baselines.
+- The anchor point at t = g-1 (event time e = -1) is set to exactly 0
+  by construction, serving as the reference for pre-treatment dynamics.
+- Control groups are dynamically defined based on treatment timing:
+  units first treated after period t plus never-treated units.
 """
 
 from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
-from typing import Any
 
 import numpy as np
 import pandas as pd
-import scipy.stats as stats
 
 from .control_groups import (
     ControlGroupStrategy,
@@ -210,12 +207,13 @@ def estimate_pre_treatment_effects(
     Notes
     -----
     The anchor point (t = g-1, event time e = -1) is handled specially:
+
     - ATT is set to exactly 0.0 (by construction of the transformation)
     - SE is set to 0.0
     - is_anchor flag is set to True
 
-    For pre-treatment periods, the control group follows Lee & Wooldridge
-    (2025) Appendix D.3: control = {units with gvar > t} ∪ {never-treated}.
+    For pre-treatment periods, the control group is defined as:
+    control = {units with gvar > t} ∪ {never-treated units}.
     """
     # =========================================================================
     # Input Validation

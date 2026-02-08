@@ -22,15 +22,13 @@ These transformations enable:
 
 Notes
 -----
-**Mathematical Formulas**
-
-Demeaning transformation:
+The demeaning transformation computes:
 
 .. math::
 
     \\dot{Y}_{itg} = Y_{it} - \\frac{1}{g-t-1} \\sum_{q=t+1}^{g-1} Y_{iq}
 
-Detrending transformation:
+The detrending transformation computes:
 
 .. math::
 
@@ -39,11 +37,9 @@ Detrending transformation:
 where :math:`\\hat{Y}_{itg}` is the OLS-fitted value from regressing
 :math:`Y_{iq}` on :math:`q` for :math:`q \\in \\{t+1, \\ldots, g-1\\}`.
 
-**Anchor Point Convention**
-
-At t = g-1 (event time e = -1), the future window {g, ..., g-1} is empty.
-By convention, the transformed outcome is set to exactly 0.0, serving as
-the reference point for pre-treatment dynamics.
+At the anchor point t = g-1 (event time e = -1), the future window
+{g, ..., g-1} is empty. By convention, the transformed outcome is set
+to exactly 0.0, serving as the reference point for pre-treatment dynamics.
 """
 
 from __future__ import annotations
@@ -131,10 +127,11 @@ def _compute_rolling_mean_future(
     the anchor point convention separately.
     """
     # Future pre-treatment periods: {period+1, ..., cohort-1}
-    future_periods = range(period + 1, cohort)
-
-    if len(list(future_periods)) == 0:
+    # Empty window when period >= cohort-1 (anchor point case).
+    if period + 1 >= cohort:
         return np.nan
+
+    future_periods = range(period + 1, cohort)
 
     future_data = unit_data[unit_data[tvar].isin(future_periods)]
     future_values = future_data[y].dropna()
@@ -294,7 +291,6 @@ def transform_staggered_demean_pre(
     else:
         nt_values = list(never_treated_values)
 
-    # Import get_cohorts from transformations module
     from .transformations import get_cohorts
 
     cohorts = get_cohorts(result, gvar, ivar, nt_values)
@@ -304,7 +300,7 @@ def transform_staggered_demean_pre(
 
     T_min = int(result[tvar].min())
 
-    # Validate that each cohort has at least one pre-treatment period
+    # Pre-treatment transformation requires at least one period before g
     for g in cohorts:
         if g <= T_min:
             raise ValueError(
@@ -320,7 +316,7 @@ def transform_staggered_demean_pre(
     for g in cohorts:
         pre_periods = get_pre_treatment_periods_for_cohort(g, T_min)
 
-        # Pre-allocate columns
+        # Initialize columns with NaN; missing data remains NaN after iteration
         for t in pre_periods:
             col_name = f'ydot_pre_g{int(g)}_t{t}'
             result[col_name] = np.nan
@@ -336,24 +332,22 @@ def transform_staggered_demean_pre(
                 if not period_mask.any():
                     continue
 
-                # Get Y_it
                 Y_it = result.loc[period_mask, y].values[0]
 
                 if pd.isna(Y_it):
                     continue
 
-                # Anchor point: t = g-1
+                # Anchor point (t = g-1): empty future window, set to 0 by convention
                 if t == g - 1:
-                    # By convention, anchor point is exactly 0
                     result.loc[period_mask, col_name] = 0.0
                 else:
-                    # Compute rolling mean from future periods
+                    # Subtract mean of future pre-treatment outcomes
                     rolling_mean = _compute_rolling_mean_future(
                         unit_data, y, tvar, t, g
                     )
 
                     if not np.isnan(rolling_mean):
-                        # ẏ_{itg} = Y_{it} - mean(Y_{iq}) for q ∈ {t+1,...,g-1}
+                        # Transformed outcome = Y_it - mean of future pre-treatment outcomes.
                         result.loc[period_mask, col_name] = Y_it - rolling_mean
                     # else: leave as NaN
 
@@ -459,7 +453,7 @@ def transform_staggered_detrend_pre(
 
     T_min = int(result[tvar].min())
 
-    # Validate pre-treatment periods
+    # Detrending requires sufficient pre-treatment periods for OLS estimation
     for g in cohorts:
         n_pre_periods = g - T_min
         if n_pre_periods < 1:
@@ -484,7 +478,7 @@ def transform_staggered_detrend_pre(
     for g in cohorts:
         pre_periods = get_pre_treatment_periods_for_cohort(g, T_min)
 
-        # Pre-allocate columns
+        # Initialize columns with NaN; missing data remains NaN after iteration
         for t in pre_periods:
             col_name = f'ycheck_pre_g{int(g)}_t{t}'
             result[col_name] = np.nan
@@ -500,29 +494,25 @@ def transform_staggered_detrend_pre(
                 if not period_mask.any():
                     continue
 
-                # Get Y_it
                 Y_it = result.loc[period_mask, y].values[0]
 
                 if pd.isna(Y_it):
                     continue
 
-                # Anchor point: t = g-1
+                # Anchor point (t = g-1): empty future window, set to 0 by convention
                 if t == g - 1:
-                    # By convention, anchor point is exactly 0
                     result.loc[period_mask, col_name] = 0.0
                 elif t == g - 2:
-                    # Only 1 future period, cannot fit OLS
-                    # Leave as NaN
+                    # Only 1 future period; OLS requires at least 2 points
                     pass
                 else:
-                    # Compute OLS trend from future periods
+                    # Subtract OLS-fitted value from future pre-treatment trend
                     A, B = _compute_rolling_trend_future(
                         unit_data, y, tvar, t, g
                     )
 
                     if not np.isnan(A) and not np.isnan(B):
-                        # Ÿ_{itg} = Y_{it} - Ŷ_{itg}
-                        # where Ŷ_{itg} = A + B * t
+                        # Detrended outcome = Y_it - fitted value from future trend.
                         Y_hat = A + B * t
                         result.loc[period_mask, col_name] = Y_it - Y_hat
                     # else: leave as NaN

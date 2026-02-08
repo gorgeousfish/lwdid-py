@@ -154,7 +154,6 @@ class TestRIParameterValidation:
             randomization_inference_staggered(
                 data=simple_staggered_data,
                 gvar='gvar', ivar='id', tvar='year', y='y',
-                cohorts=[3, 4],
                 observed_att=1.0,
                 target='cohort_time',
                 target_cohort=3,
@@ -169,7 +168,6 @@ class TestRIParameterValidation:
             randomization_inference_staggered(
                 data=simple_staggered_data,
                 gvar='gvar', ivar='id', tvar='year', y='y',
-                cohorts=[3, 4],
                 observed_att=1.0,
                 target='cohort_time',
                 target_cohort=3,
@@ -185,7 +183,6 @@ class TestRIParameterValidation:
             randomization_inference_staggered(
                 data=simple_staggered_data,
                 gvar='gvar', ivar='id', tvar='year', y='y',
-                cohorts=[3, 4],
                 observed_att=1.0,
                 target='cohort',
                 rireps=100,
@@ -198,7 +195,6 @@ class TestRIParameterValidation:
             randomization_inference_staggered(
                 data=simple_staggered_data,
                 gvar='gvar', ivar='id', tvar='year', y='y',
-                cohorts=[3, 4],
                 observed_att=1.0,
                 target='cohort_time',
                 target_cohort=3,
@@ -213,7 +209,6 @@ class TestRIParameterValidation:
             randomization_inference_staggered(
                 data=all_treated_data,
                 gvar='gvar', ivar='id', tvar='year', y='y',
-                cohorts=[3, 4],
                 observed_att=1.0,
                 target='overall',
                 rireps=100,

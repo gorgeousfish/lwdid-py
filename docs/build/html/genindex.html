@@ -104,8 +104,9 @@
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#transformation-methods">Transformation Methods</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#demean-standard-did-with-unit-fixed-effects">demean: Standard DiD with Unit Fixed Effects</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#detrend-did-with-unit-specific-linear-trends">detrend: DiD with Unit-Specific Linear Trends</a></li>
-<li class="toctree-l3"><a class="reference internal" href="user_guide.html#demeanq-quarterly-data-with-seasonal-fixed-effects">demeanq: Quarterly Data with Seasonal Fixed Effects</a></li>
-<li class="toctree-l3"><a class="reference internal" href="user_guide.html#detrendq-quarterly-data-with-trends-and-seasonal-effects">detrendq: Quarterly Data with Trends and Seasonal Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#demeanq-seasonal-data-with-seasonal-fixed-effects">demeanq: Seasonal Data with Seasonal Fixed Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#detrendq-seasonal-data-with-trends-and-seasonal-effects">detrendq: Seasonal Data with Trends and Seasonal Effects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#automatic-frequency-detection">Automatic Frequency Detection</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#variance-estimation">Variance Estimation</a><ul>
@@ -146,10 +147,18 @@
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#missing-data">Missing Data</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide.html#never-treated-unit-data-preparation">Never-Treated Unit Data Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#valid-never-treated-encodings">Valid Never-Treated Encodings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#converting-from-stata-data">Converting from Stata Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#checking-never-treated-status">Checking Never-Treated Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#common-issues-and-solutions">Common Issues and Solutions</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#best-practices">Best Practices</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#choosing-transformation-method">Choosing Transformation Method</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#choosing-variance-estimator">Choosing Variance Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#sample-size-considerations">Sample Size Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#sample-size-and-inference-method-selection-matrix">Sample Size and Inference Method Selection Matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#estimator-selection-large-sample-common-timing">Estimator Selection (Large-Sample Common Timing)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#diagnostic-checks">Diagnostic Checks</a></li>
 </ul>
@@ -162,10 +171,28 @@
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#staggered-adoption-design">Staggered Adoption Design</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#id2">Basic Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#staggered-specific-parameters">Staggered-Specific Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#robustness-to-no-anticipation-violations">Robustness to No-Anticipation Violations</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#accessing-staggered-results">Accessing Staggered Results</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#estimator-selection">Estimator Selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="user_guide.html#staggered-example">Staggered Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide.html#pre-treatment-dynamics-and-parallel-trends-testing">Pre-treatment Dynamics and Parallel Trends Testing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#why-pre-treatment-dynamics-matter">Why Pre-treatment Dynamics Matter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#id3">Basic Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#accessing-pre-treatment-results">Accessing Pre-treatment Results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#interpreting-the-parallel-trends-test">Interpreting the Parallel Trends Test</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#event-study-visualization-with-pre-treatment">Event Study Visualization with Pre-treatment</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#complete-workflow-example">Complete Workflow Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#transformation-methods-for-pre-treatment">Transformation Methods for Pre-treatment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="user_guide.html#trend-diagnostics-tools">Trend Diagnostics Tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#testing-parallel-trends-with-standalone-function">Testing Parallel Trends with Standalone Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#getting-automated-transformation-recommendation">Getting Automated Transformation Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="user_guide.html#visualizing-cohort-trends">Visualizing Cohort Trends</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="user_guide.html#further-reading">Further Reading</a></li>
@@ -179,6 +206,14 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="examples/index.html#quarterly-data">Quarterly Data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="examples/index.html#retail-sales-with-seasonal-patterns">Retail Sales with Seasonal Patterns</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples/index.html#monthly-data">Monthly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/index.html#monthly-sales-with-seasonal-adjustment-q-12">Monthly Sales with Seasonal Adjustment (Q=12)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples/index.html#weekly-data">Weekly Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples/index.html#weekly-sales-with-seasonal-adjustment-q-52">Weekly Sales with Seasonal Adjustment (Q=52)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="examples/index.html#control-variables">Control Variables</a><ul>
@@ -244,7 +279,9 @@
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#ipw-estimator">IPW Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#ipwra-estimator">IPWRA Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#psm-estimator">PSM Estimator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#randomization-inference">Randomization Inference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/staggered.html#pre-treatment-dynamics">Pre-treatment Dynamics</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#examples">Examples</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/staggered.html#see-also">See Also</a></li>
 </ul>
@@ -276,16 +313,99 @@
 <li class="toctree-l4"><a class="reference internal" href="api/estimation.html#see-also">See Also</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#inference-and-diagnostics">Inference and Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/inference.html">Inference Module (inference)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#methodological-notes">Methodological Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/inference.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/clustering_diagnostics.html">Clustering Diagnostics Module (clustering_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#enums">Enums</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#data-classes">Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/clustering_diagnostics.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/trend_diagnostics.html">Trend Diagnostics Module (trend_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod"><code class="docutils literal notranslate"><span class="pre">TrendTestMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod"><code class="docutils literal notranslate"><span class="pre">TransformationMethod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.RecommendationConfidence"><code class="docutils literal notranslate"><span class="pre">RecommendationConfidence</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate"><code class="docutils literal notranslate"><span class="pre">PreTrendEstimate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate"><code class="docutils literal notranslate"><span class="pre">CohortTrendEstimate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference"><code class="docutils literal notranslate"><span class="pre">TrendDifference</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult"><code class="docutils literal notranslate"><span class="pre">ParallelTrendsTestResult</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics"><code class="docutils literal notranslate"><span class="pre">HeterogeneousTrendsDiagnostics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation"><code class="docutils literal notranslate"><span class="pre">TransformationRecommendation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.test_parallel_trends"><code class="docutils literal notranslate"><span class="pre">test_parallel_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.diagnose_heterogeneous_trends"><code class="docutils literal notranslate"><span class="pre">diagnose_heterogeneous_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.recommend_transformation"><code class="docutils literal notranslate"><span class="pre">recommend_transformation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#lwdid.trend_diagnostics.plot_cohort_trends"><code class="docutils literal notranslate"><span class="pre">plot_cohort_trends()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#testing-functions">Testing Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#visualization">Visualization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#supporting-data-classes">Supporting Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/trend_diagnostics.html#methodological-background">Methodological Background</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/selection_diagnostics.html">Selection Diagnostics Module (selection_diagnostics)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#enums">Enums</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#data-classes">Data Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#example-usage">Example Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#interpretation-guide">Interpretation Guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/selection_diagnostics.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="api/sensitivity.html">Sensitivity Analysis</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#enumerations">Enumerations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#interpreting-results">Interpreting Results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/sensitivity.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/index.html#data-processing">Data Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/preprocessing.html">Preprocessing Module (preprocessing)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#key-functions">Key Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#key-classes">Key Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#main-functions">Main Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#result-classes">Result Classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#usage-examples">Usage Examples</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#methodological-notes">Methodological Notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/preprocessing.html#data-requirements">Data Requirements</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="api/validation.html">Validation Module (validation)</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_and_prepare_data"><code class="docutils literal notranslate"><span class="pre">validate_and_prepare_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_season_diversity"><code class="docutils literal notranslate"><span class="pre">validate_season_diversity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_season_coverage"><code class="docutils literal notranslate"><span class="pre">validate_season_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_quarter_diversity"><code class="docutils literal notranslate"><span class="pre">validate_quarter_diversity()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_quarter_coverage"><code class="docutils literal notranslate"><span class="pre">validate_quarter_coverage()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.get_cohort_mask"><code class="docutils literal notranslate"><span class="pre">get_cohort_mask()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.is_never_treated"><code class="docutils literal notranslate"><span class="pre">is_never_treated()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.validate_staggered_data"><code class="docutils literal notranslate"><span class="pre">validate_staggered_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#lwdid.validation.detect_frequency"><code class="docutils literal notranslate"><span class="pre">detect_frequency()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#validation-checks">Validation Checks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#validation-functions">Validation Functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/validation.html#never-treated-unit-identification">Never-Treated Unit Identification</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#staggered-adoption-validation">Staggered Adoption Validation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#common-validation-errors-and-solutions">Common Validation Errors and Solutions</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/validation.html#best-practices">Best Practices</a></li>
@@ -321,6 +441,7 @@
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidParameterError"><code class="docutils literal notranslate"><span class="pre">InvalidParameterError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidRollingMethodError"><code class="docutils literal notranslate"><span class="pre">InvalidRollingMethodError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidVCETypeError"><code class="docutils literal notranslate"><span class="pre">InvalidVCETypeError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.UnbalancedPanelError"><code class="docutils literal notranslate"><span class="pre">UnbalancedPanelError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InsufficientDataError"><code class="docutils literal notranslate"><span class="pre">InsufficientDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.NoTreatedUnitsError"><code class="docutils literal notranslate"><span class="pre">NoTreatedUnitsError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.NoControlUnitsError"><code class="docutils literal notranslate"><span class="pre">NoControlUnitsError</span></code></a></li>
@@ -332,6 +453,9 @@
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.VisualizationError"><code class="docutils literal notranslate"><span class="pre">VisualizationError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidStaggeredDataError"><code class="docutils literal notranslate"><span class="pre">InvalidStaggeredDataError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.NoNeverTreatedError"><code class="docutils literal notranslate"><span class="pre">NoNeverTreatedError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.AggregationError"><code class="docutils literal notranslate"><span class="pre">AggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InvalidAggregationError"><code class="docutils literal notranslate"><span class="pre">InvalidAggregationError</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#lwdid.exceptions.InsufficientCellSizeError"><code class="docutils literal notranslate"><span class="pre">InsufficientCellSizeError</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#overview">Overview</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#exception-hierarchy">Exception Hierarchy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="api/exceptions.html#exception-classes">Exception Classes</a></li>
@@ -354,7 +478,7 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#core-principle">Core Principle</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#demean-transformation-procedure-2-1">Demean Transformation (Procedure 2.1)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#detrend-transformation-procedure-3-1">Detrend Transformation (Procedure 3.1)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#quarterly-transformations">Quarterly Transformations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#seasonal-transformations-demeanq-detrendq">Seasonal Transformations (demeanq/detrendq)</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#inference-under-clm-assumptions">Inference Under CLM Assumptions</a><ul>
@@ -369,6 +493,18 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#randomization-inference">Randomization Inference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#clustering-at-higher-levels">Clustering at Higher Levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#when-to-cluster-at-higher-levels">When to Cluster at Higher Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#minimum-cluster-requirements">Minimum Cluster Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#id1">Degrees of Freedom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#diagnosing-clustering-structure">Diagnosing Clustering Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#getting-a-clustering-recommendation">Getting a Clustering Recommendation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#checking-clustering-consistency">Checking Clustering Consistency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#wild-cluster-bootstrap">Wild Cluster Bootstrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#clustering-workflow">Clustering Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#references-for-clustering">References for Clustering</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#large-sample-asymptotic-inference">Large-Sample Asymptotic Inference</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#asymptotic-theory">Asymptotic Theory</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#doubly-robust-estimation">Doubly Robust Estimation</a></li>
@@ -377,6 +513,7 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#when-to-use-large-sample-methods">When to Use Large-Sample Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#inference-distribution-by-estimator">Inference Distribution by Estimator</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#identification-assumptions">Identification Assumptions</a><ul>
@@ -384,6 +521,34 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#parallel-trends">Parallel Trends</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#common-treatment-timing-common-timing-mode">Common Treatment Timing (Common Timing Mode)</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#treatment-persistence">Treatment Persistence</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#unbalanced-panels-and-selection-mechanism">Unbalanced Panels and Selection Mechanism</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#selection-mechanism-assumption">Selection Mechanism Assumption</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#acceptable-missing-data-patterns">Acceptable Missing Data Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#problematic-missing-data-patterns">Problematic Missing Data Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#detrending-for-robustness">Detrending for Robustness</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#diagnosing-selection-risk">Diagnosing Selection Risk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#controlling-panel-balance">Controlling Panel Balance</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#heterogeneous-trends-and-assumption-cht">Heterogeneous Trends and Assumption CHT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#assumption-cht">Assumption CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#first-difference-under-cht">First Difference Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#choosing-between-demean-and-detrend">Choosing Between Demean and Detrend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#procedure-5-1-detrending-under-cht">Procedure 5.1: Detrending Under CHT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#testing-parallel-trends">Testing Parallel Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#diagnosing-heterogeneous-trends">Diagnosing Heterogeneous Trends</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#getting-a-transformation-recommendation">Getting a Transformation Recommendation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#pre-treatment-period-dynamics">Pre-treatment Period Dynamics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#motivation">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#rolling-transformation-for-pre-treatment-periods">Rolling Transformation for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#anchor-point-convention">Anchor Point Convention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#pre-treatment-att-estimation">Pre-treatment ATT Estimation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#control-group-for-pre-treatment-periods">Control Group for Pre-treatment Periods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#joint-test-for-parallel-trends">Joint Test for Parallel Trends</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#comparison-with-other-did-methods">Comparison with Other DiD Methods</a><ul>
@@ -407,11 +572,21 @@
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#control-group-strategies">Control Group Strategies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#all-units-eventually-treated">All Units Eventually Treated</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#estimation-methods">Estimation Methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#id2">Inference Distribution by Estimator</a></li>
 <li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#aggregation">Aggregation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#event-time-aggregation-watt">Event Time Aggregation (WATT)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#robustness-to-pre-treatment-period-selection">Robustness to Pre-treatment Period Selection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#id3">Motivation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#sensitivity-ratio">Sensitivity Ratio</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#using-robustness-pre-periods">Using robustness_pre_periods()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#no-anticipation-sensitivity">No-Anticipation Sensitivity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#using-exclude-pre-periods-parameter">Using exclude_pre_periods Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="methodological_notes.html#comprehensive-sensitivity-analysis">Comprehensive Sensitivity Analysis</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#references">References</a></li>
-<li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#authors">Authors</a></li>
 <li class="toctree-l2"><a class="reference internal" href="methodological_notes.html#further-reading">Further Reading</a></li>
 </ul>
 </li>
@@ -456,19 +631,26 @@
 <div class="genindex-jumpbox">
  <a href="#_"><strong>_</strong></a>
  | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
  
 </div>
 <h2 id="_">_</h2>
@@ -488,11 +670,59 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/staggered.html#lwdid.staggered.aggregate_to_cohort">aggregate_to_cohort() (in module lwdid.staggered)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/staggered.html#lwdid.staggered.aggregate_to_event_time">aggregate_to_event_time() (in module lwdid.staggered)</a>
+</li>
       <li><a href="api/staggered.html#lwdid.staggered.aggregate_to_overall">aggregate_to_overall() (in module lwdid.staggered)</a>
 </li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.AggregationError">AggregationError</a>
+</li>
+      <li><a href="api/sensitivity.html#id9">all_same_sign (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.all_same_sign">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id10">all_significant (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.all_significant">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id166">alternative_method (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id179">[1]</a>, <a href="api/trend_diagnostics.html#id72">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.alternative_method">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id167">alternative_reason (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id180">[1]</a>, <a href="api/trend_diagnostics.html#id73">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.alternative_reason">[3]</a>
+</li>
+      <li><a href="api/sensitivity.html#id23">anticipation_detected (lwdid.sensitivity.NoAnticipationSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.anticipation_detected">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id30">anticipation_result (lwdid.sensitivity.ComprehensiveSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult.anticipation_result">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.AnticipationDetectionMethod">AnticipationDetectionMethod (class in lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate">AnticipationEstimate (class in lwdid.sensitivity)</a>
+</li>
       <li><a href="api/transformations.html#lwdid.transformations.apply_rolling_transform">apply_rolling_transform() (in module lwdid.transformations)</a>
+</li>
+      <li><a href="api/sensitivity.html#id52">att (lwdid.sensitivity.AnticipationEstimate attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.att">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id40">(lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.att">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id13">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id186">[1]</a>, <a href="api/trend_diagnostics.html#id197">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.att">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/sensitivity.html#id3">att_mean (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.att_mean">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id2">att_range (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.att_range">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id4">att_std (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.att_std">[1]</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError.available">available (lwdid.exceptions.InsufficientPrePeriodsError attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id22">baseline_estimate (lwdid.sensitivity.NoAnticipationSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.baseline_estimate">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id1">baseline_spec (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.baseline_spec">[1]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -500,11 +730,55 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/staggered.html#lwdid.staggered.cohort_effects_to_dataframe">cohort_effects_to_dataframe() (in module lwdid.staggered)</a>
+      <li><a href="api/clustering_diagnostics.html#lwdid.clustering_diagnostics.check_clustering_consistency">check_clustering_consistency() (in module lwdid.clustering_diagnostics)</a>
 </li>
+      <li><a href="api/sensitivity.html#id56">ci_lower (lwdid.sensitivity.AnticipationEstimate attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.ci_lower">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id44">(lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.ci_lower">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id17">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id190">[1]</a>, <a href="api/trend_diagnostics.html#id201">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.ci_lower">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/sensitivity.html#id57">ci_upper (lwdid.sensitivity.AnticipationEstimate attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.ci_upper">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id45">(lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.ci_upper">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id18">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id191">[1]</a>, <a href="api/trend_diagnostics.html#id202">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.ci_upper">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/sensitivity.html#id64">COEFFICIENT_CHANGE (lwdid.sensitivity.AnticipationDetectionMethod attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationDetectionMethod.COEFFICIENT_CHANGE">[1]</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError.cohort">cohort (lwdid.exceptions.InsufficientPrePeriodsError attribute)</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id209">(lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id219">[1]</a>, <a href="api/trend_diagnostics.html#id22">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.cohort">[3]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id12">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id185">[1]</a>, <a href="api/trend_diagnostics.html#id196">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.cohort">[3]</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id231">cohort_1 (lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id240">[1]</a>, <a href="api/trend_diagnostics.html#id32">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.cohort_1">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id232">cohort_2 (lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id241">[1]</a>, <a href="api/trend_diagnostics.html#id33">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.cohort_2">[3]</a>
+</li>
+      <li><a href="api/staggered.html#lwdid.staggered.cohort_effects_to_dataframe">cohort_effects_to_dataframe() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id208">CohortTrendEstimate (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult">ComprehensiveSensitivityResult (class in lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id157">confidence (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id170">[1]</a>, <a href="api/trend_diagnostics.html#id63">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.confidence">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id158">confidence_level (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id171">[1]</a>, <a href="api/trend_diagnostics.html#id64">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.confidence_level">[3]</a>
+</li>
       <li><a href="api/staggered.html#lwdid.staggered.construct_aggregated_outcome">construct_aggregated_outcome() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id136">control_group_trend (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id145">[1]</a>, <a href="api/trend_diagnostics.html#id56">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.control_group_trend">[3]</a>
+</li>
+      <li><a href="api/sensitivity.html#id49">converged (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.converged">[1]</a>
 </li>
       <li><a href="api/staggered.html#lwdid.staggered.count_control_units_by_strategy">count_control_units_by_strategy() (in module lwdid.staggered)</a>
 </li>
@@ -514,13 +788,41 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id4">DEMEAN (lwdid.trend_diagnostics.TransformationMethod attribute)</a>, <a href="api/trend_diagnostics.html#id89">[1]</a>, <a href="api/trend_diagnostics.html#id93">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod.DEMEAN">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id6">DEMEANQ (lwdid.trend_diagnostics.TransformationMethod attribute)</a>, <a href="api/trend_diagnostics.html#id91">[1]</a>, <a href="api/trend_diagnostics.html#id95">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod.DEMEANQ">[3]</a>
+</li>
       <li><a href="api/transformations.html#lwdid.transformations.demeanq_unit">demeanq_unit() (in module lwdid.transformations)</a>
+</li>
+      <li><a href="api/sensitivity.html#id18">detailed_recommendations (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.detailed_recommendations">[1]</a>
+</li>
+      <li><a href="api/validation.html#lwdid.validation.detect_frequency">detect_frequency() (in module lwdid.validation)</a>
+</li>
+      <li><a href="api/sensitivity.html#id25">detection_method (lwdid.sensitivity.NoAnticipationSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.detection_method">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id5">DETREND (lwdid.trend_diagnostics.TransformationMethod attribute)</a>, <a href="api/trend_diagnostics.html#id90">[1]</a>, <a href="api/trend_diagnostics.html#id94">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod.DETREND">[3]</a>
+</li>
+      <li><a href="api/transformations.html#lwdid.transformations.detrend_unit">detrend_unit() (in module lwdid.transformations)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/transformations.html#lwdid.transformations.detrend_unit">detrend_unit() (in module lwdid.transformations)</a>
+      <li><a href="api/trend_diagnostics.html#id7">DETRENDQ (lwdid.trend_diagnostics.TransformationMethod attribute)</a>, <a href="api/trend_diagnostics.html#id92">[1]</a>, <a href="api/trend_diagnostics.html#id96">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod.DETRENDQ">[3]</a>
 </li>
       <li><a href="api/transformations.html#lwdid.transformations.detrendq_unit">detrendq_unit() (in module lwdid.transformations)</a>
+</li>
+      <li><a href="api/sensitivity.html#id48">df (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.df">[1]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id194">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id205">[1]</a>, <a href="api/trend_diagnostics.html#id21">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.df">[3]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id239">(lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id248">[1]</a>, <a href="api/trend_diagnostics.html#id40">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.df">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/clustering_diagnostics.html#lwdid.clustering_diagnostics.diagnose_clustering">diagnose_clustering() (in module lwdid.clustering_diagnostics)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id76">diagnose_heterogeneous_trends() (in module lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.diagnose_heterogeneous_trends">[1]</a>
+</li>
+      <li><a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.diagnose_selection_mechanism">diagnose_selection_mechanism() (in module lwdid.selection_diagnostics)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -528,6 +830,8 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id38">end_period (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.end_period">[1]</a>
+</li>
       <li><a href="api/estimation.html#lwdid.estimation.estimate_att">estimate_att() (in module lwdid.estimation)</a>
 </li>
       <li><a href="api/staggered.html#lwdid.staggered.estimate_cohort_time_effects">estimate_cohort_time_effects() (in module lwdid.staggered)</a>
@@ -536,16 +840,50 @@
 </li>
       <li><a href="api/staggered.html#lwdid.staggered.estimate_ipwra">estimate_ipwra() (in module lwdid.staggered)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/staggered.html#lwdid.staggered.estimate_outcome_model">estimate_outcome_model() (in module lwdid.staggered)</a>
 </li>
       <li><a href="api/estimation.html#lwdid.estimation.estimate_period_effects">estimate_period_effects() (in module lwdid.estimation)</a>
 </li>
+      <li><a href="api/staggered.html#lwdid.staggered.estimate_pre_treatment_effects">estimate_pre_treatment_effects() (in module lwdid.staggered)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/staggered.html#lwdid.staggered.estimate_propensity_score">estimate_propensity_score() (in module lwdid.staggered)</a>
 </li>
       <li><a href="api/staggered.html#lwdid.staggered.estimate_psm">estimate_psm() (in module lwdid.staggered)</a>
 </li>
+      <li><a href="api/sensitivity.html#id21">estimates (lwdid.sensitivity.NoAnticipationSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.estimates">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id14">estimator (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.estimator">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id32">estimator_comparison (lwdid.sensitivity.ComprehensiveSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult.estimator_comparison">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id11">event_time (lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id184">[1]</a>, <a href="api/trend_diagnostics.html#id195">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.event_time">[3]</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError.excluded">excluded (lwdid.exceptions.InsufficientPrePeriodsError attribute)</a>
+</li>
+      <li><a href="api/sensitivity.html#id51">excluded_periods (lwdid.sensitivity.AnticipationEstimate attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.excluded_periods">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id39">(lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.excluded_periods">[1]</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id28">figure (lwdid.sensitivity.NoAnticipationSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.figure">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id20">(lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.figure">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id141">(lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id150">[1]</a>, <a href="api/trend_diagnostics.html#id61">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.figure">[3]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id115">(lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id127">[1]</a>, <a href="api/trend_diagnostics.html#id51">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.figure">[3]</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -554,11 +892,19 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/staggered.html#lwdid.staggered.get_all_control_masks">get_all_control_masks() (in module lwdid.staggered)</a>
 </li>
+      <li><a href="api/staggered.html#lwdid.staggered.get_all_control_masks_pre">get_all_control_masks_pre() (in module lwdid.staggered)</a>
+</li>
       <li><a href="api/validation.html#lwdid.validation.get_cohort_mask">get_cohort_mask() (in module lwdid.validation)</a>
+</li>
+      <li><a href="api/staggered.html#lwdid.staggered.get_cohorts">get_cohorts() (in module lwdid.staggered)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/staggered.html#lwdid.staggered.get_cohorts">get_cohorts() (in module lwdid.staggered)</a>
+      <li><a href="api/staggered.html#lwdid.staggered.get_pre_treatment_periods_for_cohort">get_pre_treatment_periods_for_cohort() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.get_specification">get_specification() (lwdid.sensitivity.PrePeriodRobustnessResult method)</a>
+</li>
+      <li><a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.get_unit_missing_stats">get_unit_missing_stats() (in module lwdid.selection_diagnostics)</a>
 </li>
       <li><a href="api/staggered.html#lwdid.staggered.get_valid_control_units">get_valid_control_units() (in module lwdid.staggered)</a>
 </li>
@@ -570,7 +916,29 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id137">has_heterogeneous_trends (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id146">[1]</a>, <a href="api/trend_diagnostics.html#id57">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.has_heterogeneous_trends">[3]</a>
+</li>
       <li><a href="api/staggered.html#lwdid.staggered.has_never_treated_units">has_never_treated_units() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id164">has_seasonal_pattern (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id177">[1]</a>, <a href="api/trend_diagnostics.html#id70">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.has_seasonal_pattern">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id229">has_significant_trend (lwdid.trend_diagnostics.CohortTrendEstimate property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.has_significant_trend">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id161">heterogeneous_trends_diag (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id174">[1]</a>, <a href="api/trend_diagnostics.html#id67">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.heterogeneous_trends_diag">[3]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id132">HeterogeneousTrendsDiagnostics (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics">[1]</a>
+</li>
+      <li><a href="api/selection_diagnostics.html#id6">HIGH (lwdid.selection_diagnostics.SelectionRisk attribute)</a>, <a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.SelectionRisk.HIGH">[1]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id101">(lwdid.trend_diagnostics.RecommendationConfidence attribute)</a>, <a href="api/trend_diagnostics.html#id8">[1]</a>, <a href="api/trend_diagnostics.html#id98">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.RecommendationConfidence.HIGH">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/sensitivity.html#id59">HIGHLY_ROBUST (lwdid.sensitivity.RobustnessLevel attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.RobustnessLevel.HIGHLY_ROBUST">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id62">HIGHLY_SENSITIVE (lwdid.sensitivity.RobustnessLevel attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.RobustnessLevel.HIGHLY_SENSITIVE">[1]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -580,23 +948,67 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/staggered.html#lwdid.staggered.identify_never_treated_units">identify_never_treated_units() (in module lwdid.staggered)</a>
 </li>
+      <li><a href="api/sensitivity.html#id67">INSUFFICIENT_DATA (lwdid.sensitivity.AnticipationDetectionMethod attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationDetectionMethod.INSUFFICIENT_DATA">[1]</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.InsufficientCellSizeError">InsufficientCellSizeError</a>
+</li>
       <li><a href="api/exceptions.html#lwdid.exceptions.InsufficientDataError">InsufficientDataError</a>
 </li>
       <li><a href="api/exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError">InsufficientPrePeriodsError</a>
 </li>
       <li><a href="api/exceptions.html#lwdid.exceptions.InsufficientQuarterDiversityError">InsufficientQuarterDiversityError</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id210">intercept (lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id220">[1]</a>, <a href="api/trend_diagnostics.html#id23">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.intercept">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id211">intercept_se (lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id221">[1]</a>, <a href="api/trend_diagnostics.html#id24">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.intercept_se">[3]</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.InvalidAggregationError">InvalidAggregationError</a>
+</li>
       <li><a href="api/exceptions.html#lwdid.exceptions.InvalidParameterError">InvalidParameterError</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/exceptions.html#lwdid.exceptions.InvalidRollingMethodError">InvalidRollingMethodError</a>
 </li>
       <li><a href="api/exceptions.html#lwdid.exceptions.InvalidStaggeredDataError">InvalidStaggeredDataError</a>
 </li>
       <li><a href="api/exceptions.html#lwdid.exceptions.InvalidVCETypeError">InvalidVCETypeError</a>
 </li>
+      <li><a href="api/trend_diagnostics.html#id165">is_balanced_panel (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id178">[1]</a>, <a href="api/trend_diagnostics.html#id71">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.is_balanced_panel">[3]</a>
+</li>
       <li><a href="api/validation.html#lwdid.validation.is_never_treated">is_never_treated() (in module lwdid.validation)</a>
+</li>
+      <li><a href="api/sensitivity.html#id7">is_robust (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.is_robust">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.is_significant">is_significant (lwdid.sensitivity.AnticipationEstimate property)</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.is_significant_05">is_significant_05 (lwdid.sensitivity.SpecificationResult property)</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id206">(lwdid.trend_diagnostics.PreTrendEstimate property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.is_significant_05">[1]</a>
+</li>
+      </ul></li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.is_significant_10">is_significant_10 (lwdid.sensitivity.SpecificationResult property)</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id207">(lwdid.trend_diagnostics.PreTrendEstimate property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.is_significant_10">[1]</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id3">JOINT (lwdid.trend_diagnostics.TrendTestMethod attribute)</a>, <a href="api/trend_diagnostics.html#id83">[1]</a>, <a href="api/trend_diagnostics.html#id87">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod.JOINT">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id112">joint_df (lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id124">[1]</a>, <a href="api/trend_diagnostics.html#id48">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.joint_df">[3]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id110">joint_f_stat (lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id122">[1]</a>, <a href="api/trend_diagnostics.html#id46">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.joint_f_stat">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id111">joint_pvalue (lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id123">[1]</a>, <a href="api/trend_diagnostics.html#id47">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.joint_pvalue">[3]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -604,6 +1016,12 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/selection_diagnostics.html#id4">LOW (lwdid.selection_diagnostics.SelectionRisk attribute)</a>, <a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.SelectionRisk.LOW">[1]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id10">(lwdid.trend_diagnostics.RecommendationConfidence attribute)</a>, <a href="api/trend_diagnostics.html#id100">[1]</a>, <a href="api/trend_diagnostics.html#id103">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.RecommendationConfidence.LOW">[3]</a>
+</li>
+      </ul></li>
       <li><a href="api/core.html#lwdid.lwdid">lwdid() (in module lwdid)</a>
 </li>
       <li>
@@ -618,6 +1036,13 @@
 
       <ul>
         <li><a href="api/exceptions.html#module-lwdid.exceptions">module</a>
+</li>
+      </ul></li>
+      <li>
+    lwdid.preprocessing
+
+      <ul>
+        <li><a href="api/preprocessing.html#module-lwdid.preprocessing">module</a>
 </li>
       </ul></li>
       <li>
@@ -637,10 +1062,24 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
+    lwdid.sensitivity
+
+      <ul>
+        <li><a href="api/sensitivity.html#module-lwdid.sensitivity">module</a>
+</li>
+      </ul></li>
+      <li>
     lwdid.transformations
 
       <ul>
         <li><a href="api/transformations.html#module-lwdid.transformations">module</a>
+</li>
+      </ul></li>
+      <li>
+    lwdid.trend_diagnostics
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#module-lwdid.trend_diagnostics">module</a>
 </li>
       </ul></li>
       <li>
@@ -665,7 +1104,35 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/selection_diagnostics.html#id1">MAR (lwdid.selection_diagnostics.MissingPattern attribute)</a>, <a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.MissingPattern.MAR">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id130">max_abs_pre_att (lwdid.trend_diagnostics.ParallelTrendsTestResult property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.max_abs_pre_att">[1]</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.UnbalancedPanelError.max_obs">max_obs (lwdid.exceptions.UnbalancedPanelError attribute)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id153">max_trend_difference (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.max_trend_difference">[1]</a>
+</li>
+      <li><a href="api/selection_diagnostics.html#id0">MCAR (lwdid.selection_diagnostics.MissingPattern attribute)</a>, <a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.MissingPattern.MCAR">[1]</a>
+</li>
+      <li><a href="api/selection_diagnostics.html#id5">MEDIUM (lwdid.selection_diagnostics.SelectionRisk attribute)</a>, <a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.SelectionRisk.MEDIUM">[1]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id102">(lwdid.trend_diagnostics.RecommendationConfidence attribute)</a>, <a href="api/trend_diagnostics.html#id9">[1]</a>, <a href="api/trend_diagnostics.html#id99">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.RecommendationConfidence.MEDIUM">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/trend_diagnostics.html#id105">method (lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id117">[1]</a>, <a href="api/trend_diagnostics.html#id41">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.method">[3]</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.UnbalancedPanelError.min_obs">min_obs (lwdid.exceptions.UnbalancedPanelError attribute)</a>
+</li>
+      <li><a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.MissingPattern">MissingPattern (class in lwdid.selection_diagnostics)</a>
+</li>
       <li><a href="api/exceptions.html#lwdid.exceptions.MissingRequiredColumnError">MissingRequiredColumnError</a>
+</li>
+      <li><a href="api/selection_diagnostics.html#id2">MNAR (lwdid.selection_diagnostics.MissingPattern attribute)</a>, <a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.MissingPattern.MNAR">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id60">MODERATELY_ROBUST (lwdid.sensitivity.RobustnessLevel attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.RobustnessLevel.MODERATELY_ROBUST">[1]</a>
 </li>
       <li>
     module
@@ -675,11 +1142,17 @@
 </li>
         <li><a href="api/exceptions.html#module-lwdid.exceptions">lwdid.exceptions</a>
 </li>
+        <li><a href="api/preprocessing.html#module-lwdid.preprocessing">lwdid.preprocessing</a>
+</li>
         <li><a href="api/randomization.html#module-lwdid.randomization">lwdid.randomization</a>
 </li>
         <li><a href="api/results.html#module-lwdid.results">lwdid.results</a>
 </li>
+        <li><a href="api/sensitivity.html#module-lwdid.sensitivity">lwdid.sensitivity</a>
+</li>
         <li><a href="api/transformations.html#module-lwdid.transformations">lwdid.transformations</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#module-lwdid.trend_diagnostics">lwdid.trend_diagnostics</a>
 </li>
         <li><a href="api/validation.html#module-lwdid.validation">lwdid.validation</a>
 </li>
@@ -692,10 +1165,54 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/exceptions.html#lwdid.exceptions.NoControlUnitsError">NoControlUnitsError</a>
+      <li><a href="api/trend_diagnostics.html#id151">n_cohorts (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.n_cohorts">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id47">n_control (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.n_control">[1]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id193">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id20">[1]</a>, <a href="api/trend_diagnostics.html#id204">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.n_control">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.UnbalancedPanelError.n_incomplete_units">n_incomplete_units (lwdid.exceptions.UnbalancedPanelError attribute)</a>
+</li>
+      <li><a href="api/sensitivity.html#id36">n_pre_periods (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.n_pre_periods">[1]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id216">(lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id226">[1]</a>, <a href="api/trend_diagnostics.html#id29">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.n_pre_periods">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/trend_diagnostics.html#id163">n_pre_periods_max (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id176">[1]</a>, <a href="api/trend_diagnostics.html#id69">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.n_pre_periods_max">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id162">n_pre_periods_min (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id175">[1]</a>, <a href="api/trend_diagnostics.html#id68">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.n_pre_periods_min">[3]</a>
+</li>
+      <li><a href="api/sensitivity.html#id58">n_pre_periods_used (lwdid.sensitivity.AnticipationEstimate attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.n_pre_periods_used">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id12">n_sign_changes (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.n_sign_changes">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id11">n_significant (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.n_significant">[1]</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id152">n_significant_differences (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.n_significant_differences">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id129">n_significant_pre_trends (lwdid.trend_diagnostics.ParallelTrendsTestResult property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.n_significant_pre_trends">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id15">n_specifications (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.n_specifications">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id46">n_treated (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.n_treated">[1]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id19">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id192">[1]</a>, <a href="api/trend_diagnostics.html#id203">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.n_treated">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/trend_diagnostics.html#id215">n_units (lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id225">[1]</a>, <a href="api/trend_diagnostics.html#id28">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.n_units">[3]</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult">NoAnticipationSensitivityResult (class in lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.NoControlUnitsError">NoControlUnitsError</a>
+</li>
+      <li><a href="api/sensitivity.html#id66">NONE_DETECTED (lwdid.sensitivity.AnticipationDetectionMethod attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationDetectionMethod.NONE_DETECTED">[1]</a>
+</li>
       <li><a href="api/exceptions.html#lwdid.exceptions.NoNeverTreatedError">NoNeverTreatedError</a>
 </li>
       <li><a href="api/exceptions.html#lwdid.exceptions.NoTreatedUnitsError">NoTreatedUnitsError</a>
@@ -703,51 +1220,301 @@
   </ul></td>
 </tr></table>
 
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id33">overall_assessment (lwdid.sensitivity.ComprehensiveSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult.overall_assessment">[1]</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id160">parallel_trends_test (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id173">[1]</a>, <a href="api/trend_diagnostics.html#id66">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.parallel_trends_test">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id104">ParallelTrendsTestResult (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id2">PLACEBO (lwdid.trend_diagnostics.TrendTestMethod attribute)</a>, <a href="api/trend_diagnostics.html#id82">[1]</a>, <a href="api/trend_diagnostics.html#id86">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod.PLACEBO">[3]</a>
+</li>
+      <li><a href="api/sensitivity.html#id65">PLACEBO_TEST (lwdid.sensitivity.AnticipationDetectionMethod attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationDetectionMethod.PLACEBO_TEST">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.plot">plot() (lwdid.sensitivity.NoAnticipationSensitivityResult method)</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.plot">(lwdid.sensitivity.PrePeriodRobustnessResult method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult.plot_all">plot_all() (lwdid.sensitivity.ComprehensiveSensitivityResult method)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id78">plot_cohort_trends() (in module lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.plot_cohort_trends">[1]</a>
+</li>
+      <li><a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.plot_missing_pattern">plot_missing_pattern() (in module lwdid.selection_diagnostics)</a>
+</li>
       <li><a href="api/visualization.html#lwdid.visualization.plot_results">plot_results() (in module lwdid.visualization)</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.plot_sensitivity">plot_sensitivity() (in module lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/sensitivity.html#id16">pre_period_range_tested (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.pre_period_range_tested">[1]</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id29">pre_period_result (lwdid.sensitivity.ComprehensiveSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult.pre_period_result">[1]</a>
+</li>
+      <li><a href="api/staggered.html#lwdid.staggered.pre_treatment_effects_to_dataframe">pre_treatment_effects_to_dataframe() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id109">pre_trend_estimates (lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id121">[1]</a>, <a href="api/trend_diagnostics.html#id45">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.pre_trend_estimates">[3]</a>
+</li>
       <li><a href="api/estimation.html#lwdid.estimation.prepare_controls">prepare_controls() (in module lwdid.estimation)</a>
 </li>
       <li><a href="api/visualization.html#lwdid.visualization.prepare_plot_data">prepare_plot_data() (in module lwdid.visualization)</a>
 </li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult">PrePeriodRobustnessResult (class in lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id183">PreTrendEstimate (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id55">pvalue (lwdid.sensitivity.AnticipationEstimate attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.pvalue">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id43">(lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.pvalue">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id107">(lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id119">[1]</a>, <a href="api/trend_diagnostics.html#id43">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.pvalue">[3]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id16">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id189">[1]</a>, <a href="api/trend_diagnostics.html#id200">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.pvalue">[3]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id238">(lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id247">[1]</a>, <a href="api/trend_diagnostics.html#id39">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.pvalue">[3]</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id217">r_squared (lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id227">[1]</a>, <a href="api/trend_diagnostics.html#id30">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.r_squared">[3]</a>
+</li>
       <li><a href="api/staggered.html#lwdid.staggered.randomization_inference_staggered">randomization_inference_staggered() (in module lwdid.staggered)</a>
 </li>
       <li><a href="api/exceptions.html#lwdid.exceptions.RandomizationError">RandomizationError</a>
 </li>
-      <li><a href="api/staggered.html#lwdid.staggered.results_to_dataframe">results_to_dataframe() (in module lwdid.staggered)</a>
+      <li><a href="api/trend_diagnostics.html#id159">reasons (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id172">[1]</a>, <a href="api/trend_diagnostics.html#id65">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.reasons">[3]</a>
+</li>
+      <li><a href="api/clustering_diagnostics.html#lwdid.clustering_diagnostics.recommend_clustering_level">recommend_clustering_level() (in module lwdid.clustering_diagnostics)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id77">recommend_transformation() (in module lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.recommend_transformation">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id26">recommendation (lwdid.sensitivity.NoAnticipationSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.recommendation">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id17">(lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.recommendation">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id138">(lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id147">[1]</a>, <a href="api/trend_diagnostics.html#id58">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.recommendation">[3]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id113">(lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id125">[1]</a>, <a href="api/trend_diagnostics.html#id49">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.recommendation">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/trend_diagnostics.html#id139">recommendation_confidence (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id148">[1]</a>, <a href="api/trend_diagnostics.html#id59">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.recommendation_confidence">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id140">recommendation_reason (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id149">[1]</a>, <a href="api/trend_diagnostics.html#id60">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.recommendation_reason">[3]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id114">(lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id126">[1]</a>, <a href="api/trend_diagnostics.html#id50">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.recommendation_reason">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/trend_diagnostics.html#id97">RecommendationConfidence (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.RecommendationConfidence">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id34">recommendations (lwdid.sensitivity.ComprehensiveSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult.recommendations">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id24">recommended_exclusion (lwdid.sensitivity.NoAnticipationSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.recommended_exclusion">[1]</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id156">recommended_method (lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id169">[1]</a>, <a href="api/trend_diagnostics.html#id62">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.recommended_method">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id1">REGRESSION (lwdid.trend_diagnostics.TrendTestMethod attribute)</a>, <a href="api/trend_diagnostics.html#id81">[1]</a>, <a href="api/trend_diagnostics.html#id85">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod.REGRESSION">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id106">reject_null (lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id118">[1]</a>, <a href="api/trend_diagnostics.html#id42">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.reject_null">[3]</a>
+</li>
+      <li><a href="api/exceptions.html#lwdid.exceptions.InsufficientPrePeriodsError.required">required (lwdid.exceptions.InsufficientPrePeriodsError attribute)</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id218">residual_std (lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id228">[1]</a>, <a href="api/trend_diagnostics.html#id31">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.residual_std">[3]</a>
+</li>
+      <li><a href="api/sensitivity.html#id27">result_warnings (lwdid.sensitivity.NoAnticipationSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.result_warnings">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id19">(lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.result_warnings">[1]</a>
+</li>
+      </ul></li>
+      <li><a href="api/staggered.html#lwdid.staggered.results_to_dataframe">results_to_dataframe() (in module lwdid.staggered)</a>
+</li>
       <li><a href="api/staggered.html#lwdid.staggered.ri_cohort_effect">ri_cohort_effect() (in module lwdid.staggered)</a>
 </li>
       <li><a href="api/staggered.html#lwdid.staggered.ri_overall_effect">ri_overall_effect() (in module lwdid.staggered)</a>
 </li>
+      <li><a href="api/sensitivity.html#id6">robustness_level (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.robustness_level">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.robustness_pre_periods">robustness_pre_periods() (in module lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/sensitivity.html#id8">robustness_threshold (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.robustness_threshold">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.RobustnessLevel">RobustnessLevel (class in lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/sensitivity.html#id13">rolling_method (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.rolling_method">[1]</a>
+</li>
       <li><a href="api/staggered.html#lwdid.staggered.run_ols_regression">run_ols_regression() (in module lwdid.staggered)</a>
 </li>
+      <li><a href="api/staggered.html#lwdid.staggered.run_parallel_trends_test">run_parallel_trends_test() (in module lwdid.staggered)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id53">se (lwdid.sensitivity.AnticipationEstimate attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.se">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id41">(lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.se">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id14">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id187">[1]</a>, <a href="api/trend_diagnostics.html#id198">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.se">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.SelectionRisk">SelectionRisk (class in lwdid.selection_diagnostics)</a>
+</li>
+      <li><a href="api/sensitivity.html#id61">SENSITIVE (lwdid.sensitivity.RobustnessLevel attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.RobustnessLevel.SENSITIVE">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.sensitivity_analysis">sensitivity_analysis() (in module lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.sensitivity_no_anticipation">sensitivity_no_anticipation() (in module lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/sensitivity.html#id5">sensitivity_ratio (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.sensitivity_ratio">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id249">significant_at_05 (lwdid.trend_diagnostics.TrendDifference property)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.significant_at_05">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id212">slope (lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id222">[1]</a>, <a href="api/trend_diagnostics.html#id25">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.slope">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id233">slope_1 (lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id242">[1]</a>, <a href="api/trend_diagnostics.html#id34">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.slope_1">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id234">slope_2 (lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id243">[1]</a>, <a href="api/trend_diagnostics.html#id35">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.slope_2">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id235">slope_diff (lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id244">[1]</a>, <a href="api/trend_diagnostics.html#id36">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.slope_diff">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id236">slope_diff_se (lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id245">[1]</a>, <a href="api/trend_diagnostics.html#id37">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.slope_diff_se">[3]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id214">slope_pvalue (lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id224">[1]</a>, <a href="api/trend_diagnostics.html#id27">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.slope_pvalue">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id213">slope_se (lwdid.trend_diagnostics.CohortTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id223">[1]</a>, <a href="api/trend_diagnostics.html#id26">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.CohortTrendEstimate.slope_se">[3]</a>
+</li>
+      <li><a href="api/sensitivity.html#id50">spec_warnings (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.spec_warnings">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id35">specification_id (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.specification_id">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult">SpecificationResult (class in lwdid.sensitivity)</a>
+</li>
+      <li><a href="api/sensitivity.html#id0">specifications (lwdid.sensitivity.PrePeriodRobustnessResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.specifications">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id37">start_period (lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.start_period">[1]</a>
+</li>
+      <li><a href="api/staggered.html#lwdid.staggered.summarize_parallel_trends_test">summarize_parallel_trends_test() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult.summary">summary() (lwdid.sensitivity.ComprehensiveSensitivityResult method)</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.summary">(lwdid.sensitivity.NoAnticipationSensitivityResult method)</a>
+</li>
+        <li><a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.summary">(lwdid.sensitivity.PrePeriodRobustnessResult method)</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id154">(lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics method)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.summary">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id131">(lwdid.trend_diagnostics.ParallelTrendsTestResult method)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.summary">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id182">(lwdid.trend_diagnostics.TransformationRecommendation method)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.summary">[1]</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sensitivity.html#id54">t_stat (lwdid.sensitivity.AnticipationEstimate attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.t_stat">[1]</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#id42">(lwdid.sensitivity.SpecificationResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.t_stat">[1]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id15">(lwdid.trend_diagnostics.PreTrendEstimate attribute)</a>, <a href="api/trend_diagnostics.html#id188">[1]</a>, <a href="api/trend_diagnostics.html#id199">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.PreTrendEstimate.t_stat">[3]</a>
+</li>
+        <li><a href="api/trend_diagnostics.html#id237">(lwdid.trend_diagnostics.TrendDifference attribute)</a>, <a href="api/trend_diagnostics.html#id246">[1]</a>, <a href="api/trend_diagnostics.html#id38">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference.t_stat">[3]</a>
+</li>
+      </ul></li>
+      <li><a href="api/trend_diagnostics.html#id75">test_parallel_trends() (in module lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.test_parallel_trends">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id108">test_statistic (lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id120">[1]</a>, <a href="api/trend_diagnostics.html#id44">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.test_statistic">[3]</a>
+</li>
       <li><a href="api/exceptions.html#lwdid.exceptions.TimeDiscontinuityError">TimeDiscontinuityError</a>
+</li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.NoAnticipationSensitivityResult.to_dataframe">to_dataframe() (lwdid.sensitivity.NoAnticipationSensitivityResult method)</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#lwdid.sensitivity.PrePeriodRobustnessResult.to_dataframe">(lwdid.sensitivity.PrePeriodRobustnessResult method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/sensitivity.html#lwdid.sensitivity.AnticipationEstimate.to_dict">to_dict() (lwdid.sensitivity.AnticipationEstimate method)</a>
+
+      <ul>
+        <li><a href="api/sensitivity.html#lwdid.sensitivity.SpecificationResult.to_dict">(lwdid.sensitivity.SpecificationResult method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/staggered.html#lwdid.staggered.transform_staggered_demean">transform_staggered_demean() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/staggered.html#lwdid.staggered.transform_staggered_demean_pre">transform_staggered_demean_pre() (in module lwdid.staggered)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/staggered.html#lwdid.staggered.transform_staggered_demean">transform_staggered_demean() (in module lwdid.staggered)</a>
+      <li><a href="api/staggered.html#lwdid.staggered.transform_staggered_demeanq">transform_staggered_demeanq() (in module lwdid.staggered)</a>
 </li>
       <li><a href="api/staggered.html#lwdid.staggered.transform_staggered_detrend">transform_staggered_detrend() (in module lwdid.staggered)</a>
 </li>
+      <li><a href="api/staggered.html#lwdid.staggered.transform_staggered_detrend_pre">transform_staggered_detrend_pre() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/staggered.html#lwdid.staggered.transform_staggered_detrendq">transform_staggered_detrendq() (in module lwdid.staggered)</a>
+</li>
+      <li><a href="api/sensitivity.html#id31">transformation_comparison (lwdid.sensitivity.ComprehensiveSensitivityResult attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.ComprehensiveSensitivityResult.transformation_comparison">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id88">TransformationMethod (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationMethod">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id155">TransformationRecommendation (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation">[1]</a>
+</li>
+      <li><a href="api/sensitivity.html#id63">TREND_BREAK (lwdid.sensitivity.AnticipationDetectionMethod attribute)</a>, <a href="api/sensitivity.html#lwdid.sensitivity.AnticipationDetectionMethod.TREND_BREAK">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id133">trend_by_cohort (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id142">[1]</a>, <a href="api/trend_diagnostics.html#id53">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.trend_by_cohort">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id135">trend_differences (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id144">[1]</a>, <a href="api/trend_diagnostics.html#id55">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.trend_differences">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id134">trend_heterogeneity_test (lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics attribute)</a>, <a href="api/trend_diagnostics.html#id143">[1]</a>, <a href="api/trend_diagnostics.html#id54">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.HeterogeneousTrendsDiagnostics.trend_heterogeneity_test">[3]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id230">TrendDifference (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendDifference">[1]</a>
+</li>
+      <li><a href="api/trend_diagnostics.html#id79">TrendTestMethod (class in lwdid.trend_diagnostics)</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod">[1]</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/exceptions.html#lwdid.exceptions.UnbalancedPanelError">UnbalancedPanelError</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/selection_diagnostics.html#id3">UNKNOWN (lwdid.selection_diagnostics.MissingPattern attribute)</a>, <a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.MissingPattern.UNKNOWN">[1]</a>
+
+      <ul>
+        <li><a href="api/selection_diagnostics.html#id7">(lwdid.selection_diagnostics.SelectionRisk attribute)</a>, <a href="api/selection_diagnostics.html#lwdid.selection_diagnostics.SelectionRisk.UNKNOWN">[1]</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -760,13 +1527,37 @@
 </li>
       <li><a href="api/validation.html#lwdid.validation.validate_quarter_coverage">validate_quarter_coverage() (in module lwdid.validation)</a>
 </li>
+      <li><a href="api/validation.html#lwdid.validation.validate_quarter_diversity">validate_quarter_diversity() (in module lwdid.validation)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/validation.html#lwdid.validation.validate_quarter_diversity">validate_quarter_diversity() (in module lwdid.validation)</a>
+      <li><a href="api/validation.html#lwdid.validation.validate_season_coverage">validate_season_coverage() (in module lwdid.validation)</a>
+</li>
+      <li><a href="api/validation.html#lwdid.validation.validate_season_diversity">validate_season_diversity() (in module lwdid.validation)</a>
 </li>
       <li><a href="api/validation.html#lwdid.validation.validate_staggered_data">validate_staggered_data() (in module lwdid.validation)</a>
 </li>
+      <li><a href="api/trend_diagnostics.html#id0">VISUAL (lwdid.trend_diagnostics.TrendTestMethod attribute)</a>, <a href="api/trend_diagnostics.html#id80">[1]</a>, <a href="api/trend_diagnostics.html#id84">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TrendTestMethod.VISUAL">[3]</a>
+</li>
       <li><a href="api/exceptions.html#lwdid.exceptions.VisualizationError">VisualizationError</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/trend_diagnostics.html#id116">warnings (lwdid.trend_diagnostics.ParallelTrendsTestResult attribute)</a>, <a href="api/trend_diagnostics.html#id128">[1]</a>, <a href="api/trend_diagnostics.html#id52">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.ParallelTrendsTestResult.warnings">[3]</a>
+
+      <ul>
+        <li><a href="api/trend_diagnostics.html#id168">(lwdid.trend_diagnostics.TransformationRecommendation attribute)</a>, <a href="api/trend_diagnostics.html#id181">[1]</a>, <a href="api/trend_diagnostics.html#id74">[2]</a>, <a href="api/trend_diagnostics.html#lwdid.trend_diagnostics.TransformationRecommendation.warnings">[3]</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/inference.html#lwdid.inference.wild_cluster_bootstrap">wild_cluster_bootstrap() (in module lwdid.inference)</a>
+</li>
+      <li><a href="api/inference.html#lwdid.inference.wild_cluster_bootstrap_test_inversion">wild_cluster_bootstrap_test_inversion() (in module lwdid.inference)</a>
 </li>
   </ul></td>
 </tr></table>

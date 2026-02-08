@@ -59,8 +59,9 @@ class InvalidVCETypeError(InvalidParameterError):
     Exception raised when the vce parameter has an invalid value.
 
     The vce (variance-covariance estimator) parameter must be one of: None,
-    'robust', 'hc1', 'hc3', or 'cluster'. This exception is raised during
-    estimation when an unsupported variance estimator type is specified.
+    'robust', 'hc0', 'hc1', 'hc2', 'hc3', 'hc4', or 'cluster'. This
+    exception is raised during estimation when an unsupported variance
+    estimator type is specified.
 
     See Also
     --------
@@ -87,15 +88,12 @@ class UnbalancedPanelError(LWDIDError):
     
     Notes
     -----
-    From Lee & Wooldridge (2025) Section 4.4:
-    
-        "Selection may depend on unobserved time-invariant heterogeneity,
-        but cannot systematically depend on Y_it(∞) shocks."
-    
-    Unbalanced panels are acceptable under this assumption, but users may
-    want to enforce balanced panels for sensitivity analysis or when the
-    selection mechanism assumption is questionable.
-    
+    Unbalanced panels arise when units have different numbers of observed
+    time periods. Under standard selection assumptions, this is acceptable
+    provided that missingness depends only on time-invariant unit heterogeneity
+    and not on time-varying shocks. Users may want to enforce balanced panels
+    for sensitivity analysis or when the selection mechanism is questionable.
+
     See Also
     --------
     LWDIDError : Base exception class.
@@ -205,14 +203,10 @@ class InsufficientPrePeriodsError(InsufficientDataError):
 
     Notes
     -----
-    From Lee & Wooldridge (2025) Section 6:
-
-        "When the no-anticipation assumption may be violated, one can
-        leave one or more periods prior to the intervention time out
-        of the pre-treatment window used for transformation."
-
-    For cohort g with ``exclude_pre_periods=k``, the pre-treatment window
-    becomes {T_min, ..., g-1-k} instead of {T_min, ..., g-1}.
+    When the no-anticipation assumption may be violated, excluding periods
+    immediately before treatment from the transformation window can provide
+    robustness. For cohort g with ``exclude_pre_periods=k``, the pre-treatment
+    window becomes {T_min, ..., g-1-k} instead of {T_min, ..., g-1}.
     """
 
     def __init__(

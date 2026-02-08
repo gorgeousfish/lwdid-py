@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from lwdid.staggered.estimators import estimate_ipwra, estimate_ra, estimate_ipw, estimate_psm
+from lwdid.staggered.estimators import estimate_ipwra, estimate_ipw, estimate_psm
 from lwdid.validation import validate_staggered_data
 from lwdid.exceptions import InvalidParameterError
 
@@ -31,28 +31,6 @@ class TestBUG100ControlsStringValidation:
             'x2': np.random.randn(n),
             'x3': np.random.randn(n),
         })
-    
-    def test_estimate_ra_rejects_string_controls(self):
-        """estimate_ra() should reject string controls parameter."""
-        with pytest.raises(TypeError, match="controls must be a list"):
-            estimate_ra(
-                data=self.data,
-                y='y',
-                d='d',
-                controls='x1 x2 x3'  # Wrong: should be ['x1', 'x2', 'x3']
-            )
-    
-    def test_estimate_ra_accepts_list_controls(self):
-        """estimate_ra() should accept list controls parameter."""
-        # This should not raise an error
-        result = estimate_ra(
-            data=self.data,
-            y='y',
-            d='d',
-            controls=['x1', 'x2', 'x3']  # Correct
-        )
-        assert result is not None
-        assert hasattr(result, 'att')
     
     def test_estimate_ipwra_rejects_string_controls(self):
         """estimate_ipwra() should reject string controls parameter."""

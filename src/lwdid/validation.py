@@ -1,20 +1,29 @@
 """
-Input validation and data preparation for difference-in-differences estimation.
+Input validation and data preparation for difference-in-differences.
 
-This module provides comprehensive validation utilities for panel data used in
-difference-in-differences analysis. It ensures data integrity, validates
-structural assumptions (time-invariance, continuity), and prepares data for
-downstream transformation and estimation.
+This module provides comprehensive validation utilities for panel data
+used in difference-in-differences analysis. It ensures data integrity,
+validates structural assumptions (time-invariance, continuity), and
+prepares data for downstream transformation and estimation.
 
-The module supports both common timing designs (all units treated simultaneously)
-and staggered adoption designs (treatment timing varies by cohort). Validation
-checks include column existence, data types, time-invariance of treatment
-indicators and controls, time continuity, and treatment/control group adequacy.
+The module supports both common timing designs (all units treated
+simultaneously) and staggered adoption designs (treatment timing varies
+by cohort). Validation checks include column existence, data types,
+time-invariance of treatment indicators and controls, time continuity,
+and treatment/control group adequacy.
 
 Notes
 -----
-Reserved column names created internally (``d_``, ``post_``, ``tindex``, ``tq``, ``ydot``,
-``ydot_postavg``, ``firstpost``) should not exist in input data to avoid conflicts.
+Reserved column names created internally should not exist in input
+data to avoid conflicts:
+
+- ``d_`` : Binary treatment indicator
+- ``post_`` : Binary post-period indicator
+- ``tindex`` : Sequential time index
+- ``tq`` : Quarter index for quarterly data
+- ``ydot`` : Residualized outcome
+- ``ydot_postavg`` : Post-period average of residualized outcome
+- ``firstpost`` : Main regression sample indicator
 """
 
 from __future__ import annotations
@@ -48,37 +57,31 @@ def validate_and_prepare_data(
     season_var: str | None = None,
 ) -> tuple[pd.DataFrame, dict]:
     """
-    Validate input data and execute data preparation pipeline (Steps 0-6).
+    Validate input data and execute data preparation pipeline.
 
-    This is the main entry point for all data validation and preparation in the
-    lwdid package. It performs comprehensive checks and transformations to ensure
-    data integrity before transformation and estimation.
+    This is the main entry point for all data validation and preparation
+    in the lwdid package. It performs comprehensive checks and
+    transformations to ensure data integrity before transformation and
+    estimation.
 
-    Pipeline Steps
-    --------------
-    1. **Input validation**:
-       - DataFrame type check
-       - Reserved column names check
-       - Required columns existence check
-       - Rolling parameter validation
+    The validation pipeline consists of five stages:
 
-    2. **Data type validation**:
-       - Outcome variable numeric type check
-       - Control variables numeric type check
+    1. **Input validation**: DataFrame type check, reserved column names
+       check, required columns existence check, rolling parameter
+       validation.
 
-    3. **Time-invariance validation**:
-       - Treatment indicator time-invariance check
-       - Control variables time-invariance check
+    2. **Data type validation**: Outcome variable numeric type check,
+       control variables numeric type check.
 
-    4. **Data preparation**:
-       - String ID conversion to numeric codes
-       - Time index creation (``tindex``)
-       - Binary treatment/post indicator creation (``d_``, ``post_``)
-       - Missing value handling
+    3. **Time-invariance validation**: Treatment indicator time-invariance
+       check, control variables time-invariance check.
 
-    5. **Time structure validation**:
-       - Time continuity validation
-       - Post-treatment monotonicity check
+    4. **Data preparation**: String ID conversion to numeric codes, time
+       index creation (``tindex``), binary treatment/post indicator
+       creation (``d_``, ``post_``), missing value handling.
+
+    5. **Time structure validation**: Time continuity validation,
+       post-treatment monotonicity check.
 
     Parameters
     ----------
@@ -162,21 +165,16 @@ def validate_and_prepare_data(
 
     Notes
     -----
-    Reserved column names that cannot exist in input data:
-
-    - ``d_``: Binary treatment indicator (created internally)
-    - ``post_``: Binary post indicator (created internally)
-    - ``tindex``: Time index (created internally)
-    - ``tq`` : Quarter index (created internally for quarterly data)
-    - ``ydot`` : Residualized outcome (created in transformation)
-    - ``ydot_postavg`` : Post-period average of ydot (created in transformation)
-    - ``firstpost`` : Main regression sample indicator (created in transformation)
+    This function creates several internal columns (``d_``, ``post_``,
+    ``tindex``, ``tq``, ``ydot``, ``ydot_postavg``, ``firstpost``).
+    Input data must not contain columns with these names.
 
     See Also
     --------
     _validate_required_columns : Validates column existence.
     _validate_time_continuity : Validates time series continuity.
-    validate_quarter_coverage : Validates quarter coverage for quarterly methods.
+    validate_quarter_coverage : Validates quarter coverage for quarterly
+        methods.
     """
     if not isinstance(data, pd.DataFrame):
         raise TypeError(
@@ -328,9 +326,9 @@ def _validate_no_reserved_columns(data: pd.DataFrame) -> None:
     """
     Check that input data does not contain reserved column names.
 
-    This package uses several internal column names that should not exist in
-    user data. If these columns exist, they will be silently overwritten,
-    causing data loss and potentially incorrect results.
+    This package uses several internal column names that should not exist
+    in user data. If these columns exist, they will be silently
+    overwritten, causing data loss and potentially incorrect results.
 
     Parameters
     ----------
@@ -342,21 +340,9 @@ def _validate_no_reserved_columns(data: pd.DataFrame) -> None:
     InvalidParameterError
         If any reserved column names are found in the input data.
 
-    Notes
-    -----
-    Reserved columns created internally:
-
-    - ``d_`` : Binary treatment indicator (0/1)
-    - ``post_`` : Binary post-period indicator (0/1)
-    - ``tindex`` : Time index (1, 2, 3, ...)
-    - ``tq`` : Quarter index (for quarterly data)
-    - ``ydot`` : Residualized outcome variable
-    - ``ydot_postavg`` : Post-period average of ydot
-    - ``firstpost`` : Main regression sample indicator
-
     See Also
     --------
-    validate_and_prepare_data : Main validation function that calls this check.
+    validate_and_prepare_data : Main validation function that calls this.
     """
     RESERVED_COLUMNS = ['d_', 'post_', 'tindex', 'tq', 'ydot', 'ydot_postavg', 'firstpost']
     existing_reserved = [col for col in RESERVED_COLUMNS if col in data.columns]
@@ -690,7 +676,7 @@ def _validate_rolling_parameter(
             f"Got: '{rolling}'"
         )
 
-    # For seasonal methods, require either tvar=[year, quarter] or season_var
+    # Seasonal methods require either tvar=[year, quarter] or season_var.
     if rolling_lower in ['demeanq', 'detrendq']:
         has_tvar_list = isinstance(tvar, (list, tuple)) and len(tvar) == 2
         has_season_var = season_var is not None
@@ -909,7 +895,7 @@ def _validate_time_continuity(data: pd.DataFrame) -> tuple[int, int, int]:
     tpost1 = int(data[data['post_'] == 1]['tindex'].min())
     T = int(data['tindex'].max())
 
-    # Verify common timing: post must be constant across units at each time
+    # Verify common timing: post must be constant across units at each time.
     post_by_time = data.groupby('tindex')['post_'].nunique()
     if (post_by_time > 1).any():
         violating_times = post_by_time[post_by_time > 1].index.tolist()
@@ -920,7 +906,7 @@ def _validate_time_continuity(data: pd.DataFrame) -> tuple[int, int, int]:
             f"For staggered adoption scenarios, use the staggered module with gvar parameter."
         )
 
-    # Validate tindex continuity (gaps distort trend estimation)
+    # Validate tindex continuity; gaps distort trend estimation.
     unique_tindex = sorted(data['tindex'].unique())
     expected_tindex = list(range(1, T + 1))
 
@@ -939,7 +925,7 @@ def _validate_time_continuity(data: pd.DataFrame) -> tuple[int, int, int]:
             f"continuous sequence without gaps."
         )
 
-    # Validate post monotonicity: once treated, always treated
+    # Validate post monotonicity: once treated, always treated.
     post_by_time = data.groupby('tindex')['post_'].first().sort_index()
 
     if (post_by_time == 1).any():
@@ -1189,9 +1175,9 @@ def validate_quarter_coverage(
 # Staggered DiD Validation Functions
 # =============================================================================
 
-# Tolerance for floating-point cohort value comparisons.
-# Used when comparing gvar values that may have accumulated floating-point
-# errors through transformations or aggregations.
+# Tolerance for floating-point cohort value comparisons, used when comparing
+# gvar values that may have accumulated precision errors through data
+# transformations or aggregations.
 COHORT_FLOAT_TOLERANCE = 1e-9
 
 
@@ -1262,25 +1248,14 @@ def is_never_treated(gvar_value: int | float) -> bool:
     See Also
     --------
     validate_staggered_data : Validates staggered DiD data structure.
-
-    Examples
-    --------
-    >>> is_never_treated(0)
-    True
-    >>> is_never_treated(np.inf)
-    True
-    >>> is_never_treated(np.nan)
-    True
-    >>> is_never_treated(2005)
-    False
     """
     from .exceptions import InvalidStaggeredDataError
     
-    # Check NaN/None first
+    # Check NaN/None first.
     if pd.isna(gvar_value):
         return True
     
-    # Check infinity - positive inf is never-treated, negative inf is invalid
+    # Check infinity: positive inf is never-treated, negative inf is invalid.
     if np.isinf(gvar_value):
         if gvar_value < 0:
             raise InvalidStaggeredDataError(
@@ -1294,13 +1269,13 @@ def is_never_treated(gvar_value: int | float) -> bool:
                 f"  1. Replace negative infinity with 0, np.inf, or NaN\n"
                 f"  2. Or remove rows with invalid gvar values"
             )
-        return True  # Positive infinity
+        return True  # Positive infinity.
     
-    # Check zero (including near-zero for floating point tolerance)
+    # Check zero, including near-zero for floating point tolerance.
     if abs(gvar_value) < 1e-10:
         return True
     
-    # Positive values indicate treatment cohort
+    # Positive values indicate treatment cohort.
     return False
 
 
@@ -1332,16 +1307,14 @@ def _compute_method_usability(
     
     Notes
     -----
-    From Lee & Wooldridge (2025) Section 4.4:
-    
-        "For treatment cohort g in period r, the transformed outcome can only
-        be used if there are enough observed data in the periods t < g to
-        compute an average (one period) or a linear trend (two periods)."
+    For treatment cohort g in period r, the transformed outcome requires
+    sufficient pre-treatment observations: at least one period for demeaning,
+    or at least two periods for detrending.
     """
-    # Get unit-level gvar
+    # Get unit-level gvar.
     unit_gvar = data.drop_duplicates(subset=[ivar]).set_index(ivar)[gvar]
     
-    # Count treated units and those below thresholds
+    # Count treated units and those below thresholds.
     n_treated = 0
     n_below_demean = 0
     n_below_detrend = 0
@@ -1349,13 +1322,13 @@ def _compute_method_usability(
     for unit_id in data[ivar].unique():
         g = unit_gvar.get(unit_id)
         
-        # Skip never-treated units
+        # Skip never-treated units.
         if is_never_treated(g):
             continue
         
         n_treated += 1
         
-        # Count pre-treatment observations
+        # Count pre-treatment observations.
         unit_data = data[data[ivar] == unit_id]
         n_pre = len(unit_data[unit_data[tvar] < g])
         
@@ -1364,7 +1337,7 @@ def _compute_method_usability(
         if n_pre < 2:
             n_below_detrend += 1
     
-    # Calculate usability percentages
+    # Calculate usability percentages.
     if n_treated > 0:
         pct_demean = 100.0 * (1 - n_below_demean / n_treated)
         pct_detrend = 100.0 * (1 - n_below_detrend / n_treated)
@@ -1565,14 +1538,14 @@ def validate_staggered_data(
         min_obs = int(panel_counts.min())
         max_obs = int(panel_counts.max())
         
-        # Compute method usability percentages for treated units
+        # Compute method usability percentages for treated units.
         pct_demean, pct_detrend = _compute_method_usability(
             data, ivar, tvar_cols[0], gvar
         )
         
         warning_list.append(
             f"Unbalanced panel detected: observation counts range from {min_obs} to {max_obs}.\n\n"
-            f"SELECTION MECHANISM ASSUMPTION (Lee & Wooldridge 2025, Section 4.4):\n"
+            f"SELECTION MECHANISM ASSUMPTION:\n"
             f"  Selection (missing data) may depend on unobserved time-invariant heterogeneity,\n"
             f"  but cannot systematically depend on Y_it(∞) shocks.\n\n"
             f"This is analogous to the standard fixed effects assumption. The method remains\n"
@@ -1678,15 +1651,6 @@ def detect_frequency(
     - Multiple frequencies are equally likely
     - Data pattern is irregular or ambiguous
 
-    Examples
-    --------
-    >>> result = detect_frequency(data, tvar='time', ivar='id')
-    >>> if result['frequency'] is not None:
-    ...     print(f"Detected: {result['frequency']} (Q={result['Q']})")
-    ...     print(f"Confidence: {result['confidence']:.2f}")
-    ... else:
-    ...     print("Could not detect frequency automatically")
-
     See Also
     --------
     lwdid : Main estimation function with ``auto_detect_frequency`` parameter.
@@ -1716,14 +1680,14 @@ def detect_frequency(
         )
         return result
 
-    # Check if time variable is datetime
+    # Check if time variable is datetime.
     is_datetime = pd.api.types.is_datetime64_any_dtype(time_values)
 
     if is_datetime:
-        # Datetime-based detection using time intervals
+        # Datetime-based detection using time intervals.
         return _detect_frequency_datetime(data, tvar, ivar)
     else:
-        # Numeric time variable detection
+        # Numeric time variable detection.
         return _detect_frequency_numeric(data, tvar, ivar)
 
 
@@ -1746,7 +1710,7 @@ def _detect_frequency_datetime(
     }
 
     if ivar is not None and ivar in data.columns:
-        # Per-unit interval analysis
+        # Per-unit interval analysis.
         intervals = []
         n_units = 0
         for unit_id, unit_data in data.groupby(ivar):
@@ -1757,7 +1721,7 @@ def _detect_frequency_datetime(
                 n_units += 1
         result['details']['n_units_analyzed'] = n_units
     else:
-        # Global interval analysis
+        # Global interval analysis.
         sorted_times = data[tvar].dropna().sort_values()
         intervals = sorted_times.diff().dropna().dt.days.tolist()
         result['details']['n_units_analyzed'] = 1
@@ -1768,8 +1732,8 @@ def _detect_frequency_datetime(
     median_interval = np.median(intervals)
     result['details']['median_interval'] = median_interval
 
-    # Frequency detection based on median interval (in days)
-    # Weekly: ~7 days, Monthly: ~30 days, Quarterly: ~91 days, Annual: ~365 days
+    # Frequency detection based on median interval in days.
+    # Weekly ~7, Monthly ~30, Quarterly ~91, Annual ~365.
     freq_thresholds = [
         (7, 3, 'weekly', 52),
         (30, 10, 'monthly', 12),
@@ -1821,11 +1785,11 @@ def _detect_frequency_numeric(
     result['details']['t_max'] = t_max
     result['details']['t_range'] = t_range
 
-    # Check if values look like years (e.g., 2000-2025)
+    # Check if values look like years (e.g., 2000-2025).
     looks_like_years = 1900 <= t_min <= 2100 and 1900 <= t_max <= 2100
 
     if looks_like_years and t_range > 0:
-        # Count observations per year
+        # Count observations per year.
         if ivar is not None and ivar in data.columns:
             obs_per_year_list = []
             n_units = 0
@@ -1852,7 +1816,7 @@ def _detect_frequency_numeric(
             result['details']['obs_per_year'] = obs_per_year
             result['method'] = 'obs_per_year'
 
-            # Frequency detection based on observations per year
+            # Frequency detection based on observations per year.
             freq_mapping = [
                 (1, 0.5, 'annual', 1),
                 (4, 1.5, 'quarterly', 4),
@@ -1875,7 +1839,7 @@ def _detect_frequency_numeric(
                 result['confidence'] = min(1.0, best_match[2])
 
     else:
-        # Non-year numeric time index: use interval analysis
+        # Non-year numeric time index: use interval analysis.
         if ivar is not None and ivar in data.columns:
             intervals = []
             n_units = 0
@@ -1896,10 +1860,10 @@ def _detect_frequency_numeric(
             result['details']['median_interval'] = median_interval
             result['method'] = 'interval'
 
-            # For integer time indices, interval of 1 is most common
-            # Cannot reliably determine frequency without additional context
+            # For integer time indices, interval of 1 is most common.
+            # Cannot reliably determine frequency without additional context.
             if median_interval == 1:
-                # Ambiguous: could be any frequency with consecutive indexing
+                # Ambiguous: could be any frequency with consecutive indexing.
                 result['confidence'] = 0.3
                 warnings.warn(
                     "Time variable appears to be a consecutive integer index. "

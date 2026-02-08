@@ -17,7 +17,6 @@ This module performs comprehensive validation of input data to ensure:
 1. **Panel structure** is correct (unique unit-time pairs, continuous time)
 2. **Treatment timing** follows common timing assumption
 3. **Sample size** meets minimum requirements
-
 4. **Control variables** are time-invariant
 5. **Data types** are appropriate
 
@@ -215,6 +214,80 @@ pre-check seasonal coverage requirements for ``demeanq``/``detrendq``.
 In typical usage these helpers are called indirectly by
 :func:`lwdid.lwdid` via the transformation module rather than being
 used directly.
+
+Never-Treated Unit Identification
+----------------------------------
+
+The ``is_never_treated()`` function provides a standardized way to identify
+never-treated units in staggered adoption designs. This function is the
+single source of truth for never-treated identification across all modules.
+
+is_never_treated() Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from lwdid.validation import is_never_treated
+   import numpy as np
+   import pandas as pd
+
+   # Check individual values
+   is_never_treated(0)        # True - zero indicates never-treated
+   is_never_treated(np.inf)   # True - infinity indicates never-treated
+   is_never_treated(np.nan)   # True - NaN indicates never-treated
+   is_never_treated(None)     # True - None indicates never-treated
+   is_never_treated(pd.NA)    # True - pandas NA indicates never-treated
+   is_never_treated(2005)     # False - positive integer is treatment cohort
+   is_never_treated(-np.inf)  # Raises InvalidStaggeredDataError
+
+**Valid Never-Treated Encodings:**
+
+The following values are recognized as never-treated:
+
+1. **Zero (0 or 0.0)**: Common encoding in Stata and other software
+2. **Positive infinity (np.inf)**: Represents "treated at infinity" (never)
+3. **NaN/NA/None**: Missing treatment time indicates never-treated
+4. **Near-zero values**: Values within floating-point tolerance (:math:`|x| < 10^{-10}`)
+
+**Invalid Values:**
+
+- **Negative infinity (-np.inf)**: Raises ``InvalidStaggeredDataError``
+- **Negative numbers**: Should be caught by ``validate_staggered_data()``
+
+**Usage with DataFrames:**
+
+.. code-block:: python
+
+   import pandas as pd
+   import numpy as np
+   from lwdid.validation import is_never_treated
+
+   # Create sample data
+   data = pd.DataFrame({
+       'id': [1, 2, 3, 4, 5] * 3,
+       'year': [2000, 2001, 2002] * 5,
+       'y': np.random.randn(15),
+       'gvar': [0, np.inf, np.nan, 2001, 2002] * 3
+   })
+
+   # Identify never-treated units
+   unit_gvar = data.groupby('id')['gvar'].first()
+   nt_mask = unit_gvar.apply(is_never_treated)
+
+   print(f"Never-treated units: {nt_mask.sum()}")  # Output: 3
+   print(f"NT unit IDs: {unit_gvar[nt_mask].index.tolist()}")  # [1, 2, 3]
+
+**Cross-Module Consistency:**
+
+The ``is_never_treated()`` function is used consistently across all modules:
+
+- ``lwdid.validation``: Primary definition
+- ``lwdid.staggered.control_groups``: Control group selection
+- ``lwdid.staggered.aggregation``: Weight calculations
+- ``lwdid.staggered.randomization``: Randomization inference
+
+This ensures that never-treated identification is consistent throughout
+the estimation pipeline.
 
 Staggered Adoption Validation
 -----------------------------
@@ -478,8 +551,7 @@ Error: Time-Varying Controls
 .. code-block:: text
 
    InvalidParameterError indicating that control variable 'income' is
-   not time-invariant.
- (constant within each unit).
+   not time-invariant (constant within each unit).
 
 **Cause:** Control variable changes over time for some units.
 

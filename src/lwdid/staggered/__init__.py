@@ -1,68 +1,41 @@
-"""
+r"""
 Staggered difference-in-differences estimation for panel data.
 
-This module implements estimation methods for staggered adoption settings
-where units begin treatment at different time periods. The approach uses
-rolling time-series transformations at the unit level combined with
-cross-sectional treatment effect estimators.
+This module implements estimation methods for staggered adoption designs
+where treatment timing varies across units. The approach applies unit-level
+rolling time-series transformations combined with cross-sectional treatment
+effect estimators to identify cohort-time-specific average treatment effects
+on the treated (ATT).
 
-The module provides:
-
-- **Data Transformations**: Unit-specific demeaning and detrending that
-  convert panel data into cross-sectional regression problems for each
-  (cohort, period) pair.
-
-- **Pre-treatment Transformations**: Rolling transformations for pre-
-  treatment periods using future pre-treatment data, enabling event
-  study visualization and parallel trends testing.
-
-- **Control Group Selection**: Strategies for choosing valid control
-  units, including never-treated only or not-yet-treated configurations.
-
-- **Effect Estimation**: Regression adjustment (RA) estimators for
-  cohort-time-specific average treatment effects on the treated (ATT).
-
-- **Pre-treatment Effect Estimation**: Estimation of pre-treatment ATT
-  for parallel trends assessment and event study visualization.
-
-- **Parallel Trends Testing**: Statistical tests for the parallel trends
-  assumption using pre-treatment ATT estimates.
-
-- **Doubly Robust Estimation**: Inverse probability weighted regression
-  adjustment (IPWRA) combining propensity score weighting with outcome
-  regression for robustness to model misspecification.
-
-- **Propensity Score Matching**: Nearest-neighbor matching on estimated
-  propensity scores for nonparametric treatment effect estimation.
-
-- **Effect Aggregation**: Aggregation of (g, r)-specific effects to
-  cohort-level or overall average treatment effects.
-
-- **Randomization Inference**: Permutation-based inference procedures
-  for finite-sample validity without distributional assumptions.
+The module supports data transformations (demeaning, detrending), flexible
+control group selection (never-treated, not-yet-treated), multiple estimators
+(RA, IPW, IPWRA, PSM), effect aggregation, parallel trends testing, and
+permutation-based randomization inference.
 
 Notes
 -----
 Treatment cohorts are indexed by g (first treatment period) and calendar
-time by r. The ATT parameters :math:`\\tau_{g,r}` represent the average
-treatment effect on the treated for cohort g in period r, where r >= g.
+time by r. The ATT parameters :math:`\\tau_{g,r}` represent the effect
+for cohort g in period r, where r >= g.
 
 Identification requires two key assumptions:
 
-1. **No anticipation**: Treatment effects are zero prior to the first
-   treatment period, i.e., :math:`E[Y_t(g) - Y_t(\\infty) | D_g = 1] = 0`
-   for t < g.
-
-2. **Conditional parallel trends**: Trends in untreated potential outcomes
-   are independent of treatment timing conditional on covariates.
+1. **No anticipation**: Treatment effects are zero prior to treatment onset.
+2. **Conditional parallel trends**: Untreated outcome trends are independent
+   of treatment timing conditional on covariates.
 
 The rolling transformation removes unit-specific pre-treatment patterns:
 
-- **Demeaning**: :math:`\\dot{Y}_{irg} = Y_{ir} - \\bar{Y}_{i,pre(g)}`
-- **Detrending**: :math:`\\ddot{Y}_{irg} = Y_{ir} - \\hat{A}_{ig} - \\hat{B}_{ig} \\cdot r`
+.. math::
 
-For cohort g in period r, valid controls include never-treated units and
-units first treated after period r (not-yet-treated).
+    \\dot{Y}_{irg} = Y_{ir} - \\bar{Y}_{i,pre(g)} \\quad \\text{(demeaning)}
+
+.. math::
+
+    \\ddot{Y}_{irg} = Y_{ir} - \\hat{A}_{ig} - \\hat{B}_{ig} r
+
+Valid control units for cohort g in period r include never-treated units
+and units first treated after period r (not-yet-treated).
 """
 
 from .transformations import (

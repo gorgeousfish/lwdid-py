@@ -17,7 +17,6 @@ This module performs comprehensive validation of input data to ensure:
 1. **Panel structure** is correct (unique unit-time pairs, continuous time)
 2. **Treatment timing** follows common timing assumption
 3. **Sample size** meets minimum requirements
-
 4. **Control variables** are time-invariant
 5. **Data types** are appropriate
 
@@ -248,7 +247,7 @@ The following values are recognized as never-treated:
 1. **Zero (0 or 0.0)**: Common encoding in Stata and other software
 2. **Positive infinity (np.inf)**: Represents "treated at infinity" (never)
 3. **NaN/NA/None**: Missing treatment time indicates never-treated
-4. **Near-zero values**: Values within floating-point tolerance (|x| < 1e-10)
+4. **Near-zero values**: Values within floating-point tolerance (:math:`|x| < 10^{-10}`)
 
 **Invalid Values:**
 
@@ -552,8 +551,7 @@ Error: Time-Varying Controls
 .. code-block:: text
 
    InvalidParameterError indicating that control variable 'income' is
-   not time-invariant.
- (constant within each unit).
+   not time-invariant (constant within each unit).
 
 **Cause:** Control variable changes over time for some units.
 

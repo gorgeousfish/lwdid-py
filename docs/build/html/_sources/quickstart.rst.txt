@@ -62,11 +62,13 @@ Required Parameters
    - ``demean/demeanq``: Requires at least 1 pre-treatment period (:math:`T_0 \geq 1`)
    - ``detrend/detrendq``: Requires at least 2 pre-treatment periods (:math:`T_0 \geq 2`)
 
-   The ``detrend`` method estimates unit-specific linear trends using pre-treatment
-   data via regression :math:`Y_{it} = A_i + B_i t + \varepsilon_{it}`, which
-   requires at least 2 observations to identify both intercept and slope. This is
-   a transformation step as described in Lee and Wooldridge (2026, Procedure 3.1);
-   statistical inference is conducted in the subsequent cross-sectional regression.
+   The ``demean`` method subtracts the unit-specific pre-treatment mean, as
+   described in Lee and Wooldridge (2026, Procedure 2.1). The ``detrend`` method
+   estimates unit-specific linear trends using pre-treatment data via regression
+   :math:`Y_{it} = A_i + B_i t + \varepsilon_{it}`, which requires at least 2
+   observations to identify both intercept and slope (Lee and Wooldridge, 2026,
+   Procedure 3.1). Statistical inference is conducted in the subsequent
+   cross-sectional regression.
 
 Common Options
 --------------

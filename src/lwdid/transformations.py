@@ -388,18 +388,6 @@ def apply_rolling_transform(
     _detrend_transform : Unit-specific detrending implementation.
     demeanq_unit : Seasonal demeaning for a single unit.
     detrendq_unit : Seasonal detrending for a single unit.
-
-    Examples
-    --------
-    Quarterly data (Q=4):
-
-    >>> data = apply_rolling_transform(data, 'y', 'id', 't', 'post', 'demeanq',
-    ...                                tpost1=5, season_var='quarter', Q=4)
-
-    Monthly data (Q=12):
-
-    >>> data = apply_rolling_transform(data, 'y', 'id', 't', 'post', 'demeanq',
-    ...                                tpost1=13, season_var='month', Q=12)
     """
     data = data.copy()
     
@@ -767,16 +755,6 @@ def demeanq_unit(
     See Also
     --------
     detrendq_unit : Combines seasonal adjustment with linear trend removal.
-
-    Examples
-    --------
-    Quarterly data (Q=4):
-
-    >>> yhat, ydot = demeanq_unit(unit_data, 'y', 'quarter', 'post', Q=4)
-
-    Monthly data (Q=12):
-
-    >>> yhat, ydot = demeanq_unit(unit_data, 'y', 'month', 'post', Q=12)
     """
     unit_pre = unit_data[unit_data[post] == 0].copy()
     n_obs = len(unit_data)
@@ -902,16 +880,6 @@ def detrendq_unit(
     --------
     demeanq_unit : Seasonal adjustment without trend removal.
     detrend_unit : Linear trend removal without seasonal adjustment.
-
-    Examples
-    --------
-    Quarterly data (Q=4):
-
-    >>> yhat, ydot = detrendq_unit(unit_data, 'y', 'tindex', 'quarter', 'post', Q=4)
-
-    Monthly data (Q=12):
-
-    >>> yhat, ydot = detrendq_unit(unit_data, 'y', 'tindex', 'month', 'post', Q=12)
     """
     unit_pre = unit_data[unit_data[post] == 0].copy()
     n_obs = len(unit_data)

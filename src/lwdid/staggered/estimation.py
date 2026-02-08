@@ -237,9 +237,9 @@ def _compute_hc_variance(
     Typical ordering: SE(HC0) ≤ SE(HC1) and SE(HC2) ≤ SE(HC3).
     """
     n, k = X.shape
-    e2 = residuals ** 2  # Squared residuals
+    e2 = residuals ** 2
 
-    # Normalize hc_type
+    # Case-insensitive matching for user convenience
     hc_lower = hc_type.lower() if hc_type else None
 
     if hc_lower == 'hc0':
@@ -272,7 +272,7 @@ def _compute_hc_variance(
         # Provides stronger adjustment for observations with extreme leverage.
         h_ii = _compute_leverage(X, XtX_inv)
         delta = np.minimum(4.0, n * h_ii / k)
-        # Ensure delta is non-negative
+        # Guard against numerical issues from negative leverage estimates
         delta = np.maximum(delta, 0.0)
         omega_diag = e2 / ((1 - h_ii) ** delta)
 
@@ -441,7 +441,7 @@ def run_ols_regression(
         if n_treated > K + 1 and n_control > K + 1:
             # Centering covariates at treated-group mean ensures the coefficient
             # on D directly estimates ATT; interaction terms allow heterogeneous
-            # slopes across treatment and control groups
+            # slopes across treatment and control groups.
             X_controls = data_clean[controls].values.astype(float)
             X_mean_treated = X_controls[treated_mask].mean(axis=0)
             X_centered = X_controls - X_mean_treated
@@ -497,7 +497,7 @@ def run_ols_regression(
 
     sigma2 = (residuals ** 2).sum() / df_resid
 
-    # Normalize vce parameter (case-insensitive)
+    # Case-insensitive matching for user convenience
     vce_lower = vce.lower() if vce else None
 
     if vce_lower is None:
@@ -524,7 +524,7 @@ def run_ols_regression(
             raise ValueError(f"Need at least 2 clusters, got {G}")
 
         # Sum of cluster-level outer products accounts for within-cluster
-        # correlation of errors; this is the "meat" of the sandwich estimator
+        # correlation of errors; this is the "meat" of the sandwich estimator.
         meat = np.zeros((X.shape[1], X.shape[1]))
         for cluster in unique_clusters:
             mask = cluster_ids == cluster
@@ -799,7 +799,7 @@ def estimate_cohort_time_effects(
                 continue
 
             # Map unit-level control status to observations; missing units default
-            # to non-control to ensure conservative sample construction
+            # to non-control to ensure conservative sample construction.
             control_mask = period_data[ivar].map(unit_control_mask).fillna(False).astype(bool)
 
             # -------------------------------------------------------------------------

@@ -1,37 +1,34 @@
 """
 Wild cluster bootstrap for inference with few clusters.
 
-Implements the wild cluster bootstrap of Cameron, Gelbach, and Miller (2008)
-for more reliable inference when the number of clusters is small.
+This module implements the wild cluster bootstrap method for more reliable
+inference when the number of clusters is small. The method is particularly
+useful in difference-in-differences settings where standard cluster-robust
+standard errors may perform poorly.
 
-This method is particularly useful when:
+The wild cluster bootstrap is recommended when:
+
 - Number of clusters G < 30
 - Cluster sizes are unbalanced
 - Few treated clusters
 
-Features:
-- Full enumeration mode for exact Stata equivalence (when G <= 12)
-- Optional wildboottest package integration for fast algorithm
-- Multiple weight types: Rademacher, Mammen, Webb
+Key features:
 
-References
-----------
-Cameron, A.C., Gelbach, J.B., & Miller, D.L. (2008). "Bootstrap-based
-improvements for inference with clustered errors." Review of Economics
-and Statistics, 90(3), 414-427.
+- Full enumeration mode for exact p-values when G <= 12
+- Optional integration with wildboottest package for optimized computation
+- Multiple weight distributions: Rademacher, Mammen, Webb
 
-Webb, M.D. (2014). "Reworking wild bootstrap based inference for clustered
-errors." Queen's Economics Department Working Paper No. 1315.
-
-Roodman, D., Nielsen, M.Ø., MacKinnon, J.G., & Webb, M.D. (2019).
-"Fast and wild: Bootstrap inference in Stata using boottest."
-The Stata Journal, 19(1), 4-60.
+Notes
+-----
+The Rademacher weights are the simplest and most commonly used. Mammen weights
+match the first three moments of the error distribution. Webb weights provide
+better performance with very few clusters (G < 10).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Literal
 import warnings
 from itertools import product
 
@@ -42,7 +39,7 @@ from scipy.optimize import brentq
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
-# 检查 wildboottest 是否可用
+# Check if wildboottest package is available.
 try:
     from wildboottest.wildboottest import wildboottest as _wildboottest
     HAS_WILDBOOTTEST = True
@@ -96,7 +93,7 @@ class WildClusterBootstrapResult:
     n_bootstrap: int
     weight_type: str
     t_stat_original: float
-    t_stats_bootstrap: Any  # np.ndarray
+    t_stats_bootstrap: np.ndarray
     rejection_rate: float
     ci_method: str = 'percentile_t'
     
@@ -148,14 +145,6 @@ def _generate_bootstrap_weights(n_clusters: int, weight_type: str) -> np.ndarray
     Rademacher weights are the simplest and most commonly used.
     Mammen weights match the first three moments of the error distribution.
     Webb weights provide better performance with very few clusters.
-    
-    References
-    ----------
-    Mammen, E. (1993). "Bootstrap and wild bootstrap for high dimensional
-    linear models." Annals of Statistics, 21(1), 255-285.
-    
-    Webb, M.D. (2014). "Reworking wild bootstrap based inference for
-    clustered errors." Queen's Economics Department Working Paper No. 1315.
     """
     if weight_type == 'rademacher':
         # P(w=1) = P(w=-1) = 0.5
@@ -197,7 +186,7 @@ def _generate_all_rademacher_weights(n_clusters: int) -> np.ndarray:
     
     For G clusters, there are 2^G possible combinations of {-1, +1} weights.
     Full enumeration eliminates randomness and produces deterministic results
-    that are 100% equivalent to Stata boottest.
+    with exact p-values.
     
     Parameters
     ----------
@@ -214,7 +203,7 @@ def _generate_all_rademacher_weights(n_clusters: int) -> np.ndarray:
     This is only practical for G <= 12 (4096 combinations).
     For G > 12, use random sampling instead.
     """
-    # 生成所有 {-1, +1}^G 的组合
+    # Generate all {-1, +1}^G combinations.
     return np.array(list(product([-1, 1], repeat=n_clusters)))
 
 
@@ -223,7 +212,7 @@ def _estimate_ols_for_bootstrap(
     y_var: str,
     d_var: str,
     cluster_var: str,
-    controls: Optional[List[str]] = None,
+    controls: list[str] | None = None,
 ) -> dict:
     """
     Estimate OLS regression for bootstrap procedure.
@@ -238,7 +227,7 @@ def _estimate_ols_for_bootstrap(
         Treatment indicator variable name.
     cluster_var : str
         Clustering variable name.
-    controls : List[str], optional
+    controls : list[str], optional
         Control variable names.
     
     Returns
@@ -254,7 +243,7 @@ def _estimate_ols_for_bootstrap(
     """
     import statsmodels.api as sm
     
-    # 构建设计矩阵
+    # Construct design matrix.
     y = data[y_var].values
     X_vars = [d_var]
     if controls:
@@ -263,15 +252,15 @@ def _estimate_ols_for_bootstrap(
     X = data[X_vars].values
     X = sm.add_constant(X)
     
-    # OLS 估计
+    # OLS estimation.
     model = sm.OLS(y, X)
     
-    # 聚类稳健标准误
+    # Cluster-robust standard errors.
     cluster_ids = data[cluster_var].values
     results = model.fit(cov_type='cluster', cov_kwds={'groups': cluster_ids})
     
-    # 提取结果
-    att = results.params[1]  # 处理效应系数
+    # Extract results.
+    att = results.params[1]  # Treatment effect coefficient.
     se = results.bse[1]
     residuals = results.resid
     fitted = results.fittedvalues
@@ -291,13 +280,13 @@ def wild_cluster_bootstrap(
     y_transformed: str,
     d: str,
     cluster_var: str,
-    controls: Optional[List[str]] = None,
+    controls: list[str] | None = None,
     n_bootstrap: int = 999,
     weight_type: str = 'rademacher',
     alpha: float = 0.05,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     impose_null: bool = True,
-    full_enumeration: Optional[bool] = None,
+    full_enumeration: bool | None = None,
     use_wildboottest: bool = False,
 ) -> WildClusterBootstrapResult:
     """
@@ -307,14 +296,14 @@ def wild_cluster_bootstrap(
     This method provides more reliable inference when the number of clusters
     is small (< 20-30).
     
-    Algorithm:
+    **Algorithm:**
+    
     1. Estimate original model and obtain residuals
-    2. For each bootstrap replication:
-       a. Generate cluster-level weights (Rademacher/Mammen/Webb)
-       b. Construct bootstrap residuals: u*_ic = w_c * û_ic
-       c. Construct bootstrap outcome: y*_ic = X_ic β̂ + u*_ic (if impose_null)
-          or y*_ic = ŷ_ic + u*_ic (if not impose_null)
-       d. Re-estimate model and compute t-statistic
+    2. For each bootstrap replication: (a) Generate cluster-level weights
+       (Rademacher/Mammen/Webb); (b) Construct bootstrap residuals u*_ic = w_c * u_ic;
+       (c) Construct bootstrap outcome y*_ic = X_ic * beta_hat + u*_ic (if impose_null)
+       or y*_ic = y_hat_ic + u*_ic (if not impose_null); (d) Re-estimate model and
+       compute t-statistic
     3. Compute bootstrap p-value and confidence interval
     
     Parameters
@@ -327,7 +316,7 @@ def wild_cluster_bootstrap(
         Treatment indicator variable.
     cluster_var : str
         Clustering variable.
-    controls : List[str], optional
+    controls : list[str], optional
         Control variables.
     n_bootstrap : int, default 999
         Number of bootstrap replications. Should be odd for symmetric
@@ -383,47 +372,16 @@ def wild_cluster_bootstrap(
     outcome is constructed under the null hypothesis that the treatment effect
     is zero. This provides better size control.
     
-    Examples
-    --------
-    >>> from lwdid.inference import wild_cluster_bootstrap
-    >>> 
-    >>> # Basic usage
-    >>> result = wild_cluster_bootstrap(
-    ...     data, y_transformed='ydot', d='d_',
-    ...     cluster_var='state', n_bootstrap=999
-    ... )
-    >>> print(f"ATT: {result.att:.4f}")
-    >>> print(f"Bootstrap p-value: {result.pvalue:.4f}")
-    >>> 
-    >>> # With controls and Webb weights (for very few clusters)
-    >>> result = wild_cluster_bootstrap(
-    ...     data, y_transformed='ydot', d='d_',
-    ...     cluster_var='state',
-    ...     controls=['x1', 'x2'],
-    ...     weight_type='webb',
-    ...     n_bootstrap=999,
-    ...     seed=42
-    ... )
-    
-    References
-    ----------
-    Cameron, A.C., Gelbach, J.B., & Miller, D.L. (2008). "Bootstrap-based
-    improvements for inference with clustered errors." Review of Economics
-    and Statistics, 90(3), 414-427.
-    
-    Webb, M.D. (2014). "Reworking wild bootstrap based inference for clustered
-    errors." Queen's Economics Department Working Paper No. 1315.
-    
     See Also
     --------
     diagnose_clustering : Diagnose clustering structure.
     recommend_clustering_level : Get recommendation for clustering level.
     """
-    # 设置随机种子
+    # Set random seed.
     if seed is not None:
         np.random.seed(seed)
     
-    # 验证输入
+    # Validate inputs.
     if y_transformed not in data.columns:
         raise ValueError(f"Outcome variable '{y_transformed}' not found in data")
     if d not in data.columns:
@@ -436,15 +394,15 @@ def wild_cluster_bootstrap(
             f"Must be one of: 'rademacher', 'mammen', 'webb'"
         )
     
-    # 获取聚类数量
+    # Get number of clusters.
     G = data[cluster_var].nunique()
     
-    # 决定是否使用完全枚举
+    # Determine whether to use full enumeration.
     if full_enumeration is None:
-        # 自动决定：当 G <= 12 且使用 Rademacher 权重时启用
+        # Auto-enable when G <= 12 and using Rademacher weights.
         full_enumeration = (G <= 12 and weight_type == 'rademacher')
     
-    # 如果请求使用 wildboottest 包
+    # If wildboottest package is requested.
     if use_wildboottest:
         if not HAS_WILDBOOTTEST:
             raise ImportError(
@@ -465,7 +423,7 @@ def wild_cluster_bootstrap(
             full_enumeration=full_enumeration,
         )
     
-    # Step 1: 估计原始模型
+    # Step 1: Estimate original model.
     original_result = _estimate_ols_for_bootstrap(
         data, y_transformed, d, cluster_var, controls
     )
@@ -473,9 +431,9 @@ def wild_cluster_bootstrap(
     att_original = original_result['att']
     se_original = original_result['se']
     
-    # 处理 SE 为 0 或 NaN 的情况
+    # Handle degenerate cases where SE is zero or NaN.
     if se_original == 0 or np.isnan(se_original):
-        # 返回退化结果
+        # Return degenerate result.
         return WildClusterBootstrapResult(
             att=att_original,
             se_bootstrap=np.nan,
@@ -499,13 +457,13 @@ def wild_cluster_bootstrap(
     unique_clusters = np.unique(cluster_ids)
     G = len(unique_clusters)
     
-    # 创建聚类到索引的映射
+    # Create cluster-to-index mapping.
     cluster_to_idx = {c: i for i, c in enumerate(unique_clusters)}
     obs_cluster_idx = np.array([cluster_to_idx[c] for c in cluster_ids])
     
-    # 如果 impose_null=True，需要在 H0 下重新估计以获得受限残差
+    # When impose_null=True, re-estimate under H0 to obtain restricted residuals.
     if impose_null:
-        # 受限模型：y = α + ε（只有截距，没有处理效应）
+        # Restricted model: y = alpha + epsilon (intercept only, no treatment).
         y_values = data[y_transformed].values
         X_restricted = np.ones((len(data), 1))
         model_restricted = sm.OLS(y_values, X_restricted)
@@ -513,10 +471,10 @@ def wild_cluster_bootstrap(
         fitted_restricted = results_restricted.fittedvalues
         residuals_restricted = results_restricted.resid
     
-    # Step 2: Bootstrap 循环
-    # 决定使用完全枚举还是随机抽样
+    # Step 2: Bootstrap loop.
+    # Determine whether to use full enumeration or random sampling.
     if full_enumeration and weight_type == 'rademacher':
-        # 完全枚举：生成所有 2^G 种 Rademacher 权重组合
+        # Full enumeration: generate all 2^G Rademacher weight combinations.
         all_weights = _generate_all_rademacher_weights(G)
         actual_n_bootstrap = len(all_weights)
         use_full_enum = True
@@ -528,31 +486,31 @@ def wild_cluster_bootstrap(
     att_bootstrap = np.zeros(actual_n_bootstrap)
     
     for b in range(actual_n_bootstrap):
-        # 生成聚类级别权重
+        # Generate cluster-level weights.
         if use_full_enum:
             weights = all_weights[b]
         else:
             weights = _generate_bootstrap_weights(G, weight_type)
         
-        # 将权重映射到观测值
+        # Map weights to observations.
         obs_weights = weights[obs_cluster_idx]
         
-        # 构建 bootstrap 残差和结果变量
+        # Construct bootstrap residuals and outcome variable.
         if impose_null:
-            # 使用受限模型的残差（Stata boottest 的方法）
-            # y* = α̂_r + w * ε̂_r
+            # Use restricted model residuals under the null hypothesis.
+            # y* = alpha_hat_r + w * epsilon_hat_r
             u_star = obs_weights * residuals_restricted
             y_star = fitted_restricted + u_star
         else:
-            # 不施加零假设时，使用非受限模型的残差
+            # When not imposing null, use unrestricted model residuals.
             u_star = obs_weights * residuals
             y_star = fitted + u_star
         
-        # 创建 bootstrap 数据
+        # Create bootstrap data.
         data_boot = data.copy()
         data_boot[y_transformed] = y_star
         
-        # 重新估计并计算 t 统计量
+        # Re-estimate and compute t-statistic.
         try:
             boot_result = _estimate_ols_for_bootstrap(
                 data_boot, y_transformed, d, cluster_var, controls
@@ -567,13 +525,13 @@ def wild_cluster_bootstrap(
             t_stats_bootstrap[b] = np.nan
             att_bootstrap[b] = np.nan
     
-    # 移除 NaN 值
+    # Remove NaN values.
     valid_mask = ~np.isnan(t_stats_bootstrap)
     t_stats_valid = t_stats_bootstrap[valid_mask]
     att_valid = att_bootstrap[valid_mask]
     
     if len(t_stats_valid) == 0:
-        # 所有 bootstrap 都失败
+        # All bootstrap replications failed.
         return WildClusterBootstrapResult(
             att=att_original,
             se_bootstrap=np.nan,
@@ -588,39 +546,31 @@ def wild_cluster_bootstrap(
             rejection_rate=np.nan
         )
     
-    # Step 3: 计算 bootstrap p 值和置信区间
-    # 
-    # 根据 Cameron, Gelbach & Miller (2008) 的算法原理：
-    #   p = P(|t*| ≥ |t_orig| | H0)
-    # 
-    # 使用 >= 而不是 > 的理由：
-    # 1. 在完全枚举中，全 +1 权重组合会产生 t* = t_orig
-    # 2. 这个组合是零假设下的有效实现，应该被包含
-    # 3. 排除任何有效组合都会导致 p 值估计有偏
+    # Step 3: Compute bootstrap p-value and confidence interval.
     #
-    # 注意：这与 Stata boottest/wildboottest 的实现略有不同（约 0.002 差异），
-    # 但从算法原理来看是正确的。如需与 Stata 100% 等价，请使用 use_wildboottest=True
+    # The p-value is computed as: p = P(|t*| >= |t_orig| | H0)
+    #
+    # Using >= instead of > ensures that:
+    # 1. In full enumeration, the all +1 weights combination produces t* = t_orig.
+    # 2. This combination is a valid realization under the null and should be included.
+    # 3. Excluding any valid combination would bias the p-value estimate.
     pvalue = np.mean(np.abs(t_stats_valid) >= np.abs(t_stat_original))
     
-    # Bootstrap SE (bootstrap 估计的标准差)
+    # Bootstrap SE (standard deviation of bootstrap estimates).
     se_bootstrap = np.std(att_valid)
     
-    # 置信区间构建
-    # 根据 Cameron, Gelbach & Miller (2008) 和 Stata boottest 实现，
-    # 使用对称 CI（基于 |t*| 分布）：
+    # Confidence interval construction.
+    # Use symmetric CI based on |t*| distribution:
     #   CI = [att - t*_crit * se, att + t*_crit * se]
-    # 其中 t*_crit 是 |t*| 的 (1-alpha) 分位数
-    #
-    # 这与 Stata boottest 的默认 ptype(symmetric) 一致
+    # where t*_crit is the (1-alpha) quantile of |t*|.
     
     if impose_null:
-        # 对称 CI：基于 |t*| 的 (1-alpha) 分位数
-        # 这是 Stata boottest 的默认方法
+        # Symmetric CI based on (1-alpha) quantile of |t*|.
         t_abs_crit = np.percentile(np.abs(t_stats_valid), 100 * (1 - alpha))
         ci_lower = att_original - t_abs_crit * se_original
         ci_upper = att_original + t_abs_crit * se_original
     else:
-        # 当不施加零假设时，可以使用百分位 CI
+        # When not imposing null, use percentile CI.
         ci_lower = np.percentile(att_valid, 100 * alpha / 2)
         ci_upper = np.percentile(att_valid, 100 * (1 - alpha / 2))
     
@@ -645,82 +595,83 @@ def _wild_cluster_bootstrap_wildboottest(
     y_transformed: str,
     d: str,
     cluster_var: str,
-    controls: Optional[List[str]] = None,
+    controls: list[str] | None = None,
     n_bootstrap: int = 999,
     weight_type: str = 'rademacher',
     alpha: float = 0.05,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     impose_null: bool = True,
     full_enumeration: bool = False,
 ) -> WildClusterBootstrapResult:
     """
-    使用 wildboottest 包进行 wild cluster bootstrap。
+    Perform wild cluster bootstrap using the wildboottest package.
     
-    这个函数封装了 wildboottest 包，提供与 Stata boottest 100% 等价的结果。
+    This function wraps the wildboottest package to provide an optimized
+    implementation of the wild cluster bootstrap algorithm.
     
     Parameters
     ----------
     data : pd.DataFrame
-        回归数据。
+        Regression data.
     y_transformed : str
-        结果变量名。
+        Outcome variable name.
     d : str
-        处理变量名。
+        Treatment variable name.
     cluster_var : str
-        聚类变量名。
-    controls : List[str], optional
-        控制变量。
+        Clustering variable name.
+    controls : list[str], optional
+        Control variables.
     n_bootstrap : int, default 999
-        Bootstrap 次数（完全枚举时忽略）。
+        Number of bootstrap replications (ignored when using full enumeration).
     weight_type : str, default 'rademacher'
-        权重类型。
+        Type of bootstrap weights.
     alpha : float, default 0.05
-        显著性水平。
+        Significance level.
     seed : int, optional
-        随机种子。
+        Random seed for reproducibility.
     impose_null : bool, default True
-        是否施加零假设。
+        Whether to impose the null hypothesis.
     full_enumeration : bool, default False
-        是否使用完全枚举。
+        Whether to use full enumeration.
     
     Returns
     -------
     WildClusterBootstrapResult
-        Bootstrap 结果。
+        Bootstrap results.
     """
     if not HAS_WILDBOOTTEST:
         raise ImportError("wildboottest package is not installed")
     
-    # 构建公式
+    # Construct formula.
     if controls:
         formula = f"{y_transformed} ~ {d} + {' + '.join(controls)}"
     else:
         formula = f"{y_transformed} ~ {d}"
     
-    # 使用 statsmodels 创建 OLS 模型
-    # 注意：wildboottest 需要未拟合的模型对象
+    # Create OLS model using statsmodels.
+    # Note: wildboottest requires an unfitted model object.
     model = smf.ols(formula, data=data)
     
-    # 获取聚类数量
+    # Get number of clusters.
     G = data[cluster_var].nunique()
     
-    # 决定 bootstrap 类型和次数
+    # Determine bootstrap type and number of replications.
     if full_enumeration and weight_type == 'rademacher':
-        # 完全枚举：设置 B > 2^G 触发自动完全枚举
+        # Full enumeration: set B > 2^G to trigger automatic full enumeration.
         actual_n_bootstrap = 2 ** G
-        B_param = actual_n_bootstrap * 2  # 设置为 > 2^G 触发完全枚举
+        B_param = actual_n_bootstrap * 2  # Set > 2^G to trigger full enumeration.
     else:
         actual_n_bootstrap = n_bootstrap
         B_param = n_bootstrap
     
-    # 映射权重类型
+    # Map weight type.
     weight_map = {
         'rademacher': 'rademacher',
         'mammen': 'mammen',
         'webb': 'webb'
     }
     
-    # 调用 wildboottest
+    # Call wildboottest.
     boot_result = _wildboottest(
         model=model,
         cluster=data[cluster_var],
@@ -728,33 +679,33 @@ def _wild_cluster_bootstrap_wildboottest(
         B=B_param,
         weights_type=weight_map[weight_type],
         impose_null=impose_null,
-        bootstrap_type='11',  # WCR11 是默认类型，与 Stata 一致
+        bootstrap_type='11',  # WCR11 is the default type.
         seed=seed,
     )
     
-    # 拟合模型以获取系数
+    # Fit model to obtain coefficients.
     results = model.fit()
     
-    # 提取结果 - wildboottest 返回 DataFrame
+    # Extract results - wildboottest returns a DataFrame.
     att = results.params[d]
     se_original = results.bse[d]
     
-    # 从 DataFrame 中提取 p 值和 t 统计量
+    # Extract p-value and t-statistic from DataFrame.
     if isinstance(boot_result, pd.DataFrame):
         pvalue = boot_result['p-value'].values[0]
         t_stat = boot_result['statistic'].values[0]
     else:
-        # 兼容旧版本
+        # Fallback for older versions.
         t_stat = boot_result.t_stat if hasattr(boot_result, 't_stat') else att / se_original
         pvalue = boot_result.pvalue if hasattr(boot_result, 'pvalue') else np.nan
     
-    # 置信区间 - 使用 t 分布近似
+    # Confidence interval using t-distribution approximation.
     from scipy import stats as scipy_stats
     t_crit = scipy_stats.t.ppf(1 - alpha/2, G - 1)
     ci_lower = att - t_crit * se_original
     ci_upper = att + t_crit * se_original
     
-    # Bootstrap SE
+    # Bootstrap SE.
     se_bootstrap = se_original
     
     return WildClusterBootstrapResult(
@@ -767,7 +718,7 @@ def _wild_cluster_bootstrap_wildboottest(
         n_bootstrap=actual_n_bootstrap,
         weight_type=weight_type,
         t_stat_original=t_stat,
-        t_stats_bootstrap=np.array([]),  # wildboottest 不返回完整分布
+        t_stats_bootstrap=np.array([]),  # wildboottest does not return full distribution.
         rejection_rate=pvalue,
         ci_method='wildboottest'
     )
@@ -783,58 +734,58 @@ def _compute_bootstrap_pvalue_at_null(
     se_original: float,
     n_bootstrap: int,
     weight_type: str,
-    controls: Optional[List[str]] = None,
-    seed: Optional[int] = None,
+    controls: list[str] | None = None,
+    seed: int | None = None,
 ) -> float:
     """
-    计算给定零假设值 θ 的 bootstrap p 值。
+    Compute bootstrap p-value at a given null hypothesis value.
     
-    用于 test inversion CI 的内部函数。
+    Internal function used for test inversion confidence intervals.
     
     Parameters
     ----------
     data : pd.DataFrame
-        回归数据。
+        Regression data.
     y_var : str
-        结果变量名。
+        Outcome variable name.
     d_var : str
-        处理变量名。
+        Treatment variable name.
     cluster_var : str
-        聚类变量名。
+        Clustering variable name.
     null_value : float
-        零假设值 θ（H0: β = θ）。
+        Null hypothesis value theta (H0: beta = theta).
     att_original : float
-        原始 ATT 估计。
+        Original ATT estimate.
     se_original : float
-        原始聚类稳健标准误。
+        Original cluster-robust standard error.
     n_bootstrap : int
-        Bootstrap 次数。
+        Number of bootstrap replications.
     weight_type : str
-        权重类型。
-    controls : List[str], optional
-        控制变量。
+        Type of bootstrap weights.
+    controls : list[str], optional
+        Control variables.
     seed : int, optional
-        随机种子。
+        Random seed for reproducibility.
     
     Returns
     -------
     float
-        Bootstrap p 值。
+        Bootstrap p-value.
     """
     if seed is not None:
         np.random.seed(seed)
     
-    # 原始 t 统计量（相对于 null_value）
+    # Original t-statistic (relative to null_value).
     t_original = (att_original - null_value) / se_original
     
-    # 聚类信息
+    # Cluster information.
     cluster_ids = data[cluster_var].values
     unique_clusters = np.unique(cluster_ids)
     G = len(unique_clusters)
     cluster_to_idx = {c: i for i, c in enumerate(unique_clusters)}
     obs_cluster_idx = np.array([cluster_to_idx[c] for c in cluster_ids])
     
-    # 受限模型：y - θ*d = α + ε
+    # Restricted model: y - theta*d = alpha + epsilon.
     y_restricted = data[y_var].values - null_value * data[d_var].values
     X_r = np.ones((len(data), 1))
     model_r = sm.OLS(y_restricted, X_r)
@@ -844,15 +795,15 @@ def _compute_bootstrap_pvalue_at_null(
     
     t_stats = []
     for b in range(n_bootstrap):
-        # 生成权重
+        # Generate weights.
         weights = _generate_bootstrap_weights(G, weight_type)
         obs_weights = weights[obs_cluster_idx]
         
-        # Bootstrap 样本：y* = α̂ + θ*d + w*ε̂
+        # Bootstrap sample: y* = alpha_hat + theta*d + w*epsilon_hat.
         u_star = obs_weights * residuals_r
         y_star = fitted_r + null_value * data[d_var].values + u_star
         
-        # 重新估计
+        # Re-estimate.
         data_boot = data.copy()
         data_boot[y_var] = y_star
         
@@ -861,7 +812,7 @@ def _compute_bootstrap_pvalue_at_null(
                 data_boot, y_var, d_var, cluster_var, controls
             )
             if boot_result['se'] > 0 and not np.isnan(boot_result['se']):
-                # t* = (β* - θ) / se*
+                # t* = (beta* - theta) / se*
                 t_stats.append((boot_result['att'] - null_value) / boot_result['se'])
         except Exception:
             pass
@@ -871,7 +822,7 @@ def _compute_bootstrap_pvalue_at_null(
     
     t_stats = np.array(t_stats)
     
-    # 双侧 p 值
+    # Two-sided p-value.
     pvalue = np.mean(np.abs(t_stats) >= np.abs(t_original))
     
     return pvalue
@@ -882,75 +833,71 @@ def wild_cluster_bootstrap_test_inversion(
     y_transformed: str,
     d: str,
     cluster_var: str,
-    controls: Optional[List[str]] = None,
+    controls: list[str] | None = None,
     n_bootstrap: int = 999,
     weight_type: str = 'rademacher',
     alpha: float = 0.05,
-    seed: Optional[int] = None,
+    seed: int | None = None,
     grid_points: int = 25,
     ci_tol: float = 0.01,
 ) -> WildClusterBootstrapResult:
     """
-    使用 test inversion 方法计算 wild cluster bootstrap 置信区间。
+    Compute wild cluster bootstrap confidence interval using test inversion.
     
-    这是 Stata boottest 使用的方法，通过反转假设检验来构建置信区间：
-    CI = {θ : p(θ) ≥ α}
+    This method constructs confidence intervals by inverting hypothesis tests:
+    CI = {theta : p(theta) >= alpha}
     
-    即找到所有使得 bootstrap p 值大于显著性水平的 θ 值。
+    That is, the CI consists of all null hypothesis values for which the
+    bootstrap p-value exceeds the significance level.
     
     Parameters
     ----------
     data : pd.DataFrame
-        回归数据。
+        Regression data.
     y_transformed : str
-        转换后的结果变量。
+        Transformed outcome variable.
     d : str
-        处理变量。
+        Treatment variable.
     cluster_var : str
-        聚类变量。
-    controls : List[str], optional
-        控制变量。
+        Clustering variable.
+    controls : list[str], optional
+        Control variables.
     n_bootstrap : int, default 999
-        Bootstrap 次数。
+        Number of bootstrap replications.
     weight_type : str, default 'rademacher'
-        权重类型。
+        Type of bootstrap weights.
     alpha : float, default 0.05
-        显著性水平。
+        Significance level.
     seed : int, optional
-        随机种子。
+        Random seed for reproducibility.
     grid_points : int, default 25
-        初始网格搜索点数。
+        Number of grid points for initial search.
     ci_tol : float, default 0.01
-        CI 边界精度容差。
+        Tolerance for CI boundary precision.
     
     Returns
     -------
     WildClusterBootstrapResult
-        包含 test inversion CI 的结果。
+        Results containing test inversion CI.
     
     Notes
     -----
-    Test inversion CI 的优点：
-    1. 与 Stata boottest 的结果更接近
-    2. 在某些情况下比 percentile-t CI 更准确
-    3. 可以处理非对称分布
+    Advantages of test inversion CI:
     
-    缺点：
-    1. 计算量更大（需要多次 bootstrap）
-    2. 需要数值优化找到边界
+    1. Can be more accurate than percentile-t CI in some settings.
+    2. Handles asymmetric distributions appropriately.
     
-    References
-    ----------
-    Roodman, D., Nielsen, M.Ø., MacKinnon, J.G., & Webb, M.D. (2019).
-    "Fast and wild: Bootstrap inference in Stata using boottest."
-    The Stata Journal, 19(1), 4-60.
+    Disadvantages:
+    
+    1. More computationally intensive (requires multiple bootstrap runs).
+    2. Requires numerical optimization to find boundaries.
     """
-    # 设置随机种子
+    # Set random seed.
     rng_state = np.random.get_state() if seed is None else None
     if seed is not None:
         np.random.seed(seed)
     
-    # 验证输入
+    # Validate inputs.
     if y_transformed not in data.columns:
         raise ValueError(f"Outcome variable '{y_transformed}' not found in data")
     if d not in data.columns:
@@ -958,7 +905,7 @@ def wild_cluster_bootstrap_test_inversion(
     if cluster_var not in data.columns:
         raise ValueError(f"Cluster variable '{cluster_var}' not found in data")
     
-    # Step 1: 估计原始模型
+    # Step 1: Estimate original model.
     original_result = _estimate_ols_for_bootstrap(
         data, y_transformed, d, cluster_var, controls
     )
@@ -985,7 +932,7 @@ def wild_cluster_bootstrap_test_inversion(
     t_stat_original = att_original / se_original
     G = data[cluster_var].nunique()
     
-    # Step 2: 计算 θ=0 时的 p 值（用于报告）
+    # Step 2: Compute p-value at theta=0 (for reporting).
     pvalue_at_zero = _compute_bootstrap_pvalue_at_null(
         data, y_transformed, d, cluster_var,
         null_value=0,
@@ -997,9 +944,9 @@ def wild_cluster_bootstrap_test_inversion(
         seed=seed
     )
     
-    # Step 3: 使用 test inversion 找到 CI 边界
-    # 首先进行粗略网格搜索
-    # 搜索范围：ATT ± 4 * SE
+    # Step 3: Find CI boundaries using test inversion.
+    # First perform coarse grid search.
+    # Search range: ATT +/- 4 * SE.
     search_range = 4 * se_original
     theta_min = att_original - search_range
     theta_max = att_original + search_range
@@ -1022,20 +969,20 @@ def wild_cluster_bootstrap_test_inversion(
     
     pvalues_grid = np.array(pvalues_grid)
     
-    # 找到 p >= alpha 的区域
+    # Find region where p >= alpha.
     ci_mask = pvalues_grid >= alpha
     
     if not np.any(ci_mask):
-        # 没有找到 p >= alpha 的区域，使用 percentile-t 作为后备
+        # No region found with p >= alpha, use percentile-t as fallback.
         ci_lower = att_original - 1.96 * se_original
         ci_upper = att_original + 1.96 * se_original
     else:
-        # 粗略边界
+        # Coarse boundaries.
         ci_thetas = theta_grid[ci_mask]
         ci_lower_approx = ci_thetas.min()
         ci_upper_approx = ci_thetas.max()
         
-        # 使用二分法精确定位边界
+        # Use bisection to precisely locate boundaries.
         def pvalue_minus_alpha(theta):
             pval = _compute_bootstrap_pvalue_at_null(
                 data, y_transformed, d, cluster_var,
@@ -1049,29 +996,28 @@ def wild_cluster_bootstrap_test_inversion(
             )
             return pval - alpha
         
-        # 找下界
+        # Find lower bound.
         try:
-            # 在 ATT 左侧找到 p < alpha 的点
+            # Search for p < alpha point to the left of ATT.
             lower_search_min = theta_min
             lower_search_max = att_original
             ci_lower = brentq(pvalue_minus_alpha, lower_search_min, lower_search_max, xtol=ci_tol)
         except ValueError:
             ci_lower = ci_lower_approx
         
-        # 找上界
+        # Find upper bound.
         try:
-            # 在 ATT 右侧找到 p < alpha 的点
+            # Search for p < alpha point to the right of ATT.
             upper_search_min = att_original
             upper_search_max = theta_max
             ci_upper = brentq(pvalue_minus_alpha, upper_search_min, upper_search_max, xtol=ci_tol)
         except ValueError:
             ci_upper = ci_upper_approx
     
-    # 计算 bootstrap SE（使用 θ=0 的 bootstrap 分布）
-    # 这里简化处理，使用 CI 宽度估计
+    # Compute bootstrap SE (simplified using CI width estimate).
     se_bootstrap = (ci_upper - ci_lower) / (2 * 1.96)
     
-    # 恢复随机状态
+    # Restore random state.
     if rng_state is not None:
         np.random.set_state(rng_state)
     
@@ -1085,7 +1031,7 @@ def wild_cluster_bootstrap_test_inversion(
         n_bootstrap=n_bootstrap,
         weight_type=weight_type,
         t_stat_original=t_stat_original,
-        t_stats_bootstrap=np.array([]),  # test inversion 不保存 t 分布
+        t_stats_bootstrap=np.array([]),  # Test inversion does not save t distribution.
         rejection_rate=pvalue_at_zero,
         ci_method='test_inversion'
     )

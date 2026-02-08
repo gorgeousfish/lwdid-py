@@ -62,8 +62,8 @@ These attributes describe the variance estimation and inference settings.
 - ``df_resid`` (int): Residual degrees of freedom from the regression.
 - ``df_inference`` (int): Degrees of freedom used for inference. For
   cluster-robust SE, this is G - 1; otherwise equals ``df_resid``.
-- ``vce_type`` (str or None): Variance estimator: 'ols', 'robust', 'hc1',
-  'hc3', or 'cluster'.
+- ``vce_type`` (str or None): Variance estimator: 'ols', 'hc0', 'robust'/'hc1',
+  'hc2', 'hc3', 'hc4', or 'cluster'.
 - ``cluster_var`` (str or None): Clustering variable name (if
   ``vce='cluster'``).
 - ``n_clusters`` (int or None): Number of clusters (if ``vce='cluster'``).

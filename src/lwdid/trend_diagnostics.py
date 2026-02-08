@@ -1,36 +1,26 @@
 """
-Heterogeneous Trends Diagnostics for Difference-in-Differences.
+Diagnostics for parallel trends and heterogeneous trends in DiD estimation.
 
-This module implements diagnostic tools for assessing the parallel trends
-assumption and detecting heterogeneous trends across treatment cohorts.
-It provides functions to:
+This module provides tools for assessing the parallel trends assumption and
+detecting heterogeneous trends across treatment cohorts in difference-in-
+differences (DiD) settings. The main functions test parallel trends via
+placebo effects, diagnose trend heterogeneity, recommend transformation
+methods, and visualize cohort-specific trajectories.
 
-1. Test the parallel trends assumption using placebo treatment effects
-2. Diagnose heterogeneous trends across cohorts
-3. Recommend appropriate transformation methods (demean vs detrend)
-4. Visualize cohort-specific trends
+The conditional heterogeneous trends (CHT) framework allows each treatment
+cohort to have its own linear trend, relaxing the standard parallel trends
+assumption. Under CHT, the expected outcome in the never-treated state
+includes cohort-specific linear time trends in addition to common time
+effects and covariate adjustments.
 
-The implementation follows Lee & Wooldridge (2025) Section 5 on
-Heterogeneous Trends and Assumption CHT (Conditional Heterogeneous Trends).
+Notes
+-----
+When parallel trends holds, demeaning is more efficient. When CHT holds
+but parallel trends fails, detrending removes cohort-specific linear
+trends and restores consistency.
 
-Assumption CHT (Equation 5.3):
-    E[Y_t(∞)|D, X] = η_S(D_S·t) + ... + η_T(D_T·t) + q_∞(X) + Σ D_g q_g(X) + m_t(X)
-
-This allows each treatment cohort g to have its own linear trend η_g,
-relaxing the standard parallel trends assumption.
-
-For placebo testing, the implementation follows the paper's recommendation:
-    "One way to test for violation of the PT assumption is to estimate
-    placebo treatment effects prior to the intervention. Here, we can
-    apply Procedure 3.1 or 4.1 to pre-treatment periods."
-
-This means using rolling transformations (not simple 2x2 DiD) for proper
-standard error estimation that accounts for the panel structure.
-
-References
-----------
-Lee, S. J., & Wooldridge, J. M. (2025). A Simple Transformation Approach
-to Difference-in-Differences Estimation for Panel Data. Section 5.
+For placebo testing, rolling transformations applied to pre-treatment
+periods produce proper standard errors that account for the panel structure.
 """
 
 from __future__ import annotations
@@ -38,14 +28,14 @@ from __future__ import annotations
 import warnings
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 
-# Import staggered module functions for proper placebo testing
-# These implement Procedure 3.1/4.1 as specified in the paper
+# Import staggered module functions for proper placebo testing.
+# These implement rolling demeaning and detrending transformations.
 try:
     from .staggered.transformations_pre import (
         transform_staggered_demean_pre,
@@ -68,7 +58,21 @@ except ImportError:
 # =============================================================================
 
 class TrendTestMethod(Enum):
-    """Method for testing parallel trends assumption."""
+    """
+    Method for testing the parallel trends assumption.
+
+    Attributes
+    ----------
+    VISUAL : str
+        Visual inspection of pre-treatment trajectories.
+    REGRESSION : str
+        Formal regression-based test for trend differences.
+    PLACEBO : str
+        Estimate pre-treatment ATTs using rolling transformation.
+    JOINT : str
+        Combine placebo and regression tests.
+    """
+
     VISUAL = "visual"
     REGRESSION = "regression"
     PLACEBO = "placebo"
@@ -76,7 +80,21 @@ class TrendTestMethod(Enum):
 
 
 class TransformationMethod(Enum):
-    """Available transformation methods."""
+    """
+    Unit-specific transformation methods for panel data.
+
+    Attributes
+    ----------
+    DEMEAN : str
+        Subtract pre-treatment mean from post-treatment outcomes.
+    DETREND : str
+        Remove unit-specific linear trend using pre-treatment periods.
+    DEMEANQ : str
+        Quarterly demeaning with seasonal fixed effects.
+    DETRENDQ : str
+        Quarterly detrending with seasonal effects and trends.
+    """
+
     DEMEAN = "demean"
     DETREND = "detrend"
     DEMEANQ = "demeanq"
@@ -84,10 +102,22 @@ class TransformationMethod(Enum):
 
 
 class RecommendationConfidence(Enum):
-    """Confidence level for method recommendation."""
-    HIGH = "high"      # > 0.8
-    MEDIUM = "medium"  # 0.5 - 0.8
-    LOW = "low"        # < 0.5
+    """
+    Confidence level for transformation method recommendation.
+
+    Attributes
+    ----------
+    HIGH : str
+        Confidence score above 0.8.
+    MEDIUM : str
+        Confidence score between 0.5 and 0.8.
+    LOW : str
+        Confidence score below 0.5.
+    """
+
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 
 # =============================================================================
@@ -99,37 +129,38 @@ class PreTrendEstimate:
     """
     Pre-treatment ATT estimate for a single event time.
 
-    Used for placebo tests and parallel trends assessment.
-    Under H0 (parallel trends), these estimates should be
-    statistically indistinguishable from zero.
+    Stores the estimated treatment effect for a pre-treatment period, used
+    for placebo tests and parallel trends assessment. Under the null
+    hypothesis of parallel trends, these estimates should be statistically
+    indistinguishable from zero.
 
     Attributes
     ----------
     event_time : int
-        Event time relative to treatment (negative for pre-treatment).
-    cohort : Optional[int]
-        Treatment cohort (for staggered designs).
+        Event time relative to treatment onset (negative for pre-treatment).
+    cohort : int or None
+        Treatment cohort identifier for staggered adoption designs.
     att : float
-        Estimated ATT for this event time.
+        Estimated average treatment effect on the treated.
     se : float
         Standard error of the ATT estimate.
     t_stat : float
-        T-statistic: att / se.
+        t-statistic computed as att / se.
     pvalue : float
-        Two-sided p-value for H0: ATT = 0.
+        Two-sided p-value for testing H0: ATT = 0.
     ci_lower : float
-        Lower bound of confidence interval.
+        Lower bound of the confidence interval.
     ci_upper : float
-        Upper bound of confidence interval.
+        Upper bound of the confidence interval.
     n_treated : int
-        Number of treated units in estimation.
+        Number of treated units in the estimation sample.
     n_control : int
-        Number of control units in estimation.
+        Number of control units in the estimation sample.
     df : int
-        Degrees of freedom for inference.
+        Degrees of freedom for t-distribution inference.
     """
     event_time: int
-    cohort: Optional[int]
+    cohort: int | None
     att: float
     se: float
     t_stat: float
@@ -156,31 +187,32 @@ class CohortTrendEstimate:
     """
     Estimated linear trend for a single treatment cohort.
 
-    Represents the average pre-treatment trend for units in cohort g,
-    estimated from Y_it = α_g + β_g * t + ε_it for t < g.
+    Stores the pre-treatment linear trend estimate for a cohort, obtained
+    by regressing outcomes on time for pre-treatment periods. Significant
+    slopes indicate the presence of cohort-specific trends.
 
     Attributes
     ----------
     cohort : int
-        Treatment cohort identifier.
+        Treatment cohort identifier (first treatment period).
     intercept : float
-        Estimated intercept (α_g).
+        Estimated intercept of the trend regression.
     intercept_se : float
-        Standard error of intercept.
+        Standard error of the intercept estimate.
     slope : float
-        Estimated slope (β_g) - the linear trend.
+        Estimated slope representing the linear time trend.
     slope_se : float
-        Standard error of slope.
+        Standard error of the slope estimate.
     slope_pvalue : float
-        P-value for H0: slope = 0.
+        Two-sided p-value for testing H0: slope = 0.
     n_units : int
         Number of units in this cohort.
     n_pre_periods : int
-        Number of pre-treatment periods used.
+        Number of pre-treatment periods used in estimation.
     r_squared : float
-        R-squared of the trend regression.
+        Coefficient of determination for the trend regression.
     residual_std : float
-        Standard deviation of residuals.
+        Standard deviation of regression residuals.
     """
     cohort: int
     intercept: float
@@ -202,11 +234,11 @@ class CohortTrendEstimate:
 @dataclass
 class TrendDifference:
     """
-    Pairwise trend difference between two cohorts.
+    Pairwise difference in linear trends between two cohorts.
 
-    Tests H0: β_g1 = β_g2 (trends are equal).
-    Under parallel trends assumption, all pairwise
-    differences should be statistically zero.
+    Stores the result of testing whether two cohorts have equal pre-treatment
+    trends. Under the parallel trends assumption, all pairwise differences
+    should be statistically indistinguishable from zero.
 
     Attributes
     ----------
@@ -215,19 +247,19 @@ class TrendDifference:
     cohort_2 : int
         Second cohort identifier.
     slope_1 : float
-        Estimated slope for cohort 1.
+        Estimated slope for the first cohort.
     slope_2 : float
-        Estimated slope for cohort 2.
+        Estimated slope for the second cohort.
     slope_diff : float
-        Difference: slope_1 - slope_2.
+        Difference in slopes (slope_1 - slope_2).
     slope_diff_se : float
-        Standard error of the difference.
+        Standard error of the slope difference.
     t_stat : float
-        T-statistic for the difference.
+        t-statistic for testing equal slopes.
     pvalue : float
-        P-value for H0: slope_1 = slope_2.
+        Two-sided p-value for H0: slope_1 = slope_2.
     df : int
-        Degrees of freedom.
+        Degrees of freedom for the test.
     """
     cohort_1: int
     cohort_2: int
@@ -248,50 +280,51 @@ class TrendDifference:
 @dataclass
 class ParallelTrendsTestResult:
     """
-    Result of parallel trends assumption test.
+    Results from testing the parallel trends assumption.
 
-    Aggregates results from various testing methods to assess
-    whether the parallel trends assumption is likely to hold.
+    Aggregates pre-treatment ATT estimates and joint test statistics to
+    assess whether the parallel trends assumption is likely to hold.
+    Includes a method recommendation based on the test outcome.
 
     Attributes
     ----------
     method : TrendTestMethod
-        Testing method used.
+        Testing method used (placebo, regression, visual, or joint).
     reject_null : bool
-        Whether to reject H0 (parallel trends holds).
+        Whether to reject H0 that parallel trends holds.
     pvalue : float
-        P-value for the test.
+        P-value for the overall test.
     test_statistic : float
-        Test statistic value.
-    pre_trend_estimates : List[PreTrendEstimate]
+        Test statistic value (F-statistic for joint test).
+    pre_trend_estimates : list of PreTrendEstimate
         Pre-treatment ATT estimates by event time.
-    joint_f_stat : Optional[float]
-        F-statistic for joint test H0: all pre-ATT = 0.
-    joint_pvalue : Optional[float]
-        P-value for joint F-test.
-    joint_df : Tuple[int, int]
-        Degrees of freedom for F-test (numerator, denominator).
+    joint_f_stat : float or None
+        F-statistic for the joint test H0: all pre-ATT = 0.
+    joint_pvalue : float or None
+        P-value for the joint F-test.
+    joint_df : tuple of int
+        Degrees of freedom (numerator, denominator) for the F-test.
     recommendation : str
-        Recommended transformation method.
+        Recommended transformation method based on test results.
     recommendation_reason : str
         Explanation for the recommendation.
-    figure : Optional[Any]
-        Pre-trends visualization.
-    warnings : List[str]
-        Warning messages.
+    figure : Any or None
+        Pre-trends visualization figure object.
+    warnings : list of str
+        Warning messages from the testing procedure.
     """
     method: TrendTestMethod
     reject_null: bool
     pvalue: float
     test_statistic: float
-    pre_trend_estimates: List[PreTrendEstimate]
-    joint_f_stat: Optional[float] = None
-    joint_pvalue: Optional[float] = None
-    joint_df: Tuple[int, int] = (0, 0)
+    pre_trend_estimates: list[PreTrendEstimate]
+    joint_f_stat: float | None = None
+    joint_pvalue: float | None = None
+    joint_df: tuple[int, int] = (0, 0)
     recommendation: str = "demean"
     recommendation_reason: str = ""
-    figure: Optional[Any] = None
-    warnings: List[str] = field(default_factory=list)
+    figure: Any | None = None
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def n_significant_pre_trends(self) -> int:
@@ -363,42 +396,42 @@ class HeterogeneousTrendsDiagnostics:
     """
     Diagnostic results for heterogeneous trends across cohorts.
 
-    Tests whether different treatment cohorts have different
-    pre-treatment trends, which would violate the standard
-    parallel trends assumption but may be accommodated by
-    Assumption CHT using detrending.
+    Tests whether different treatment cohorts have different pre-treatment
+    linear trends. Significant heterogeneity violates the standard parallel
+    trends assumption but may be accommodated by detrending to remove
+    cohort-specific trends under the CHT framework.
 
     Attributes
     ----------
-    trend_by_cohort : List[CohortTrendEstimate]
+    trend_by_cohort : list of CohortTrendEstimate
         Estimated linear trends for each treatment cohort.
-    trend_heterogeneity_test : Dict[str, float]
-        Test for overall trend heterogeneity.
-        Keys: 'f_stat', 'pvalue', 'df_num', 'df_den', 'reject_null'
-    trend_differences : List[TrendDifference]
-        Pairwise trend differences between cohorts.
-    control_group_trend : Optional[CohortTrendEstimate]
-        Trend estimate for never-treated/control group.
+    trend_heterogeneity_test : dict
+        Results of the F-test for overall trend heterogeneity.
+        Keys: 'f_stat', 'pvalue', 'df_num', 'df_den', 'reject_null'.
+    trend_differences : list of TrendDifference
+        Pairwise trend differences between all cohort pairs.
+    control_group_trend : CohortTrendEstimate or None
+        Trend estimate for the never-treated control group.
     has_heterogeneous_trends : bool
         Whether significant trend heterogeneity is detected.
     recommendation : str
-        Recommended transformation method.
+        Recommended transformation method based on diagnostics.
     recommendation_confidence : float
-        Confidence in recommendation (0-1).
+        Confidence score for the recommendation (0 to 1).
     recommendation_reason : str
-        Explanation for recommendation.
-    figure : Optional[Any]
-        Trend comparison visualization.
+        Explanation for the recommendation.
+    figure : Any or None
+        Trend comparison visualization figure object.
     """
-    trend_by_cohort: List[CohortTrendEstimate]
-    trend_heterogeneity_test: Dict[str, float]
-    trend_differences: List[TrendDifference]
-    control_group_trend: Optional[CohortTrendEstimate]
+    trend_by_cohort: list[CohortTrendEstimate]
+    trend_heterogeneity_test: dict[str, float]
+    trend_differences: list[TrendDifference]
+    control_group_trend: CohortTrendEstimate | None
     has_heterogeneous_trends: bool
     recommendation: str
     recommendation_confidence: float
     recommendation_reason: str
-    figure: Optional[Any] = None
+    figure: Any | None = None
 
     @property
     def n_cohorts(self) -> int:
@@ -483,51 +516,52 @@ class TransformationRecommendation:
     """
     Comprehensive recommendation for transformation method selection.
 
-    Combines multiple diagnostic results to provide an informed
-    recommendation on whether to use demean or detrend.
+    Combines parallel trends test results, heterogeneous trends diagnostics,
+    and data characteristics to provide an informed recommendation on
+    whether to use demean, detrend, or their seasonal variants.
 
     Attributes
     ----------
     recommended_method : str
-        Primary recommendation: 'demean', 'detrend', 'demeanq', 'detrendq'
+        Primary recommendation: 'demean', 'detrend', 'demeanq', or 'detrendq'.
     confidence : float
-        Confidence in recommendation (0-1).
+        Confidence score for the recommendation (0 to 1).
     confidence_level : RecommendationConfidence
-        Categorical confidence level.
-    reasons : List[str]
+        Categorical confidence level (HIGH, MEDIUM, or LOW).
+    reasons : list of str
         List of reasons supporting the recommendation.
-    parallel_trends_test : Optional[ParallelTrendsTestResult]
-        Results from parallel trends test.
-    heterogeneous_trends_diag : Optional[HeterogeneousTrendsDiagnostics]
-        Results from heterogeneous trends diagnostics.
+    parallel_trends_test : ParallelTrendsTestResult or None
+        Results from the parallel trends test, if performed.
+    heterogeneous_trends_diag : HeterogeneousTrendsDiagnostics or None
+        Results from heterogeneous trends diagnostics, if performed.
     n_pre_periods_min : int
-        Minimum pre-treatment periods across cohorts.
+        Minimum number of pre-treatment periods across cohorts.
     n_pre_periods_max : int
-        Maximum pre-treatment periods across cohorts.
+        Maximum number of pre-treatment periods across cohorts.
     has_seasonal_pattern : bool
-        Whether seasonal patterns are detected.
+        Whether seasonal patterns are detected in the outcome.
     is_balanced_panel : bool
-        Whether panel is balanced.
-    alternative_method : Optional[str]
+        Whether the panel is balanced.
+    alternative_method : str or None
         Alternative recommendation if primary is not suitable.
-    alternative_reason : Optional[str]
-        Reason for alternative recommendation.
-    warnings : List[str]
-        Warning messages about data or method limitations.
+    alternative_reason : str or None
+        Explanation for the alternative recommendation.
+    warnings : list of str
+        Warning messages about data limitations or method constraints.
     """
     recommended_method: str
     confidence: float
     confidence_level: RecommendationConfidence
-    reasons: List[str]
-    parallel_trends_test: Optional[ParallelTrendsTestResult] = None
-    heterogeneous_trends_diag: Optional[HeterogeneousTrendsDiagnostics] = None
+    reasons: list[str]
+    parallel_trends_test: ParallelTrendsTestResult | None = None
+    heterogeneous_trends_diag: HeterogeneousTrendsDiagnostics | None = None
     n_pre_periods_min: int = 0
     n_pre_periods_max: int = 0
     has_seasonal_pattern: bool = False
     is_balanced_panel: bool = True
-    alternative_method: Optional[str] = None
-    alternative_reason: Optional[str] = None
-    warnings: List[str] = field(default_factory=list)
+    alternative_method: str | None = None
+    alternative_reason: str | None = None
+    warnings: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
         """Generate human-readable summary."""
@@ -576,8 +610,8 @@ def _get_valid_cohorts(
     data: pd.DataFrame,
     gvar: str,
     ivar: str,
-    never_treated_values: Optional[List] = None,
-) -> List[int]:
+    never_treated_values: list | None = None,
+) -> list[int]:
     """
     Get list of valid treatment cohorts from data.
 
@@ -594,16 +628,16 @@ def _get_valid_cohorts(
 
     Returns
     -------
-    List[int]
+    list of int
         Sorted list of valid treatment cohort values.
     """
     if never_treated_values is None:
         never_treated_values = [0, np.inf]
 
-    # Get unique cohort values
+    # Extract unique cohort values, excluding missing.
     cohort_values = data[gvar].dropna().unique()
 
-    # Filter out never-treated values
+    # Keep only cohorts with valid treatment timing.
     valid_cohorts = [
         int(g) for g in cohort_values
         if g not in never_treated_values and not np.isinf(g)
@@ -616,8 +650,8 @@ def _compute_pre_period_range(
     data: pd.DataFrame,
     tvar: str,
     gvar: str,
-    never_treated_values: Optional[List] = None,
-) -> Tuple[int, int]:
+    never_treated_values: list | None = None,
+) -> tuple[int, int]:
     """
     Compute the range of pre-treatment periods across cohorts.
 
@@ -634,7 +668,7 @@ def _compute_pre_period_range(
 
     Returns
     -------
-    Tuple[int, int]
+    tuple of int
         (min_pre_periods, max_pre_periods) across all cohorts.
     """
     if never_treated_values is None:
@@ -756,7 +790,7 @@ def _estimate_cohort_trend(
     y: str,
     ivar: str,
     tvar: str,
-    controls: Optional[List[str]] = None,
+    controls: list[str] | None = None,
 ) -> CohortTrendEstimate:
     """
     Estimate linear trend for a cohort using pooled OLS.
@@ -800,11 +834,11 @@ def _estimate_cohort_trend(
             residual_std=np.nan,
         )
 
-    # Center time for numerical stability
+    # Center time to reduce numerical instability in matrix inversion.
     t_mean = np.mean(t_vals)
     t_centered = t_vals - t_mean
 
-    # Build design matrix: [1, t_centered, controls...]
+    # Construct design matrix with intercept, centered time, and controls.
     X = np.column_stack([np.ones(len(t_centered)), t_centered])
 
     if controls:
@@ -887,10 +921,10 @@ def _test_trend_heterogeneity(
     ivar: str,
     tvar: str,
     gvar: str,
-    controls: Optional[List[str]],
-    never_treated_values: List,
+    controls: list[str] | None,
+    never_treated_values: list,
     alpha: float,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Test for trend heterogeneity across cohorts using F-test.
 
@@ -919,7 +953,7 @@ def _test_trend_heterogeneity(
 
     Returns
     -------
-    Dict[str, float]
+    dict
         Test results with keys: f_stat, pvalue, df_num, df_den, reject_null
     """
     # Get cohorts
@@ -1028,10 +1062,10 @@ def _test_trend_heterogeneity(
 
 
 def _compute_pairwise_trend_differences(
-    trend_by_cohort: List[CohortTrendEstimate],
-    control_group_trend: Optional[CohortTrendEstimate],
+    trend_by_cohort: list[CohortTrendEstimate],
+    control_group_trend: CohortTrendEstimate | None,
     alpha: float,
-) -> List[TrendDifference]:
+) -> list[TrendDifference]:
     """
     Compute pairwise trend differences between cohorts.
 
@@ -1046,17 +1080,17 @@ def _compute_pairwise_trend_differences(
 
     Returns
     -------
-    List[TrendDifference]
+    list of TrendDifference
         Pairwise trend differences.
     """
     differences = []
 
-    # Include control group if available
+    # Include control group for comprehensive comparison.
     all_trends = list(trend_by_cohort)
     if control_group_trend is not None:
         all_trends.append(control_group_trend)
 
-    # Compute all pairwise differences
+    # Test equal trends for all cohort pairs.
     for i, t1 in enumerate(all_trends):
         for t2 in all_trends[i + 1:]:
             if np.isnan(t1.slope) or np.isnan(t2.slope):
@@ -1068,13 +1102,13 @@ def _compute_pairwise_trend_differences(
 
             slope_diff = t1.slope - t2.slope
 
-            # SE of difference (assuming independence)
+            # Compute SE assuming independent cohort samples.
             slope_diff_se = np.sqrt(t1.slope_se ** 2 + t2.slope_se ** 2)
 
-            # T-test
+            # Perform two-sample t-test for trend equality.
             if slope_diff_se > 0:
                 t_stat = slope_diff / slope_diff_se
-                # Use Welch-Satterthwaite approximation for df
+                # Welch-Satterthwaite approximation accounts for unequal variances.
                 df = (t1.slope_se ** 2 + t2.slope_se ** 2) ** 2 / (
                     t1.slope_se ** 4 / max(t1.n_units - 1, 1) +
                     t2.slope_se ** 4 / max(t2.n_units - 1, 1)
@@ -1106,8 +1140,8 @@ def _compute_pairwise_trend_differences(
 # =============================================================================
 
 def _compute_joint_f_test(
-    estimates: List[PreTrendEstimate],
-) -> Tuple[float, float, Tuple[int, int]]:
+    estimates: list[PreTrendEstimate],
+) -> tuple[float, float, tuple[int, int]]:
     """
     Compute joint F-test for H0: all pre-treatment ATTs = 0.
 
@@ -1123,13 +1157,13 @@ def _compute_joint_f_test(
 
     Returns
     -------
-    Tuple[float, float, Tuple[int, int]]
+    tuple
         (f_stat, pvalue, (df_num, df_den))
     """
     if not estimates:
         return 0.0, 1.0, (0, 0)
 
-    # Filter valid estimates
+    # Exclude estimates with invalid ATT or SE values.
     valid_estimates = [
         e for e in estimates
         if not np.isnan(e.att) and not np.isnan(e.se) and e.se > 0
@@ -1142,15 +1176,14 @@ def _compute_joint_f_test(
     atts = np.array([e.att for e in valid_estimates])
     ses = np.array([e.se for e in valid_estimates])
 
-    # Assume independence (diagonal covariance)
-    # This is conservative if estimates are positively correlated
+    # Diagonal covariance assumes independence across event times.
+    # This yields conservative inference if estimates are positively correlated.
     var_diag = ses ** 2
 
-    # Wald statistic
+    # Compute Wald statistic as sum of squared standardized effects.
     wald_stat = np.sum(atts ** 2 / var_diag)
 
-    # Convert to F-statistic
-    # Use minimum df across estimates for conservative inference
+    # Convert to F-statistic using minimum df for conservative inference.
     dfs = [e.df for e in valid_estimates if e.df > 0]
     df_den = min(dfs) if dfs else 100
     f_stat = wald_stat / k
@@ -1216,16 +1249,17 @@ def _estimate_placebo_att(
     y: str,
     ivar: str,
     tvar: str,
-    controls: Optional[List[str]],
+    controls: list[str] | None,
     estimator: str,
     n_bootstrap: int,
-) -> Tuple[float, float, int, int, int]:
+) -> tuple[float, float, int, int, int]:
     """
-    Estimate placebo ATT using simple DiD (DEPRECATED - use rolling transformation).
+    Estimate placebo ATT using simple two-by-two DiD.
 
-    This function uses simple 2x2 DiD which produces conservative standard errors
-    that include unit fixed effect variation. For proper implementation following
-    Lee & Wooldridge (2025), use _estimate_placebo_with_rolling_transformation.
+    Computes the difference-in-differences estimate using cell means. This
+    approach produces conservative standard errors that include unit fixed
+    effect variation. The rolling transformation approach accounts for the
+    panel structure more accurately.
 
     Parameters
     ----------
@@ -1238,16 +1272,18 @@ def _estimate_placebo_att(
     tvar : str
         Time variable column name.
     controls : list of str, optional
-        Control variable column names.
+        Control variable column names (not used in simple DiD).
     estimator : str
-        Estimation method.
+        Estimation method identifier (not used in simple DiD).
     n_bootstrap : int
-        Number of bootstrap replications.
+        Number of bootstrap replications (not used in simple DiD).
 
     Returns
     -------
-    Tuple[float, float, int, int, int]
-        (att, se, n_treated, n_control, df)
+    tuple
+        (att, se, n_treated, n_control, df) where att is the estimated
+        treatment effect, se is the standard error, n_treated and n_control
+        are sample sizes, and df is degrees of freedom.
     """
     try:
         # Simple 2x2 DiD estimation
@@ -1314,22 +1350,20 @@ def _estimate_placebo_with_rolling_transformation(
     ivar: str,
     tvar: str,
     gvar: str,
-    controls: Optional[List[str]],
+    controls: list[str] | None,
     estimator: str,
     rolling: str,
-    never_treated_values: List,
+    never_treated_values: list,
     alpha: float,
-    warnings_list: List[str],
-) -> List[PreTrendEstimate]:
+    warnings_list: list[str],
+) -> list[PreTrendEstimate]:
     """
-    Estimate pre-treatment ATTs using rolling transformation (Procedure 3.1/4.1).
+    Estimate pre-treatment ATTs using rolling transformation.
 
-    This implements the correct approach from Lee & Wooldridge (2025) Section 5:
-    "Here, we can apply Procedure 3.1 or 4.1 to pre-treatment periods"
-
-    The rolling transformation uses **future** pre-treatment periods as the
-    baseline, which properly accounts for the panel structure and produces
-    correct standard errors.
+    Applies rolling demeaning or detrending to pre-treatment periods to
+    estimate placebo treatment effects. The rolling transformation uses
+    future pre-treatment periods as the baseline, which properly accounts
+    for the panel structure and produces correct standard errors.
 
     Parameters
     ----------
@@ -1358,14 +1392,14 @@ def _estimate_placebo_with_rolling_transformation(
 
     Returns
     -------
-    List[PreTrendEstimate]
+    list of PreTrendEstimate
         Pre-treatment ATT estimates.
     """
     pre_trend_estimates = []
 
     try:
-        # Step 1: Apply rolling transformation to pre-treatment periods
-        # This follows Procedure 3.1 (demean) or 4.1 (detrend) from the paper
+        # Step 1: Apply rolling transformation to pre-treatment periods.
+        # Demeaning subtracts pre-treatment means; detrending removes linear trends.
         if rolling == 'demean':
             data_transformed = transform_staggered_demean_pre(
                 data, y, ivar, tvar, gvar, never_treated_values
@@ -1435,26 +1469,27 @@ def _estimate_placebo_with_simple_did(
     ivar: str,
     tvar: str,
     gvar: str,
-    controls: Optional[List[str]],
+    controls: list[str] | None,
     estimator: str,
-    never_treated_values: List,
+    never_treated_values: list,
     alpha: float,
-    warnings_list: List[str],
+    warnings_list: list[str],
     T_min: int,
-    cohorts: List[int],
+    cohorts: list[int],
     n_bootstrap: int,
-) -> List[PreTrendEstimate]:
+) -> list[PreTrendEstimate]:
     """
-    Fallback: Estimate pre-treatment ATTs using simple 2x2 DiD.
+    Estimate pre-treatment ATTs using simple two-by-two DiD.
 
-    WARNING: This produces conservative standard errors that include unit
-    fixed effect variation. Use _estimate_placebo_with_rolling_transformation
-    for proper implementation following Lee & Wooldridge (2025).
+    Serves as a fallback when rolling transformation functions are unavailable.
+    This approach uses simple cell-mean differences, which produces conservative
+    standard errors that include unit fixed effect variation. The rolling
+    transformation approach is preferred when available.
 
     Parameters
     ----------
     data : pd.DataFrame
-        Panel data.
+        Panel data in long format.
     y : str
         Outcome variable column name.
     ivar : str
@@ -1466,24 +1501,24 @@ def _estimate_placebo_with_simple_did(
     controls : list of str, optional
         Control variable column names.
     estimator : str
-        Estimation method.
+        Estimation method identifier.
     never_treated_values : list
         Values indicating never-treated units.
     alpha : float
-        Significance level.
+        Significance level for confidence intervals.
     warnings_list : list
-        List to append warnings to.
+        List to append warning messages to.
     T_min : int
-        Minimum time period.
+        Minimum time period in the data.
     cohorts : list of int
-        Treatment cohorts.
+        List of treatment cohort identifiers.
     n_bootstrap : int
-        Number of bootstrap replications.
+        Number of bootstrap replications for SE estimation.
 
     Returns
     -------
-    List[PreTrendEstimate]
-        Pre-treatment ATT estimates.
+    list of PreTrendEstimate
+        Pre-treatment ATT estimates for each cohort and event time.
     """
     pre_trend_estimates = []
 
@@ -1540,16 +1575,31 @@ def _validate_trend_test_inputs(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
+    gvar: str | None,
     method: str,
 ) -> None:
     """
     Validate inputs for parallel trends test.
 
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Panel data to validate.
+    y : str
+        Outcome variable column name.
+    ivar : str
+        Unit identifier column name.
+    tvar : str
+        Time variable column name.
+    gvar : str or None
+        Cohort variable column name.
+    method : str
+        Testing method to validate.
+
     Raises
     ------
     ValueError
-        If inputs are invalid.
+        If required columns are missing or method is invalid.
     """
     required_cols = [y, ivar, tvar]
     if gvar is not None:
@@ -1573,25 +1623,23 @@ def test_parallel_trends(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str] = None,
-    controls: Optional[List[str]] = None,
+    gvar: str | None = None,
+    controls: list[str] | None = None,
     method: str = 'placebo',
     estimator: str = 'ra',
     alpha: float = 0.05,
     n_bootstrap: int = 0,
-    never_treated_values: Optional[List] = None,
+    never_treated_values: list | None = None,
     rolling: str = 'demean',
     verbose: bool = True,
 ) -> ParallelTrendsTestResult:
     """
     Test the parallel trends assumption.
 
-    Implements the testing approach from Lee & Wooldridge (2025) Section 5:
-    
-    "One way to test for violation of the PT assumption is to estimate
-    placebo treatment effects prior to the intervention. Here, we can
-    apply **Procedure 3.1 or 4.1** to pre-treatment periods and test
-    for effects prior to the intervention."
+    Estimates placebo treatment effects in pre-treatment periods to assess
+    whether the parallel trends assumption holds. Under the null hypothesis
+    of parallel trends, all pre-treatment ATT estimates should be
+    statistically indistinguishable from zero.
 
     This function uses rolling transformations (not simple 2x2 DiD) to
     properly estimate pre-treatment ATTs with correct standard errors
@@ -1627,8 +1675,8 @@ def test_parallel_trends(
         Values in gvar indicating never-treated units.
     rolling : str, default 'demean'
         Rolling transformation method: 'demean' or 'detrend'.
-        This determines how pre-treatment outcomes are transformed
-        following Procedure 3.1 (demean) or 4.1 (detrend).
+        Demeaning subtracts pre-treatment means; detrending removes
+        unit-specific linear trends.
     verbose : bool, default True
         Whether to print summary.
 
@@ -1640,10 +1688,10 @@ def test_parallel_trends(
 
     Notes
     -----
-    The implementation follows Lee & Wooldridge (2025) Section 5 exactly:
+    The testing procedure:
 
-    1. Apply rolling transformation (Procedure 3.1 or 4.1) to pre-treatment
-       periods using **future** pre-treatment periods as the baseline.
+    1. Apply rolling transformation (demeaning or detrending) to pre-treatment
+       periods using future pre-treatment periods as the baseline.
     2. Estimate ATT for each pre-treatment event time using the transformed
        outcomes.
     3. Under H0 (parallel trends), all pre-treatment ATTs should be zero.
@@ -1651,15 +1699,6 @@ def test_parallel_trends(
 
     The anchor point (event time e = -1) is set to 0 by construction and
     excluded from testing.
-
-    Examples
-    --------
-    >>> from lwdid import test_parallel_trends
-    >>> result = test_parallel_trends(
-    ...     data, y='outcome', ivar='unit', tvar='year', gvar='first_treat'
-    ... )
-    >>> if result.reject_null:
-    ...     print("Parallel trends violated - consider using detrend")
 
     See Also
     --------
@@ -1706,8 +1745,6 @@ def test_parallel_trends(
 
     # =========================================================================
     # Placebo Test Implementation using Rolling Transformation
-    # Following Lee & Wooldridge (2025) Section 5:
-    # "Here, we can apply Procedure 3.1 or 4.1 to pre-treatment periods"
     # =========================================================================
     if method in ('placebo', 'joint'):
         # Check if staggered module is available for proper implementation
@@ -1811,9 +1848,9 @@ def diagnose_heterogeneous_trends(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str] = None,
-    controls: Optional[List[str]] = None,
-    never_treated_values: Optional[List] = None,
+    gvar: str | None = None,
+    controls: list[str] | None = None,
+    never_treated_values: list | None = None,
     include_control_group: bool = True,
     alpha: float = 0.05,
     verbose: bool = True,
@@ -1822,8 +1859,9 @@ def diagnose_heterogeneous_trends(
     Diagnose heterogeneous trends across treatment cohorts.
 
     Estimates pre-treatment linear trends for each cohort and tests
-    whether trends differ significantly. Under Assumption CHT, different
-    cohorts may have different trends, which can be removed by detrending.
+    whether trends differ significantly. Under the conditional heterogeneous
+    trends (CHT) assumption, different cohorts may have different linear
+    trends, which can be removed by detrending.
 
     Parameters
     ----------
@@ -1856,24 +1894,14 @@ def diagnose_heterogeneous_trends(
 
     Notes
     -----
-    The diagnostic implements the framework from Lee & Wooldridge (2025)
-    Section 5, Assumption CHT:
-
-    E[Y_t(∞)|D, X] = η_S(D_S·t) + ... + η_T(D_T·t) + q_∞(X) + Σ D_g q_g(X) + m_t(X)
-
-    This allows each cohort g to have its own linear trend η_g.
+    Under the CHT framework, the expected outcome in the never-treated state
+    includes cohort-specific linear time trends. Each cohort g has its own
+    trend coefficient, allowing for differential pre-treatment trajectories
+    across cohorts.
 
     The heterogeneity test uses an F-test for the null hypothesis that
-    all cohort trends are equal: H0: η_S = η_{S+1} = ... = η_T.
-
-    Examples
-    --------
-    >>> from lwdid import diagnose_heterogeneous_trends
-    >>> diag = diagnose_heterogeneous_trends(
-    ...     data, y='outcome', ivar='unit', tvar='year', gvar='first_treat'
-    ... )
-    >>> if diag.has_heterogeneous_trends:
-    ...     print("Heterogeneous trends detected - use detrend")
+    all cohort trends are equal. Rejection suggests detrending may be
+    appropriate to remove cohort-specific trends.
 
     See Also
     --------
@@ -2030,9 +2058,9 @@ def recommend_transformation(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str] = None,
-    controls: Optional[List[str]] = None,
-    never_treated_values: Optional[List] = None,
+    gvar: str | None = None,
+    controls: list[str] | None = None,
+    never_treated_values: list | None = None,
     run_all_diagnostics: bool = True,
     verbose: bool = True,
 ) -> TransformationRecommendation:
@@ -2072,7 +2100,7 @@ def recommend_transformation(
     -----
     The recommendation algorithm considers:
 
-    1. **Data requirements**: detrend requires ≥2 pre-treatment periods
+    1. **Data requirements**: detrend requires at least 2 pre-treatment periods
     2. **Parallel trends test**: If violated, recommend detrend
     3. **Trend heterogeneity**: If detected, recommend detrend
     4. **Panel balance**: Unbalanced panels favor detrend
@@ -2081,23 +2109,14 @@ def recommend_transformation(
     Decision tree::
 
         n_pre_periods < 2?
-        ├── Yes → demean (detrend not feasible)
-        └── No → Run diagnostics
-                ├── PT violated OR heterogeneous trends?
-                │   ├── Yes → detrend
-                │   └── No → demean (more efficient)
-                └── Seasonal patterns?
-                    ├── Yes → demeanq/detrendq
-                    └── No → demean/detrend
-
-    Examples
-    --------
-    >>> from lwdid import recommend_transformation
-    >>> rec = recommend_transformation(
-    ...     data, y='outcome', ivar='unit', tvar='year', gvar='first_treat'
-    ... )
-    >>> print(f"Use: rolling='{rec.recommended_method}'")
-    >>> print(f"Confidence: {rec.confidence:.1%}")
+        |-- Yes -> demean (detrend not feasible)
+        +-- No -> Run diagnostics
+                |-- PT violated OR heterogeneous trends?
+                |   |-- Yes -> detrend
+                |   +-- No -> demean (more efficient)
+                +-- Seasonal patterns?
+                    |-- Yes -> demeanq/detrendq
+                    +-- No -> demean/detrend
 
     See Also
     --------
@@ -2295,16 +2314,16 @@ def plot_cohort_trends(
     ivar: str,
     tvar: str,
     gvar: str,
-    controls: Optional[List[str]] = None,
-    never_treated_values: Optional[List] = None,
+    controls: list[str] | None = None,
+    never_treated_values: list | None = None,
     normalize: bool = True,
-    normalize_period: Optional[int] = None,
+    normalize_period: int | None = None,
     show_treatment_lines: bool = True,
     show_trend_lines: bool = True,
     confidence_bands: bool = True,
     alpha: float = 0.05,
-    figsize: Tuple[float, float] = (12, 8),
-    ax: Optional[Any] = None,
+    figsize: tuple[float, float] = (12, 8),
+    ax: Any | None = None,
 ) -> Any:
     """
     Visualize outcome trends by treatment cohort.
@@ -2357,14 +2376,6 @@ def plot_cohort_trends(
     1. Whether pre-treatment trends are parallel across cohorts
     2. Whether treatment effects appear at the expected timing
     3. Whether trends are approximately linear (for detrending)
-
-    Examples
-    --------
-    >>> from lwdid import plot_cohort_trends
-    >>> fig = plot_cohort_trends(
-    ...     data, y='outcome', ivar='unit', tvar='year', gvar='first_treat'
-    ... )
-    >>> fig.savefig('cohort_trends.png')
     """
     try:
         import matplotlib.pyplot as plt

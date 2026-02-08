@@ -2,20 +2,18 @@
 Core estimation interface for difference-in-differences with panel data.
 
 This module provides the main entry point for LWDID estimation, supporting
-three methodological scenarios based on Lee and Wooldridge's rolling
-transformation approach:
+three methodological scenarios based on the rolling transformation approach:
 
-1. **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based
-   inference under classical linear model (CLM) assumptions when the number
-   of cross-sectional units is small.
+1. **Small-sample common timing**: Exact t-based inference under classical
+   linear model (CLM) assumptions when the number of cross-sectional units
+   is small.
 
-2. **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic
-   inference with heteroskedasticity-robust standard errors for moderate to
-   large samples.
+2. **Large-sample common timing**: Asymptotic inference with
+   heteroskedasticity-robust standard errors for moderate to large samples.
 
-3. **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific
-   effect estimation with flexible control group strategies (never-treated
-   or not-yet-treated) for settings where treatment timing varies.
+3. **Staggered adoption**: Cohort-time specific effect estimation with
+   flexible control group strategies (never-treated or not-yet-treated)
+   for settings where treatment timing varies.
 
 The method applies unit-specific time-series transformations that remove
 pre-treatment patterns, converting the panel DiD problem into a cross-sectional
@@ -24,12 +22,18 @@ assumptions, standard estimators can be applied to the transformed outcomes.
 
 Notes
 -----
-Two transformation methods are available:
+Four transformation methods are available:
 
 - **Demeaning** ('demean'): Subtracts the unit-specific pre-treatment mean.
   Requires at least one pre-treatment period.
 - **Detrending** ('detrend'): Removes unit-specific linear time trends.
   Requires at least two pre-treatment periods.
+- **Seasonal demeaning** ('demeanq'): Removes unit-specific mean with seasonal
+  fixed effects. Requires sufficient pre-treatment observations for seasonal
+  pattern estimation.
+- **Seasonal detrending** ('detrendq'): Removes unit-specific linear trends
+  with seasonal effects. Requires at least two pre-treatment periods plus
+  adequate seasonal coverage.
 
 Four estimation methods are supported:
 
@@ -650,17 +654,17 @@ def lwdid(
     """
     Difference-in-differences estimator with unit-specific transformations.
 
-    Implements the Lee-Wooldridge rolling transformation approach for DiD
-    estimation, supporting three methodological scenarios:
+    Implements the rolling transformation approach for DiD estimation,
+    supporting three methodological scenarios:
 
-    1. **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based
-       inference under classical linear model assumptions.
+    1. **Small-sample common timing**: Exact t-based inference under classical
+       linear model assumptions.
 
-    2. **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic
-       inference with heteroskedasticity-robust standard errors.
+    2. **Large-sample common timing**: Asymptotic inference with
+       heteroskedasticity-robust standard errors.
 
-    3. **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific
-       effect estimation with flexible control group strategies.
+    3. **Staggered adoption**: Cohort-time specific effect estimation with
+       flexible control group strategies.
 
     The transformation removes unit-specific pre-treatment patterns, converting
     panel DiD into a cross-sectional treatment effects problem.
@@ -733,8 +737,8 @@ def lwdid(
         - 'error': Raise UnbalancedPanelError if panel is unbalanced.
         - 'ignore': Silently proceed without warnings.
 
-        From Lee & Wooldridge (2025) Section 4.4: Selection may depend on
-        time-invariant heterogeneity but not on Y_it(∞) shocks. Use
+        Selection may depend on time-invariant heterogeneity but not on
+        shocks to the untreated potential outcome. Use
         ``diagnose_selection_mechanism()`` for detailed diagnostics.
     ps_controls : list of str, optional
         Control variables for propensity score model. If None, uses ``controls``.
@@ -856,8 +860,8 @@ def lwdid(
         - For staggered adoption: excludes k periods before each cohort's
           treatment date.
         
-        This implements the robustness check recommended in Lee & Wooldridge
-        (2026) Section 8.1 for testing sensitivity to anticipation effects.
+        This implements a robustness check for testing sensitivity to
+        anticipation effects.
         
         Example: If treatment occurs at t=6 and ``exclude_pre_periods=2``,
         periods t=4 and t=5 are excluded from the pre-treatment sample.
@@ -1095,7 +1099,6 @@ def lwdid(
         VALID_ESTIMATORS_COMMON = ('ra', 'ipw', 'ipwra', 'psm')
         if estimator_lower not in VALID_ESTIMATORS_COMMON:
             raise ValueError(
-                f"无效的estimator: '{estimator}'.\n"
                 f"Invalid estimator='{estimator}'.\n"
                 f"Valid values for common timing mode: {VALID_ESTIMATORS_COMMON}"
             )
@@ -1129,7 +1132,6 @@ def lwdid(
         # IPW/PSM: requires controls OR ps_controls (propensity score model only).
         if estimator_lower == 'ipwra' and not controls:
             raise ValueError(
-                f"需要提供controls参数（IPWRA 需要结果模型控制变量）。\n"
                 f"estimator='ipwra' requires 'controls' parameter for outcome model.\n"
                 f"IPWRA (doubly robust) uses controls in both outcome regression and "
                 f"propensity score model.\n"
@@ -1138,7 +1140,6 @@ def lwdid(
             )
         elif estimator_lower in ('ipw', 'psm') and not controls and not ps_controls:
             raise ValueError(
-                f"需要提供controls参数（或ps_controls参数）。\n"
                 f"estimator='{estimator}' requires 'controls' or 'ps_controls' parameter.\n"
                 f"IPW and PSM estimators need control variables for propensity score model.\n"
                 f"  - Use 'controls' to specify variables (also used as ps_controls by default)\n"
@@ -1916,7 +1917,6 @@ def _lwdid_staggered(
     VALID_ESTIMATORS = ('ra', 'ipw', 'ipwra', 'psm')
     if estimator_lower not in VALID_ESTIMATORS:
         raise ValueError(
-            f"无效的estimator: '{estimator}'.\n"
             f"Invalid estimator='{estimator}'.\n"
             f"Valid values: {VALID_ESTIMATORS}"
         )
@@ -1926,7 +1926,6 @@ def _lwdid_staggered(
     # IPW/PSM: requires controls OR ps_controls (propensity score model only).
     if estimator_lower == 'ipwra' and not controls:
         raise ValueError(
-            f"需要提供controls参数（IPWRA 需要结果模型控制变量）。\n"
             f"estimator='ipwra' requires 'controls' parameter for outcome model.\n"
             f"IPWRA (doubly robust) uses controls in both outcome regression and "
             f"propensity score model.\n"
@@ -1935,7 +1934,6 @@ def _lwdid_staggered(
         )
     elif estimator_lower in ('ipw', 'psm') and not controls and not ps_controls:
         raise ValueError(
-            f"需要提供controls参数（或ps_controls参数）。\n"
             f"estimator='{estimator}' requires 'controls' or 'ps_controls' parameter.\n"
             f"IPW and PSM estimators need control variables for propensity score model.\n"
             f"  - Use 'controls' to specify variables (also used as ps_controls by default)\n"
@@ -2635,6 +2633,7 @@ def _lwdid_staggered(
                 ivar=ivar,
                 tvar=tvar_str,
                 y=y,
+                cohorts=cohorts,
                 observed_att=ri_observed,
                 target=ri_target,
                 target_cohort=target_cohort_ri,

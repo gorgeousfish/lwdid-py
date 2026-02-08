@@ -20,6 +20,7 @@ from lwdid.staggered.transformations import (
     get_cohorts,
     get_valid_periods_for_cohort,
 )
+from lwdid.exceptions import InsufficientPrePeriodsError
 
 
 # =============================================================================
@@ -164,7 +165,7 @@ class TestStaggeredDetrendBasic:
             'gvar': [2,2,2]
         })
         
-        with pytest.raises(ValueError, match="at least 2"):
+        with pytest.raises(InsufficientPrePeriodsError, match="at least 2"):
             transform_staggered_detrend(data, 'y', 'id', 'year', 'gvar')
     
     def test_detrend_with_exactly_two_pre_periods(self):

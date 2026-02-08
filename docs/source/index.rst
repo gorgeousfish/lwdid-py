@@ -149,11 +149,6 @@ Lee, S. J., and Wooldridge, J. M. (2025). A Simple Transformation Approach to
 Difference-in-Differences Estimation for Panel Data.
 *Available at SSRN 4516518*.
 
-Authors
--------
-
-Xuanyu Cai, Wenli Xu
-
 Indices and Search
 ------------------
 

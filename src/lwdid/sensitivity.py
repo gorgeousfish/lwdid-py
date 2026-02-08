@@ -1,29 +1,29 @@
 """
 Sensitivity analysis for difference-in-differences estimation.
 
-This module implements robustness checks recommended in Lee & Wooldridge (2026)
-Section 8.1, including:
-- Pre-treatment period selection sensitivity
-- No-anticipation assumption sensitivity
-- Comprehensive sensitivity analysis
+This module provides tools to assess the robustness of ATT estimates under
+varying methodological choices and potential assumption violations. Three
+types of sensitivity analysis are supported: pre-treatment period selection
+(testing stability across different baseline period configurations),
+no-anticipation assumption testing (evaluating robustness by excluding
+periods immediately before treatment), and comprehensive analysis combining
+multiple robustness checks including transformation method and estimator
+comparisons.
 
-References
-----------
-Lee, S.J. & Wooldridge, J.M. (2026). "Simple Difference-in-Differences
-Estimation in Fixed-T Panels." SSRN 5325686, Section 8.1.
-
-Lee, S.J. & Wooldridge, J.M. (2025). "A Simple Transformation Approach to
-Difference-in-Differences Estimation for Panel Data." SSRN 4516518, Section 4.4.
-
-Rambachan, A. & Roth, J. (2023). "A More Credible Approach to Parallel Trends."
-Review of Economic Studies, 90(5), 2555–2591.
+Notes
+-----
+Results are classified into robustness levels based on the sensitivity ratio,
+defined as the range of ATT estimates across specifications divided by the
+absolute value of the baseline estimate. Thresholds for classification are:
+highly robust (< 10%), moderately robust (10-25%), sensitive (25-50%), and
+highly sensitive (>= 50%).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 import warnings
 
 import numpy as np
@@ -37,13 +37,21 @@ from scipy import stats
 
 class RobustnessLevel(Enum):
     """
-    Robustness assessment level based on sensitivity ratio.
-    
-    Thresholds:
-    - HIGHLY_ROBUST: sensitivity_ratio < 10%
-    - MODERATELY_ROBUST: 10% <= sensitivity_ratio < 25%
-    - SENSITIVE: 25% <= sensitivity_ratio < 50%
-    - HIGHLY_SENSITIVE: sensitivity_ratio >= 50%
+    Categorical assessment of estimate stability across specifications.
+
+    The robustness level is determined by the sensitivity ratio, which measures
+    the range of ATT estimates relative to the baseline estimate magnitude.
+
+    Attributes
+    ----------
+    HIGHLY_ROBUST : str
+        Sensitivity ratio below 10%. Estimates are very stable.
+    MODERATELY_ROBUST : str
+        Sensitivity ratio between 10% and 25%. Estimates show minor variation.
+    SENSITIVE : str
+        Sensitivity ratio between 25% and 50%. Estimates vary noticeably.
+    HIGHLY_SENSITIVE : str
+        Sensitivity ratio at or above 50%. Estimates are unstable.
     """
     HIGHLY_ROBUST = "highly_robust"
     MODERATELY_ROBUST = "moderately_robust"
@@ -52,7 +60,25 @@ class RobustnessLevel(Enum):
 
 
 class AnticipationDetectionMethod(Enum):
-    """Method used for detecting anticipation effects."""
+    """
+    Detection method used to identify potential anticipation effects.
+
+    Anticipation effects occur when units adjust behavior before formal
+    treatment begins, violating the no-anticipation assumption.
+
+    Attributes
+    ----------
+    TREND_BREAK : str
+        Detected via structural break in pre-treatment trend.
+    COEFFICIENT_CHANGE : str
+        Detected via significant change in ATT when excluding periods.
+    PLACEBO_TEST : str
+        Detected via significant placebo effects in pre-treatment periods.
+    NONE_DETECTED : str
+        No anticipation effects identified by any method.
+    INSUFFICIENT_DATA : str
+        Insufficient pre-treatment periods to perform detection.
+    """
     TREND_BREAK = "trend_break"
     COEFFICIENT_CHANGE = "coefficient_change"
     PLACEBO_TEST = "placebo_test"
@@ -104,7 +130,7 @@ class SpecificationResult:
         Degrees of freedom for inference.
     converged : bool
         Whether estimation converged successfully.
-    warnings : List[str]
+    spec_warnings : list[str]
         Warning messages from estimation.
     """
     specification_id: int
@@ -122,7 +148,7 @@ class SpecificationResult:
     n_control: int
     df: int
     converged: bool = True
-    spec_warnings: List[str] = field(default_factory=list)
+    spec_warnings: list[str] = field(default_factory=list)
     
     @property
     def is_significant_05(self) -> bool:
@@ -134,8 +160,16 @@ class SpecificationResult:
         """Whether estimate is significant at 10% level."""
         return self.pvalue < 0.10
     
-    def to_dict(self) -> Dict:
-        """Convert to dictionary for DataFrame construction."""
+    def to_dict(self) -> dict:
+        """
+        Convert specification result to dictionary for DataFrame construction.
+
+        Returns
+        -------
+        dict
+            Dictionary containing all specification attributes suitable for
+            constructing a pandas DataFrame row.
+        """
         return {
             'spec_id': self.specification_id,
             'n_pre_periods': self.n_pre_periods,
@@ -194,8 +228,16 @@ class AnticipationEstimate:
         """Whether estimate is significant at 5% level."""
         return self.pvalue < 0.05
     
-    def to_dict(self) -> Dict:
-        """Convert to dictionary."""
+    def to_dict(self) -> dict:
+        """
+        Convert anticipation estimate to dictionary.
+
+        Returns
+        -------
+        dict
+            Dictionary containing all estimate attributes suitable for
+            constructing a pandas DataFrame row.
+        """
         return {
             'excluded_periods': self.excluded_periods,
             'att': self.att,
@@ -214,17 +256,17 @@ class PrePeriodRobustnessResult:
     """
     Result of pre-treatment period robustness analysis.
     
-    Implements the sensitivity analysis from Lee & Wooldridge (2026) Section 8.1:
-    "one can study the robustness of the findings by adjusting the number of
-    pre-treatment time periods."
+    Assesses how ATT estimates vary when using different numbers of
+    pre-treatment periods, helping identify whether findings are robust
+    to this methodological choice.
     
     Attributes
     ----------
-    specifications : List[SpecificationResult]
+    specifications : list[SpecificationResult]
         ATT estimates for each pre-period configuration.
     baseline_spec : SpecificationResult
         Estimate using all available pre-treatment periods.
-    att_range : Tuple[float, float]
+    att_range : tuple[float, float]
         (min ATT, max ATT) across all specifications.
     att_mean : float
         Mean ATT across specifications.
@@ -252,20 +294,20 @@ class PrePeriodRobustnessResult:
         Estimation method used.
     n_specifications : int
         Total number of specifications tested.
-    pre_period_range_tested : Tuple[int, int]
+    pre_period_range_tested : tuple[int, int]
         Range of pre-periods tested (min, max).
     recommendation : str
         Main recommendation based on analysis.
-    detailed_recommendations : List[str]
+    detailed_recommendations : list[str]
         Detailed recommendations.
-    result_warnings : List[str]
+    result_warnings : list[str]
         Warning messages.
-    figure : Optional[Any]
+    figure : Any | None
         Matplotlib figure if plot was generated.
     """
-    specifications: List[SpecificationResult]
+    specifications: list[SpecificationResult]
     baseline_spec: SpecificationResult
-    att_range: Tuple[float, float]
+    att_range: tuple[float, float]
     att_mean: float
     att_std: float
     sensitivity_ratio: float
@@ -279,29 +321,56 @@ class PrePeriodRobustnessResult:
     rolling_method: str
     estimator: str
     n_specifications: int
-    pre_period_range_tested: Tuple[int, int]
+    pre_period_range_tested: tuple[int, int]
     recommendation: str
-    detailed_recommendations: List[str] = field(default_factory=list)
-    result_warnings: List[str] = field(default_factory=list)
-    figure: Optional[Any] = None
+    detailed_recommendations: list[str] = field(default_factory=list)
+    result_warnings: list[str] = field(default_factory=list)
+    figure: Any | None = None
     
     def to_dataframe(self) -> pd.DataFrame:
-        """Convert all specifications to DataFrame."""
+        """
+        Convert all specification results to a pandas DataFrame.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with one row per specification containing ATT estimates,
+            standard errors, p-values, and other diagnostic information.
+        """
         return pd.DataFrame([s.to_dict() for s in self.specifications])
     
-    def get_specification(self, n_pre: int) -> Optional[SpecificationResult]:
-        """Get specification result for specific pre-period count."""
+    def get_specification(self, n_pre: int) -> SpecificationResult | None:
+        """
+        Retrieve specification result for a specific pre-period count.
+
+        Parameters
+        ----------
+        n_pre : int
+            Number of pre-treatment periods to look up.
+
+        Returns
+        -------
+        SpecificationResult or None
+            The specification result if found, None otherwise.
+        """
         for spec in self.specifications:
             if spec.n_pre_periods == n_pre:
                 return spec
         return None
     
     def summary(self) -> str:
-        """Generate comprehensive summary report."""
+        """
+        Generate a comprehensive human-readable summary report.
+
+        Returns
+        -------
+        str
+            Formatted text report containing configuration, baseline estimates,
+            sensitivity metrics, robustness assessment, and recommendations.
+        """
         lines = [
             "=" * 75,
             "PRE-TREATMENT PERIOD ROBUSTNESS ANALYSIS",
-            "Based on Lee & Wooldridge (2026) Section 8.1",
             "=" * 75,
             "",
             "CONFIGURATION:",
@@ -370,7 +439,7 @@ class PrePeriodRobustnessResult:
         self,
         show_ci: bool = True,
         show_baseline: bool = True,
-        figsize: Tuple[float, float] = (10, 6),
+        figsize: tuple[float, float] = (10, 6),
         ax: Any = None,
     ) -> Any:
         """
@@ -477,7 +546,7 @@ class NoAnticipationSensitivityResult:
     
     Attributes
     ----------
-    estimates : List[AnticipationEstimate]
+    estimates : list[AnticipationEstimate]
         ATT estimates for each exclusion configuration.
     baseline_estimate : AnticipationEstimate
         Estimate with no exclusion (excluded_periods=0).
@@ -489,30 +558,45 @@ class NoAnticipationSensitivityResult:
         Method used to detect anticipation.
     recommendation : str
         Interpretation and recommendations.
-    result_warnings : List[str]
+    result_warnings : list[str]
         Warning messages.
-    figure : Optional[Any]
+    figure : Any | None
         Matplotlib figure if plot was generated.
     """
-    estimates: List[AnticipationEstimate]
+    estimates: list[AnticipationEstimate]
     baseline_estimate: AnticipationEstimate
     anticipation_detected: bool
     recommended_exclusion: int
     detection_method: AnticipationDetectionMethod
     recommendation: str
-    result_warnings: List[str] = field(default_factory=list)
-    figure: Optional[Any] = None
+    result_warnings: list[str] = field(default_factory=list)
+    figure: Any | None = None
     
     def to_dataframe(self) -> pd.DataFrame:
-        """Convert estimates to DataFrame."""
+        """
+        Convert all anticipation estimates to a pandas DataFrame.
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with one row per exclusion level containing ATT estimates,
+            standard errors, p-values, and significance indicators.
+        """
         return pd.DataFrame([e.to_dict() for e in self.estimates])
     
     def summary(self) -> str:
-        """Generate human-readable summary."""
+        """
+        Generate a human-readable summary of the anticipation analysis.
+
+        Returns
+        -------
+        str
+            Formatted text report containing estimates by exclusion level,
+            detection results, and recommendations.
+        """
         lines = [
             "=" * 70,
             "NO-ANTICIPATION SENSITIVITY ANALYSIS",
-            "Based on Lee & Wooldridge (2025) Section 4.4",
             "=" * 70,
             "",
             f"Exclusion range tested: 0 - {max(e.excluded_periods for e in self.estimates)}",
@@ -557,7 +641,7 @@ class NoAnticipationSensitivityResult:
     def plot(
         self,
         show_ci: bool = True,
-        figsize: Tuple[float, float] = (10, 6),
+        figsize: tuple[float, float] = (10, 6),
         ax: Any = None,
     ) -> Any:
         """
@@ -653,28 +737,37 @@ class ComprehensiveSensitivityResult:
     
     Attributes
     ----------
-    pre_period_result : Optional[PrePeriodRobustnessResult]
+    pre_period_result : PrePeriodRobustnessResult | None
         Results from pre-period robustness analysis.
-    anticipation_result : Optional[NoAnticipationSensitivityResult]
+    anticipation_result : NoAnticipationSensitivityResult | None
         Results from no-anticipation sensitivity analysis.
-    transformation_comparison : Optional[Dict]
+    transformation_comparison : dict | None
         Comparison of demean vs detrend results.
-    estimator_comparison : Optional[Dict]
+    estimator_comparison : dict | None
         Comparison across different estimators.
     overall_assessment : str
         Overall robustness assessment.
-    recommendations : List[str]
+    recommendations : list[str]
         List of recommendations.
     """
-    pre_period_result: Optional[PrePeriodRobustnessResult] = None
-    anticipation_result: Optional[NoAnticipationSensitivityResult] = None
-    transformation_comparison: Optional[Dict] = None
-    estimator_comparison: Optional[Dict] = None
+    pre_period_result: PrePeriodRobustnessResult | None = None
+    anticipation_result: NoAnticipationSensitivityResult | None = None
+    transformation_comparison: dict | None = None
+    estimator_comparison: dict | None = None
     overall_assessment: str = ""
-    recommendations: List[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
     
     def summary(self) -> str:
-        """Generate comprehensive summary."""
+        """
+        Generate a comprehensive summary of all sensitivity analyses.
+
+        Returns
+        -------
+        str
+            Formatted text report containing results from pre-period robustness,
+            anticipation sensitivity, transformation comparison, estimator
+            comparison, overall assessment, and recommendations.
+        """
         lines = [
             "=" * 70,
             "COMPREHENSIVE SENSITIVITY ANALYSIS",
@@ -728,8 +821,21 @@ class ComprehensiveSensitivityResult:
         lines.append("=" * 70)
         return "\n".join(lines)
     
-    def plot_all(self, figsize: Tuple[float, float] = (14, 10)) -> Any:
-        """Generate combined visualization of all sensitivity analyses."""
+    def plot_all(self, figsize: tuple[float, float] = (14, 10)) -> Any:
+        """
+        Generate combined visualization of all sensitivity analyses.
+
+        Parameters
+        ----------
+        figsize : tuple of float, default (14, 10)
+            Figure size in inches (width, height).
+
+        Returns
+        -------
+        matplotlib.figure.Figure or None
+            Combined figure with subplots for each available analysis,
+            or None if no results are available to plot.
+        """
         import matplotlib.pyplot as plt
         
         n_plots = sum([
@@ -767,14 +873,18 @@ def _validate_robustness_inputs(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
-    d: Optional[str],
-    post: Optional[str],
+    gvar: str | None,
+    d: str | None,
+    post: str | None,
     rolling: str,
 ) -> None:
     """
     Validate inputs for robustness analysis.
-    
+
+    Performs three validation checks: presence of required columns in the
+    DataFrame, validity of the transformation method specification, and
+    consistency of the design mode parameters.
+
     Parameters
     ----------
     data : pd.DataFrame
@@ -793,11 +903,13 @@ def _validate_robustness_inputs(
         Post-treatment indicator for common timing.
     rolling : str
         Transformation method.
-        
+
     Raises
     ------
     ValueError
-        If required columns are missing or parameters are invalid.
+        If required columns are missing, rolling method is invalid, or
+        design mode parameters are inconsistent (must specify either gvar
+        for staggered designs or both d and post for common timing).
     """
     # Check required columns
     required = [y, ivar, tvar]
@@ -831,11 +943,11 @@ def _auto_detect_pre_period_range(
     data: pd.DataFrame,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
-    d: Optional[str],
-    post: Optional[str],
+    gvar: str | None,
+    d: str | None,
+    post: str | None,
     rolling: str,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """
     Automatically detect valid pre-treatment period range.
     
@@ -862,7 +974,7 @@ def _auto_detect_pre_period_range(
         
     Returns
     -------
-    Tuple[int, int]
+    tuple[int, int]
         (min_pre_periods, max_pre_periods)
     """
     # Minimum requirements by method
@@ -904,10 +1016,34 @@ def _get_max_pre_periods(
     data: pd.DataFrame,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
-    post: Optional[str],
+    gvar: str | None,
+    post: str | None,
 ) -> int:
-    """Get maximum number of pre-treatment periods available."""
+    """
+    Determine the maximum number of pre-treatment periods available.
+
+    For staggered designs, returns the minimum across all cohorts to ensure
+    all cohorts have sufficient pre-treatment data. For common timing,
+    counts the number of unique pre-treatment time periods.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Input panel data.
+    ivar : str
+        Unit identifier column name.
+    tvar : str
+        Time variable column name.
+    gvar : str or None
+        Cohort variable for staggered designs.
+    post : str or None
+        Post-treatment indicator for common timing.
+
+    Returns
+    -------
+    int
+        Maximum number of pre-treatment periods available.
+    """
     if gvar is not None:
         cohorts = data[gvar].dropna().unique()
         cohorts = [c for c in cohorts if c > 0 and np.isfinite(c)]
@@ -927,9 +1063,9 @@ def _filter_to_n_pre_periods(
     data: pd.DataFrame,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
-    d: Optional[str],
-    post: Optional[str],
+    gvar: str | None,
+    d: str | None,
+    post: str | None,
     n_pre_periods: int,
     exclude_periods: int,
 ) -> pd.DataFrame:
@@ -1009,7 +1145,8 @@ def _filter_to_n_pre_periods(
         
         if filtered_dfs:
             return pd.concat(filtered_dfs, ignore_index=True)
-        return data.iloc[0:0]  # Empty DataFrame with same columns
+        # Return empty DataFrame preserving schema for downstream compatibility
+        return data.iloc[0:0]
     
     else:
         # Common timing: simpler filtering
@@ -1038,16 +1175,17 @@ def _filter_excluding_periods(
     data: pd.DataFrame,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
-    post: Optional[str],
+    gvar: str | None,
+    post: str | None,
     exclude_periods: int,
 ) -> pd.DataFrame:
     """
     Filter data excluding specified periods before treatment.
-    
-    After filtering, the time variable is re-encoded to be continuous,
-    avoiding time discontinuity errors in lwdid().
-    
+
+    Removes the specified number of periods immediately preceding treatment
+    from the pre-treatment baseline. For common timing designs, re-encodes
+    the time variable to maintain continuity after filtering.
+
     Parameters
     ----------
     data : pd.DataFrame
@@ -1062,11 +1200,18 @@ def _filter_excluding_periods(
         Post-treatment indicator for common timing.
     exclude_periods : int
         Number of periods to exclude before treatment.
-        
+
     Returns
     -------
     pd.DataFrame
         Filtered data with excluded periods removed and time re-encoded.
+
+    Notes
+    -----
+    Time re-encoding for common timing designs prevents discontinuity errors
+    that would otherwise occur when the excluded periods create gaps in the
+    time sequence. For staggered designs, re-encoding is not performed due
+    to the complexity of cohort-specific time structures.
     """
     if exclude_periods == 0:
         return data.copy()
@@ -1161,25 +1306,36 @@ def _determine_robustness_level(sensitivity_ratio: float) -> RobustnessLevel:
 
 
 def _compute_sensitivity_ratio(
-    atts: List[float],
+    atts: list[float],
     baseline_att: float,
 ) -> float:
     """
-    Compute sensitivity ratio.
-    
-    Formula: (max(ATT) - min(ATT)) / |baseline ATT|
-    
+    Compute sensitivity ratio measuring estimate variability.
+
     Parameters
     ----------
-    atts : List[float]
+    atts : list[float]
         List of ATT estimates across specifications.
     baseline_att : float
-        Baseline ATT estimate.
-        
+        Baseline ATT estimate used for normalization.
+
     Returns
     -------
     float
-        Sensitivity ratio.
+        Sensitivity ratio, or infinity if baseline is near zero but range
+        is positive, or zero if both baseline and range are near zero.
+
+    Notes
+    -----
+    The sensitivity ratio is defined as the range of ATT estimates divided
+    by the absolute value of the baseline estimate:
+
+    .. math::
+
+        \\text{ratio} = \\frac{\\max(ATT) - \\min(ATT)}{|ATT_{baseline}|}
+
+    A ratio of 0.25 indicates the estimate range spans 25% of the baseline
+    magnitude. Lower ratios indicate greater stability across specifications.
     """
     if not atts:
         return 0.0
@@ -1193,20 +1349,20 @@ def _compute_sensitivity_ratio(
 
 
 def _generate_robustness_recommendations(
-    specifications: List[SpecificationResult],
+    specifications: list[SpecificationResult],
     baseline_spec: SpecificationResult,
     sensitivity_ratio: float,
     is_robust: bool,
     all_same_sign: bool,
     all_significant: bool,
     rolling: str,
-) -> Tuple[str, List[str], List[str]]:
+) -> tuple[str, list[str], list[str]]:
     """
     Generate recommendations based on robustness analysis.
     
     Parameters
     ----------
-    specifications : List[SpecificationResult]
+    specifications : list[SpecificationResult]
         All specification results.
     baseline_spec : SpecificationResult
         Baseline specification result.
@@ -1223,7 +1379,7 @@ def _generate_robustness_recommendations(
         
     Returns
     -------
-    Tuple[str, List[str], List[str]]
+    tuple[str, list[str], list[str]]
         (main_recommendation, detailed_recommendations, warnings)
     """
     recommendations = []
@@ -1274,11 +1430,11 @@ def _generate_robustness_recommendations(
             "misspecification or data quality issues."
         )
     
-    # Check for pattern in sensitivity
+    # Monotonic pattern may indicate time-varying confounding
     converged_specs = [s for s in specifications if s.converged]
     atts = [s.att for s in sorted(converged_specs, key=lambda x: x.n_pre_periods)]
     if len(atts) >= 3:
-        # Check for monotonic trend
+        # Consistent increase or decrease across specifications is suspicious
         diffs = np.diff(atts)
         if len(diffs) > 0 and (all(d > 0 for d in diffs) or all(d < 0 for d in diffs)):
             result_warnings.append(
@@ -1294,14 +1450,14 @@ def _run_single_specification(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str],
-    d: Optional[str],
-    post: Optional[str],
+    gvar: str | None,
+    d: str | None,
+    post: str | None,
     rolling: str,
     estimator: str,
-    controls: Optional[List[str]],
-    vce: Optional[str],
-    cluster_var: Optional[str],
+    controls: list[str] | None,
+    vce: str | None,
+    cluster_var: str | None,
     n_pre_periods: int,
     exclude_periods: int,
     alpha: float,
@@ -1333,7 +1489,7 @@ def _run_single_specification(
         Transformation method.
     estimator : str
         Estimation method.
-    controls : List[str] or None
+    controls : list[str] or None
         Control variables.
     vce : str or None
         Variance estimator type.
@@ -1450,30 +1606,46 @@ def _run_single_specification(
 
 
 def _detect_anticipation_effects(
-    estimates: List[AnticipationEstimate],
+    estimates: list[AnticipationEstimate],
     baseline: AnticipationEstimate,
     threshold: float,
-) -> Tuple[bool, int, AnticipationDetectionMethod]:
+) -> tuple[bool, int, AnticipationDetectionMethod]:
     """
-    Detect anticipation effects from sensitivity analysis.
-    
-    Methods:
-    1. Coefficient change: ATT changes significantly when excluding periods
-    2. Trend break: Pattern suggests pre-treatment adjustment
-    
+    Detect anticipation effects from sensitivity analysis results.
+
+    Applies two detection methods sequentially to identify potential
+    violations of the no-anticipation assumption.
+
     Parameters
     ----------
-    estimates : List[AnticipationEstimate]
-        Estimates for each exclusion level.
+    estimates : list[AnticipationEstimate]
+        Estimates for each exclusion level, ordered by exclusion count.
     baseline : AnticipationEstimate
-        Baseline estimate (no exclusion).
+        Baseline estimate with no period exclusion.
     threshold : float
-        Detection threshold for relative change.
-        
+        Detection threshold for relative change in ATT.
+
     Returns
     -------
-    Tuple[bool, int, AnticipationDetectionMethod]
-        (detected, recommended_exclusion, method)
+    detected : bool
+        Whether anticipation effects were detected.
+    recommended_exclusion : int
+        Recommended number of periods to exclude if detected.
+    method : AnticipationDetectionMethod
+        Detection method that identified the effect.
+
+    Notes
+    -----
+    Two detection methods are applied:
+
+    1. Coefficient change method: Flags anticipation if ATT increases in
+       magnitude by more than the threshold when excluding periods. This
+       pattern suggests pre-treatment periods were biasing estimates toward
+       zero.
+
+    2. Trend break method: Flags anticipation if ATT magnitude increases
+       monotonically with exclusion count, then stabilizes. The recommended
+       exclusion is set where the rate of increase drops by at least 50%.
     """
     valid_estimates = [e for e in estimates if not np.isnan(e.att)]
     
@@ -1518,15 +1690,15 @@ def robustness_pre_periods(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str] = None,
-    d: Optional[str] = None,
-    post: Optional[str] = None,
+    gvar: str | None = None,
+    d: str | None = None,
+    post: str | None = None,
     rolling: str = 'demean',
     estimator: str = 'ra',
-    controls: Optional[List[str]] = None,
-    vce: Optional[str] = None,
-    cluster_var: Optional[str] = None,
-    pre_period_range: Optional[Tuple[int, int]] = None,
+    controls: list[str] | None = None,
+    vce: str | None = None,
+    cluster_var: str | None = None,
+    pre_period_range: tuple[int, int] | None = None,
     step: int = 1,
     exclude_periods_before_treatment: int = 0,
     robustness_threshold: float = 0.25,
@@ -1536,9 +1708,9 @@ def robustness_pre_periods(
     """
     Assess robustness of ATT estimates to pre-treatment period selection.
     
-    Implements the sensitivity analysis recommended in Lee & Wooldridge (2026)
-    Section 8.1: "one can study the robustness of the findings by adjusting
-    the number of pre-treatment time periods."
+    Tests how ATT estimates vary when using different numbers of pre-treatment
+    periods, allowing researchers to assess whether findings are robust to
+    this methodological choice.
     
     Parameters
     ----------
@@ -1594,32 +1766,19 @@ def robustness_pre_periods(
     
     Notes
     -----
-    This implements the robustness check from Lee & Wooldridge (2026) Section 8.1:
-    
-    "In many examples, the policy intervention is likely based on past outcomes
-    (in the untreated state). Does one need to go back, say, 20 years to remove
-    unit specific intercepts and trends to account for the selection into
-    treatment? In many cases, fewer pre-treatment periods might suffice."
-    
     The function varies the starting point of pre-treatment data and re-estimates
     ATT for each specification, allowing researchers to assess how sensitive
-    their findings are to this choice.
+    their findings are to this methodological choice.
+    
+    In many applications, the policy intervention may be based on past outcomes.
+    This analysis helps determine whether sufficient pre-treatment periods are
+    being used to adequately control for selection into treatment.
     
     Robustness levels based on sensitivity ratio:
     - < 10%: Highly robust
     - 10-25%: Moderately robust
     - 25-50%: Sensitive
     - >= 50%: Highly sensitive
-    
-    Examples
-    --------
-    >>> from lwdid import robustness_pre_periods
-    >>> result = robustness_pre_periods(
-    ...     data, y='outcome', ivar='unit', tvar='year', gvar='first_treat',
-    ...     rolling='detrend', pre_period_range=(3, 10)
-    ... )
-    >>> print(result.summary())
-    >>> result.plot()
     
     See Also
     --------
@@ -1746,14 +1905,14 @@ def sensitivity_no_anticipation(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str] = None,
-    d: Optional[str] = None,
-    post: Optional[str] = None,
+    gvar: str | None = None,
+    d: str | None = None,
+    post: str | None = None,
     rolling: str = 'demean',
     estimator: str = 'ra',
-    controls: Optional[List[str]] = None,
-    vce: Optional[str] = None,
-    cluster_var: Optional[str] = None,
+    controls: list[str] | None = None,
+    vce: str | None = None,
+    cluster_var: str | None = None,
     max_anticipation: int = 3,
     detection_threshold: float = 0.10,
     alpha: float = 0.05,
@@ -1815,26 +1974,14 @@ def sensitivity_no_anticipation(
     
     Notes
     -----
-    From Lee & Wooldridge (2025) Section 4.4:
-    
-    "The no anticipation assumption requires that, prior to the first
+    The no-anticipation assumption requires that, prior to the first
     intervention period for a given treatment cohort, the potential outcomes
-    are the same (on average) as in the never treated state."
+    are the same (on average) as in the never treated state.
     
     If policy is announced k periods before implementation, units may adjust
     behavior during periods {g-k, ..., g-1}. By excluding these periods from
     the pre-treatment baseline, we can test whether estimates are robust to
     such anticipation effects.
-    
-    Examples
-    --------
-    >>> from lwdid import sensitivity_no_anticipation
-    >>> result = sensitivity_no_anticipation(
-    ...     data, y='outcome', ivar='unit', tvar='year', gvar='first_treat',
-    ...     max_anticipation=2
-    ... )
-    >>> if result.anticipation_detected:
-    ...     print(f"Consider excluding {result.recommended_exclusion} periods")
     
     See Also
     --------
@@ -1958,27 +2105,25 @@ def sensitivity_analysis(
     y: str,
     ivar: str,
     tvar: str,
-    gvar: Optional[str] = None,
-    d: Optional[str] = None,
-    post: Optional[str] = None,
+    gvar: str | None = None,
+    d: str | None = None,
+    post: str | None = None,
     rolling: str = 'demean',
     estimator: str = 'ra',
-    controls: Optional[List[str]] = None,
-    vce: Optional[str] = None,
-    cluster_var: Optional[str] = None,
-    analyses: Optional[List[str]] = None,
+    controls: list[str] | None = None,
+    vce: str | None = None,
+    cluster_var: str | None = None,
+    analyses: list[str] | None = None,
     alpha: float = 0.05,
     verbose: bool = True,
 ) -> ComprehensiveSensitivityResult:
     """
     Perform comprehensive sensitivity analysis for DiD estimation.
-    
-    Combines multiple robustness checks into a single analysis:
-    1. Pre-treatment period selection sensitivity
-    2. No-anticipation assumption sensitivity
-    3. Transformation method comparison (demean vs detrend)
-    4. Estimator comparison (RA, IPW, IPWRA, PSM)
-    
+
+    Combines multiple robustness checks into a single analysis, providing
+    an overall assessment of estimate reliability across different
+    methodological choices.
+
     Parameters
     ----------
     data : pd.DataFrame
@@ -2012,22 +2157,28 @@ def sensitivity_analysis(
         Significance level.
     verbose : bool, default True
         Whether to print progress and summary.
-    
+
     Returns
     -------
     ComprehensiveSensitivityResult
         Combined results from all sensitivity analyses.
-    
-    Examples
-    --------
-    >>> from lwdid import sensitivity_analysis
-    >>> result = sensitivity_analysis(
-    ...     data, y='outcome', ivar='unit', tvar='year', gvar='first_treat',
-    ...     analyses=['pre_periods', 'anticipation']
-    ... )
-    >>> print(result.summary())
-    >>> result.plot_all()
-    
+
+    Notes
+    -----
+    Four types of sensitivity analysis are available:
+
+    1. **Pre-periods**: Tests stability across different numbers of
+       pre-treatment periods used in the transformation.
+
+    2. **Anticipation**: Tests robustness to potential anticipation effects
+       by excluding periods immediately before treatment.
+
+    3. **Transformation**: Compares demean and detrend methods to assess
+       whether heterogeneous trends may be present.
+
+    4. **Estimator**: Compares RA, IPW, and IPWRA estimators to check
+       robustness to propensity score or outcome model misspecification.
+
     See Also
     --------
     robustness_pre_periods : Pre-period robustness check.
@@ -2217,11 +2368,11 @@ def sensitivity_analysis(
 # =============================================================================
 
 def plot_sensitivity(
-    result: Union[PrePeriodRobustnessResult, NoAnticipationSensitivityResult],
+    result: PrePeriodRobustnessResult | NoAnticipationSensitivityResult,
     show_ci: bool = True,
     show_baseline: bool = True,
     highlight_significant: bool = True,
-    figsize: Tuple[float, float] = (10, 6),
+    figsize: tuple[float, float] = (10, 6),
     ax: Any = None,
 ) -> Any:
     """

@@ -53,7 +53,7 @@ def randomization_inference(
     att_obs: float | None = None,
     ri_method: str = 'bootstrap',
     controls: Sequence[str] | None = None,
-) -> dict:
+) -> dict[str, float | str | int]:
     """
     Perform randomization inference for the null hypothesis of zero treatment effect.
 
@@ -70,7 +70,7 @@ def randomization_inference(
     y_col : str, default 'ydot_postavg'
         Name of the column containing the transformed outcome variable (after
         unit-specific demeaning or detrending).
-    d_col : str, default ``'d_'``
+    d_col : str, default 'd_'
         Name of the column containing the binary treatment indicator (0 or 1).
     ivar : str, default 'ivar'
         Name of the column containing the unit identifier.
@@ -258,7 +258,7 @@ def randomization_inference(
                     atts[rep] = np.nan
                     continue
 
-            # Build design matrix: ydot ~ 1 + d_perm + X + d_perm*(X - X_bar_1)
+            # Match the main regression specification to ensure comparable test statistics
             if controls_spec is not None and controls_spec['include']:
                 X_centered = controls_spec['X_centered']
 
@@ -295,8 +295,9 @@ def randomization_inference(
     n_failed = rireps - n_valid
     failure_rate = n_failed / rireps
 
-    # Compute theoretical failure rate for diagnostic comparison
-    # Under random sampling with replacement, P(N1=0) = (1-p)^N and P(N1=N) = p^N
+    # Compute theoretical failure rate to distinguish expected degeneracy from data issues.
+    # Helps users understand whether high failure rates reflect small treatment proportions
+    # (expected) versus unexpected problems requiring investigation.
     theoretical_failure_rate = None
     if ri_method == 'bootstrap' and n1_distribution:
         N1_obs = int(d_values.sum())
