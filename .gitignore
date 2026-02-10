@@ -38,6 +38,7 @@ test_lwdid_env/
 *~
 
 # Testing
+tests/
 .pytest_cache/
 .coverage
 htmlcov/

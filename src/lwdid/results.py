@@ -1075,10 +1075,9 @@ class LWDIDResults:
         -------
         fig : matplotlib.figure.Figure
             The matplotlib figure object.
-        ax : matplotlib.axes.Axes
-            The matplotlib axes object.
         event_df : pd.DataFrame
-            Aggregated event study data. Only returned if return_data=True.
+            Aggregated event study data. Only returned (as tuple) if
+            return_data=True: ``fig, ax, event_df``.
 
         Raises
         ------
@@ -1381,7 +1380,7 @@ class LWDIDResults:
         
         if return_data:
             return fig, ax, event_df
-        return fig, ax
+        return fig
 
     def to_excel(self, path: str):
         """
