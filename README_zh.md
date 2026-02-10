@@ -2,7 +2,7 @@
 
 ---
 
-**面向面板数据的 Lee–Wooldridge 双重差分方法（Difference-in-Differences）**
+## 面向面板数据的 Lee–Wooldridge 双重差分方法（Difference-in-Differences）
 
 ![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)

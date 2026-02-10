@@ -2,7 +2,7 @@
 
 ---
 
-**Lee–Wooldridge Difference-in-Differences for Panel Data**
+## Lee–Wooldridge Difference-in-Differences for Panel Data
 
 ![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
