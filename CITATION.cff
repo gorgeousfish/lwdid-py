@@ -1,9 +1,9 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite both the software and the paper."
+message: "If you use this software, please cite both the software and the associated papers."
 type: software
-title: "lwdid: Difference-in-Differences Estimator for Small Cross-Sectional Samples"
+title: "lwdid: Lee & Wooldridge Difference-in-Differences with Rolling Transformations for Panel Data"
 version: 0.2.0
-date-released: 2025-11-25
+date-released: 2026-01-31
 authors:
   - family-names: Cai
     given-names: Xuanyu
@@ -17,16 +17,18 @@ authors:
 repository-code: "https://github.com/gorgeousfish/lwdid-py"
 url: "https://lwdid.readthedocs.io"
 abstract: >
-  Python implementation of the Lee & Wooldridge (2025) 
-  difference-in-differences estimator for small cross-sectional 
-  samples. Supports unit-specific demeaning and detrending 
-  transformations, quarterly data with seasonal effects, 
-  time-invariant controls, and randomization inference.
+  Python implementation of the Lee & Wooldridge difference-in-differences
+  methods with unit-specific rolling transformations. Supports common timing
+  and staggered adoption designs, demeaning and detrending transformations,
+  seasonal adjustments, multiple estimators (RA, IPW, IPWRA, PSM),
+  heteroskedasticity-robust inference, and randomization inference.
 keywords:
   - difference-in-differences
   - causal inference
   - econometrics
   - panel data
+  - staggered adoption
+  - rolling transformations
   - small samples
   - Python
 license: AGPL-3.0-or-later
@@ -38,6 +40,17 @@ preferred-citation:
       given-names: Soo Jeong
     - family-names: Wooldridge
       given-names: Jeffrey M.
-  year: 2025
+  year: 2026
   url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5325686"
   notes: "SSRN Working Paper 5325686"
+references:
+  - type: article
+    title: "Simple Difference-in-Differences Estimation in Fixed-T Panels"
+    authors:
+      - family-names: Lee
+        given-names: Soo Jeong
+      - family-names: Wooldridge
+        given-names: Jeffrey M.
+    year: 2025
+    url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4516518"
+    notes: "SSRN Working Paper 4516518"

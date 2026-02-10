@@ -1,6 +1,7 @@
 {
-  "title": "lwdid: Python Implementation of Lee & Wooldridge (2025) DID Estimator",
-  "description": "Python implementation of the Lee & Wooldridge (2025) difference-in-differences estimator for small cross-sectional samples. Supports unit-specific demeaning and detrending transformations, quarterly data with seasonal effects, time-invariant controls, and randomization inference.",
+  "title": "lwdid: Lee & Wooldridge Difference-in-Differences with Rolling Transformations for Panel Data",
+  "version": "0.2.0",
+  "description": "Python implementation of the Lee & Wooldridge difference-in-differences methods with unit-specific rolling transformations. Supports common timing and staggered adoption designs, demeaning and detrending transformations, seasonal adjustments, multiple estimators (RA, IPW, IPWRA, PSM), heteroskedasticity-robust inference, and randomization inference.",
   "creators": [
     {
       "name": "Cai, Xuanyu",
@@ -18,6 +19,8 @@
     "causal inference",
     "econometrics",
     "panel data",
+    "staggered adoption",
+    "rolling transformations",
     "small samples",
     "Python"
   ],
@@ -26,6 +29,16 @@
       "identifier": "https://github.com/gorgeousfish/lwdid-py",
       "relation": "isSupplementTo",
       "scheme": "url"
+    },
+    {
+      "identifier": "10.2139/ssrn.5325686",
+      "relation": "isDocumentedBy",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "10.2139/ssrn.4516518",
+      "relation": "isDocumentedBy",
+      "scheme": "doi"
     }
   ],
   "upload_type": "software",

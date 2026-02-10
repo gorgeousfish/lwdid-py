@@ -273,7 +273,7 @@ class PrePeriodRobustnessResult:
     att_std : float
         Standard deviation of ATT across specifications.
     sensitivity_ratio : float
-        Ratio of range to baseline: (max - min) / |baseline|.
+        Ratio of range to baseline: (max - min) / abs(baseline).
     robustness_level : RobustnessLevel
         Categorical assessment of robustness.
     is_robust : bool

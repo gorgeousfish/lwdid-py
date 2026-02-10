@@ -7,7 +7,7 @@ This test validates the correct use of distributions for confidence intervals:
 2. M-estimation based estimators (IPW, IPWRA, PSM) should use z-distribution (asymptotic)
 
 Reference:
-- Lee & Wooldridge (2025, Small Sample paper), Equation (2.10):
+- Lee & Wooldridge (2026, Small Sample paper), Equation (2.10):
   (τ̂_DD - τ) / se(τ̂_DD) ~ T_{N-2}
   
 - Lee & Wooldridge (2023, Large Sample paper):

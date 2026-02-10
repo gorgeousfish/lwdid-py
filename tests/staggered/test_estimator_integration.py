@@ -30,7 +30,7 @@ class TestEstimatorParameterValidation:
     
     def test_invalid_estimator_raises_error(self, simple_staggered_data):
         """Invalid estimator value should raise ValueError"""
-        with pytest.raises(ValueError, match="无效的estimator"):
+        with pytest.raises(ValueError, match="[Ii]nvalid estimator"):
             lwdid(
                 data=simple_staggered_data,
                 y='y',
@@ -44,7 +44,7 @@ class TestEstimatorParameterValidation:
     
     def test_ipwra_without_controls_raises_error(self, simple_staggered_data):
         """IPWRA without controls should raise ValueError"""
-        with pytest.raises(ValueError, match="需要提供controls参数"):
+        with pytest.raises(ValueError, match="requires.*controls"):
             lwdid(
                 data=simple_staggered_data,
                 y='y',
@@ -58,7 +58,7 @@ class TestEstimatorParameterValidation:
     
     def test_psm_without_controls_raises_error(self, simple_staggered_data):
         """PSM without controls should raise ValueError"""
-        with pytest.raises(ValueError, match="需要提供controls参数"):
+        with pytest.raises(ValueError, match="requires.*controls"):
             lwdid(
                 data=simple_staggered_data,
                 y='y',

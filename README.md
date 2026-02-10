@@ -1,417 +1,427 @@
-# lwdid: Lee-Wooldridge Difference-in-Differences with Rolling Transformations
+# lwdid
+
+---
+
+**Lee–Wooldridge Difference-in-Differences for Panel Data**
 
 ![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)
+[![Documentation](https://readthedocs.org/projects/lwdid/badge/?version=latest)](https://lwdid.readthedocs.io)
 
-Python implementation of the Lee and Wooldridge difference-in-differences methods for panel data, supporting both small cross-sectional sample sizes with exact inference and large-sample settings with asymptotic inference.
+![From Panel to Cross-Section](image/image.png)
+
+`lwdid` implements the rolling-transformation DiD workflow described in
+Lee & Wooldridge (2025, 2026) with source-level support for:
+
+- common timing designs (`d` + `post`),
+- staggered adoption designs (`gvar`),
+- seasonal adjustments (`Q`, `season_var`) for quarterly, monthly, or weekly data,
+- robust/cluster inference with HC0–HC4 standard errors for OLS-based paths,
+- IPW / IPWRA / PSM estimators with propensity-score workflows,
+- pre-treatment dynamics and parallel trends testing,
+- randomization inference (`bootstrap` / `permutation`),
+- diagnostic toolkits for trend assessment, sensitivity analysis, and clustering,
+- event-study plotting and export utilities.
+
+## Statement of Need
+
+Difference-in-differences (DiD) is one of the most widely used methods for
+causal inference in the social sciences. However, existing implementations
+often assume large cross-sectional sample sizes and may perform poorly when
+the number of treated or control units is small. Lee & Wooldridge (2026)
+propose a rolling-transformation approach that converts panel DiD into a
+cross-sectional treatment effects problem, enabling exact t-based inference
+under classical linear model assumptions — even with as few as N₀ ≥ 1
+control and N₁ ≥ 1 treated units (N ≥ 3 total). Lee & Wooldridge (2025)
+extend this framework to staggered adoption designs with cohort-time
+specific effects, multiple estimators (RA, IPW, IPWRA, PSM), and flexible
+aggregation strategies.
+
+`lwdid` provides a unified Python implementation of both papers, filling a
+gap in the existing ecosystem where no Python package offers:
+
+- exact small-sample inference for DiD,
+- unit-specific rolling transformations (demeaning and detrending),
+- integrated support for both common timing and staggered adoption,
+- seasonal adjustment for high-frequency panel data,
+- pre-treatment dynamics for parallel trends assessment,
+- built-in diagnostic toolkits for trend heterogeneity, sensitivity, and clustering.
 
 ## Overview
 
-This package implements the Lee and Wooldridge transformation-based approach for difference-in-differences estimation, covering three methodological scenarios:
+`lwdid` follows the Lee–Wooldridge rolling-transformation strategy: transform
+panel outcomes at the unit level using pre-treatment information, then estimate
+treatment effects in a cross-sectional framework.
 
-- **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based inference under classical linear model assumptions when the number of cross-sectional units is small.
-- **Large-sample common timing** (Lee and Wooldridge, 2025): Asymptotic inference with heteroskedasticity-robust standard errors for moderate to large samples.
-- **Staggered adoption** (Lee and Wooldridge, 2025): Cohort-time specific effect estimation with flexible control group strategies for settings where treatment timing varies.
+The package supports three practical DiD workflows:
 
-**References**:
+- **Common timing** with exact/robust OLS inference (`d`, `post`).
+- **Staggered adoption** with cohort-time effects and aggregation (`gvar`).
+- **Repeated cross-section aggregation** to panel format before DiD estimation.
 
-Lee, S. J., and Wooldridge, J. M. (2026). Simple Approaches to Inference with Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes. *Available at [SSRN 5325686](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5325686)*.
+Compared with a single fixed estimator pipeline, `lwdid` exposes multiple
+transformation and estimator combinations (`ra`, `ipw`, `ipwra`, `psm`) while
+keeping inference and output APIs unified via `LWDIDResults`.
 
-Lee, S. J., and Wooldridge, J. M. (2025). A Simple Transformation Approach to Difference-in-Differences Estimation for Panel Data. *Available at [SSRN 4516518](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4516518)*.
+## Requirements
 
-**Authors**: Xuanyu Cai, Wenli Xu
+### Software
 
-### Key Features
+- Python `>=3.10,<3.13`
+- `numpy>=1.20,<3.0`
+- `pandas>=1.3,<3.0`
+- `scipy>=1.7,<2.0`
+- `statsmodels>=0.13,<1.0`
+- `scikit-learn>=1.0`
+- `matplotlib>=3.3`
+- `openpyxl>=3.1`
 
-The package transforms panel data into cross-sectional regressions, enabling various treatment effects estimators:
+### Data
 
-- **Three methodological scenarios**: Small-sample exact inference, large-sample asymptotic inference, and staggered adoption
-- **Multiple variance estimators**: Homoskedastic OLS, HC0-HC4 robust, and cluster-robust standard errors
-- **Multiple estimators**: Regression adjustment (RA), inverse probability weighting (IPW), doubly robust (IPWRA), and propensity score matching (PSM)
-- **Unit-specific transformations**: Serial correlation handled through demeaning or detrending
-- **Seasonal patterns**: Support for quarterly data with seasonal fixed effects
-- **Randomization inference**: Bootstrap and permutation-based procedures for finite-sample validity
-- **Staggered DiD**: Cohort-time specific effect estimation based on Lee and Wooldridge (2025)
+Before estimation, ensure:
 
-### Transformation Methods
+- Long-format panel structure (one row per unit-time observation),
+- Unique `(ivar, time)` keys,
+- Valid treatment coding for the selected mode:
+  - common timing: `d` + `post`,
+  - staggered: `gvar` with `0/NaN/inf` as never treated,
+- Sufficient pre-treatment observations for the selected rolling method.
 
-Four transformation methods are available:
-
-- **demean**: Unit-specific demeaning (Procedure 2.1)
-- **detrend**: Unit-specific detrending (Procedure 3.1)
-- **demeanq**: Quarterly demeaning with seasonal effects
-- **detrendq**: Quarterly detrending with linear trends and seasonal effects
+Detailed validation rules are documented in **Data Requirements and Validation Rules** below.
 
 ## Installation
+
+Install from PyPI:
 
 ```bash
 pip install lwdid
 ```
 
-Or install from source:
-
-```bash
-git clone https://github.com/gorgeousfish/lwdid-py.git
-cd lwdid-py
-pip install .
-```
-
 ## Quick Start
 
-### Basic Example
+### 1) Common Timing (small-N or large-N)
 
 ```python
 import pandas as pd
 from lwdid import lwdid
 
-# Load panel data
-data = pd.read_csv('smoking.csv')
-# Note: 'd' is the column name for treatment indicator in this dataset
+df = pd.read_csv("data/smoking.csv")
 
-# Estimate ATT with exact inference
-results = lwdid(
-    data,
-    y='lcigsale',      # outcome variable
-    d='d',             # treatment indicator (0/1)
-    ivar='state',      # unit identifier
-    tvar='year',       # time variable
-    post='post',       # post-treatment indicator
-    rolling='detrend', # transformation: demean, detrend, demeanq, detrendq
-    vce=None           # None: exact inference; 'hc3': heteroskedasticity-robust
+res = lwdid(
+    data=df,
+    y="lcigsale",
+    d="d",
+    ivar="state",
+    tvar="year",
+    post="post",
+    rolling="detrend",
+    estimator="ra",
+    vce="hc3",          # None / hc0 / hc1(robust) / hc2 / hc3 / hc4 / cluster
+    alpha=0.05,
 )
 
-# View results
-print(results.summary())
-print(f"ATT: {results.att:.4f} (SE: {results.se_att:.4f})")
-print(f"95% CI: [{results.ci_lower:.4f}, {results.ci_upper:.4f}]")
-
-# Export results
-results.to_excel('results.xlsx')
-results.to_latex('results.tex')
+print(res.summary())
+print(res.att, res.se_att, res.pvalue)
 ```
 
-### Advanced Usage
-
-**Randomization Inference**
-
-```python
-# Randomization inference for finite-sample validity without distributional assumptions
-# Default: bootstrap resampling
-# Alternative: permutation-based (Fisher randomization inference)
-results = lwdid(
-    data, 'lcigsale', 'd', 'state', 'year', 'post', 'detrend',
-    ri=True,               # enable randomization inference
-    ri_method='bootstrap', # 'bootstrap' (default) or 'permutation'
-    rireps=1000,           # number of replications
-    seed=42
-)
-print(f"RI p-value: {results.ri_pvalue:.4f}")
-```
-
-**Control Variables**
-
-```python
-# Include time-invariant control variables
-# Note: Controls must be constant within each unit across all periods
-# For time-varying variables, use pre-treatment mean or first value
-
-# Create time-invariant controls from time-varying variables
-data_with_controls = data.copy()
-for var in ['retprice', 'beer']:
-    # Use pre-treatment period mean
-    pre_mean = data[data['post']==0].groupby('state')[var].mean()
-    data_with_controls[f'{var}_pre'] = data_with_controls['state'].map(pre_mean)
-
-results = lwdid(
-    data_with_controls, 'lcigsale', 'd', 'state', 'year', 'post', 'detrend',
-    controls=['retprice_pre', 'beer_pre'],  # time-invariant covariates
-    vce='hc3'
-)
-```
-
-**Quarterly Data**
-
-```python
-# Quarterly panel with seasonal effects
-# Example: data with columns [unit, year, quarter, outcome, d, post]
-results = lwdid(
-    data, 'outcome', 'd', 'unit',
-    tvar=['year', 'quarter'],  # composite time variable
-    post='post',
-    rolling='detrendq'         # quarterly detrending
-)
-```
-
-### Staggered DiD (NEW)
-
-For settings where different units begin treatment at different times:
+### 2) Staggered Adoption
 
 ```python
 import pandas as pd
 from lwdid import lwdid
 
-# Load Castle Law data (states adopted at different times)
-data = pd.read_csv('castle.csv')
+df = pd.read_csv("data/castle.csv")
+df["gvar"] = df["effyear"].fillna(0)  # 0 / NaN / inf => never treated
 
-# Create gvar: first treatment year (0 = never treated)
-data['gvar'] = data['effyear'].fillna(0).astype(int)
-
-# Overall weighted effect across all cohorts
-results = lwdid(
-    data=data,
-    y='lhomicide',           # Log homicide rate
-    ivar='sid',              # State ID (integer)
-    tvar='year',             # Year
-    gvar='gvar',             # First treatment year
-    rolling='demean',        # Transformation method
-    control_group='never_treated',  # Use never-treated as controls
-    aggregate='overall',     # Get overall weighted effect
-    vce='hc3'               # HC3 standard errors
+res = lwdid(
+    data=df,
+    y="lhomicide",
+    ivar="sid",
+    tvar="year",
+    gvar="gvar",
+    rolling="demean",
+    estimator="ra",
+    control_group="not_yet_treated",
+    aggregate="none",
+    vce="hc3",
+    include_pretreatment=True,
 )
 
-print(f"Overall ATT: {results.att_overall:.4f}")
-print(f"SE: {results.se_overall:.4f}")
-# Output: Overall ATT: 0.0917, SE: 0.0612
+res.plot_event_study(aggregation="weighted", title="Castle Law Event Study")
 ```
 
-**Cohort-Specific Effects**
+### 3) Repeated Cross-Section → Panel Aggregation
 
 ```python
-# Get effects for each treatment cohort
-results = lwdid(
-    data=data, y='lhomicide', ivar='sid', tvar='year', gvar='gvar',
-    aggregate='cohort',  # Aggregate within cohorts
-    vce='hc3'
-)
-print(results.att_by_cohort)
-```
+from lwdid import aggregate_to_panel
 
-**Event Study**
-
-```python
-# All (cohort, time) specific effects
-results = lwdid(
-    data=data, y='lhomicide', ivar='sid', tvar='year', gvar='gvar',
-    aggregate='none',  # No aggregation
-    vce='hc3'
+agg = aggregate_to_panel(
+    data=raw_df,
+    unit_var="state",
+    time_var="year",
+    outcome_var="outcome",
+    weight_var="survey_weight",   # optional
+    treatment_var="treated",      # optional consistency check
 )
 
-# Plot event study
-results.plot_event_study(title='Castle Doctrine Effect')
+panel_df = agg.panel_data
 ```
 
-**Key Parameters for Staggered DiD:**
-- `gvar`: Column name for first treatment period (0/NaN = never treated)
-- `control_group`: `'never_treated'` or `'not_yet_treated'`
-- `aggregate`: `'none'` (all g,r effects), `'cohort'`, or `'overall'`
-- `estimator`: `'ra'` (default), `'ipwra'`, or `'psm'`
-
-## Capabilities
-
-### Core Features
-
-- **Transformation methods**: demean, detrend, demeanq, detrendq
-- **Inference options**: Exact (under normality), HC1 robust, HC3 robust, cluster-robust
-- **Control variables**: Time-invariant covariates with automatic centering
-- **Period-specific effects**: Estimate ATT for each post-treatment period
-- **Randomization inference**: Bootstrap (default) or permutation-based p-values for finite-sample validity
-- **Visualization**: Time series plots comparing treated and control units
-- **Export formats**: Excel (multi-sheet), CSV, LaTeX tables
-
-### Staggered DiD Features
-
-- **Cohort-specific effects**: Estimate ATT for each treatment cohort
-- **Overall weighted effect**: Aggregate across cohorts using optimal weights
-- **Control group strategies**: Never-treated or not-yet-treated units
-- **Multiple estimators**: RA (regression adjustment), IPWRA (doubly robust), PSM
-- **Event study plots**: Visualize treatment effects by event time
-
-### Validation
-
-The implementation has been validated for numerical accuracy and consistency with the methodology described in Lee and Wooldridge (2025, 2026).
-
-## Requirements
-
-- Python ≥ 3.8, <3.13
-- numpy ≥ 1.20, <3.0
-- pandas ≥ 1.3, <3.0
-- scipy ≥ 1.7, <2.0
-- statsmodels ≥ 0.13, <1.0
-- matplotlib ≥ 3.3 (visualization)
-- openpyxl ≥ 3.1 (Excel export)
-
-## API Reference
-
-### Main Function
+## Core API
 
 ```python
-lwdid(data, y, d, ivar, tvar, post, rolling, **options)
-```
-
-**Required Parameters**:
-- `data` (DataFrame): Panel data in long format
-- `y` (str): Outcome variable
-- `d` (str): Unit-level treatment indicator Dᵢ (0/1)
-  - **Important**: Must be time-invariant (constant within each unit across all periods)
-  - Do **not** pass time-varying treatment indicator Wᵢₜ = Dᵢ × postₜ
-  - If you have Wᵢₜ, construct Dᵢ first: `data['D_i'] = data.groupby('unit')['W_it'].transform('max')`
-- `ivar` (str): Unit identifier
-- `tvar` (str or list): Time variable (must be numeric)
-  - Annual data: Single column name (str), e.g., `tvar='year'`
-  - Quarterly data: List of two column names [year, quarter], e.g., `tvar=['year', 'quarter']`
-  - **Important**: All time variables must contain numeric values (int or float)
-- `post` (str): Post-treatment indicator (0/1)
-- `rolling` (str): Transformation method
-  - `'demean'`: Standard DiD with unit fixed effects
-  - `'detrend'`: DiD with unit-specific linear trends
-  - `'demeanq'`: Quarterly data with seasonal effects
-  - `'detrendq'`: Quarterly data with trends and seasonal effects
-
-**Optional Parameters**:
-- `vce` (str or None): Variance estimator (default: `None`, case-insensitive)
-  - `None`: Homoskedastic standard errors (exact inference under normality)
-  - `'robust'` or `'hc1'`: HC1 heteroskedasticity-robust standard errors
-  - `'hc3'`: HC3 small-sample adjusted heteroskedasticity-robust standard errors
-  - `'cluster'`: Cluster-robust standard errors (requires `cluster_var`)
-- `cluster_var` (str): Cluster variable for cluster-robust standard errors (required when `vce='cluster'`)
-  - Must be a column name in the data
-  - Clusters are typically defined at a higher aggregation level than units
-  - Inference uses G-1 degrees of freedom, where G is the number of clusters
-- `controls` (list of str): Time-invariant control variables
-  - Controls are included only if both N₁ > K+1 and N₀ > K+1 (where K is the number of controls)
-  - If conditions are not met, controls are excluded and a warning is issued
-- `ri` (bool): Enable randomization inference (default: `False`)
-- `ri_method` (str): Resampling method for randomization inference (default: `'bootstrap'`)
-  - `'bootstrap'`: With-replacement resampling
-  - `'permutation'`: Without-replacement permutation (Fisher randomization inference)
-- `rireps` (int): Number of replications for randomization inference (default: 1000)
-- `seed` (int): Random seed for reproducibility
-- `graph` (bool): Generate visualization (default: `False`)
-  - If plotting fails, a warning is issued and estimation continues unaffected
-- `gid` (str/int): Unit identifier for plotting (default: `None` for treated group mean)
-- `graph_options` (dict): Matplotlib plotting options (default: `None`)
-  - Supported keys: `figsize`, `title`, `xlabel`, `ylabel`, `legend_loc`, `dpi`, `savefig`
-
-**Returns**: `LWDIDResults` object with the following attributes:
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `att` | float | Average treatment effect on treated |
-| `se_att` | float | Standard error |
-| `t_stat` | float | t-statistic |
-| `pvalue` | float | Two-sided p-value |
-| `ci_lower`, `ci_upper` | float | 95% confidence interval |
-| `att_by_period` | DataFrame | Period-specific treatment effects |
-| `ri_pvalue` | float | Randomization inference p-value (if `ri=True`) |
-| `rireps` | int | Number of RI replications (if `ri=True`) |
-| `ri_method` | str | RI method used: 'bootstrap' or 'permutation' (if `ri=True`) |
-| `ri_valid` | int | Number of successful RI replications (if `ri=True`) |
-| `ri_failed` | int | Number of failed RI replications (if `ri=True`) |
-| `nobs` | int | Number of observations in the cross-sectional regression (equals number of units) |
-| `n_treated` | int | Number of treated units |
-| `n_control` | int | Number of control units |
-| `df_resid` | int | Residual degrees of freedom (N - K - 1) |
-| `df_inference` | int | Degrees of freedom used for inference (G - 1 for cluster-robust SE, df_resid otherwise) |
-
-**Methods**:
-- `summary()`: Print formatted results table
-- `plot(gid=None, graph_options=None)`: Visualize transformed outcomes over time
-  - Plots residualized outcomes after removing unit-specific patterns
-  - Useful for assessing parallel trends assumption
-  - `gid`: Unit identifier to plot (default: treated group mean)
-  - `graph_options`: Dictionary of matplotlib options
-- `to_excel(path)`: Export to Excel workbook
-- `to_csv(path)`: Export period-specific effects to CSV
-- `to_latex(path)`: Export to LaTeX table
-
-### Usage Guidelines
-
-**Inference Choice**:
-- Use `vce=None` for exact inference when N is small and normality is plausible
-- Use `vce='hc3'` for moderate samples (N ≥ 10) or when heteroskedasticity is suspected
-- Use `vce='cluster'` for cluster-robust inference (requires `cluster_var`)
-  - Inference uses df = G - 1 (number of clusters minus 1)
-  - Actual degrees of freedom stored in `results.df_inference`
-- Use randomization inference (`ri=True`) for finite-sample validity without distributional assumptions
-  - Randomization inference uses homoskedastic standard errors to construct the null distribution
-  - The `vce` option affects only classical t-based inference, not the randomization inference p-value
-
-**Data Format**:
-- **Panel structure**:
-  - Data must be in long format (one row per unit-time observation)
-  - Each (unit, time) combination must be unique
-  - Time index must form a continuous sequence
-  - Panels may be balanced or unbalanced across units
-- **Common timing** (use `d` and `post` parameters):
-  - All treated units must begin treatment in the same period
-  - The `post` indicator must be a function of time only
-  - Treatment must be persistent (no reversals)
-- **Staggered adoption** (use `gvar` parameter):
-  - Provide `gvar`: column with first treatment period (0 or NaN = never treated)
-  - Do not provide `d` or `post` (they will be ignored)
-  - See Lee and Wooldridge (2025) for methodological details
-- **Time variable format**:
-  - Annual data: Single numeric column (e.g., `tvar='year'`)
-  - Quarterly data: Two numeric columns (e.g., `tvar=['year', 'quarter']`)
-- **Reserved column names**: Avoid `d_`, `post_`, `tindex`, `tq`, `ydot`, `ydot_postavg`, `firstpost`, `ydot_g*_r*`
-
-## Examples
-
-### California Smoking Restrictions
-
-```python
-# Analysis with single treated unit (N_treated = 1, N_control = 38)
-data = pd.read_csv('smoking.csv')
-results = lwdid(
-    data,
-    y='lcigsale',
-    d='d',
-    ivar='state',
-    tvar='year',
-    post='post',
-    rolling='detrend',
-    vce=None
+lwdid(
+    data, y, d=None, ivar=None, tvar=None, post=None, rolling="demean", *,
+    gvar=None, control_group="not_yet_treated", estimator="ra", aggregate="cohort",
+    balanced_panel="warn", ps_controls=None, trim_threshold=0.01,
+    return_diagnostics=False, n_neighbors=1, caliper=None, with_replacement=True,
+    match_order="data", vce=None, controls=None, cluster_var=None, alpha=0.05,
+    ri=False, rireps=1000, seed=None, ri_method="bootstrap",
+    graph=False, gid=None, graph_options=None,
+    season_var=None, Q=4, auto_detect_frequency=False,
+    include_pretreatment=False, pretreatment_test=True, pretreatment_alpha=0.05,
+    exclude_pre_periods=0
 )
-print(results.summary())
 ```
 
-See `examples/smoking.ipynb` for complete example.
+## Method Selection Guide
 
-### Castle Law (Staggered DiD)
+### Transformation Methods
+
+| Method | Data Type | Problem It Addresses | Practical Advantage |
+|---|---|---|---|
+| `demean` | Annual/ordered panel | Level differences across units | Most direct implementation of rolling DiD baseline |
+| `detrend` | Annual/ordered panel | Unit-specific linear trends (CHT-style concern) | More robust when pre-trends differ by cohort; recommended for small samples (Lee & Wooldridge, 2026) |
+| `demeanq` | Seasonal panel (quarterly/monthly/weekly via `Q`) | Seasonal level effects + unit heterogeneity | Handles periodic structure without explicit FE model rewriting |
+| `detrendq` | Seasonal panel | Unit trends + seasonal structure | Most robust seasonal option when both trends and seasonality matter |
+
+All four transformation methods are supported for both common timing and staggered adoption designs.
+
+### When to Use `detrend` vs `demean`
+
+Under the Conditional Heterogeneous Trends (CHT) assumption (Lee & Wooldridge, 2025), each treatment cohort may have its own linear trend. The `detrend` method removes unit-specific linear trends, relaxing the standard parallel trends assumption. Use `detrend` when:
+
+- Pre-treatment outcome trends differ visibly across cohorts,
+- You suspect unit-specific linear trends (e.g., differential growth rates),
+- Small-sample settings where HC3 + detrending provides the best coverage (Lee & Wooldridge, 2026).
+
+### Estimators
+
+| Estimator | Best-Suited Setting | Main Use Case | Advantage | Inference Distribution |
+|---|---|---|---|---|
+| `ra` | Small or large N, strong linear adjustment | Baseline ATT estimation | Transparent OLS path + full `vce` support | **t-distribution** |
+| `ipw` | Covariate imbalance with PS model | Reweight controls to treated support | Simpler weighting estimator | **normal (z)** |
+| `ipwra` | Potential model misspecification risk | Doubly robust ATT | Consistent if PS or outcome model is correct | **normal (z)** |
+| `psm` | Matchable treated/control support | Nearest-neighbor ATT | Intuitive matched-sample interpretation | **normal (z)** |
+
+Note: IPW, IPWRA, and PSM currently use normal-based inference. The `ra` estimator uses t-distribution inference with degrees of freedom df = N₁ + N₀ − 2, which is recommended for small samples per Lee & Wooldridge (2026). A future release will migrate IPW, IPWRA, and PSM to t-distribution inference as well.
+
+## Inference Behavior
+
+- `vce` options for OLS-based paths (`ra`): `None`, `hc0`, `hc1`/`robust`, `hc2`, `hc3`, `hc4`, `cluster`.
+- HC3 is recommended for small samples (Lee & Wooldridge, 2026).
+- Cluster OLS uses `df = G - 1` (`G` = number of clusters). When the unit of analysis is finer than the policy level (e.g., county data with state-level policy), cluster at the policy level (Lee & Wooldridge, 2026).
+- `ra` computes p-values and CIs from t-distribution critical values with df = N₁ + N₀ − 2.
+- `ipw`, `ipwra`, and `psm` compute p-values and CIs from normal critical values.
+- `ri=True` enables randomization inference for exact p-values:
+  - `ri_method="bootstrap"` (default),
+  - `ri_method="permutation"`.
+- Event-study weighted aggregation (`plot_event_study(aggregation="weighted")`) uses t-based CI construction with a conservative df strategy (minimum df across contributing cohorts).
+
+### Minimum Sample Requirements
+
+Following Lee & Wooldridge (2026), exact inference requires:
+
+- N₀ ≥ 1 (at least 1 control unit),
+- N₁ ≥ 1 (at least 1 treated unit),
+- N = N₀ + N₁ ≥ 3 (at least 3 total units).
+
+## Mode-Specific Parameters
+
+### Common Timing Mode (`gvar=None`)
+
+Required: `d`, `post`, `ivar`, `tvar`.
+
+- `control_group` and `aggregate` are ignored in this mode.
+- `d` must be time-invariant within unit.
+- `post` must be monotone (no treatment reversal).
+
+### Staggered Mode (`gvar` provided)
+
+Required: `gvar`, `ivar`, `tvar`.
+
+- `d` and `post` are ignored if provided together with `gvar`.
+- `gvar` coding: positive values = first treatment period; `0` / `NaN` / `np.inf` = never treated.
+- `control_group`: `not_yet_treated`, `never_treated`, `all_others`.
+- `aggregate`: `none`, `cohort`, `overall`.
+- `aggregate in {"cohort","overall"}` requires never-treated units; control strategy auto-switches to `never_treated`.
+
+### Pre-treatment Dynamics and Parallel Trends
+
+Set `include_pretreatment=True` (staggered mode) to compute pre-treatment transformed outcomes for parallel trends assessment. The transformation uses future pre-treatment periods {t+1, ..., g−1} as reference (Lee & Wooldridge, 2025):
+
+- **Demeaning**: ẏ_{itg} = Y_{it} − mean(Y_{i,t+1}, ..., Y_{i,g−1})
+- **Detrending**: Ÿ_{itg} = Y_{it} − fitted value from regressing future pre-treatment outcomes on time
+
+The period t = g−1 serves as the anchor point (reference baseline) for event study visualization. Set `pretreatment_test=True` to run individual t-tests and a joint F-test for H₀: all pre-treatment ATT = 0.
+
+### No-Anticipation Robustness
+
+Set `exclude_pre_periods=k` to exclude the k periods immediately before treatment from the pre-treatment sample used for transformation. This addresses potential violations of the no-anticipation assumption when units may adjust behavior before formal treatment.
+
+## Data Requirements and Validation Rules
+
+- Long format panel (`one row = one unit-time observation`).
+- Unique `(ivar, time)` combinations required.
+- Minimum sample size check enforced (`N >= 3` units).
+- `controls` are treated as time-invariant regressors.
+- Seasonal modes require `season_var` (or legacy `tvar=[year, quarter]`) and valid values in `1..Q`.
+- Reserved internal column names should not appear in raw input:
+  - `d_`, `post_`, `tindex`, `tq`, `ydot`, `ydot_postavg`, `firstpost`.
+
+### Unbalanced Panels
+
+The `balanced_panel` parameter controls handling of unbalanced panels:
+
+- `"warn"` (default): Issue a warning with selection mechanism diagnostics.
+- `"error"`: Raise an error if the panel is unbalanced.
+- `"ignore"`: Proceed silently.
+
+Selection may depend on unobserved time-invariant heterogeneity, but cannot systematically depend on Y_{it}(∞) shocks (Lee & Wooldridge, 2025). Minimum pre-treatment observation requirements:
+
+- `demean`: at least 1 pre-treatment period per unit.
+- `detrend`: at least 2 pre-treatment periods per unit.
+- `demeanq`: at least Q + 1 pre-treatment periods per unit.
+- `detrendq`: at least Q + 2 pre-treatment periods per unit.
+
+## Returned Object (`LWDIDResults`)
+
+Core fields:
+
+- `att`, `se_att`, `t_stat`, `pvalue`, `ci_lower`, `ci_upper`
+- `nobs`, `n_treated`, `n_control`, `df_resid`, `df_inference`
+- `att_by_period` (common timing)
+- `att_by_cohort_time`, `att_by_cohort`, `att_overall` (staggered, depending on `aggregate`)
+- `att_pre_treatment`, `parallel_trends_test` (if `include_pretreatment=True`)
+
+Key methods:
+
+- `summary()`
+- `plot(...)` (common-timing style transformed-outcome plot)
+- `plot_event_study(...)` (staggered event-study visualization)
+- `to_excel(...)`, `to_csv(...)`, `to_latex(...)`
+
+## Diagnostic Toolkits
+
+`lwdid` includes built-in diagnostic modules for common methodological concerns:
+
+### Trend Diagnostics
 
 ```python
-# Analysis with staggered adoption (21 treated states, 29 controls)
-data = pd.read_csv('castle.csv')
-data['gvar'] = data['effyear'].fillna(0).astype(int)
+from lwdid import test_parallel_trends, diagnose_heterogeneous_trends, recommend_transformation
 
-results = lwdid(
-    data,
-    y='lhomicide',
-    ivar='sid',
-    tvar='year',
-    gvar='gvar',
-    rolling='demean',
-    aggregate='overall',
-    vce='hc3'
-)
-print(results.summary())
+# Test parallel trends assumption
+pt_result = test_parallel_trends(data, y="outcome", ivar="unit", tvar="year", gvar="gvar")
+
+# Diagnose heterogeneous trends across cohorts
+ht_diag = diagnose_heterogeneous_trends(data, y="outcome", ivar="unit", tvar="year", gvar="gvar")
+
+# Get transformation recommendation (demean vs detrend)
+rec = recommend_transformation(data, y="outcome", ivar="unit", tvar="year", gvar="gvar")
 ```
 
-See `examples/castle_law.ipynb` for complete example.
+### Sensitivity Analysis
 
-## Testing
+```python
+from lwdid import robustness_pre_periods, sensitivity_no_anticipation, sensitivity_analysis
 
-The package includes comprehensive tests:
+# Robustness to number of pre-treatment periods
+rob = robustness_pre_periods(data, y="outcome", ivar="unit", tvar="year", d="d", post="post")
 
-```bash
-pytest tests/
+# Sensitivity to no-anticipation assumption violation
+na_sens = sensitivity_no_anticipation(data, y="outcome", ivar="unit", tvar="year", d="d", post="post")
+
+# Comprehensive sensitivity analysis
+comp = sensitivity_analysis(data, y="outcome", ivar="unit", tvar="year", d="d", post="post")
 ```
+
+### Clustering Diagnostics
+
+```python
+from lwdid import diagnose_clustering, recommend_clustering_level
+
+# Diagnose clustering structure
+clust_diag = diagnose_clustering(data, ivar="county", potential_cluster_vars=["state", "region"], gvar="gvar")
+
+# Get clustering level recommendation
+rec = recommend_clustering_level(data, ivar="county", tvar="year", potential_cluster_vars=["state", "region"], gvar="gvar")
+```
+
+### Selection Diagnostics
+
+```python
+from lwdid import diagnose_selection_mechanism
+
+# Diagnose selection mechanism for unbalanced panels
+sel_diag = diagnose_selection_mechanism(data, ivar="unit", tvar="year", y="outcome")
+```
+
+## Current Boundaries and Caveats
+
+- `graph=True` in staggered mode is not executed directly; use `results.plot_event_study()` after estimation.
+- `balanced_panel="error"` is the strict enforcement mode; `warn`/`ignore` do not trigger the same hard check.
+- When overlap is weak, propensity-score estimators may trim many observations (`trim_threshold`), potentially reducing effective sample size.
+- IPWRA and PSM currently use normal-distribution-based inference; a future release will migrate these to t-distribution inference consistent with the `ra` path.
+
+## Documentation
+
+Full API documentation is available at [lwdid.readthedocs.io](https://lwdid.readthedocs.io).
+
+## Version Notes
+
+- Current package version: `0.2.0` (`pyproject.toml`).
+- Includes generalized seasonal support (`Q`, `season_var`) and staggered seasonal transformations (`demeanq`, `detrendq` in staggered mode).
+- Pre-treatment dynamics and parallel trends testing (`include_pretreatment`, `pretreatment_test`).
+- No-anticipation robustness check (`exclude_pre_periods`).
+- Diagnostic toolkits: trend diagnostics, sensitivity analysis, clustering diagnostics, selection diagnostics.
+- Wild cluster bootstrap inference.
+
+## Getting Help
+
+- Report bugs or request features via [GitHub Issues](https://github.com/gorgeousfish/lwdid-py/issues).
+- For questions about methodology, consult the referenced papers or open a discussion on the repository.
+
+## Contributing
+
+Contributions are welcome. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to report bugs, suggest features, and submit pull requests.
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Citation
+
+If you use `lwdid` in your research, please cite both the software and the underlying papers. A machine-readable citation file is provided in [CITATION.cff](CITATION.cff).
+
+```bibtex
+@software{cai_lwdid_2025,
+  author  = {Cai, Xuanyu and Xu, Wenli},
+  title   = {lwdid: Lee--Wooldridge Difference-in-Differences for Panel Data},
+  version = {0.2.0},
+  year    = {2025},
+  url     = {https://github.com/gorgeousfish/lwdid-py}
+}
+```
+
+## References
+
+- Lee, Soo Jeong and Wooldridge, Jeffrey M., *Simple Approaches to Inference with Difference-in-Differences Estimators with Small Cross-Sectional Sample Sizes* (January 03, 2026). Available at SSRN: [https://ssrn.com/abstract=5325686](https://ssrn.com/abstract=5325686) or [http://dx.doi.org/10.2139/ssrn.5325686](https://dx.doi.org/10.2139/ssrn.5325686)
+- Lee, Soo Jeong and Wooldridge, Jeffrey M., *A Simple Transformation Approach to Difference-in-Differences Estimation for Panel Data* (December 25, 2025). Available at SSRN: [https://ssrn.com/abstract=4516518](https://ssrn.com/abstract=4516518) or [http://dx.doi.org/10.2139/ssrn.4516518](https://dx.doi.org/10.2139/ssrn.4516518)
+
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later)**.
+See `LICENSE` for the full license text.
 
 ## Authors
 
 Xuanyu Cai, Wenli Xu
-
-## Contributing
-
-Contributions are welcome. Please submit bug reports or feature requests via the issue tracker.

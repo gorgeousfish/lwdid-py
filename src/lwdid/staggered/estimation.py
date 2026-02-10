@@ -60,6 +60,7 @@ from .control_groups import (
 )
 from .transformations import get_cohorts, get_valid_periods_for_cohort
 from .estimators import estimate_ipwra, estimate_psm, IPWRAResult, PSMResult
+from ..exceptions import InvalidParameterError
 
 
 @dataclass
@@ -512,7 +513,9 @@ def run_ols_regression(
 
     elif vce_lower == 'cluster':
         if cluster_var is None:
-            raise ValueError("cluster_var required when vce='cluster'")
+            raise InvalidParameterError(
+                "vce='cluster' requires cluster_var parameter"
+            )
         if cluster_var not in data_clean.columns:
             raise ValueError(f"Cluster variable '{cluster_var}' not in data")
 
@@ -522,6 +525,16 @@ def run_ols_regression(
 
         if G < 2:
             raise ValueError(f"Need at least 2 clusters, got {G}")
+
+        if G < 20:
+            warnings.warn(
+                f"Few clusters (G={G} < 20). Over-rejection of the null "
+                f"hypothesis is likely with cluster-robust standard errors. "
+                f"Consider wild cluster bootstrap or bias-corrected methods. "
+                f"See Cameron, Gelbach & Miller (2008) and Cameron & Miller (2015).",
+                UserWarning,
+                stacklevel=2,
+            )
 
         # Sum of cluster-level outer products accounts for within-cluster
         # correlation of errors; this is the "meat" of the sandwich estimator.
@@ -929,7 +942,8 @@ def results_to_dataframe(results: list[CohortTimeEffect]) -> pd.DataFrame:
         return pd.DataFrame(columns=[
             'cohort', 'period', 'event_time', 'att', 'se',
             'ci_lower', 'ci_upper', 't_stat', 'pvalue',
-            'n_treated', 'n_control', 'n_total'
+            'n_treated', 'n_control', 'n_total',
+            'df_resid', 'df_inference'
         ])
 
     return pd.DataFrame([
@@ -946,6 +960,8 @@ def results_to_dataframe(results: list[CohortTimeEffect]) -> pd.DataFrame:
             'n_treated': r.n_treated,
             'n_control': r.n_control,
             'n_total': r.n_total,
+            'df_resid': r.df_resid,
+            'df_inference': r.df_inference,
         }
         for r in results
     ])

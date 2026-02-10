@@ -79,18 +79,18 @@ class TestBootstrapWeightsPassedCorrectly:
         bootstrap_calls = call_args_list[1:]  # 跳过主估计调用
         
         for i, (args, kwargs) in enumerate(bootstrap_calls):
-            assert 'weights' in kwargs, (
-                f"Bootstrap迭代{i}未传入weights参数"
+            assert 'sample_weights' in kwargs, (
+                f"Bootstrap迭代{i}未传入sample_weights参数"
             )
-            weights = kwargs['weights']
+            weights = kwargs['sample_weights']
             assert weights is not None, (
-                f"Bootstrap迭代{i}的weights为None"
+                f"Bootstrap迭代{i}的sample_weights为None"
             )
             assert isinstance(weights, np.ndarray), (
-                f"Bootstrap迭代{i}的weights类型错误: {type(weights)}"
+                f"Bootstrap迭代{i}的sample_weights类型错误: {type(weights)}"
             )
             assert len(weights) > 0, (
-                f"Bootstrap迭代{i}的weights为空数组"
+                f"Bootstrap迭代{i}的sample_weights为空数组"
             )
     
     def test_bootstrap_weights_computed_before_outcome_model(self):
@@ -111,9 +111,9 @@ class TestBootstrapWeightsPassedCorrectly:
         original_func = estimate_outcome_model
         
         def mock_outcome_model(*args, **kwargs):
-            if 'weights' in kwargs and kwargs['weights'] is not None:
+            if 'sample_weights' in kwargs and kwargs['sample_weights'] is not None:
                 # 验证权重是正数（IPW权重应该是正的）
-                weights = kwargs['weights']
+                weights = kwargs['sample_weights']
                 weights_at_call.append(weights.copy())
             return original_func(*args, **kwargs)
         
@@ -184,10 +184,11 @@ class TestBootstrapAnalyticalConsistency:
             seed=42
         )
         
-        # SE的相对差异应在合理范围内
+        # SE的相对差异应在合理范围内（Hajek IF 修复后，analytical 与 bootstrap 高度一致）
+        # 经验测试（20组随机种子）：n=500时 max差异≈9.4%，500次bootstrap蒙特卡洛误差更小
         se_diff = abs(result_analytical.se - result_bootstrap.se) / result_analytical.se
         
-        assert se_diff < 0.3, (
+        assert se_diff < 0.15, (
             f"Analytical SE与Bootstrap SE差异过大: "
             f"analytical={result_analytical.se:.6f}, "
             f"bootstrap={result_bootstrap.se:.6f}, "
@@ -244,8 +245,11 @@ class TestBootstrapAnalyticalConsistency:
         
         se_diff = abs(result_analytical.se - result_bootstrap.se) / result_analytical.se
         
-        # 容许更大的差异，因为Bootstrap本身有随机性
-        max_diff = 0.35 if n < 500 else 0.25
+        # 经验测试（20组随机种子，300次bootstrap）：
+        # n=200: max=11.2%, p95=10.5%
+        # n=500: max=9.4%,  p95=8.2%
+        # n=1000: max=5.8%, p95=5.3%
+        max_diff = 0.15 if n < 500 else 0.12
         
         assert se_diff < max_diff, (
             f"N={n}时SE差异过大: analytical={result_analytical.se:.6f}, "
@@ -278,7 +282,7 @@ class TestWLSWeightsApplication:
         weights = np.array([1.0, 2.0, 1.5, 1.0, 1.0, 1.0])  # 控制组权重: [1.0, 2.0, 1.5]
         
         # 使用函数估计
-        m0_hat, coef = estimate_outcome_model(data, 'y', 'd', ['x'], weights=weights)
+        m0_hat, coef = estimate_outcome_model(data, 'y', 'd', ['x'], sample_weights=weights)
         
         # 手工计算WLS
         # 控制组数据
@@ -319,10 +323,10 @@ class TestWLSWeightsApplication:
         
         # 有权重 vs 无权重
         m0_with_weights, coef_with = estimate_outcome_model(
-            data, 'y', 'd', ['x'], weights=weights
+            data, 'y', 'd', ['x'], sample_weights=weights
         )
         m0_without_weights, coef_without = estimate_outcome_model(
-            data, 'y', 'd', ['x'], weights=None
+            data, 'y', 'd', ['x'], sample_weights=None
         )
         
         # 系数应该不同（因为权重改变了估计）

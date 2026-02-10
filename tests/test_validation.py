@@ -62,7 +62,7 @@ class TestBasicValidation:
         for method in ['demean', 'detrend', 'demeanq', 'detrendq']:
             if method in ['demeanq', 'detrendq']:
                 # Quarterly methods require ``tvar`` to be a list
-                with pytest.raises(InvalidRollingMethodError, match="requires tvar"):
+                with pytest.raises(InvalidRollingMethodError, match="requires either"):
                     validate_and_prepare_data(
                         data, y='y', d='d', ivar='id',
                         tvar='year',  # should be a list here

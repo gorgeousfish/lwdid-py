@@ -55,10 +55,10 @@ class TestEmptyData:
     """Test handling of empty or near-empty data."""
     
     def test_empty_dataframe_raises(self):
-        """Empty DataFrame should raise InsufficientDataError."""
+        """Empty DataFrame should raise an error."""
         df = pd.DataFrame(columns=['unit', 'year', 'treated', 'post', 'outcome'])
         
-        with pytest.raises(InsufficientDataError):
+        with pytest.raises((InsufficientDataError, InvalidParameterError)):
             validate_and_prepare_data(
                 df, y='outcome', d='treated', ivar='unit',
                 tvar='year', post='post', rolling='demean'

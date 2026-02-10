@@ -27,6 +27,9 @@ env/
 .venv
 test_lwdid_env/
 
+# Environment variables
+.env
+
 # IDE
 .vscode/
 .idea/
@@ -39,6 +42,13 @@ test_lwdid_env/
 .coverage
 htmlcov/
 .tox/
+
+# Logs
+*.log
+stata.log
+
+# Jupyter
+.ipynb_checkpoints/
 
 # Documentation builds
 docs/build/
@@ -58,3 +68,30 @@ Thumbs.db
 /*.xlsx
 !tests/data/*.csv
 !data/*.csv
+
+# Development/debug scripts (not part of package)
+_check_import.py
+_move_broken_tests.sh
+_cleanup_git_cache.sh
+_diagnose_*.py
+_verify_*.py
+test_fix.py
+test_hc_staggered.py
+verify_hc_status.py
+.specstory/
+
+# Development diagnostic/debug scripts in tests/
+tests/diagnose_*.py
+tests/debug_*.py
+tests/check_residuals.py
+tests/compare_algorithms.py
+tests/deep_ci_analysis.py
+tests/replicate_stata_ci.py
+tests/validate_bug_fixes_stata.py
+tests/BUG_FIXES_REPORT.md
+
+# Archived dev tests (not part of release)
+tests/_archived_dev_tests/
+
+# Hypothesis (property-based testing cache)
+.hypothesis/

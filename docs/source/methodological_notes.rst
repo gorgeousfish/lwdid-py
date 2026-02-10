@@ -14,14 +14,14 @@ Overview
 The ``lwdid`` package implements the Lee and Wooldridge methods for difference-in-
 differences estimation with panel data, covering three scenarios:
 
-1. **Small-sample common timing** (Lee and Wooldridge, 2026): Exact t-based inference
+1. **Small-sample common timing** (Lee and Wooldridge 2026): Exact t-based inference
    under classical linear model assumptions when the number of cross-sectional units
    is small.
 
-2. **Large-sample common timing** (Lee and Wooldridge, 2025): Rolling transformation
+2. **Large-sample common timing** (Lee and Wooldridge 2025): Rolling transformation
    approach with asymptotic inference using robust standard errors.
 
-3. **Staggered adoption** (Lee and Wooldridge, 2025): Extension to settings where
+3. **Staggered adoption** (Lee and Wooldridge 2025): Extension to settings where
    units are treated at different times, with cohort-time specific effect estimation.
 
 The core method transforms panel data into cross-sectional form via unit-specific
@@ -369,7 +369,7 @@ Clustering at Higher Levels
 ---------------------------
 
 When the policy or treatment varies at a level higher than the unit of observation,
-cluster standard errors at the policy variation level (Lee and Wooldridge, 2026).
+cluster standard errors at the policy variation level (Lee and Wooldridge 2026).
 This section provides guidance on choosing the appropriate clustering level and
 tools for diagnosing clustering structure.
 

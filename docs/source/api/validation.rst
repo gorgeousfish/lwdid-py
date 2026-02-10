@@ -646,16 +646,15 @@ Data Preparation Checklist
 
 Before using ``lwdid()``, ensure:
 
-1. ☑ Data is in long format (one row per unit-time observation)
-2. ☑ No duplicate (unit, time) pairs
-3. ☑ Time variable forms continuous sequence
-
-4. ☑ ``post`` is binary (0/1) and time-based
-5. ☑ ``d`` is time-invariant treatment group indicator
-6. ☑ Control variables (if any) are time-invariant
-7. ☑ No missing values in required variables
-8. ☑ Sufficient pre-treatment periods for chosen transformation
-9. ☑ At least :math:`N \geq 3` units
+1. Data is in long format (one row per unit-time observation)
+2. No duplicate (unit, time) pairs
+3. Time variable forms continuous sequence
+4. ``post`` is binary (0/1) and time-based
+5. ``d`` is time-invariant treatment group indicator
+6. Control variables (if any) are time-invariant
+7. No missing values in required variables
+8. Sufficient pre-treatment periods for chosen transformation
+9. At least :math:`N \geq 3` units
 
 See Also
 --------

@@ -413,7 +413,7 @@ where :math:`\pi = P(D=1)` is the unconditional treatment probability,
 - **PSM (Propensity Score Matching)**: Matches treated to control units based on
   estimated propensity scores. Generally less efficient than RA and IPWRA.
 
-**Efficiency Comparison** (from Lee and Wooldridge, 2025)
+**Efficiency Comparison** (from Lee and Wooldridge 2025)
 
 Under correct specification of all models:
 

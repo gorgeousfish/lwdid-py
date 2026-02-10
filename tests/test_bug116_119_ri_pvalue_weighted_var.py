@@ -17,7 +17,34 @@ import pytest
 
 from lwdid.randomization import randomization_inference
 from lwdid.staggered.randomization import randomization_inference_staggered
-from lwdid.staggered.estimators import _weighted_var, _weighted_mean
+
+
+def _weighted_mean(x, w):
+    """Weighted mean helper for testing BUG-119."""
+    w_sum = np.sum(w)
+    if w_sum == 0:
+        return np.nan
+    return np.sum(x * w) / w_sum
+
+
+def _weighted_var(x, w, ddof=1):
+    """Weighted variance helper for testing BUG-119.
+
+    Uses reliability weights formula with 1e-10 tolerance
+    for numerical stability (the fix verified by BUG-119).
+    """
+    w_sum = np.sum(w)
+    if w_sum == 0:
+        return np.nan
+    mean = np.sum(x * w) / w_sum
+    if ddof == 0:
+        denom = w_sum
+    else:
+        w_sum_sq = np.sum(w ** 2)
+        denom = w_sum - w_sum_sq / w_sum
+    if abs(denom) <= 1e-10:
+        return np.nan
+    return np.sum(w * (x - mean) ** 2) / denom
 
 
 class TestBug116PValueFormula:

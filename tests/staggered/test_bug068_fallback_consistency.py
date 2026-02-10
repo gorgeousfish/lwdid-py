@@ -197,14 +197,15 @@ class TestAggregatNoneFallback:
 # =============================================================================
 
 class TestAggregateCohortFallback:
-    """Test that aggregate='cohort' returns np.nan (not None) for inference stats.
+    """Test that aggregate='cohort' populates top-level stats from cohort-weighted average.
     
-    Note: aggregate='cohort' computes cohort-specific effects but not overall.
-    The top-level results object inherits fallback values similar to 'none'.
+    Note: aggregate='cohort' computes cohort-specific effects and then derives
+    top-level statistics (att, se_att, etc.) as the n_units-weighted average
+    across cohort effects. This is more informative than returning nan.
     """
     
-    def test_cohort_aggregate_fallback_consistency(self, simple_staggered_data):
-        """aggregate='cohort' should also have nan fallback for inference stats."""
+    def test_cohort_aggregate_has_valid_top_level_stats(self, simple_staggered_data):
+        """aggregate='cohort' should have valid top-level stats from weighted average."""
         results = lwdid(
             data=simple_staggered_data,
             y='y',
@@ -215,19 +216,22 @@ class TestAggregateCohortFallback:
             aggregate='cohort',
         )
         
-        # For cohort aggregation, overall effect is not computed
-        # Fallback values should be nan
-        fallback_attrs = ['se_att', 't_stat', 'pvalue', 'ci_lower', 'ci_upper']
-        for attr in fallback_attrs:
+        # Top-level stats should be valid floats (weighted average of cohort effects)
+        top_level_attrs = ['se_att', 't_stat', 'pvalue', 'ci_lower', 'ci_upper']
+        for attr in top_level_attrs:
             value = getattr(results, attr)
             assert value is not None, \
-                f"{attr} should be np.nan, not None for aggregate='cohort'"
+                f"{attr} should not be None for aggregate='cohort'"
             assert isinstance(value, (float, np.floating)), \
                 f"{attr} should be float type, got {type(value)}"
-            assert math.isnan(value), \
-                f"{attr} should be nan when aggregate='cohort', got {value}"
+            assert np.isfinite(value), \
+                f"{attr} should be finite when aggregate='cohort', got {value}"
         
-        # But cohort-level effects should have valid values
+        # att should also be valid
+        assert results.att is not None
+        assert np.isfinite(results.att)
+        
+        # Cohort-level effects should have valid values
         assert results.att_by_cohort is not None
         assert len(results.att_by_cohort) > 0
         for _, row in results.att_by_cohort.iterrows():

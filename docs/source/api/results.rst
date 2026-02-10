@@ -368,7 +368,7 @@ Staggered Design Example
    from lwdid import lwdid
 
    # Estimate with staggered design
-   results = lwdid(data, y='l_homicide', ivar='state', tvar='year',
+   results = lwdid(data, y='lhomicide', ivar='state', tvar='year',
                    gvar='effyear', rolling='demean',
                    aggregate='overall', control_group='not_yet_treated')
 

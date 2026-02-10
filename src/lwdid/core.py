@@ -702,7 +702,8 @@ def lwdid(
           and ``Q`` parameters. Supports quarterly (Q=4), monthly (Q=12), or
           weekly (Q=52) data.
 
-        Seasonal methods (demeanq, detrendq) are only supported in common timing mode.
+        All four transformation methods are supported for both common timing
+        and staggered adoption designs.
     gvar : str, optional
         Column name indicating first treatment period for staggered adoption.
         If specified, activates staggered mode and ignores ``d`` and ``post``.
@@ -1748,7 +1749,7 @@ def _lwdid_staggered(
         Column name(s) of the time variable.
     gvar : str
         Column name indicating the first treatment period for each unit.
-    rolling : {'demean', 'detrend'}
+    rolling : {'demean', 'detrend', 'demeanq', 'detrendq'}
         Transformation method for removing pre-treatment patterns.
     control_group : {'never_treated', 'not_yet_treated', 'all_others'}
         Control group composition strategy.
@@ -1839,28 +1840,18 @@ def _lwdid_staggered(
     if rolling is None:
         raise ValueError(
             "Staggered mode requires 'rolling' parameter.\n"
-            "Valid values: 'demean', 'detrend'."
+            "Valid values: 'demean', 'detrend', 'demeanq', 'detrendq'."
         )
     
     if not isinstance(rolling, str):
         raise TypeError(
             f"Parameter 'rolling' must be a string, got {type(rolling).__name__}. "
-            f"Valid values: 'demean', 'detrend'."
+            f"Valid values: 'demean', 'detrend', 'demeanq', 'detrendq'."
         )
     
     rolling_lower = rolling.lower()
 
-    # Seasonal rolling transformations are only supported in common timing mode.
-    # In staggered mode (gvar provided), they are intentionally disabled to avoid
-    # ambiguity about cohort-specific seasonal adjustments.
-    if rolling_lower in ('demeanq', 'detrendq'):
-        raise ValueError(
-            f"Staggered mode does not support rolling='{rolling}'. "
-            f"Seasonal rolling transformations are only supported in common timing mode "
-            f"(set gvar=None)."
-        )
-
-    VALID_ROLLING_STAGGERED = ('demean', 'detrend')
+    VALID_ROLLING_STAGGERED = ('demean', 'detrend', 'demeanq', 'detrendq')
     if rolling_lower not in VALID_ROLLING_STAGGERED:
         raise ValueError(
             f"Invalid rolling='{rolling}' for staggered mode.\n"
@@ -2128,7 +2119,9 @@ def _lwdid_staggered(
             'pvalue': e.pvalue,
             'n_treated': e.n_treated,
             'n_control': e.n_control,
-            'n_total': e.n_total
+            'n_total': e.n_total,
+            'df_resid': e.df_resid,
+            'df_inference': e.df_inference,
         }
         for e in cohort_time_effects
     ])
@@ -2152,7 +2145,7 @@ def _lwdid_staggered(
             tvar=tvar_str,
             cohorts=cohorts,
             T_max=T_max,
-            transform_type='demean' if rolling_lower == 'demean' else 'detrend',
+            transform_type='demean' if rolling_lower in ('demean', 'demeanq') else 'detrend',
             vce=vce,
             cluster_var=cluster_var,
             alpha=alpha,

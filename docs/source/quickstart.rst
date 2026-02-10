@@ -66,7 +66,7 @@ Required Parameters
    described in Lee and Wooldridge (2026). The ``detrend`` method estimates
    unit-specific linear trends using pre-treatment data via regression
    :math:`Y_{it} = A_i + B_i t + \varepsilon_{it}`, which requires at least 2
-   observations to identify both intercept and slope (Lee and Wooldridge, 2026).
+   observations to identify both intercept and slope (Lee and Wooldridge 2026).
 
 Common Options
 --------------

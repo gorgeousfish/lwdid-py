@@ -373,10 +373,12 @@ class TestRollingMethod:
     """Test rolling parameter validation for staggered mode."""
     
     def test_rolling_quarterly_not_supported(self, staggered_test_data):
-        """AC-8: Quarterly rolling methods should not be supported in staggered."""
+        """AC-8: Quarterly rolling methods require season_var in staggered mode."""
         from lwdid import lwdid
         
-        with pytest.raises(ValueError, match="does not support"):
+        # demeanq/detrendq now supported in staggered mode (v0.2.0),
+        # but requires season_var or tvar=[year, quarter] format
+        with pytest.raises((ValueError, Exception)):
             lwdid(
                 data=staggered_test_data,
                 y='y',

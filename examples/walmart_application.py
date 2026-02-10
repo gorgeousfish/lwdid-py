@@ -99,7 +99,8 @@ def load_and_describe_data():
     return df
 
 
-def estimate_rolling_ipwra(df, rolling_method, controls, control_group='not_yet_treated'):
+def estimate_rolling_ipwra(df, rolling_method, controls, control_group='not_yet_treated',
+                          include_pretreatment=True, verbose=True):
     """
     Estimate ATT using Rolling IPWRA method.
     
@@ -113,13 +114,18 @@ def estimate_rolling_ipwra(df, rolling_method, controls, control_group='not_yet_
         Control variables
     control_group : str
         'never_treated', 'not_yet_treated', or 'all_others'
+    include_pretreatment : bool
+        是否计算 pre-treatment 效应（bootstrap 内部设为 False 以加速）
+    verbose : bool
+        是否打印进度信息
         
     Returns
     -------
     LWDIDResults
         Estimation results
     """
-    print(f"\nEstimating Rolling IPWRA with {rolling_method} (control: {control_group})...")
+    if verbose:
+        print(f"\nEstimating Rolling IPWRA with {rolling_method} (control: {control_group})...")
     
     results = lwdid(
         data=df,
@@ -133,6 +139,7 @@ def estimate_rolling_ipwra(df, rolling_method, controls, control_group='not_yet_
         control_group=control_group,
         aggregate='none',
         alpha=0.05,
+        include_pretreatment=include_pretreatment,
     )
     
     return results
@@ -256,9 +263,10 @@ def compute_watt_bootstrap_se(
     This is computationally expensive: it re-runs the full staggered pipeline
     n_bootstrap times. Enable only when you explicitly want paper-style SEs.
     """
-    # Point estimate on original sample
+    # Point estimate on original sample（不需要 pre-treatment）
     base_results = estimate_rolling_ipwra(
-        df, rolling_method, controls, control_group=control_group
+        df, rolling_method, controls, control_group=control_group,
+        include_pretreatment=False, verbose=False
     )
     watt_point = compute_watt(base_results, df)
     if len(watt_point) == 0:
@@ -268,9 +276,12 @@ def compute_watt_bootstrap_se(
     rep_matrix = {et: [] for et in event_times}
 
     for b in range(n_bootstrap):
+        if (b + 1) % 10 == 0 or b == 0:
+            print(f"  Bootstrap rep {b + 1}/{n_bootstrap}...")
         boot_df = _bootstrap_resample_units(df, ivar='fips', seed=seed, rep=b)
         boot_results = estimate_rolling_ipwra(
-            boot_df, rolling_method, controls, control_group=control_group
+            boot_df, rolling_method, controls, control_group=control_group,
+            include_pretreatment=False, verbose=False
         )
         boot_watt = compute_watt(boot_results, boot_df)
 
@@ -508,17 +519,20 @@ def main():
     print("Section 4: Weighted ATT by Event Time")
     print("=" * 70)
     
-    watt_demean = compute_watt(results_demean, df)
-    watt_detrend = compute_watt(results_detrend, df)
+    # 论文使用 bootstrap SE (100 reps) 计算 WATT 的标准误和置信区间。
+    # 默认遵照论文配置使用 bootstrap SE。
+    # 设置 WALMART_FAST=1 可跳过 bootstrap，使用 analytical SE（仅供调试）。
+    skip_bootstrap = os.getenv('WALMART_FAST', '0') == '1'
 
-    # Optional: paper-style WATT bootstrap SE (100 reps).
-    # Enable by setting WALMART_WATT_BOOTSTRAP=1 in your environment.
-    run_watt_bootstrap = os.getenv('WALMART_WATT_BOOTSTRAP', '0') == '1'
-    if run_watt_bootstrap:
+    if skip_bootstrap:
+        print("\n[FAST MODE] 跳过 bootstrap，使用 analytical SE（仅供调试）")
+        watt_demean = compute_watt(results_demean, df)
+        watt_detrend = compute_watt(results_detrend, df)
+    else:
         reps = int(os.getenv('WALMART_WATT_BOOTSTRAP_REPS', '100'))
         seed = int(os.getenv('WALMART_WATT_BOOTSTRAP_SEED', '12345'))
         print("\n" + "-" * 70)
-        print(f"Bootstrap WATT SE enabled: reps={reps}, seed={seed}")
+        print(f"Bootstrap WATT SE (论文配置): reps={reps}, seed={seed}")
         print("-" * 70)
         watt_demean = compute_watt_bootstrap_se(
             df, 'demean', controls, control_group='all_others',
@@ -538,9 +552,67 @@ def main():
     # Step 5: Compare with paper results
     compare_with_paper(watt_demean, watt_detrend)
     
-    # Step 6: Generate event study plot
+    # Step 6: Generate event study plot (论文 Figure 1 风格：error bar)
+    # Post-treatment 使用 bootstrap SE（与论文一致），pre-treatment 使用 analytical SE
     save_path = Path(__file__).parent / 'walmart_event_study.png'
-    plot_event_study(watt_demean, watt_detrend, save_path)
+    
+    print("\n" + "=" * 70)
+    print("Section 5: Event Study Visualization (Figure 1)")
+    print("=" * 70)
+    
+    from lwdid.staggered.aggregation import aggregate_to_event_time, event_time_effects_to_dataframe
+    
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
+    
+    for idx, (results_obj, watt_post, panel_title) in enumerate([
+        (results_demean, watt_demean, '(b) Rolling IPWRA with unit-specific demeaning'),
+        (results_detrend, watt_detrend, '(c) Rolling IPWRA with unit-specific detrending'),
+    ]):
+        ax = axes[idx]
+        
+        # Pre-treatment: 从 att_pre_treatment 聚合（analytical SE）
+        pre_plot = pd.DataFrame()
+        if results_obj.include_pretreatment and results_obj.att_pre_treatment is not None:
+            pre_ct = results_obj.att_pre_treatment.copy()
+            pre_effects = aggregate_to_event_time(
+                pre_ct, results_obj.cohort_sizes, alpha=0.05, df_strategy='conservative'
+            )
+            pre_plot = event_time_effects_to_dataframe(pre_effects)
+            pre_plot = pre_plot[pre_plot['event_time'] < 0].sort_values('event_time')
+        
+        # Post-treatment: 使用 watt_demean/watt_detrend（bootstrap SE 或 analytical SE）
+        post_plot = watt_post[watt_post['event_time'] >= 0].copy().sort_values('event_time')
+        
+        # Pre-treatment (蓝色 error bar)
+        if len(pre_plot) > 0:
+            ax.errorbar(
+                pre_plot['event_time'], pre_plot['att'],
+                yerr=[pre_plot['att'] - pre_plot['ci_lower'], pre_plot['ci_upper'] - pre_plot['att']],
+                fmt='o-', color='steelblue', capsize=2, markersize=4,
+                linewidth=1.2, label='Pre-treatment',
+            )
+        
+        # Post-treatment (红色 error bar)
+        if len(post_plot) > 0:
+            ax.errorbar(
+                post_plot['event_time'], post_plot['watt'],
+                yerr=1.96 * post_plot['se'],
+                fmt='o-', color='firebrick', capsize=2, markersize=4,
+                linewidth=1.2, label='Post-treatment',
+            )
+        
+        ax.axhline(y=0, color='gray', linestyle='-', linewidth=0.6, alpha=0.7)
+        ax.axvline(x=-0.5, color='gray', linestyle=':', linewidth=0.8, alpha=0.5)
+        ax.set_xlabel('Time To Treatment', fontsize=10)
+        ax.set_ylabel('WATT', fontsize=10)
+        ax.set_title(panel_title, fontsize=11)
+        ax.legend(loc='upper left', fontsize=8)
+        ax.grid(False)
+    
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    print(f"\nFigure saved to: {save_path}")
+    plt.close()
     
     # Summary
     print("\n" + "=" * 70)
@@ -579,8 +651,10 @@ def main():
     
     print("\n2. Demean Results:")
     print("   - With control_group='all_others', results closely match paper Table A4 (column 3)")
-    print("   - Note: Paper standard errors are bootstrap-based (100 reps);")
-    print("     this script currently reports conservative SE using an independence formula.")
+    if skip_bootstrap:
+        print("   - [FAST MODE] SE 使用 analytical 独立性假设，非论文 bootstrap 配置")
+    else:
+        print("   - SE 使用 bootstrap (100 reps)，与论文配置一致")
     
     print("\n3. Key Qualitative Findings (Consistent with Paper):")
     print("   - Detrending produces smaller, more conservative estimates")

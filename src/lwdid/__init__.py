@@ -33,8 +33,8 @@ Four unit-specific transformation methods remove pre-treatment patterns:
 - ``demeanq`` : Quarterly demeaning with seasonal fixed effects.
 - ``detrendq`` : Quarterly detrending with seasonal effects and trends.
 
-All four transformation methods are supported for both common timing and
-staggered adoption designs.
+All four transformation methods are supported for both common timing
+and staggered adoption designs.
 
 Estimation Methods
 ------------------
@@ -81,15 +81,16 @@ estimators (RA, IPW, IPWRA, PSM) can be applied to the transformed outcomes.
 For staggered adoption, the transformation is applied separately for each
 treatment cohort, using cohort-specific pre-treatment periods.
 
-Requires Python >= 3.8.
-Dependencies: numpy >= 1.20, pandas >= 1.3, scipy >= 1.7, statsmodels >= 0.13.
+Requires Python >= 3.10.
+Dependencies: numpy >= 1.20, pandas >= 1.3, scipy >= 1.7, statsmodels >= 0.13,
+scikit-learn >= 1.0.
 """
 
 try:
     from importlib.metadata import version as _version
     __version__ = _version("lwdid")
 except ImportError:
-    # Python < 3.8 fallback
+    # Python < 3.10 fallback
     try:
         import pkg_resources
         __version__ = pkg_resources.get_distribution("lwdid").version

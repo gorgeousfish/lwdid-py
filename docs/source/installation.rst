@@ -6,7 +6,7 @@ System Requirements
 
 **Python Version**
 
-- Python 3.8 to 3.12
+- Python 3.10 to 3.12
 - Python 3.10 or 3.12 recommended
 
 **Core Dependencies**
@@ -17,15 +17,9 @@ lwdid requires the following Python packages:
 - pandas >= 1.3, < 3.0
 - scipy >= 1.7, < 2.0
 - statsmodels >= 0.13, < 1.0
+- scikit-learn >= 1.0
 - matplotlib >= 3.3
 - openpyxl >= 3.1
-
-**Optional Dependencies**
-
-- scikit-learn: Required internally by the IPW, IPWRA, and PSM estimators
-  for propensity score estimation via logistic regression. Installed
-  automatically in most scientific Python environments. If not present,
-  an ``ImportError`` is raised when these estimators are invoked.
 
 Installation Methods
 --------------------

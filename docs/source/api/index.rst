@@ -47,9 +47,9 @@ Quick Index
 
 - :func:`lwdid.lwdid` - Main estimation function supporting three scenarios:
 
-  - Small-sample common timing with exact t-based inference (Lee and Wooldridge, 2026)
-  - Large-sample common timing with robust standard errors (Lee and Wooldridge, 2025)
-  - Staggered adoption with cohort-time effects (Lee and Wooldridge, 2025)
+  - Small-sample common timing with exact t-based inference (Lee and Wooldridge 2026)
+  - Large-sample common timing with robust standard errors (Lee and Wooldridge 2025)
+  - Staggered adoption with cohort-time effects (Lee and Wooldridge 2025)
 
 - :class:`lwdid.LWDIDResults` - Results container class
 

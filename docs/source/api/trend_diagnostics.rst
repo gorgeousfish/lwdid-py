@@ -5,11 +5,6 @@ The trend diagnostics module provides tools for assessing the parallel trends
 assumption and detecting heterogeneous trends across treatment cohorts in
 difference-in-differences settings.
 
-.. automodule:: lwdid.trend_diagnostics
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Overview
 --------
 

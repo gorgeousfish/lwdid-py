@@ -309,47 +309,72 @@ def transform_staggered_demean_pre(
             )
 
     # =========================================================================
-    # Compute Pre-treatment Demeaning Transformations
+    # Compute Pre-treatment Demeaning Transformations (向量化实现)
     # =========================================================================
-    all_units = result[ivar].unique()
+    # 构建 (unit, time) -> Y 的 pivot table，用于快速查找
+    # 行 = unit, 列 = time period
+    pivot = result.pivot_table(index=ivar, columns=tvar, values=y, aggfunc='first')
+    # 确保列是整数排序
+    pivot = pivot.reindex(columns=sorted(pivot.columns))
+
+    # 收集所有新列，最后一次性 concat（避免 DataFrame fragmentation）
+    new_cols = {}
 
     for g in cohorts:
         pre_periods = get_pre_treatment_periods_for_cohort(g, T_min)
 
-        # Initialize columns with NaN; missing data remains NaN after iteration
+        # 初始化所有列为 NaN Series
         for t in pre_periods:
             col_name = f'ydot_pre_g{int(g)}_t{t}'
-            result[col_name] = np.nan
+            new_cols[col_name] = pd.Series(np.nan, index=result.index)
 
-        for unit_id in all_units:
-            unit_mask = result[ivar] == unit_id
-            unit_data = result[unit_mask]
+        # Anchor point (t = g-1): 所有单位设为 0.0
+        anchor_t = g - 1
+        if anchor_t in pre_periods:
+            col_name = f'ydot_pre_g{int(g)}_t{anchor_t}'
+            anchor_mask = result[tvar] == anchor_t
+            new_cols[col_name].loc[anchor_mask] = 0.0
 
-            for t in pre_periods:
-                col_name = f'ydot_pre_g{int(g)}_t{t}'
-                period_mask = unit_mask & (result[tvar] == t)
+        # 对非 anchor 的 pre-treatment periods 进行向量化计算
+        for t in pre_periods:
+            if t == g - 1:
+                continue  # anchor 已处理
 
-                if not period_mask.any():
-                    continue
+            col_name = f'ydot_pre_g{int(g)}_t{t}'
 
-                Y_it = result.loc[period_mask, y].values[0]
+            # future periods: {t+1, ..., g-1}
+            future_cols = [c for c in pivot.columns if t < c < g]
+            if len(future_cols) == 0:
+                continue
 
-                if pd.isna(Y_it):
-                    continue
+            # 每个单位在 future periods 的均值（向量化）
+            future_mean = pivot[future_cols].mean(axis=1)  # Series: unit -> mean
 
-                # Anchor point (t = g-1): empty future window, set to 0 by convention
-                if t == g - 1:
-                    result.loc[period_mask, col_name] = 0.0
-                else:
-                    # Subtract mean of future pre-treatment outcomes
-                    rolling_mean = _compute_rolling_mean_future(
-                        unit_data, y, tvar, t, g
-                    )
+            # 当前期 Y_it
+            if t in pivot.columns:
+                Y_it = pivot[t]  # Series: unit -> Y_it
+            else:
+                continue
 
-                    if not np.isnan(rolling_mean):
-                        # Transformed outcome = Y_it - mean of future pre-treatment outcomes.
-                        result.loc[period_mask, col_name] = Y_it - rolling_mean
-                    # else: leave as NaN
+            # 变换值 = Y_it - future_mean
+            transformed = Y_it - future_mean
+
+            # 只保留两者都非 NaN 的
+            valid = transformed.dropna()
+
+            if len(valid) == 0:
+                continue
+
+            # 赋值到对应 (unit, t) 的行
+            period_mask = result[tvar] == t
+            period_data = result.loc[period_mask]
+            unit_map = valid.to_dict()
+            new_cols[col_name].loc[period_mask] = period_data[ivar].map(unit_map).values
+
+    # 一次性添加所有新列
+    if new_cols:
+        new_df = pd.DataFrame(new_cols, index=result.index)
+        result = pd.concat([result, new_df], axis=1)
 
     return result
 
@@ -471,50 +496,106 @@ def transform_staggered_detrend_pre(
             )
 
     # =========================================================================
-    # Compute Pre-treatment Detrending Transformations
+    # Compute Pre-treatment Detrending Transformations (向量化实现)
     # =========================================================================
-    all_units = result[ivar].unique()
+    # 构建 (unit, time) -> Y 的 pivot table
+    pivot = result.pivot_table(index=ivar, columns=tvar, values=y, aggfunc='first')
+    pivot = pivot.reindex(columns=sorted(pivot.columns))
+
+    # 收集所有新列，最后一次性 concat（避免 DataFrame fragmentation）
+    new_cols = {}
 
     for g in cohorts:
         pre_periods = get_pre_treatment_periods_for_cohort(g, T_min)
 
-        # Initialize columns with NaN; missing data remains NaN after iteration
+        # 初始化所有列为 NaN Series
         for t in pre_periods:
             col_name = f'ycheck_pre_g{int(g)}_t{t}'
-            result[col_name] = np.nan
+            new_cols[col_name] = pd.Series(np.nan, index=result.index)
 
-        for unit_id in all_units:
-            unit_mask = result[ivar] == unit_id
-            unit_data = result[unit_mask]
+        # Anchor point (t = g-1): 设为 0.0
+        anchor_t = g - 1
+        if anchor_t in pre_periods:
+            col_name = f'ycheck_pre_g{int(g)}_t{anchor_t}'
+            anchor_mask = result[tvar] == anchor_t
+            new_cols[col_name].loc[anchor_mask] = 0.0
 
-            for t in pre_periods:
-                col_name = f'ycheck_pre_g{int(g)}_t{t}'
-                period_mask = unit_mask & (result[tvar] == t)
+        for t in pre_periods:
+            if t == g - 1:
+                continue  # anchor 已处理
+            if t == g - 2:
+                continue  # 只有1个 future period，OLS 需要至少2个
 
-                if not period_mask.any():
-                    continue
+            col_name = f'ycheck_pre_g{int(g)}_t{t}'
 
-                Y_it = result.loc[period_mask, y].values[0]
+            # future periods: {t+1, ..., g-1}
+            future_cols = [c for c in pivot.columns if t < c < g]
+            if len(future_cols) < 2:
+                continue
 
-                if pd.isna(Y_it):
-                    continue
+            # 提取 future periods 的数据矩阵 (units × future_periods)
+            Y_future = pivot[future_cols]  # DataFrame: units × future_periods
+            t_vals = np.array(future_cols, dtype=float)  # 时间值
 
-                # Anchor point (t = g-1): empty future window, set to 0 by convention
-                if t == g - 1:
-                    result.loc[period_mask, col_name] = 0.0
-                elif t == g - 2:
-                    # Only 1 future period; OLS requires at least 2 points
-                    pass
-                else:
-                    # Subtract OLS-fitted value from future pre-treatment trend
-                    A, B = _compute_rolling_trend_future(
-                        unit_data, y, tvar, t, g
-                    )
+            # 向量化 OLS: Y = A + B*t
+            # 公式: B = (n*sum(t*Y) - sum(t)*sum(Y)) / (n*sum(t^2) - sum(t)^2)
+            #        A = (sum(Y) - B*sum(t)) / n
 
-                    if not np.isnan(A) and not np.isnan(B):
-                        # Detrended outcome = Y_it - fitted value from future trend.
-                        Y_hat = A + B * t
-                        result.loc[period_mask, col_name] = Y_it - Y_hat
-                    # else: leave as NaN
+            # 计算每个单位的有效观测数（非 NaN）
+            valid_mask = Y_future.notna()
+            n_valid = valid_mask.sum(axis=1)  # Series: unit -> count
+
+            # 只处理有至少2个有效观测的单位
+            enough_mask = n_valid >= 2
+
+            if not enough_mask.any():
+                continue
+
+            # 将 NaN 替换为 0 用于求和（配合 valid_mask 计数）
+            Y_filled = Y_future.fillna(0.0)
+
+            # sum(Y), sum(t*Y), sum(t), sum(t^2) — 只对有效值求和
+            sum_Y = (Y_filled * valid_mask).sum(axis=1)
+            sum_tY = (Y_filled * valid_mask * t_vals[np.newaxis, :]).sum(axis=1)
+            sum_t = (valid_mask * t_vals[np.newaxis, :]).sum(axis=1)
+            sum_t2 = (valid_mask * (t_vals ** 2)[np.newaxis, :]).sum(axis=1)
+
+            # OLS 公式
+            denom = n_valid * sum_t2 - sum_t ** 2
+
+            # 避免除零（常数时间值或不足观测）
+            safe_denom = denom.where(denom.abs() > 1e-10, np.nan)
+
+            B_hat = (n_valid * sum_tY - sum_t * sum_Y) / safe_denom
+            A_hat = (sum_Y - B_hat * sum_t) / n_valid
+
+            # 拟合值 Y_hat = A + B * t
+            Y_hat_at_t = A_hat + B_hat * float(t)
+
+            # 当前期 Y_it
+            if t in pivot.columns:
+                Y_it = pivot[t]
+            else:
+                continue
+
+            # 变换值 = Y_it - Y_hat
+            transformed = Y_it - Y_hat_at_t
+
+            # 只保留有效的（enough_mask 且 Y_it 非 NaN 且 OLS 成功）
+            valid = transformed[enough_mask].dropna()
+
+            if len(valid) == 0:
+                continue
+
+            # 赋值
+            period_mask = result[tvar] == t
+            period_data = result.loc[period_mask]
+            unit_map = valid.to_dict()
+            new_cols[col_name].loc[period_mask] = period_data[ivar].map(unit_map).values
+
+    # 一次性添加所有新列
+    if new_cols:
+        new_df = pd.DataFrame(new_cols, index=result.index)
+        result = pd.concat([result, new_df], axis=1)
 
     return result

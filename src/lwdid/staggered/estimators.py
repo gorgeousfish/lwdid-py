@@ -271,31 +271,64 @@ def estimate_ipw(
     if n_control_valid == 0:
         raise ValueError("No control units remain after trimming.")
 
-    # IPW weights w = p/(1-p) reweight controls to match treated covariate distribution.
+    # IPW 权重 w = p/(1-p)，用于重加权控制组以匹配处理组的协变量分布。
+    w_raw = ps_valid[control_valid] / (1 - ps_valid[control_valid])
+    w_raw_sum = w_raw.sum()
+
+    # 归一化权重（用于返回值和诊断，不影响 ATT 估计）。
     weights = np.zeros(len(y_valid))
-    weights[control_valid] = ps_valid[control_valid] / (1 - ps_valid[control_valid])
+    weights[control_valid] = w_raw * n_treated_valid / w_raw_sum if w_raw_sum > 0 else 0.0
 
-    # Normalize weights so they sum to n_treated for proper ATT estimation.
-    weight_sum = weights[control_valid].sum()
-    if weight_sum > 0:
-        weights[control_valid] = weights[control_valid] * n_treated_valid / weight_sum
-
-    # Compute ATT.
+    # ATT（Hajek 形式）：mean_treated(Y) - sum_ctrl(w*Y) / sum_ctrl(w)。
     y_treated_mean = y_valid[treated_valid].mean()
-    y_control_weighted = np.sum(weights[control_valid] * y_valid[control_valid]) / n_treated_valid
+    y_control_weighted = np.sum(w_raw * y_valid[control_valid]) / w_raw_sum
     att = y_treated_mean - y_control_weighted
 
-    # Influence function approach provides asymptotically valid variance estimation.
-    psi = np.zeros(len(y_valid))
+    # ================================================================
+    # M-estimation influence function（含 PS 估计不确定性调整）。
+    #
+    # IPW-ATT 不具有 doubly robust 性质，PS 估计的不确定性对 SE 有
+    # 显著影响。使用 Horvitz-Thompson IF + PS score 调整。
+    #
+    # 参考：Lunceford & Davidian (2004), Wooldridge (2010, Ch.21)
+    # ================================================================
+    n_valid = len(y_valid)
+    D_valid = d_valid.astype(float)
+    p_bar = n_treated_valid / n_valid
 
-    # For treated: psi_i = (Y_i - tau) / N_1.
-    psi[treated_valid] = (y_valid[treated_valid] - att) / n_treated_valid
+    # HT 形式的 influence function。
+    psi_ht = np.zeros(n_valid)
+    psi_ht[treated_valid] = (y_valid[treated_valid] - att) / p_bar
+    psi_ht[control_valid] = -w_raw * y_valid[control_valid] / p_bar
 
-    # For control: psi_i = -w_i * Y_i / N_1, where mu_0 is the weighted control mean.
-    psi[control_valid] = -weights[control_valid] * y_valid[control_valid] / n_treated_valid
+    # PS 估计不确定性的 M-estimation 调整。
+    # 构造设计矩阵（含截距）。
+    X_ps_valid = data[propensity_controls].values[valid_mask].astype(float)
+    X_const = np.column_stack([np.ones(n_valid), X_ps_valid])
 
-    # Variance is the sum of squared influence functions.
-    var_att = np.sum(psi**2)
+    # Logit score: S_i = (D_i - p_i) * X_i。
+    S = (D_valid - ps_valid)[:, np.newaxis] * X_const
+
+    # Logit Hessian: H = -(1/N) * X' diag(p*(1-p)) X。
+    W_ps = ps_valid * (1 - ps_valid)
+    H = -(X_const.T * W_ps) @ X_const / n_valid
+    try:
+        H_inv = np.linalg.inv(H)
+    except np.linalg.LinAlgError:
+        H_inv = np.linalg.pinv(H)
+
+    # dATT_HT/dgamma = -sum_ctrl(dw/dgamma * Y) / (N * p_bar)。
+    # 其中 dw/dgamma = p/(1-p) * X（对 control units）。
+    dw_dgamma_ctrl = w_raw[:, np.newaxis] * X_const[control_valid]
+    Y_ctrl = y_valid[control_valid]
+    dATT_dgamma = -(dw_dgamma_ctrl * Y_ctrl[:, np.newaxis]).sum(axis=0) / (n_valid * p_bar)
+
+    # M-estimation 调整: psi = psi_ht - dATT/dgamma * H^{-1} * S_i。
+    adjustment = (S @ H_inv.T) @ dATT_dgamma
+    psi = psi_ht - adjustment
+
+    # 方差估计。
+    var_att = np.var(psi, ddof=1) / n_valid
     se = np.sqrt(var_att)
 
     # Degrees of freedom retained for interface compatibility; inference uses normal distribution.
@@ -537,7 +570,8 @@ def estimate_ipwra(
     if se_method == 'analytical':
         se, ci_lower, ci_upper = compute_ipwra_se_analytical(
             data_clean, y, d, controls,
-            att, pscores, m0_hat, weights, alpha
+            att, pscores, m0_hat, weights, alpha,
+            propensity_controls=propensity_controls,
         )
     elif se_method == 'bootstrap':
         se, ci_lower, ci_upper = compute_ipwra_se_bootstrap(
@@ -719,11 +753,24 @@ def estimate_outcome_model(
     X_control_const = np.column_stack([np.ones(len(X_control)), X_control])
     
     if sample_weights is not None:
+        # 验证权重有效性（BUG-065 修复）
+        if not np.all(np.isfinite(sample_weights)):
+            raise ValueError(
+                "Invalid weights: sample_weights contain non-finite values "
+                "(inf or NaN). All weights must be finite."
+            )
+        w_mean = sample_weights[control_mask].mean() if control_mask.any() else 0.0
+        if w_mean <= 0 or not np.isfinite(w_mean):
+            raise ValueError(
+                f"Invalid weights: control unit weights have mean={w_mean:.6g}. "
+                "Weights must have a positive finite mean for normalization."
+            )
+        
         # Weighted Least Squares (WLS) estimation.
         # Extract weights for control units only.
         w_control = sample_weights[control_mask]
         
-        # Ensure weights are positive.
+        # Ensure weights are positive (clip near-zero values for numerical stability).
         w_control = np.maximum(w_control, 1e-10)
         
         # WLS via sqrt(W) transformation: beta = (X̃'X̃)^{-1} X̃'Ỹ.
@@ -766,14 +813,42 @@ def compute_ipwra_se_analytical(
     m0_hat: np.ndarray,
     weights: np.ndarray,
     alpha: float = 0.05,
+    propensity_controls: list[str] | None = None,
 ) -> tuple[float, float, float]:
     """
-    Compute IPWRA standard error using the influence function approach.
+    Compute IPWRA standard error using the full semiparametric IF.
 
-    Uses a simplified influence function that accounts for the primary
-    estimation uncertainty. The full doubly robust influence function
-    would additionally adjust for uncertainty in the propensity score
-    and outcome model estimation.
+    Implements the complete influence function matching Stata ``teffects ipwra
+    ... , atet`` default standard errors. The full IF consists of three
+    components derived from the stacked M-estimation framework (Cattaneo 2010,
+    Newey & McFadden 1994):
+
+    1. **Hajek IF**: linearization of the IPWRA-ATT Hajek ratio estimator
+    2. **PS adjustment**: M-estimation correction for propensity score
+       estimation uncertainty via logit score
+    3. **Outcome model adjustment**: M-estimation correction for WLS outcome
+       regression estimation uncertainty
+
+    The full IF is:
+
+    .. math::
+
+        \\psi_i = \\psi^{\\text{main}}_i
+                 - \\left(\\frac{\\partial \\tau}{\\partial \\beta_0}\\right)^\\top
+                   H_{\\beta}^{-1} S_{\\beta,i}
+                 - \\left(\\frac{\\partial \\tau}{\\partial \\gamma}\\right)^\\top
+                   H_{\\gamma}^{-1} S_{\\gamma,i}
+
+    where:
+
+    - :math:`\\partial\\tau/\\partial\\beta_0 = \\bar{X}_{0,w} - \\bar{X}_1`
+      (weighted control mean minus treated mean of covariates)
+    - :math:`\\partial\\tau/\\partial\\gamma = -\\sum_{D=0} w_i X_i (r_i - B)
+      / \\sum_{D=0} w_i` (ATT sensitivity to PS parameters)
+    - :math:`S_{\\beta,i}` and :math:`H_{\\beta}` are the WLS score and
+      Hessian for the outcome model
+    - :math:`S_{\\gamma,i}` and :math:`H_{\\gamma}` are the logit score and
+      Hessian for the PS model
 
     Parameters
     ----------
@@ -784,7 +859,7 @@ def compute_ipwra_se_analytical(
     d : str
         Treatment indicator column name.
     controls : list[str]
-        Control variable column names.
+        Outcome model control variable column names.
     att : float
         Estimated ATT value.
     pscores : np.ndarray
@@ -792,9 +867,11 @@ def compute_ipwra_se_analytical(
     m0_hat : np.ndarray
         Predicted outcomes from control regression.
     weights : np.ndarray
-        IPW weights for all observations.
+        IPW weights (p/(1-p)) for all observations.
     alpha : float, default=0.05
         Significance level for confidence interval.
+    propensity_controls : list[str], optional
+        PS model control variable column names. If None, uses ``controls``.
 
     Returns
     -------
@@ -804,41 +881,134 @@ def compute_ipwra_se_analytical(
         Lower bound of confidence interval.
     ci_upper : float
         Upper bound of confidence interval.
+
+    References
+    ----------
+    Cattaneo, M. D. (2010). Efficient semiparametric estimation of
+    multi-valued treatment effects under ignorability. *Journal of
+    Econometrics*, 155(2), 138-154.
+
+    Newey, W. K. & McFadden, D. (1994). Large sample estimation and
+    hypothesis testing. *Handbook of Econometrics*, Vol. 4, Ch. 36.
+
+    Lunceford, J. K. & Davidian, M. (2004). Stratification and weighting
+    via the propensity score in estimation of causal treatment effects.
+    *Statistics in Medicine*, 23(19), 2937-2960.
     """
+    if propensity_controls is None:
+        propensity_controls = controls
+
     D = data[d].values.astype(float)
     Y = data[y].values.astype(float)
+    X_out = data[controls].values.astype(float)
+    X_ps = data[propensity_controls].values.astype(float)
     n = len(D)
-    
+
     n_treated = D.sum()
     treat_mask = D == 1
     control_mask = D == 0
-    
-    # Simplified influence function.
+
     p_bar = n_treated / n
-    weights_sum = weights[control_mask].sum()
-    
-    # Treated unit contribution.
-    psi_treat = (Y[treat_mask] - m0_hat[treat_mask] - att) / p_bar
-    
-    # Control unit contribution.
+    weights_ctrl = weights[control_mask]
+    weights_sum = weights_ctrl.sum()
+
+    # ================================================================
+    # 组件 1: Hajek IF（主项）
+    # ================================================================
     residuals_control = Y[control_mask] - m0_hat[control_mask]
-    psi_control = -weights[control_mask] * residuals_control / weights_sum
-    
-    # Combine influence functions.
+    control_term = (weights_ctrl * residuals_control).sum() / weights_sum
+
+    psi_treat = (Y[treat_mask] - m0_hat[treat_mask] - att) / p_bar
+    psi_control = -weights_ctrl * (residuals_control - control_term) / weights_sum * n
+
     psi = np.zeros(n)
     psi[treat_mask] = psi_treat
     psi[control_mask] = psi_control
-    
-    # Variance estimation.
-    var_psi = np.var(psi, ddof=1)
+
+    # ================================================================
+    # 组件 2: PS 估计不确定性调整
+    #
+    # ∂τ/∂γ = -Σ_{D=0} w_i X_i (r_i - B) / Σ_{D=0} w_i
+    #
+    # Logit score: S_γ_i = (D_i - p̂_i) · X_i
+    # Logit Hessian: H_γ = -(1/N) X' diag(p̂(1-p̂)) X
+    #
+    # 调整项: -(∂τ/∂γ)' H_γ⁻¹ S_γ_i
+    # ================================================================
+    X_ps_const = np.column_stack([np.ones(n), X_ps])
+
+    # Logit score。
+    S_gamma = (D - pscores)[:, np.newaxis] * X_ps_const
+
+    # Logit Hessian。
+    W_ps = pscores * (1 - pscores)
+    H_gamma = -(X_ps_const.T * W_ps) @ X_ps_const / n
+    try:
+        H_gamma_inv = np.linalg.inv(H_gamma)
+    except np.linalg.LinAlgError:
+        H_gamma_inv = np.linalg.pinv(H_gamma)
+
+    # ∂τ/∂γ: ∂w_i/∂γ = w_i · X_i（logit 链式法则）。
+    r_minus_B = residuals_control - control_term
+    dw_dgamma_ctrl = weights_ctrl[:, np.newaxis] * X_ps_const[control_mask]
+    dATT_dgamma = -(dw_dgamma_ctrl * r_minus_B[:, np.newaxis]).sum(axis=0) / weights_sum
+
+    # PS 调整: -(∂τ/∂γ)' H_γ⁻¹ S_γ_i。
+    ps_adjustment = (S_gamma @ H_gamma_inv.T) @ dATT_dgamma
+
+    # ================================================================
+    # 组件 3: Outcome Model 估计不确定性调整
+    #
+    # ∂τ/∂β₀ = -X̄₁ + X̄₀_w
+    #   X̄₁ = (1/N₁) Σ_{D=1} X_i（处理组均值）
+    #   X̄₀_w = Σ_{D=0} w_i X_i / Σ_{D=0} w_i（控制组加权均值）
+    #
+    # WLS score: S_β_i = (1-D_i) · w_i · (Y_i - X_i'β̂₀) · X_i
+    # WLS Hessian: H_β = -(1/N) Σ_{D=0} w_i X_i X_i'
+    #
+    # 调整项: -(∂τ/∂β₀)' H_β⁻¹ S_β_i
+    # ================================================================
+    X_out_const = np.column_stack([np.ones(n), X_out])
+    X_ctrl_const = X_out_const[control_mask]
+
+    # WLS score（仅控制组非零）。
+    S_beta = np.zeros((n, X_out_const.shape[1]))
+    S_beta[control_mask] = (
+        weights_ctrl[:, np.newaxis]
+        * residuals_control[:, np.newaxis]
+        * X_ctrl_const
+    )
+
+    # WLS Hessian: H_β = -(1/N) Σ_{D=0} w_i X_i X_i'。
+    H_beta = -(X_ctrl_const.T * weights_ctrl) @ X_ctrl_const / n
+    try:
+        H_beta_inv = np.linalg.inv(H_beta)
+    except np.linalg.LinAlgError:
+        H_beta_inv = np.linalg.pinv(H_beta)
+
+    # ∂τ/∂β₀ = -X̄₁ + X̄₀_w。
+    X_bar_treated = X_out_const[treat_mask].mean(axis=0)
+    X_bar_ctrl_w = (weights_ctrl[:, np.newaxis] * X_ctrl_const).sum(axis=0) / weights_sum
+    dATT_dbeta = -X_bar_treated + X_bar_ctrl_w
+
+    # Outcome model 调整: -(∂τ/∂β₀)' H_β⁻¹ S_β_i。
+    om_adjustment = (S_beta @ H_beta_inv.T) @ dATT_dbeta
+
+    # ================================================================
+    # 合并完整 IF
+    # ================================================================
+    psi_full = psi - ps_adjustment - om_adjustment
+
+    # 方差估计。
+    var_psi = np.var(psi_full, ddof=1)
     var_att = var_psi / n
     se = np.sqrt(var_att)
-    
-    # Confidence interval.
+
+    # 置信区间。
     z_crit = stats.norm.ppf(1 - alpha / 2)
     ci_lower = att - z_crit * se
     ci_upper = att + z_crit * se
-    
+
     return se, ci_lower, ci_upper
 
 
@@ -1173,11 +1343,24 @@ def estimate_psm(
     
     # Filter out treated units dropped due to caliper.
     valid_treat_mask = np.array([len(m) > 0 for m in matched_control_ids])
-    
-    if valid_treat_mask.sum() == 0:
+    n_valid = valid_treat_mask.sum()
+
+    if n_valid == 0:
         raise ValueError(
-            "No valid matches found for any treated unit. "
+            "All treated units failed to find valid matches. "
             "Consider relaxing the caliper or checking propensity score overlap."
+        )
+
+    # 当匹配成功率低于50%时发出警告
+    match_success_rate = n_valid / n_treated
+    if match_success_rate < 0.5:
+        warnings.warn(
+            f"Low match success rate: {match_success_rate:.1%} "
+            f"({n_valid}/{n_treated} treated units matched). "
+            f"Results may be unreliable. Consider relaxing the caliper "
+            f"or checking propensity score overlap.",
+            UserWarning,
+            stacklevel=2,
         )
     
     # Compute matched mean for each treated unit.

@@ -40,6 +40,10 @@ Control Group Strategies
     - ``not_yet_treated``: Never-treated plus cohorts h > r (units first treated
       after period r). Uses more control observations, potentially improving
       efficiency.
+    - ``all_others``: All units not in the treated cohort, including units that
+      were already treated in earlier periods. This option is primarily intended
+      for replication and diagnostics; it may introduce forbidden comparisons
+      under the no-anticipation assumption.
 
     The theoretical justification shows that the cohort assignments are
     unconfounded with respect to the transformed potential outcome conditional
@@ -71,6 +75,13 @@ Transformations
 .. autofunction:: lwdid.staggered.transform_staggered_demeanq
 
 .. autofunction:: lwdid.staggered.transform_staggered_detrendq
+
+.. note::
+
+   All four transformation methods (``demean``, ``detrend``, ``demeanq``,
+   ``detrendq``) are available through the main ``lwdid()`` function in
+   staggered mode. The seasonal transformations (``demeanq``, ``detrendq``)
+   require the ``season_var`` and ``Q`` parameters.
 
 .. autofunction:: lwdid.staggered.get_cohorts
 

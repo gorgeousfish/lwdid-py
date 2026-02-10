@@ -259,7 +259,7 @@ Basic Event Study (Staggered)
    # Estimate staggered effects
    results = lwdid(
        data,
-       y='l_homicide',
+       y='lhomicide',
        ivar='state',
        tvar='year',
        gvar='effyear',

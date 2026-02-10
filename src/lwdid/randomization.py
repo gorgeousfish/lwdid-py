@@ -70,7 +70,7 @@ def randomization_inference(
     y_col : str, default 'ydot_postavg'
         Name of the column containing the transformed outcome variable (after
         unit-specific demeaning or detrending).
-    d_col : str, default 'd_'
+    d_col : str, default ``'d_'``
         Name of the column containing the binary treatment indicator (0 or 1).
     ivar : str, default 'ivar'
         Name of the column containing the unit identifier.

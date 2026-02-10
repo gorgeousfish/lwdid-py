@@ -14,19 +14,19 @@ Overview
 The ``lwdid`` package implements the Lee and Wooldridge methods for difference-in-
 differences estimation with panel data, covering three main scenarios:
 
-**Small-Sample Common Timing** (Lee and Wooldridge, 2026):
+**Small-Sample Common Timing** (Lee and Wooldridge 2026):
 
 - Exact t-based inference under CLM assumptions (normality and homoskedasticity)
 - Designed for settings with small numbers of treated or control units
 - Works best with large time dimensions
 
-**Large-Sample Common Timing** (Lee and Wooldridge, 2025):
+**Large-Sample Common Timing** (Lee and Wooldridge 2025):
 
 - Asymptotic inference with robust standard errors
 - Supports heteroskedasticity-robust (HC0-HC4) and cluster-robust options
 - Multiple estimators: RA, IPW, IPWRA, PSM
 
-**Staggered Adoption** (Lee and Wooldridge, 2025):
+**Staggered Adoption** (Lee and Wooldridge 2025):
 
 - Units treated at different times
 - Cohort-time specific effect estimation
@@ -114,7 +114,7 @@ demean: Standard DiD with Unit Fixed Effects
 
 Removes unit-specific pre-treatment means from each observation.
 
-**Mathematical form** (Lee and Wooldridge, 2026):
+**Mathematical form** (Lee and Wooldridge 2026):
 
 For each unit :math:`i`, compute the pre-treatment mean :math:`\bar{Y}_{i,pre}` and
 transform:
@@ -147,7 +147,7 @@ detrend: DiD with Unit-Specific Linear Trends
 
 Estimates and removes unit-specific linear trends from the pre-treatment data.
 
-**Mathematical form** (Lee and Wooldridge, 2026):
+**Mathematical form** (Lee and Wooldridge 2026):
 
 For each unit :math:`i`, estimate linear trend from pre-treatment data:
 
@@ -310,8 +310,10 @@ determine the most likely data frequency:
 - Detects weekly data (Q=52) based on 52 observations per year pattern
 - Falls back to quarterly (Q=4) if frequency cannot be determined
 
-**Note**: If both ``Q`` and ``auto_detect_frequency=True`` are specified, an error
-is raised unless ``Q=4`` (the default).
+**Note**: If both an explicit ``Q`` (other than the default 4) and
+``auto_detect_frequency=True`` are specified, and the detected frequency
+differs from the explicit ``Q``, a warning is issued and the explicit ``Q``
+value takes precedence. No error is raised.
 
 Variance Estimation
 -------------------
@@ -1040,12 +1042,11 @@ When units are treated at different times, use the staggered adoption framework.
 
 .. note::
 
-   **Staggered transformation options**: All four transformation methods
-   (``demean``, ``detrend``, ``demeanq``, ``detrendq``) are available for
-   staggered designs. Seasonal transformations (``demeanq``, ``detrendq``)
-   require sufficient pre-treatment observations for each cohort to estimate
-   seasonal parameters (at least Q+1 periods for ``demeanq``, Q+2 for
-   ``detrendq``, where Q is the number of seasonal periods).
+   **Staggered transformation options**: Only ``demean`` and ``detrend``
+   are supported for staggered adoption designs through the ``lwdid()``
+   interface. Seasonal transformations (``demeanq``, ``detrendq``) are
+   restricted to common timing mode; passing them with ``gvar`` raises
+   a ``ValueError``.
 
 Basic Usage
 ~~~~~~~~~~~
@@ -1069,16 +1070,19 @@ Staggered-Specific Parameters
 
 **gvar** : str
     Column name indicating the first treatment period for each unit.
-    Units with ``gvar = inf`` or ``gvar = NaN`` are never treated.
+    Units with ``gvar = 0``, ``gvar = inf``, or ``gvar = NaN`` are never treated.
 
 **aggregate** : {'none', 'cohort', 'overall'}
     - ``'none'``: Return (g,r)-specific effects only
     - ``'cohort'``: Average effects within each cohort (default)
     - ``'overall'``: Weighted average across cohorts
 
-**control_group** : {'not_yet_treated', 'never_treated'}
+**control_group** : {'not_yet_treated', 'never_treated', 'all_others'}
     - ``'not_yet_treated'``: Use never-treated plus not-yet-treated units (default)
     - ``'never_treated'``: Use only never-treated units
+    - ``'all_others'``: All units not in the treated cohort (including already-treated
+      units). Primarily for replication and diagnostics; may introduce forbidden
+      comparisons.
 
 **estimator** : {'ra', 'ipw', 'ipwra', 'psm'}
     - ``'ra'``: Regression adjustment (default)
@@ -1136,8 +1140,6 @@ perform robustness checks.
 
 - ``demean``: At least 1 pre-treatment period remaining after exclusion
 - ``detrend``: At least 2 pre-treatment periods remaining after exclusion
-- ``demeanq``: At least Q+1 pre-treatment periods remaining (Q = number of seasons)
-- ``detrendq``: At least Q+2 pre-treatment periods remaining
 
 If any cohort has insufficient pre-treatment periods after applying
 ``exclude_pre_periods``, an ``InsufficientPrePeriodsError`` is raised.
@@ -1222,7 +1224,7 @@ Staggered Example
    # Estimate with staggered design
    results = lwdid(
        data,
-       y='l_homicide',
+       y='lhomicide',
        ivar='state',
        tvar='year',
        gvar='effyear',
@@ -1370,7 +1372,7 @@ Complete Workflow Example
    # Step 1: Estimate with pre-treatment dynamics
    results = lwdid(
        data,
-       y='l_homicide',
+       y='lhomicide',
        ivar='state',
        tvar='year',
        gvar='effyear',
@@ -1409,7 +1411,8 @@ Complete Workflow Example
 Transformation Methods for Pre-treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pre-treatment dynamics support both ``demean`` and ``detrend`` transformations:
+Pre-treatment dynamics support all four transformation methods (``demean``,
+``detrend``, ``demeanq``, ``detrendq``):
 
 **Demean (default)**:
 

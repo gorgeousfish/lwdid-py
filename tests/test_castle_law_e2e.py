@@ -339,7 +339,7 @@ class TestControlGroupVerification:
         from lwdid import lwdid
         
         # Should warn about auto-switch
-        with pytest.warns(UserWarning, match="切换到'never_treated'"):
+        with pytest.warns(UserWarning, match="automatically switched"):
             result = lwdid(
                 data=castle_data,
                 y='lhomicide',

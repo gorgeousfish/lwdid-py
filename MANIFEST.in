@@ -1,7 +1,10 @@
 include README.md
+include README_zh.md
 include LICENSE
 include CITATION.cff
 include CHANGELOG.md
+include CODE_OF_CONDUCT.md
+include CONTRIBUTING.md
 include pytest.ini
 
 # Include data files

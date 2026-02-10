@@ -556,11 +556,11 @@ class TestEdgeCases:
     def test_single_unit_staggered(self):
         """Test staggered transformation with single treated unit."""
         data = pd.DataFrame({
-            'id': [1]*10 + [2]*10,
-            'tindex': list(range(1, 11)) * 2,
-            'quarter': [1,2,3,4,1,2,3,4,1,2] * 2,
-            'y': np.random.randn(20) + 100,
-            'gvar': [5]*10 + [np.inf]*10  # Unit 1 treated at t=5, Unit 2 never
+            'id': [1]*12 + [2]*12,
+            'tindex': list(range(1, 13)) * 2,
+            'quarter': [1,2,3,4,1,2,3,4,1,2,3,4] * 2,
+            'y': np.random.randn(24) + 100,
+            'gvar': [7]*12 + [np.inf]*12  # Unit 1 treated at t=7, Unit 2 never
         })
         
         result = transform_staggered_demeanq(
@@ -568,8 +568,8 @@ class TestEdgeCases:
             season_var='quarter', Q=4
         )
         
-        # Should have columns for cohort 5
-        assert 'ydot_g5_r5' in result.columns
+        # Should have columns for cohort 7
+        assert 'ydot_g7_r7' in result.columns
 
 
 # =============================================================================

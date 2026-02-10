@@ -10,7 +10,7 @@ DiD estimation into cross-sectional treatment effects problems, enabling
 various estimators including regression adjustment, inverse probability
 weighting, doubly robust methods, and propensity score matching.
 
-.. image:: https://img.shields.io/badge/python-3.8%2B-blue
+.. image:: https://img.shields.io/badge/python-3.10%2B-blue
    :target: https://www.python.org/
    :alt: Python Version
 
@@ -21,18 +21,18 @@ weighting, doubly robust methods, and propensity score matching.
 Supported Scenarios
 -------------------
 
-**Small-Sample Common Timing** (Lee and Wooldridge, 2026)
+**Small-Sample Common Timing** (Lee and Wooldridge 2026)
 
 For settings with small numbers of treated or control units and common
 treatment timing. Under classical linear model assumptions (normality and
 homoskedasticity), exact t-based finite-sample inference is available.
 
-**Large-Sample Common Timing** (Lee and Wooldridge, 2025)
+**Large-Sample Common Timing** (Lee and Wooldridge 2025)
 
 For settings with larger cross-sectional samples. Supports heteroskedasticity-
 robust (HC0-HC4) and cluster-robust standard errors with asymptotic inference.
 
-**Staggered Adoption** (Lee and Wooldridge, 2025)
+**Staggered Adoption** (Lee and Wooldridge 2025)
 
 For settings where units are treated at different times. Estimates cohort-time
 specific ATTs with flexible control group strategies (never-treated or not-yet-
@@ -96,7 +96,7 @@ Staggered Adoption Example
    # Estimate with staggered design
    results = lwdid(
        data,
-       y='l_homicide',
+       y='lhomicide',
        ivar='state',
        tvar='year',
        gvar='effyear',        # first treatment period

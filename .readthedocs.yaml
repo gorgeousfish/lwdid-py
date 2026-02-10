@@ -13,14 +13,11 @@ formats:
   - pdf
   - epub
 
-# Python version
+# Python version (docs build uses 3.11; package supports 3.10-3.12)
 build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  jobs:
-    post_install:
-      - pip install -e .
 
 # Python requirements
 python:

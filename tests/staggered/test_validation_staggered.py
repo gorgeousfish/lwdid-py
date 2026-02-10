@@ -58,14 +58,15 @@ class TestIsNeverTreated:
         """
         assert is_never_treated(-1) is False
     
-    def test_negative_inf_is_never_treated(self):
-        """-np.inf should be identified as never treated (edge case)
+    def test_negative_inf_raises_error(self):
+        """-np.inf should raise InvalidStaggeredDataError.
         
-        Note: np.isinf(-np.inf) == True, so -inf is also identified as NT.
-        However, in validate_staggered_data(), the negative value check
-        will reject -inf before it reaches is_never_treated().
+        Note: Negative infinity is not a valid gvar value. The function
+        explicitly rejects it to prevent ambiguity. Use 0, np.inf, or NaN
+        to indicate never-treated units.
         """
-        assert is_never_treated(-np.inf) is True
+        with pytest.raises(InvalidStaggeredDataError, match="Negative infinity"):
+            is_never_treated(-np.inf)
 
 
 # =============================================================================

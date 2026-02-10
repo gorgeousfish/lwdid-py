@@ -1202,8 +1202,20 @@ class LWDIDResults:
                 event_df['ci_upper'] = event_df['att'] + t_crit * event_df['se']
                 event_df['df_inference'] = df_inference
         else:
-            # Simple average aggregation
+            # Simple average aggregation (analytical SE assumes independence across cohorts)
             from scipy.stats import t as t_dist
+            
+            # Warn about independence assumption for analytical SE
+            n_cohorts = len(df['cohort'].unique()) if 'cohort' in df.columns else 0
+            if n_cohorts > 1:
+                warnings.warn(
+                    f"Analytical SE assumes independence across {n_cohorts} cohorts. "
+                    f"When cohorts share control units, this may underestimate SE "
+                    f"(confidence intervals may be too narrow). "
+                    f"Consider using se_method='bootstrap' for more accurate SE.",
+                    UserWarning,
+                    stacklevel=2
+                )
             
             def simple_agg(x):
                 att = x['att'].mean()

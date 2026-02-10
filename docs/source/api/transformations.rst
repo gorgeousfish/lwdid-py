@@ -237,56 +237,28 @@ parameter is specified in ``lwdid()``:
        rolling='detrend'
    )
 
-Staggered Seasonal Transformations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Seasonal transformations are fully supported in staggered mode.**
-
-The ``demeanq`` and ``detrendq`` transformations can be used with staggered
-adoption designs (``gvar`` parameter). For each cohort :math:`g`, seasonal
-parameters are estimated using only the cohort-specific pre-treatment periods
-:math:`\{1, 2, \ldots, g-1\}`.
-
-**Key considerations for staggered seasonal methods:**
-
-1. **Pre-treatment requirements**: Each cohort must have sufficient pre-treatment
-   observations spanning enough seasonal periods for reliable parameter estimation.
-   Early cohorts with limited pre-treatment data may be excluded automatically.
-
-2. **Seasonal coverage**: For accurate seasonal adjustment, pre-treatment periods
-   should ideally cover at least one complete seasonal cycle (e.g., 4 quarters for
-   quarterly data, 12 months for monthly data).
-
-3. **Data frequency**: Seasonal transformations are most relevant for sub-annual
-   data (quarterly, monthly, weekly) where seasonal patterns affect outcomes.
-
-**Usage example:**
-
-.. code-block:: python
-
-   # Staggered design with quarterly seasonal adjustment
-   results = lwdid(
-       data,
-       y='outcome',
-       ivar='unit',
-       tvar='quarter_index',
-       gvar='first_treat_quarter',
-       rolling='demeanq',
-       Q=4,                      # Quarterly data
-       season_var='quarter'      # Quarter indicator (1-4)
-   )
-
 Staggered Transformation Selection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **demean**: Staggered support = Yes. Pre-periods required:
+In staggered adoption designs, only the ``demean`` and ``detrend``
+transformations are supported through the main ``lwdid()`` interface.
+Seasonal transformations (``demeanq``, ``detrendq``) are restricted to
+common timing mode; passing ``rolling='demeanq'`` or ``rolling='detrendq'``
+with ``gvar`` raises a ``ValueError``.
+
+- **demean**: Staggered support via ``lwdid()`` = Yes. Pre-periods required:
   :math:`g - 1 \geq 1` per cohort.
-- **detrend**: Staggered support = Yes. Pre-periods required:
+- **detrend**: Staggered support via ``lwdid()`` = Yes. Pre-periods required:
   :math:`g - 1 \geq 2` per cohort.
-- **demeanq**: Staggered support = Yes. Pre-periods required:
-  :math:`g - 1 \geq Q + 1` per cohort (where Q = number of seasons).
-- **detrendq**: Staggered support = Yes. Pre-periods required:
-  :math:`g - 1 \geq Q + 2` per cohort (where Q = number of seasons).
+- **demeanq**: Staggered support via ``lwdid()`` = No (common timing only).
+- **detrendq**: Staggered support via ``lwdid()`` = No (common timing only).
+
+.. note::
+
+   The staggered module contains low-level implementations of
+   ``transform_staggered_demeanq`` and ``transform_staggered_detrendq``
+   for advanced users, but these are not exposed through the main
+   ``lwdid()`` function.
 
 See Also
 --------

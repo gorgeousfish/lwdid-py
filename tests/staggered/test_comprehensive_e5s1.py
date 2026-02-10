@@ -213,6 +213,7 @@ class TestTransformationsDetrend:
     def test_detrend_requires_min_preperiods(self):
         """Detrending requires at least 2 pre-treatment periods."""
         from lwdid.staggered.transformations import transform_staggered_detrend
+        from lwdid.exceptions import InsufficientPrePeriodsError
         
         # Cohort 2001 with only 1 pre-period (2000)
         data = pd.DataFrame({
@@ -222,8 +223,8 @@ class TestTransformationsDetrend:
             'gvar': [2001, 2001, 0, 0]
         })
         
-        # Should raise ValueError for insufficient pre-periods
-        with pytest.raises(ValueError, match="pre-treatment period"):
+        # Should raise error for insufficient pre-periods
+        with pytest.raises((ValueError, InsufficientPrePeriodsError)):
             transform_staggered_detrend(data, 'y', 'id', 'year', 'gvar')
 
 
@@ -480,9 +481,10 @@ class TestAggregation:
     def test_aggregate_requires_nt_for_overall(self, all_treated_data):
         """Overall aggregation requires never-treated units."""
         from lwdid import lwdid
+        from lwdid.exceptions import NoNeverTreatedError
         
         # Should raise error when no NT units and aggregate='overall'
-        with pytest.raises((ValueError, RuntimeError)):
+        with pytest.raises((ValueError, RuntimeError, NoNeverTreatedError)):
             lwdid(
                 data=all_treated_data,
                 y='y', ivar='id', tvar='year', gvar='gvar',

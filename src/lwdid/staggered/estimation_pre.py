@@ -95,6 +95,7 @@ class PreTreatmentEffect:
     n_control: int
     is_anchor: bool = False
     rolling_window_size: int = 0
+    df_inference: int = 0
 
 
 def estimate_pre_treatment_effects(
@@ -315,6 +316,7 @@ def estimate_pre_treatment_effects(
                     n_control=int(n_control),
                     is_anchor=True,
                     rolling_window_size=0,
+                    df_inference=int(n_treat + n_control - 2) if n_treat + n_control > 2 else 0,
                 ))
                 continue
 
@@ -441,6 +443,7 @@ def estimate_pre_treatment_effects(
                 n_control=int(n_control),
                 is_anchor=False,
                 rolling_window_size=rolling_window_size,
+                df_inference=int(est_result.get('df_inference', 0)) if not np.isnan(est_result.get('df_inference', 0)) else 0,
             ))
 
     # =========================================================================
@@ -490,7 +493,8 @@ def pre_treatment_effects_to_dataframe(
         return pd.DataFrame(columns=[
             'cohort', 'period', 'event_time', 'att', 'se',
             'ci_lower', 'ci_upper', 't_stat', 'pvalue',
-            'n_treated', 'n_control', 'is_anchor', 'rolling_window_size'
+            'n_treated', 'n_control', 'is_anchor', 'rolling_window_size',
+            'df_inference'
         ])
 
     return pd.DataFrame([
@@ -508,6 +512,7 @@ def pre_treatment_effects_to_dataframe(
             'n_control': r.n_control,
             'is_anchor': r.is_anchor,
             'rolling_window_size': r.rolling_window_size,
+            'df_inference': r.df_inference,
         }
         for r in results
     ])

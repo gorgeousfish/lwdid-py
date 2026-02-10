@@ -49,7 +49,7 @@ We welcome suggestions for new features or improvements. Please open an issue wi
 
 ### Prerequisites
 
-- Python 3.8 or higher (up to 3.12)
+- Python 3.10 or higher (up to 3.12)
 - Git
 
 ### Installation for Development
