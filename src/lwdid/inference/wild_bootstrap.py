@@ -206,6 +206,169 @@ def _generate_all_rademacher_weights(n_clusters: int) -> np.ndarray:
     # Generate all {-1, +1}^G combinations.
     return np.array(list(product([-1, 1], repeat=n_clusters)))
 
+def _precompute_bootstrap_matrices(
+    data: pd.DataFrame,
+    y_var: str,
+    d_var: str,
+    cluster_var: str,
+    controls: list[str] | None = None,
+) -> dict:
+    """
+    预计算 bootstrap 循环所需的所有矩阵和索引。
+
+    一次性完成所有 pandas → numpy 转换和矩阵分解，
+    后续 bootstrap 循环完全在 numpy 层面运行。
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        回归数据。
+    y_var : str
+        结果变量名。
+    d_var : str
+        处理变量名。
+    cluster_var : str
+        聚类变量名。
+    controls : list[str], optional
+        控制变量名列表。
+
+    Returns
+    -------
+    dict
+        包含以下键:
+        y : ndarray, shape (N,) — 原始 y 向量
+        X : ndarray, shape (N, k) — 设计矩阵（含截距）
+        P : ndarray, shape (k, N) — 投影矩阵 (X'X)⁻¹X'
+        XtX_inv : ndarray, shape (k, k) — (X'X)⁻¹
+        cluster_ids : ndarray, shape (N,) — 聚类 ID
+        unique_clusters : ndarray, shape (G,) — 唯一聚类
+        obs_cluster_idx : ndarray, shape (N,) — 每个观测对应的聚类索引
+        cluster_masks : list[ndarray] — 每个聚类的布尔 mask
+        cluster_X : list[ndarray] — 每个聚类的 X 子矩阵
+        G : int — 聚类数
+        N : int — 观测数
+        k : int — 参数数
+        correction : float — 有限样本校正因子
+    """
+    # 提取 numpy 数组
+    y = data[y_var].values.astype(np.float64)
+
+    X_vars = [d_var]
+    if controls:
+        X_vars.extend(controls)
+    X_raw = data[X_vars].values.astype(np.float64)
+    # 添加截距列（与 sm.add_constant 列排序一致：[intercept, d, controls...]）
+    X = np.column_stack([np.ones(len(data), dtype=np.float64), X_raw])
+
+    N, k = X.shape
+
+    # 计算 (X'X) 及其逆
+    XtX = X.T @ X
+
+    # 条件数检查（设计文档 §7.3.1）
+    cond = np.linalg.cond(XtX)
+    if cond > 1e10:
+        warnings.warn(
+            f"设计矩阵条件数较大 ({cond:.2e})。"
+            f"正规方程法相比 SVD 可能损失约 {np.log10(cond):.0f} 位有效数字精度。"
+            f"结果的数值精度可能降低。",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    XtX_inv = np.linalg.inv(XtX)
+    # 投影矩阵 P = (X'X)⁻¹X'，shape (k, N)
+    P = XtX_inv @ X.T
+
+    # 聚类结构
+    cluster_ids = data[cluster_var].values
+    unique_clusters = np.unique(cluster_ids)
+    G = len(unique_clusters)
+
+    cluster_to_idx = {c: i for i, c in enumerate(unique_clusters)}
+    obs_cluster_idx = np.array([cluster_to_idx[c] for c in cluster_ids])
+
+    # 预计算每个聚类的 mask 和 X 子矩阵
+    cluster_masks = []
+    cluster_X = []
+    for g in range(G):
+        mask = obs_cluster_idx == g
+        cluster_masks.append(mask)
+        cluster_X.append(X[mask])
+
+    # 有限样本校正因子 (Cameron & Miller 2015)
+    # c = (G/(G-1)) × ((N-1)/(N-K))
+    correction = (G / (G - 1)) * ((N - 1) / (N - k))
+
+    return {
+        'y': y, 'X': X, 'P': P, 'XtX_inv': XtX_inv,
+        'cluster_ids': cluster_ids, 'unique_clusters': unique_clusters,
+        'obs_cluster_idx': obs_cluster_idx,
+        'cluster_masks': cluster_masks, 'cluster_X': cluster_X,
+        'G': G, 'N': N, 'k': k, 'correction': correction,
+    }
+
+
+def _fast_ols_cluster_se(
+    y_star: np.ndarray,
+    precomp: dict,
+) -> tuple[float, float]:
+    """
+    使用预计算矩阵快速计算 OLS 系数和 cluster-robust SE。
+
+    数学公式:
+        β = P @ y*                          （OLS 系数）
+        û = y* - X @ β                      （残差）
+        s_g = X_g' @ û_g                    （聚类得分向量）
+        B_clu = Σ_g s_g s_g'               （meat 矩阵）
+        V_clu = c · (X'X)⁻¹ B_clu (X'X)⁻¹ （校正后方差）
+        SE(τ̂) = √(V_clu[1,1])              （处理效应标准误）
+
+    Parameters
+    ----------
+    y_star : ndarray, shape (N,)
+        Bootstrap 样本的 y 向量。
+    precomp : dict
+        _precompute_bootstrap_matrices() 的返回值。
+
+    Returns
+    -------
+    att : float
+        处理效应估计（X 中第 1 列的系数，第 0 列是截距）。
+    se : float
+        Cluster-robust 标准误。
+    """
+    P = precomp['P']
+    X = precomp['X']
+    XtX_inv = precomp['XtX_inv']
+    k = precomp['k']
+    correction = precomp['correction']
+
+    # OLS 系数: β = P @ y*
+    beta = P @ y_star  # shape (k,)
+    att = beta[1]  # 处理效应系数（第 0 列是截距）
+
+    # 残差: û = y* - X @ β
+    residuals = y_star - X @ beta  # shape (N,)
+
+    # Cluster-robust SE（三明治估计量）
+    # meat = Σ_g (X_g' û_g)(X_g' û_g)'
+    meat = np.zeros((k, k))
+    for g_idx in range(precomp['G']):
+        mask = precomp['cluster_masks'][g_idx]
+        X_g = precomp['cluster_X'][g_idx]
+        e_g = residuals[mask]
+        score_g = X_g.T @ e_g  # shape (k,)
+        meat += np.outer(score_g, score_g)
+
+    # 校正后方差: V = c · (X'X)⁻¹ · meat · (X'X)⁻¹
+    var_beta = correction * XtX_inv @ meat @ XtX_inv
+    se = np.sqrt(var_beta[1, 1])
+
+    return att, se
+
+
+
 
 def _estimate_ols_for_bootstrap(
     data: pd.DataFrame,
@@ -449,32 +612,30 @@ def wild_cluster_bootstrap(
         )
     
     t_stat_original = att_original / se_original
-    residuals = original_result['residuals']
-    fitted = original_result['fitted']
-    X = original_result['X']
     
-    cluster_ids = data[cluster_var].values
-    unique_clusters = np.unique(cluster_ids)
-    G = len(unique_clusters)
+    # 预计算 bootstrap 所需的矩阵和聚类结构（FR-1 + FR-3: 消除循环内 DataFrame 操作）
+    precomp = _precompute_bootstrap_matrices(data, y_transformed, d, cluster_var, controls)
     
-    # Create cluster-to-index mapping.
-    cluster_to_idx = {c: i for i, c in enumerate(unique_clusters)}
-    obs_cluster_idx = np.array([cluster_to_idx[c] for c in cluster_ids])
+    obs_cluster_idx = precomp['obs_cluster_idx']
+    G = precomp['G']
     
-    # When impose_null=True, re-estimate under H0 to obtain restricted residuals.
+    # 受限/非受限模型的 fitted 和 residuals（纯 numpy 计算）
     if impose_null:
-        # Restricted model: y = alpha + epsilon (intercept only, no treatment).
-        y_values = data[y_transformed].values
-        X_restricted = np.ones((len(data), 1))
-        model_restricted = sm.OLS(y_values, X_restricted)
-        results_restricted = model_restricted.fit()
-        fitted_restricted = results_restricted.fittedvalues
-        residuals_restricted = results_restricted.resid
+        # 受限模型: y = α + ε（仅截距，无处理效应）
+        X_restricted = np.ones((precomp['N'], 1), dtype=np.float64)
+        beta_r = np.linalg.lstsq(X_restricted, precomp['y'], rcond=None)[0]
+        fitted_restricted = (X_restricted @ beta_r).ravel()
+        residuals_restricted = precomp['y'] - fitted_restricted
+    else:
+        # 非受限模型的 fitted 和 residuals
+        beta_u = precomp['P'] @ precomp['y']
+        fitted_unrestricted = precomp['X'] @ beta_u
+        residuals_unrestricted = precomp['y'] - fitted_unrestricted
     
-    # Step 2: Bootstrap loop.
-    # Determine whether to use full enumeration or random sampling.
+    # Step 2: Bootstrap 循环
+    # 确定使用完全枚举还是随机抽样
     if full_enumeration and weight_type == 'rademacher':
-        # Full enumeration: generate all 2^G Rademacher weight combinations.
+        # 完全枚举: 生成所有 2^G Rademacher 权重组合
         all_weights = _generate_all_rademacher_weights(G)
         actual_n_bootstrap = len(all_weights)
         use_full_enum = True
@@ -486,38 +647,29 @@ def wild_cluster_bootstrap(
     att_bootstrap = np.zeros(actual_n_bootstrap)
     
     for b in range(actual_n_bootstrap):
-        # Generate cluster-level weights.
+        # 生成聚类级权重
         if use_full_enum:
             weights = all_weights[b]
         else:
             weights = _generate_bootstrap_weights(G, weight_type)
         
-        # Map weights to observations.
+        # 映射权重到观测值级别
         obs_weights = weights[obs_cluster_idx]
         
-        # Construct bootstrap residuals and outcome variable.
+        # 构建 bootstrap y*（纯 numpy，无 DataFrame 操作）
         if impose_null:
-            # Use restricted model residuals under the null hypothesis.
-            # y* = alpha_hat_r + w * epsilon_hat_r
-            u_star = obs_weights * residuals_restricted
-            y_star = fitted_restricted + u_star
+            # y* = α̂_R + w · ε̂_R
+            y_star = fitted_restricted + obs_weights * residuals_restricted
         else:
-            # When not imposing null, use unrestricted model residuals.
-            u_star = obs_weights * residuals
-            y_star = fitted + u_star
+            # y* = ŷ + w · ε̂
+            y_star = fitted_unrestricted + obs_weights * residuals_unrestricted
         
-        # Create bootstrap data.
-        data_boot = data.copy()
-        data_boot[y_transformed] = y_star
-        
-        # Re-estimate and compute t-statistic.
+        # 快速 OLS + cluster SE（使用预计算矩阵，无 data.copy()）
         try:
-            boot_result = _estimate_ols_for_bootstrap(
-                data_boot, y_transformed, d, cluster_var, controls
-            )
-            if boot_result['se'] > 0 and not np.isnan(boot_result['se']):
-                t_stats_bootstrap[b] = boot_result['att'] / boot_result['se']
-                att_bootstrap[b] = boot_result['att']
+            att_b, se_b = _fast_ols_cluster_se(y_star, precomp)
+            if se_b > 0 and not np.isnan(se_b):
+                t_stats_bootstrap[b] = att_b / se_b
+                att_bootstrap[b] = att_b
             else:
                 t_stats_bootstrap[b] = np.nan
                 att_bootstrap[b] = np.nan
