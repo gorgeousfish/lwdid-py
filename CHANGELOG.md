@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.1 - 2026-02-14
+
+### Performance
+
+- **Common timing RI** (`randomization.py`): No-controls path uses direct ATT computation with batch vectorization; with-controls path uses pre-allocated design matrix + `np.linalg.lstsq`
+- **Staggered RI** (`staggered/randomization.py`): `n_jobs` parameter for joblib parallel resampling; `SeedSequence`-derived child seeds for deterministic parallelism; `legacy_seed` for backward compatibility
+- **Wild cluster bootstrap** (`inference/wild_bootstrap.py`): Vectorized OLS and batch matrix operations; shared pre-computation across grid points
+
+---
+
 ## 0.2.0 - 2026-01-31
 
 ### Added

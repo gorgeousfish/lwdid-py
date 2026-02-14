@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "If you use this software, please cite both the software and the associated papers."
 type: software
 title: "lwdid: Lee & Wooldridge Difference-in-Differences with Rolling Transformations for Panel Data"
-version: 0.2.0
-date-released: 2026-01-31
+version: 0.2.1
+date-released: 2026-02-14
 authors:
   - family-names: Cai
     given-names: Xuanyu

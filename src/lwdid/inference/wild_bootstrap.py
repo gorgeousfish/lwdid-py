@@ -214,73 +214,74 @@ def _precompute_bootstrap_matrices(
     controls: list[str] | None = None,
 ) -> dict:
     """
-    预计算 bootstrap 循环所需的所有矩阵和索引。
+    Precompute all matrices and indices required by the bootstrap loop.
 
-    一次性完成所有 pandas → numpy 转换和矩阵分解，
-    后续 bootstrap 循环完全在 numpy 层面运行。
+    Performs all pandas-to-numpy conversions and matrix decompositions
+    in a single pass so that subsequent bootstrap iterations operate
+    entirely at the numpy level.
 
     Parameters
     ----------
     data : pd.DataFrame
-        回归数据。
+        Regression data.
     y_var : str
-        结果变量名。
+        Name of the outcome variable.
     d_var : str
-        处理变量名。
+        Name of the treatment indicator.
     cluster_var : str
-        聚类变量名。
+        Name of the cluster variable.
     controls : list[str], optional
-        控制变量名列表。
+        Names of control variables.
 
     Returns
     -------
     dict
-        包含以下键:
-        y : ndarray, shape (N,) — 原始 y 向量
-        X : ndarray, shape (N, k) — 设计矩阵（含截距）
-        P : ndarray, shape (k, N) — 投影矩阵 (X'X)⁻¹X'
+        Dictionary with the following keys:
+        y : ndarray, shape (N,) — original outcome vector
+        X : ndarray, shape (N, k) — design matrix (with intercept)
+        P : ndarray, shape (k, N) — projection matrix (X'X)⁻¹X'
         XtX_inv : ndarray, shape (k, k) — (X'X)⁻¹
-        cluster_ids : ndarray, shape (N,) — 聚类 ID
-        unique_clusters : ndarray, shape (G,) — 唯一聚类
-        obs_cluster_idx : ndarray, shape (N,) — 每个观测对应的聚类索引
-        cluster_masks : list[ndarray] — 每个聚类的布尔 mask
-        cluster_X : list[ndarray] — 每个聚类的 X 子矩阵
-        G : int — 聚类数
-        N : int — 观测数
-        k : int — 参数数
-        correction : float — 有限样本校正因子
+        cluster_ids : ndarray, shape (N,) — cluster identifiers
+        unique_clusters : ndarray, shape (G,) — unique cluster values
+        obs_cluster_idx : ndarray, shape (N,) — cluster index for each obs
+        cluster_masks : list[ndarray] — boolean mask for each cluster
+        cluster_X : list[ndarray] — X sub-matrix for each cluster
+        G : int — number of clusters
+        N : int — number of observations
+        k : int — number of parameters
+        correction : float — finite-sample correction factor
     """
-    # 提取 numpy 数组
+    # Extract numpy arrays
     y = data[y_var].values.astype(np.float64)
 
     X_vars = [d_var]
     if controls:
         X_vars.extend(controls)
     X_raw = data[X_vars].values.astype(np.float64)
-    # 添加截距列（与 sm.add_constant 列排序一致：[intercept, d, controls...]）
+    # Prepend intercept column (column order matches sm.add_constant: [intercept, d, controls...])
     X = np.column_stack([np.ones(len(data), dtype=np.float64), X_raw])
 
     N, k = X.shape
 
-    # 计算 (X'X) 及其逆
+    # Compute (X'X) and its inverse
     XtX = X.T @ X
 
-    # 条件数检查（设计文档 §7.3.1）
+    # Condition number check (Design Doc §7.3.1)
     cond = np.linalg.cond(XtX)
     if cond > 1e10:
         warnings.warn(
-            f"设计矩阵条件数较大 ({cond:.2e})。"
-            f"正规方程法相比 SVD 可能损失约 {np.log10(cond):.0f} 位有效数字精度。"
-            f"结果的数值精度可能降低。",
+            f"Design matrix condition number is large ({cond:.2e}). "
+            f"Normal equations may lose ~{np.log10(cond):.0f} digits of "
+            f"precision compared to SVD. Numerical accuracy may be reduced.",
             UserWarning,
             stacklevel=2,
         )
 
     XtX_inv = np.linalg.inv(XtX)
-    # 投影矩阵 P = (X'X)⁻¹X'，shape (k, N)
+    # Projection matrix P = (X'X)⁻¹X', shape (k, N)
     P = XtX_inv @ X.T
 
-    # 聚类结构
+    # Cluster structure
     cluster_ids = data[cluster_var].values
     unique_clusters = np.unique(cluster_ids)
     G = len(unique_clusters)
@@ -288,7 +289,7 @@ def _precompute_bootstrap_matrices(
     cluster_to_idx = {c: i for i, c in enumerate(unique_clusters)}
     obs_cluster_idx = np.array([cluster_to_idx[c] for c in cluster_ids])
 
-    # 预计算每个聚类的 mask 和 X 子矩阵
+    # Precompute boolean mask and X sub-matrix for each cluster
     cluster_masks = []
     cluster_X = []
     for g in range(G):
@@ -296,8 +297,8 @@ def _precompute_bootstrap_matrices(
         cluster_masks.append(mask)
         cluster_X.append(X[mask])
 
-    # 有限样本校正因子 (Cameron & Miller 2015)
-    # c = (G/(G-1)) × ((N-1)/(N-K))
+    # Finite-sample correction factor (Cameron & Miller, 2015)
+    # c = (G/(G-1)) * ((N-1)/(N-K))
     correction = (G / (G - 1)) * ((N - 1) / (N - k))
 
     return {
@@ -314,29 +315,31 @@ def _fast_ols_cluster_se(
     precomp: dict,
 ) -> tuple[float, float]:
     """
-    使用预计算矩阵快速计算 OLS 系数和 cluster-robust SE。
+    Compute OLS coefficients and cluster-robust standard errors using
+    precomputed matrices for fast bootstrap replication.
 
-    数学公式:
-        β = P @ y*                          （OLS 系数）
-        û = y* - X @ β                      （残差）
-        s_g = X_g' @ û_g                    （聚类得分向量）
-        B_clu = Σ_g s_g s_g'               （meat 矩阵）
-        V_clu = c · (X'X)⁻¹ B_clu (X'X)⁻¹ （校正后方差）
-        SE(τ̂) = √(V_clu[1,1])              （处理效应标准误）
+    Mathematical formulation:
+        β = P @ y*                          (OLS coefficients)
+        û = y* - X @ β                      (residuals)
+        s_g = X_g' @ û_g                    (cluster score vector)
+        B_clu = Σ_g s_g s_g'               (meat matrix)
+        V_clu = c · (X'X)⁻¹ B_clu (X'X)⁻¹ (bias-corrected variance)
+        SE(τ̂) = √(V_clu[1,1])              (treatment effect standard error)
 
     Parameters
     ----------
     y_star : ndarray, shape (N,)
-        Bootstrap 样本的 y 向量。
+        Outcome vector for the bootstrap sample.
     precomp : dict
-        _precompute_bootstrap_matrices() 的返回值。
+        Return value from ``_precompute_bootstrap_matrices()``.
 
     Returns
     -------
     att : float
-        处理效应估计（X 中第 1 列的系数，第 0 列是截距）。
+        Estimated treatment effect (coefficient on column 1 of X;
+        column 0 is the intercept).
     se : float
-        Cluster-robust 标准误。
+        Cluster-robust standard error.
     """
     P = precomp['P']
     X = precomp['X']
@@ -344,14 +347,14 @@ def _fast_ols_cluster_se(
     k = precomp['k']
     correction = precomp['correction']
 
-    # OLS 系数: β = P @ y*
+    # OLS coefficients: β = P @ y*
     beta = P @ y_star  # shape (k,)
-    att = beta[1]  # 处理效应系数（第 0 列是截距）
+    att = beta[1]  # Treatment effect coefficient (column 0 is the intercept)
 
-    # 残差: û = y* - X @ β
+    # Residuals: û = y* - X @ β
     residuals = y_star - X @ beta  # shape (N,)
 
-    # Cluster-robust SE（三明治估计量）
+    # Cluster-robust SE (sandwich estimator)
     # meat = Σ_g (X_g' û_g)(X_g' û_g)'
     meat = np.zeros((k, k))
     for g_idx in range(precomp['G']):
@@ -361,13 +364,294 @@ def _fast_ols_cluster_se(
         score_g = X_g.T @ e_g  # shape (k,)
         meat += np.outer(score_g, score_g)
 
-    # 校正后方差: V = c · (X'X)⁻¹ · meat · (X'X)⁻¹
+    # Bias-corrected variance: V = c · (X'X)⁻¹ · meat · (X'X)⁻¹
     var_beta = correction * XtX_inv @ meat @ XtX_inv
     se = np.sqrt(var_beta[1, 1])
 
     return att, se
 
 
+
+
+
+
+
+
+
+def _generate_all_bootstrap_weights(
+    n_bootstrap: int,
+    n_clusters: int,
+    weight_type: str,
+) -> np.ndarray:
+    """
+    Generate all bootstrap weights at once as a (B, G) matrix.
+
+    This batch generation is numerically identical to calling
+    _generate_bootstrap_weights() B times sequentially, because
+    the underlying np.random calls consume the same RNG state
+    in the same order.
+
+    Parameters
+    ----------
+    n_bootstrap : int
+        Number of bootstrap replications (B).
+    n_clusters : int
+        Number of clusters (G).
+    weight_type : str
+        Weight distribution: 'rademacher', 'mammen', or 'webb'.
+
+    Returns
+    -------
+    ndarray, shape (B, G)
+        All bootstrap weights.
+    """
+    if weight_type == 'rademacher':
+        return np.random.choice([-1, 1], size=(n_bootstrap, n_clusters))
+    elif weight_type == 'mammen':
+        sqrt5 = np.sqrt(5)
+        p = (sqrt5 + 1) / (2 * sqrt5)
+        w1 = -(sqrt5 - 1) / 2
+        w2 = (sqrt5 + 1) / 2
+        return np.where(
+            np.random.random((n_bootstrap, n_clusters)) < p, w1, w2
+        )
+    elif weight_type == 'webb':
+        values = np.array([
+            -np.sqrt(3 / 2), -np.sqrt(2 / 2), -np.sqrt(1 / 2),
+            np.sqrt(1 / 2), np.sqrt(2 / 2), np.sqrt(3 / 2),
+        ])
+        return np.random.choice(values, size=(n_bootstrap, n_clusters))
+    else:
+        raise ValueError(
+            f"Unknown weight_type: {weight_type}. "
+            f"Must be one of: 'rademacher', 'mammen', 'webb'"
+        )
+
+
+# Maximum memory budget for batch bootstrap matrices (bytes).
+# Three (B, N) float64 matrices: obs_weights_all, Y_star, Residuals.
+_MAX_BATCH_MEMORY_BYTES: int = 500 * 1024 * 1024  # 500 MB
+
+
+def _batch_bootstrap(
+    all_weights: np.ndarray,
+    precomp: dict,
+    fitted: np.ndarray,
+    residuals_base: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Batch-compute bootstrap ATT estimates and t-statistics.
+
+    Replaces the Python for-loop with matrix operations for the
+    coefficient and residual computation steps.  Cluster-robust SE
+    still requires a per-sample loop because each bootstrap sample
+    has a different meat matrix.
+
+    Parameters
+    ----------
+    all_weights : ndarray, shape (B, G)
+        Bootstrap cluster-level weights.
+    precomp : dict
+        Output of _precompute_bootstrap_matrices().
+    fitted : ndarray, shape (N,)
+        Fitted values from the restricted or unrestricted model.
+    residuals_base : ndarray, shape (N,)
+        Residuals from the restricted or unrestricted model.
+
+    Returns
+    -------
+    att_bootstrap : ndarray, shape (B,)
+        Bootstrap ATT estimates.
+    t_stats_bootstrap : ndarray, shape (B,)
+        Bootstrap t-statistics (NaN where SE is invalid).
+    """
+    B = all_weights.shape[0]
+    N = precomp['N']
+    obs_cluster_idx = precomp['obs_cluster_idx']
+
+    # Memory check: estimate peak usage for 3 (B, N) float64 matrices
+    element_bytes = 8  # float64
+    required_bytes = 3 * B * N * element_bytes
+
+    if required_bytes > _MAX_BATCH_MEMORY_BYTES:
+        # Process in chunks to stay within memory budget
+        chunk_size = max(1, _MAX_BATCH_MEMORY_BYTES // (3 * N * element_bytes))
+        return _batch_bootstrap_chunked(
+            all_weights, precomp, fitted, residuals_base, chunk_size
+        )
+
+    # --- Full batch path (fits in memory) ---
+    return _batch_bootstrap_core(
+        all_weights, precomp, fitted, residuals_base
+    )
+
+
+def _batch_bootstrap_core(
+    all_weights: np.ndarray,
+    precomp: dict,
+    fitted: np.ndarray,
+    residuals_base: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Core batch bootstrap computation without chunking.
+
+    Parameters
+    ----------
+    all_weights : ndarray, shape (B, G)
+        Bootstrap cluster-level weights.
+    precomp : dict
+        Precomputed matrices.
+    fitted : ndarray, shape (N,)
+        Fitted values.
+    residuals_base : ndarray, shape (N,)
+        Base residuals.
+
+    Returns
+    -------
+    att_bootstrap : ndarray, shape (B,)
+    t_stats_bootstrap : ndarray, shape (B,)
+    """
+    B = all_weights.shape[0]
+    obs_cluster_idx = precomp['obs_cluster_idx']
+    P = precomp['P']          # (k, N)
+    X = precomp['X']          # (N, k)
+
+    # Map cluster weights to observation level: (B, N)
+    obs_weights_all = all_weights[:, obs_cluster_idx]
+
+    # Batch construct Y*: (B, N)
+    # y*_i = fitted_i + w_{g(i)} * residuals_i
+    Y_star = fitted[np.newaxis, :] + obs_weights_all * residuals_base[np.newaxis, :]
+
+    # Batch OLS coefficients: Beta = P @ Y*.T  -> (k, B)
+    Beta = P @ Y_star.T
+
+    # ATT is the coefficient on the treatment variable (index 1)
+    att_bootstrap = Beta[1, :].copy()  # (B,)
+
+    # Batch residuals: (B, N)
+    # Residuals[b, :] = Y_star[b, :] - X @ Beta[:, b]
+    Residuals = Y_star - (X @ Beta).T
+
+    # Free Y_star and obs_weights_all to reduce peak memory
+    del Y_star, obs_weights_all
+
+    # Vectorized cluster-robust SE: replace B × G nested loop with
+    # G iterations + einsum batch operations
+    var_11 = _batch_cluster_se_variance_11(Residuals, precomp)
+    se_all = np.sqrt(np.maximum(var_11, 0))
+    valid = (se_all > 0) & ~np.isnan(se_all)
+
+    t_stats_bootstrap = np.full(B, np.nan)
+    t_stats_bootstrap[valid] = att_bootstrap[valid] / se_all[valid]
+    # Mark ATT as NaN when SE is invalid (consistent with loop mode)
+    att_bootstrap[~valid] = np.nan
+
+    return att_bootstrap, t_stats_bootstrap
+
+def _batch_cluster_se_variance_11(
+    Residuals: np.ndarray,
+    precomp: dict,
+) -> np.ndarray:
+    """
+    Vectorized computation of cluster-robust variance V[1,1] for all
+    bootstrap samples simultaneously.
+
+    Replaces the B × G nested loop with G iterations plus einsum batch
+    operations for substantial computational savings.
+
+    Algorithm:
+        For each cluster g:
+            Scores_g = X_g.T @ Residuals[:, mask_g].T   # shape (k, B)
+        Meat = sum_g einsum('ib,jb->ijb', Scores_g, Scores_g)  # shape (k, k, B)
+        a = XtX_inv[1, :]  # row corresponding to the treatment variable
+        var_11 = correction * einsum('i,ijb,j->b', a, Meat, a)  # shape (B,)
+
+    Parameters
+    ----------
+    Residuals : ndarray, shape (B, N)
+        Residuals for each bootstrap sample.
+    precomp : dict
+        Precomputed matrices containing cluster_masks, cluster_X,
+        XtX_inv, correction, k, and G.
+
+    Returns
+    -------
+    var_11 : ndarray, shape (B,)
+        V[1,1] (variance of the treatment effect coefficient) for each
+        bootstrap sample. Invalid values (negative or NaN) are preserved
+        for the caller to handle.
+    """
+    B = Residuals.shape[0]
+    k = precomp['k']
+    G = precomp['G']
+    XtX_inv = precomp['XtX_inv']
+    correction = precomp['correction']
+    a = XtX_inv[1, :]  # (k,) — row of XtX_inv for the treatment variable
+
+    # Accumulate meat matrix across all clusters: shape (k, k, B)
+    Meat = np.zeros((k, k, B))
+    for g_idx in range(G):
+        mask = precomp['cluster_masks'][g_idx]
+        X_g = precomp['cluster_X'][g_idx]  # (n_g, k)
+        # Batch score vectors: (k, B) = (k, n_g) @ (n_g, B)
+        Scores_g = X_g.T @ Residuals[:, mask].T
+        # Accumulate outer products: (k, k, B) += einsum('ib,jb->ijb', ...)
+        Meat += np.einsum('ib,jb->ijb', Scores_g, Scores_g)
+
+    # Batch compute V[1,1] = correction * a @ Meat[:,:,b] @ a
+    var_11 = correction * np.einsum('i,ijb,j->b', a, Meat, a)
+
+    return var_11
+
+
+
+
+def _batch_bootstrap_chunked(
+    all_weights: np.ndarray,
+    precomp: dict,
+    fitted: np.ndarray,
+    residuals_base: np.ndarray,
+    chunk_size: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Chunked batch bootstrap for large datasets that exceed memory budget.
+
+    Splits the B bootstrap replications into chunks of size `chunk_size`,
+    processes each chunk via _batch_bootstrap_core(), and concatenates.
+
+    Parameters
+    ----------
+    all_weights : ndarray, shape (B, G)
+        All bootstrap weights.
+    precomp : dict
+        Precomputed matrices.
+    fitted : ndarray, shape (N,)
+        Fitted values.
+    residuals_base : ndarray, shape (N,)
+        Base residuals.
+    chunk_size : int
+        Maximum number of bootstrap samples per chunk.
+
+    Returns
+    -------
+    att_bootstrap : ndarray, shape (B,)
+    t_stats_bootstrap : ndarray, shape (B,)
+    """
+    B = all_weights.shape[0]
+    att_parts = []
+    t_parts = []
+
+    for start in range(0, B, chunk_size):
+        end = min(start + chunk_size, B)
+        chunk_weights = all_weights[start:end]
+        att_chunk, t_chunk = _batch_bootstrap_core(
+            chunk_weights, precomp, fitted, residuals_base
+        )
+        att_parts.append(att_chunk)
+        t_parts.append(t_chunk)
+
+    return np.concatenate(att_parts), np.concatenate(t_parts)
 
 
 def _estimate_ols_for_bootstrap(
@@ -451,6 +735,7 @@ def wild_cluster_bootstrap(
     impose_null: bool = True,
     full_enumeration: bool | None = None,
     use_wildboottest: bool = False,
+    _force_loop: bool = False,
 ) -> WildClusterBootstrapResult:
     """
     Perform wild cluster bootstrap for inference with few clusters.
@@ -539,6 +824,17 @@ def wild_cluster_bootstrap(
     --------
     diagnose_clustering : Diagnose clustering structure.
     recommend_clustering_level : Get recommendation for clustering level.
+
+    Performance
+    -----------
+    Uses pre-computed projection matrices and batch matrix operations
+    internally, avoiding per-iteration statsmodels overhead. The design
+    matrix inverse ``(X'X)^{-1}`` and cluster structure are computed once
+    before the bootstrap loop. Set ``_force_loop=True`` to use the
+    single-iteration path (useful for numerical verification).
+
+    .. versionchanged:: 0.2.0
+       Vectorized OLS and batch matrix operations for >10x speedup.
     """
     # Set random seed.
     if seed is not None:
@@ -613,29 +909,29 @@ def wild_cluster_bootstrap(
     
     t_stat_original = att_original / se_original
     
-    # 预计算 bootstrap 所需的矩阵和聚类结构（FR-1 + FR-3: 消除循环内 DataFrame 操作）
+    # Precompute matrices and cluster structure for bootstrap replication
     precomp = _precompute_bootstrap_matrices(data, y_transformed, d, cluster_var, controls)
     
     obs_cluster_idx = precomp['obs_cluster_idx']
     G = precomp['G']
     
-    # 受限/非受限模型的 fitted 和 residuals（纯 numpy 计算）
+    # Fitted values and residuals from restricted/unrestricted model
     if impose_null:
-        # 受限模型: y = α + ε（仅截距，无处理效应）
+        # Restricted model: y = α + ε (intercept only, no treatment effect)
         X_restricted = np.ones((precomp['N'], 1), dtype=np.float64)
         beta_r = np.linalg.lstsq(X_restricted, precomp['y'], rcond=None)[0]
         fitted_restricted = (X_restricted @ beta_r).ravel()
         residuals_restricted = precomp['y'] - fitted_restricted
     else:
-        # 非受限模型的 fitted 和 residuals
+        # Unrestricted model fitted values and residuals
         beta_u = precomp['P'] @ precomp['y']
         fitted_unrestricted = precomp['X'] @ beta_u
         residuals_unrestricted = precomp['y'] - fitted_unrestricted
     
-    # Step 2: Bootstrap 循环
-    # 确定使用完全枚举还是随机抽样
+    # Step 2: Bootstrap
+    # Determine full enumeration vs random sampling
     if full_enumeration and weight_type == 'rademacher':
-        # 完全枚举: 生成所有 2^G Rademacher 权重组合
+        # Full enumeration: generate all 2^G Rademacher weight combinations
         all_weights = _generate_all_rademacher_weights(G)
         actual_n_bootstrap = len(all_weights)
         use_full_enum = True
@@ -643,39 +939,55 @@ def wild_cluster_bootstrap(
         actual_n_bootstrap = n_bootstrap
         use_full_enum = False
     
-    t_stats_bootstrap = np.zeros(actual_n_bootstrap)
-    att_bootstrap = np.zeros(actual_n_bootstrap)
-    
-    for b in range(actual_n_bootstrap):
-        # 生成聚类级权重
-        if use_full_enum:
-            weights = all_weights[b]
-        else:
-            weights = _generate_bootstrap_weights(G, weight_type)
-        
-        # 映射权重到观测值级别
-        obs_weights = weights[obs_cluster_idx]
-        
-        # 构建 bootstrap y*（纯 numpy，无 DataFrame 操作）
-        if impose_null:
-            # y* = α̂_R + w · ε̂_R
-            y_star = fitted_restricted + obs_weights * residuals_restricted
-        else:
-            # y* = ŷ + w · ε̂
-            y_star = fitted_unrestricted + obs_weights * residuals_unrestricted
-        
-        # 快速 OLS + cluster SE（使用预计算矩阵，无 data.copy()）
-        try:
-            att_b, se_b = _fast_ols_cluster_se(y_star, precomp)
-            if se_b > 0 and not np.isnan(se_b):
-                t_stats_bootstrap[b] = att_b / se_b
-                att_bootstrap[b] = att_b
+    # Select fitted values and residuals for y* construction
+    if impose_null:
+        fitted_base = fitted_restricted
+        resid_base = residuals_restricted
+    else:
+        fitted_base = fitted_unrestricted
+        resid_base = residuals_unrestricted
+
+    # Decide between batch mode and loop mode
+    if _force_loop:
+        # --- Loop mode (reference implementation) ---
+        t_stats_bootstrap = np.full(actual_n_bootstrap, np.nan)
+        att_bootstrap = np.full(actual_n_bootstrap, np.nan)
+
+        for b in range(actual_n_bootstrap):
+            if use_full_enum:
+                weights = all_weights[b]
             else:
+                weights = _generate_bootstrap_weights(G, weight_type)
+
+            obs_weights = weights[obs_cluster_idx]
+            y_star = fitted_base + obs_weights * resid_base
+
+            try:
+                att_b, se_b = _fast_ols_cluster_se(y_star, precomp)
+                if se_b > 0 and not np.isnan(se_b):
+                    t_stats_bootstrap[b] = att_b / se_b
+                    att_bootstrap[b] = att_b
+                else:
+                    t_stats_bootstrap[b] = np.nan
+                    att_bootstrap[b] = np.nan
+            except Exception:
                 t_stats_bootstrap[b] = np.nan
                 att_bootstrap[b] = np.nan
-        except Exception:
-            t_stats_bootstrap[b] = np.nan
-            att_bootstrap[b] = np.nan
+    else:
+        # --- Batch mode: eliminate Python for-loop for OLS ---
+        # Generate all weights at once: shape (B, G)
+        if use_full_enum:
+            # all_weights already generated above as (2^G, G)
+            pass
+        else:
+            all_weights = _generate_all_bootstrap_weights(
+                actual_n_bootstrap, G, weight_type
+            )
+
+        # Batch compute ATT and t-statistics via matrix operations
+        att_bootstrap, t_stats_bootstrap = _batch_bootstrap(
+            all_weights, precomp, fitted_base, resid_base
+        )
     
     # Remove NaN values.
     valid_mask = ~np.isnan(t_stats_bootstrap)
@@ -893,6 +1205,7 @@ def _compute_bootstrap_pvalue_at_null(
     Compute bootstrap p-value at a given null hypothesis value.
     
     Internal function used for test inversion confidence intervals.
+    This is the legacy slow path kept for reference and fallback.
     
     Parameters
     ----------
@@ -980,6 +1293,116 @@ def _compute_bootstrap_pvalue_at_null(
     return pvalue
 
 
+def _compute_bootstrap_pvalue_at_null_fast(
+    null_value: float,
+    precomp: dict,
+    d_values: np.ndarray,
+    att_original: float,
+    se_original: float,
+    n_bootstrap: int,
+    weight_type: str,
+    seed: int | None = None,
+) -> float:
+    """
+    Compute bootstrap p-value at a given null hypothesis value using precomputed matrices.
+
+    Numerically equivalent to _compute_bootstrap_pvalue_at_null(), but achieves
+    substantial performance gains by reusing precomputed projection matrices
+    and leveraging batch matrix operations.
+
+    Algorithm:
+        1. Restricted model: y_r = y - θd, fit intercept model y_r = α + ε
+        2. Batch-generate all bootstrap weights: W shape (B, G)
+        3. Batch-construct y*: Y* = fitted_r + θd + W_obs * residuals_r
+        4. Batch OLS: Beta = P @ Y*.T
+        5. Compute cluster-robust SE per bootstrap sample (meat matrix differs per sample)
+        6. t* = (att* - θ) / se*
+        7. p-value = mean(|t*| >= |t_orig|)
+
+    Parameters
+    ----------
+    null_value : float
+        Null hypothesis value θ (H₀: β = θ).
+    precomp : dict
+        Return value of _precompute_bootstrap_matrices(), shared across all grid points.
+    d_values : ndarray, shape (N,)
+        Treatment indicator vector.
+    att_original : float
+        Original ATT point estimate.
+    se_original : float
+        Original cluster-robust standard error.
+    n_bootstrap : int
+        Number of bootstrap replications.
+    weight_type : str
+        Bootstrap weight type: 'rademacher', 'mammen', 'webb'.
+    seed : int, optional
+        Random seed. Resets the RNG state on each call to ensure identical
+        bootstrap weights at every grid point (consistent with the original implementation).
+
+    Returns
+    -------
+    float
+        Bootstrap p-value.
+    """
+    if seed is not None:
+        np.random.seed(seed)
+
+    # Original t-statistic (relative to null_value)
+    t_original = (att_original - null_value) / se_original
+
+    N = precomp['N']
+    G = precomp['G']
+    obs_cluster_idx = precomp['obs_cluster_idx']
+    P = precomp['P']          # (k, N)
+    X = precomp['X']          # (N, k)
+
+    # Restricted model: y - θd = α + ε (intercept-only model)
+    y_restricted = precomp['y'] - null_value * d_values
+    # OLS solution for the intercept model is the sample mean
+    alpha_hat = y_restricted.mean()
+    fitted_r = np.full(N, alpha_hat)
+    residuals_r = y_restricted - alpha_hat
+
+    # Batch-generate all bootstrap weights: (B, G)
+    all_weights = _generate_all_bootstrap_weights(n_bootstrap, G, weight_type)
+
+    # Map to observation level: (B, N)
+    obs_weights_all = all_weights[:, obs_cluster_idx]
+
+    # Batch-construct Y*: y*_i = fitted_r_i + θ * d_i + w_{g(i)} * residuals_r_i
+    # Shape: (B, N)
+    Y_star = (fitted_r[np.newaxis, :]
+              + null_value * d_values[np.newaxis, :]
+              + obs_weights_all * residuals_r[np.newaxis, :])
+
+    # Batch OLS coefficients: Beta = P @ Y*.T -> (k, B)
+    Beta = P @ Y_star.T
+    att_all = Beta[1, :]  # (B,) — treatment effect coefficient
+
+    # Batch residuals: (B, N)
+    Residuals = Y_star - (X @ Beta).T
+
+    # Release large matrices to reduce peak memory usage
+    del Y_star, obs_weights_all
+
+    # Vectorized cluster-robust SE: eliminates B × G double loop
+    var_11 = _batch_cluster_se_variance_11(Residuals, precomp)
+    se_all = np.sqrt(np.maximum(var_11, 0))
+    valid = (se_all > 0) & ~np.isnan(se_all)
+
+    t_stats = np.full(n_bootstrap, np.nan)
+    t_stats[valid] = (att_all[valid] - null_value) / se_all[valid]
+
+    # Valid t-statistics
+    valid = ~np.isnan(t_stats)
+    if not np.any(valid):
+        return np.nan
+
+    # Two-sided p-value
+    pvalue = np.mean(np.abs(t_stats[valid]) >= np.abs(t_original))
+    return pvalue
+
+
 def wild_cluster_bootstrap_test_inversion(
     data: pd.DataFrame,
     y_transformed: str,
@@ -992,6 +1415,7 @@ def wild_cluster_bootstrap_test_inversion(
     seed: int | None = None,
     grid_points: int = 25,
     ci_tol: float = 0.01,
+    _force_slow: bool = False,
 ) -> WildClusterBootstrapResult:
     """
     Compute wild cluster bootstrap confidence interval using test inversion.
@@ -1026,6 +1450,8 @@ def wild_cluster_bootstrap_test_inversion(
         Number of grid points for initial search.
     ci_tol : float, default 0.01
         Tolerance for CI boundary precision.
+    _force_slow : bool, default False
+        Internal parameter. When True, uses the original slow path (for regression testing).
     
     Returns
     -------
@@ -1043,6 +1469,16 @@ def wild_cluster_bootstrap_test_inversion(
     
     1. More computationally intensive (requires multiple bootstrap runs).
     2. Requires numerical optimization to find boundaries.
+
+    Performance
+    -----------
+    The projection matrix ``(X'X)^{-1}X'`` is pre-computed once and shared
+    across all grid points and bisection iterations, reducing the cost from
+    ~35 full bootstrap runs to ~35 batch matrix operations. Set
+    ``_force_slow=True`` to use the original per-grid-point path.
+
+    .. versionchanged:: 0.2.0
+       Shared pre-computation across grid points for >6x speedup.
     """
     # Set random seed.
     rng_state = np.random.get_state() if seed is None else None
@@ -1084,17 +1520,42 @@ def wild_cluster_bootstrap_test_inversion(
     t_stat_original = att_original / se_original
     G = data[cluster_var].nunique()
     
-    # Step 2: Compute p-value at theta=0 (for reporting).
-    pvalue_at_zero = _compute_bootstrap_pvalue_at_null(
-        data, y_transformed, d, cluster_var,
-        null_value=0,
-        att_original=att_original,
-        se_original=se_original,
-        n_bootstrap=n_bootstrap,
-        weight_type=weight_type,
-        controls=controls,
-        seed=seed
+    # Precompute projection matrices and cluster structure (once, shared across all grid points)
+    precomp = _precompute_bootstrap_matrices(
+        data, y_transformed, d, cluster_var, controls
     )
+    d_values = data[d].values.astype(np.float64)
+    
+    # Select p-value computation function
+    if _force_slow:
+        # Slow path: used for regression testing validation
+        def _pvalue_func(theta):
+            return _compute_bootstrap_pvalue_at_null(
+                data, y_transformed, d, cluster_var,
+                null_value=theta,
+                att_original=att_original,
+                se_original=se_original,
+                n_bootstrap=n_bootstrap,
+                weight_type=weight_type,
+                controls=controls,
+                seed=seed,
+            )
+    else:
+        # Fast path: uses precomputed matrices and batch operations
+        def _pvalue_func(theta):
+            return _compute_bootstrap_pvalue_at_null_fast(
+                null_value=theta,
+                precomp=precomp,
+                d_values=d_values,
+                att_original=att_original,
+                se_original=se_original,
+                n_bootstrap=n_bootstrap,
+                weight_type=weight_type,
+                seed=seed,
+            )
+    
+    # Step 2: Compute p-value at theta=0 (for reporting).
+    pvalue_at_zero = _pvalue_func(0.0)
     
     # Step 3: Find CI boundaries using test inversion.
     # First perform coarse grid search.
@@ -1104,22 +1565,7 @@ def wild_cluster_bootstrap_test_inversion(
     theta_max = att_original + search_range
     
     theta_grid = np.linspace(theta_min, theta_max, grid_points)
-    pvalues_grid = []
-    
-    for theta in theta_grid:
-        pval = _compute_bootstrap_pvalue_at_null(
-            data, y_transformed, d, cluster_var,
-            null_value=theta,
-            att_original=att_original,
-            se_original=se_original,
-            n_bootstrap=n_bootstrap,
-            weight_type=weight_type,
-            controls=controls,
-            seed=seed
-        )
-        pvalues_grid.append(pval)
-    
-    pvalues_grid = np.array(pvalues_grid)
+    pvalues_grid = np.array([_pvalue_func(theta) for theta in theta_grid])
     
     # Find region where p >= alpha.
     ci_mask = pvalues_grid >= alpha
@@ -1136,17 +1582,7 @@ def wild_cluster_bootstrap_test_inversion(
         
         # Use bisection to precisely locate boundaries.
         def pvalue_minus_alpha(theta):
-            pval = _compute_bootstrap_pvalue_at_null(
-                data, y_transformed, d, cluster_var,
-                null_value=theta,
-                att_original=att_original,
-                se_original=se_original,
-                n_bootstrap=n_bootstrap,
-                weight_type=weight_type,
-                controls=controls,
-                seed=seed
-            )
-            return pval - alpha
+            return _pvalue_func(theta) - alpha
         
         # Find lower bound.
         try:

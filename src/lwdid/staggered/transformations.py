@@ -340,8 +340,9 @@ def transform_staggered_demean(
     result = data.copy()
     result[tvar] = pd.to_numeric(result[tvar], errors='coerce')
 
-    # DESIGN-051: 将时间变量四舍五入为整数，避免浮点精度问题
-    # （例如 CSV 导入后 4.0 + 1e-14 无法与整数 4 精确匹配）
+    # Round the time variable to integer to avoid floating-point precision
+    # issues (e.g., 4.0 + 1e-14 after CSV import fails to match the
+    # integer 4 exactly)
     tvar_notna = result[tvar].notna()
     if tvar_notna.any():
         result.loc[tvar_notna, tvar] = result.loc[tvar_notna, tvar].round().astype(int)

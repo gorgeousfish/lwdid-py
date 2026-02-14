@@ -24,6 +24,7 @@ from typing import Literal
 import warnings
 
 import numpy as np
+from numpy.random import SeedSequence, default_rng
 from numpy.typing import NDArray
 import pandas as pd
 
@@ -80,6 +81,155 @@ class StaggeredRIResult:
         )
 
 
+def _single_staggered_ri_iteration(
+    child_seed,
+    ri_method: str,
+    unit_ids: list,
+    unit_gvar_values: np.ndarray,
+    n_units: int,
+    data: pd.DataFrame,
+    gvar: str,
+    ivar: str,
+    tvar: str,
+    y: str,
+    target: str,
+    target_cohort: int | None,
+    target_period: int | None,
+    rolling_lower: str,
+    transform_func,
+    controls: list[str] | None,
+    vce: str | None,
+    cluster_var: str | None,
+    T_max: int,
+) -> float:
+    """
+    Execute a single staggered RI iteration.
+
+    Designed as a pure function with no shared mutable state, safe for
+    parallel execution via joblib.
+
+    Parameters
+    ----------
+    child_seed : SeedSequence or Generator
+        Deterministic child seed for this iteration's RNG, or a pre-existing
+        Generator instance (for legacy_seed mode).
+    ri_method : str
+        'permutation' or 'bootstrap'.
+    unit_ids : list
+        Unit identifiers.
+    unit_gvar_values : np.ndarray
+        Cohort assignment values per unit.
+    n_units : int
+        Number of units.
+    data : pd.DataFrame
+        Original panel data (read-only within this function).
+    gvar, ivar, tvar, y : str
+        Column names.
+    target : str
+        'overall', 'cohort', or 'cohort_time'.
+    target_cohort, target_period : int or None
+        Target cohort/period for cohort or cohort_time targets.
+    rolling_lower : str
+        Transformation type ('demean' or 'detrend').
+    transform_func : callable
+        Transformation function.
+    controls : list of str or None
+        Control variable names.
+    vce : str or None
+        Variance-covariance estimator type.
+    cluster_var : str or None
+        Cluster variable name.
+    T_max : int
+        Maximum time period.
+
+    Returns
+    -------
+    float
+        ATT statistic for this iteration, or np.nan on failure.
+    """
+    # Two seed modes are supported:
+    # - SeedSequence: new mode (parallel-safe)
+    # - Generator: legacy mode (pre-existing RNG passed in)
+    if hasattr(child_seed, 'permutation'):
+        # Already a Generator instance (legacy mode)
+        rng_local = child_seed
+    else:
+        rng_local = default_rng(child_seed)
+
+    try:
+        if ri_method == 'permutation':
+            perm_idx = rng_local.permutation(n_units)
+            perm_gvar = unit_gvar_values[perm_idx]
+        else:
+            boot_idx = rng_local.integers(0, n_units, size=n_units)
+            perm_gvar = unit_gvar_values[boot_idx]
+
+        perm_gvar_mapping = dict(zip(unit_ids, perm_gvar))
+
+        # Use assign() to avoid mutating the original data
+        data_perm = data.assign(**{gvar: data[ivar].map(perm_gvar_mapping)})
+
+        try:
+            data_transformed = transform_func(data_perm, y, ivar, tvar, gvar)
+        except (ValueError, KeyError):
+            return np.nan
+
+        # Deferred imports to avoid circular dependencies
+        from .aggregation import aggregate_to_cohort, aggregate_to_overall
+        from .transformations import get_cohorts
+        from .estimation import estimate_cohort_time_effects
+
+        if target == 'overall':
+            try:
+                result = aggregate_to_overall(
+                    data_transformed, gvar, ivar, tvar,
+                    transform_type=rolling_lower,
+                    vce=vce,
+                    cluster_var=cluster_var,
+                )
+                return result.att
+            except (ValueError, KeyError):
+                return np.nan
+
+        elif target == 'cohort':
+            try:
+                perm_cohorts = get_cohorts(data_transformed, gvar, ivar)
+                if target_cohort not in perm_cohorts:
+                    return np.nan
+
+                results = aggregate_to_cohort(
+                    data_transformed, gvar, ivar, tvar,
+                    cohorts=[target_cohort], T_max=T_max,
+                    transform_type=rolling_lower,
+                    vce=vce,
+                    cluster_var=cluster_var,
+                )
+                return results[0].att if results else np.nan
+            except (ValueError, KeyError):
+                return np.nan
+
+        else:
+            # target == 'cohort_time'
+            try:
+                ct_results = estimate_cohort_time_effects(
+                    data_transformed, gvar, ivar, tvar,
+                    controls=controls,
+                    vce=vce,
+                    cluster_var=cluster_var,
+                    transform_type=rolling_lower,
+                )
+                target_result = [
+                    r for r in ct_results
+                    if r.cohort == target_cohort and r.period == target_period
+                ]
+                return target_result[0].att if target_result else np.nan
+            except (ValueError, KeyError):
+                return np.nan
+
+    except Exception:
+        return np.nan
+
+
 def randomization_inference_staggered(
     data: pd.DataFrame,
     gvar: str,
@@ -98,6 +248,8 @@ def randomization_inference_staggered(
     vce: str | None = None,
     cluster_var: str | None = None,
     n_never_treated: int = 0,
+    n_jobs: int = 1,
+    legacy_seed: bool = False,
 ) -> StaggeredRIResult:
     """
     Perform randomization inference for staggered DiD estimation.
@@ -159,6 +311,26 @@ def randomization_inference_staggered(
     n_never_treated : int, default 0
         Number of never-treated units. Required for overall effect inference
         to ensure a consistent reference group across permutations.
+    n_jobs : int, default 1
+        Number of parallel cores for resampling iterations.
+
+        - 1: Serial execution (default, backward compatible).
+        - -1: Use all available CPU cores.
+        - n > 1: Use n cores.
+
+        Requires joblib package. Falls back to serial execution with a
+        UserWarning if joblib is not installed.
+
+        .. versionadded:: 0.2.0
+
+    legacy_seed : bool, default False
+        Whether to preserve the original single-RNG sequential seed behavior.
+        Only effective when ``n_jobs=1``. When True, uses a single RNG
+        instance for all iterations (reproducing pre-optimization results
+        exactly). When False (default), uses SeedSequence-derived child
+        seeds for each iteration, enabling parallel-safe determinism.
+
+        .. versionadded:: 0.2.0
 
     Returns
     -------
@@ -194,6 +366,17 @@ def randomization_inference_staggered(
 
     A minimum of 50 valid replications (or 10% of rireps, whichever is larger)
     is required for reliable p-value computation.
+
+    Performance
+    -----------
+    Each resampling iteration is independent and can be parallelized via
+    the ``n_jobs`` parameter (requires joblib). Seed determinism is
+    maintained through ``numpy.random.SeedSequence`` child seeds, ensuring
+    identical results regardless of execution order.
+
+    .. versionchanged:: 0.2.0
+       Added ``n_jobs`` for joblib-based parallelization and
+       ``legacy_seed`` for backward-compatible seed behavior.
     """
     # =========================================================================
     # Input Validation
@@ -226,8 +409,6 @@ def randomization_inference_staggered(
             f"rolling must be 'demean' or 'detrend', got '{rolling}'"
         )
 
-    rng = np.random.default_rng(seed)
-
     # Cohort assignment is time-invariant; extract once per unit for efficiency.
     unit_gvar = data.groupby(ivar)[gvar].first()
     unit_ids = unit_gvar.index.tolist()
@@ -239,8 +420,6 @@ def randomization_inference_staggered(
 
     # Deferred imports to avoid circular dependencies between submodules.
     from .transformations import transform_staggered_demean, transform_staggered_detrend
-    from .estimation import estimate_cohort_time_effects
-    from .aggregation import aggregate_to_cohort, aggregate_to_overall, get_cohorts
 
     transform_func = (
         transform_staggered_demean
@@ -251,95 +430,81 @@ def randomization_inference_staggered(
     T_max = int(data[tvar].max())
 
     # =========================================================================
+    # Seed Strategy
+    # =========================================================================
+    # legacy_seed=True + n_jobs=1: use the original single-RNG sequential
+    # generation to exactly reproduce pre-optimization results.
+    # Otherwise: use SeedSequence-derived deterministic child seeds,
+    # enabling parallel execution.
+    use_legacy = legacy_seed and n_jobs == 1
+
+    # Common arguments (passed to _single_staggered_ri_iteration)
+    common_args = dict(
+        ri_method=ri_method,
+        unit_ids=unit_ids,
+        unit_gvar_values=unit_gvar.values.copy(),
+        n_units=n_units,
+        data=data,
+        gvar=gvar,
+        ivar=ivar,
+        tvar=tvar,
+        y=y,
+        target=target,
+        target_cohort=target_cohort,
+        target_period=target_period,
+        rolling_lower=rolling_lower,
+        transform_func=transform_func,
+        controls=controls,
+        vce=vce,
+        cluster_var=cluster_var,
+        T_max=T_max,
+    )
+
+    # =========================================================================
     # Resampling Loop
     # =========================================================================
-    # Pre-fill with NaN to distinguish failed replications from valid zeros;
-    # NaN entries are excluded when computing the empirical p-value.
-    perm_stats = np.empty(rireps, dtype=float)
-    perm_stats.fill(np.nan)
+    if use_legacy:
+        # Legacy mode: single RNG sequential generation, fully consistent
+        # with pre-optimization behavior
+        rng = default_rng(seed)
+        perm_stats = np.array([
+            _single_staggered_ri_iteration(rng, **common_args)
+            for _ in range(rireps)
+        ])
+    else:
+        # New mode: SeedSequence-derived deterministic child seeds
+        ss = SeedSequence(seed if seed is not None else None)
+        child_seeds = ss.spawn(rireps)
 
-    for rep in range(rireps):
-        try:
-            if ri_method == 'permutation':
-                # Without-replacement shuffle preserves marginal cohort distribution.
-                perm_idx = rng.permutation(n_units)
-                perm_gvar = unit_gvar.values[perm_idx]
-            else:
-                # With-replacement bootstrap allows cohort frequency variation.
-                boot_idx = rng.integers(0, n_units, size=n_units)
-                perm_gvar = unit_gvar.values[boot_idx]
-
-            perm_gvar_mapping = dict(zip(unit_ids, perm_gvar))
-
-            data_perm = data.copy()
-            data_perm[gvar] = data_perm[ivar].map(perm_gvar_mapping)
-
+        if n_jobs == 1:
+            # Serial execution (default)
+            perm_stats = np.array([
+                _single_staggered_ri_iteration(child_seeds[rep], **common_args)
+                for rep in range(rireps)
+            ])
+        else:
+            # Parallel execution
             try:
-                data_transformed = transform_func(
-                    data_perm, y, ivar, tvar, gvar
+                from joblib import Parallel, delayed
+                results = Parallel(n_jobs=n_jobs, backend='loky')(
+                    delayed(_single_staggered_ri_iteration)(
+                        child_seeds[rep], **common_args
+                    )
+                    for rep in range(rireps)
                 )
-            except (ValueError, KeyError):
-                perm_stats[rep] = np.nan
-                continue
-
-            if target == 'overall':
-                try:
-                    result = aggregate_to_overall(
-                        data_transformed, gvar, ivar, tvar,
-                        transform_type=rolling_lower,
-                        vce=vce,
-                        cluster_var=cluster_var,
+                perm_stats = np.array(results)
+            except ImportError:
+                warnings.warn(
+                    "joblib is not installed; falling back to serial execution. "
+                    "Install joblib to enable parallelization: pip install joblib",
+                    UserWarning,
+                )
+                perm_stats = np.array([
+                    _single_staggered_ri_iteration(
+                        child_seeds[rep], **common_args
                     )
-                    perm_stats[rep] = result.att
-                except (ValueError, KeyError):
-                    perm_stats[rep] = np.nan
-
-            elif target == 'cohort':
-                try:
-                    perm_cohorts = get_cohorts(data_transformed, gvar, ivar)
-                    # Permutation may reassign all units away from target cohort.
-                    if target_cohort not in perm_cohorts:
-                        perm_stats[rep] = np.nan
-                        continue
-
-                    results = aggregate_to_cohort(
-                        data_transformed, gvar, ivar, tvar,
-                        cohorts=[target_cohort], T_max=T_max,
-                        transform_type=rolling_lower,
-                        vce=vce,
-                        cluster_var=cluster_var,
-                    )
-                    if results:
-                        perm_stats[rep] = results[0].att
-                    else:
-                        perm_stats[rep] = np.nan
-                except (ValueError, KeyError):
-                    perm_stats[rep] = np.nan
-
-            else:
-                # target == 'cohort_time'
-                try:
-                    ct_results = estimate_cohort_time_effects(
-                        data_transformed, gvar, ivar, tvar,
-                        controls=controls,
-                        vce=vce,
-                        cluster_var=cluster_var,
-                        transform_type=rolling_lower,
-                    )
-                    target_result = [
-                        r for r in ct_results
-                        if r.cohort == target_cohort and r.period == target_period
-                    ]
-                    if target_result:
-                        perm_stats[rep] = target_result[0].att
-                    else:
-                        perm_stats[rep] = np.nan
-                except (ValueError, KeyError):
-                    perm_stats[rep] = np.nan
-
-        except Exception:
-            # Catch-all for unexpected failures; NaN exclusion handles these.
-            perm_stats[rep] = np.nan
+                    for rep in range(rireps)
+                ])
 
     # =========================================================================
     # P-Value Computation
@@ -393,6 +558,8 @@ def ri_overall_effect(
     seed: int | None = None,
     vce: str | None = None,
     cluster_var: str | None = None,
+    n_jobs: int = 1,
+    legacy_seed: bool = False,
 ) -> StaggeredRIResult:
     """
     Perform randomization inference for the overall weighted ATT.
@@ -427,6 +594,15 @@ def ri_overall_effect(
         Variance-covariance estimator type.
     cluster_var : str, optional
         Column name for clustering standard errors.
+    n_jobs : int, default 1
+        Number of parallel cores. See `randomization_inference_staggered`.
+
+        .. versionadded:: 0.2.0
+
+    legacy_seed : bool, default False
+        Preserve original seed behavior. See `randomization_inference_staggered`.
+
+        .. versionadded:: 0.2.0
 
     Returns
     -------
@@ -459,6 +635,8 @@ def ri_overall_effect(
         n_never_treated=n_nt,
         vce=vce,
         cluster_var=cluster_var,
+        n_jobs=n_jobs,
+        legacy_seed=legacy_seed,
     )
 
 
@@ -476,6 +654,8 @@ def ri_cohort_effect(
     seed: int | None = None,
     vce: str | None = None,
     cluster_var: str | None = None,
+    n_jobs: int = 1,
+    legacy_seed: bool = False,
 ) -> StaggeredRIResult:
     """
     Perform randomization inference for a cohort-specific ATT.
@@ -513,6 +693,15 @@ def ri_cohort_effect(
         Variance-covariance estimator type.
     cluster_var : str, optional
         Column name for clustering standard errors.
+    n_jobs : int, default 1
+        Number of parallel cores. See `randomization_inference_staggered`.
+
+        .. versionadded:: 0.2.0
+
+    legacy_seed : bool, default False
+        Preserve original seed behavior. See `randomization_inference_staggered`.
+
+        .. versionadded:: 0.2.0
 
     Returns
     -------
@@ -546,4 +735,6 @@ def ri_cohort_effect(
         n_never_treated=n_nt,
         vce=vce,
         cluster_var=cluster_var,
+        n_jobs=n_jobs,
+        legacy_seed=legacy_seed,
     )

@@ -516,7 +516,7 @@ def apply_rolling_transform(
         data['ydot_postavg'].notna()
     )
 
-    # Clean up temporary column if created
+    # Remove temporary column if created during transformation.
     if '_post_for_transform' in data.columns:
         data = data.drop(columns=['_post_for_transform'])
 

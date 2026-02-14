@@ -1625,7 +1625,7 @@ def _select_degrees_of_freedom(
         else:
             return max(1, n_cohorts - 1)
 
-    # Should not reach here
+    # Unreachable: all valid strategy values handled above.
     return max(1, n_cohorts - 1)
 
 
@@ -1910,7 +1910,7 @@ def aggregate_to_event_time(
         if df_inference > 0:
             t_crit = t_dist.ppf(1 - alpha / 2, df_inference)
         else:
-            # Fallback to z=1.96 if df is invalid (should not happen)
+            # Fallback to standard normal critical value when df is non-positive
             t_crit = 1.96
             warnings.warn(
                 f"Event time {r}: Invalid df_inference={df_inference}, using z=1.96",

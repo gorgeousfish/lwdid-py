@@ -309,69 +309,69 @@ def transform_staggered_demean_pre(
             )
 
     # =========================================================================
-    # Compute Pre-treatment Demeaning Transformations (向量化实现)
+    # Compute Pre-treatment Demeaning Transformations (Vectorized)
     # =========================================================================
-    # 构建 (unit, time) -> Y 的 pivot table，用于快速查找
-    # 行 = unit, 列 = time period
+    # Build (unit, time) -> Y pivot table for efficient lookup.
+    # Rows = units, columns = time periods.
     pivot = result.pivot_table(index=ivar, columns=tvar, values=y, aggfunc='first')
-    # 确保列是整数排序
+    # Ensure columns are sorted in ascending integer order.
     pivot = pivot.reindex(columns=sorted(pivot.columns))
 
-    # 收集所有新列，最后一次性 concat（避免 DataFrame fragmentation）
+    # Collect all new columns and concatenate once to avoid DataFrame fragmentation.
     new_cols = {}
 
     for g in cohorts:
         pre_periods = get_pre_treatment_periods_for_cohort(g, T_min)
 
-        # 初始化所有列为 NaN Series
+        # Initialize all columns as NaN Series.
         for t in pre_periods:
             col_name = f'ydot_pre_g{int(g)}_t{t}'
             new_cols[col_name] = pd.Series(np.nan, index=result.index)
 
-        # Anchor point (t = g-1): 所有单位设为 0.0
+        # Anchor point (t = g-1): set to 0.0 for all units.
         anchor_t = g - 1
         if anchor_t in pre_periods:
             col_name = f'ydot_pre_g{int(g)}_t{anchor_t}'
             anchor_mask = result[tvar] == anchor_t
             new_cols[col_name].loc[anchor_mask] = 0.0
 
-        # 对非 anchor 的 pre-treatment periods 进行向量化计算
+        # Compute vectorized transformations for non-anchor pre-treatment periods.
         for t in pre_periods:
             if t == g - 1:
-                continue  # anchor 已处理
+                continue  # Anchor already handled.
 
             col_name = f'ydot_pre_g{int(g)}_t{t}'
 
-            # future periods: {t+1, ..., g-1}
+            # Future periods: {t+1, ..., g-1}
             future_cols = [c for c in pivot.columns if t < c < g]
             if len(future_cols) == 0:
                 continue
 
-            # 每个单位在 future periods 的均值（向量化）
+            # Mean of future periods for each unit (vectorized).
             future_mean = pivot[future_cols].mean(axis=1)  # Series: unit -> mean
 
-            # 当前期 Y_it
+            # Current period outcome Y_it.
             if t in pivot.columns:
                 Y_it = pivot[t]  # Series: unit -> Y_it
             else:
                 continue
 
-            # 变换值 = Y_it - future_mean
+            # Transformed value = Y_it - future_mean.
             transformed = Y_it - future_mean
 
-            # 只保留两者都非 NaN 的
+            # Retain only observations where both values are non-NaN.
             valid = transformed.dropna()
 
             if len(valid) == 0:
                 continue
 
-            # 赋值到对应 (unit, t) 的行
+            # Assign to corresponding (unit, t) rows.
             period_mask = result[tvar] == t
             period_data = result.loc[period_mask]
             unit_map = valid.to_dict()
             new_cols[col_name].loc[period_mask] = period_data[ivar].map(unit_map).values
 
-    # 一次性添加所有新列
+    # Concatenate all new columns at once.
     if new_cols:
         new_df = pd.DataFrame(new_cols, index=result.index)
         result = pd.concat([result, new_df], axis=1)
@@ -496,24 +496,24 @@ def transform_staggered_detrend_pre(
             )
 
     # =========================================================================
-    # Compute Pre-treatment Detrending Transformations (向量化实现)
+    # Compute Pre-treatment Detrending Transformations (Vectorized)
     # =========================================================================
-    # 构建 (unit, time) -> Y 的 pivot table
+    # Build (unit, time) -> Y pivot table.
     pivot = result.pivot_table(index=ivar, columns=tvar, values=y, aggfunc='first')
     pivot = pivot.reindex(columns=sorted(pivot.columns))
 
-    # 收集所有新列，最后一次性 concat（避免 DataFrame fragmentation）
+    # Collect all new columns and concatenate once to avoid DataFrame fragmentation.
     new_cols = {}
 
     for g in cohorts:
         pre_periods = get_pre_treatment_periods_for_cohort(g, T_min)
 
-        # 初始化所有列为 NaN Series
+        # Initialize all columns as NaN Series.
         for t in pre_periods:
             col_name = f'ycheck_pre_g{int(g)}_t{t}'
             new_cols[col_name] = pd.Series(np.nan, index=result.index)
 
-        # Anchor point (t = g-1): 设为 0.0
+        # Anchor point (t = g-1): set to 0.0.
         anchor_t = g - 1
         if anchor_t in pre_periods:
             col_name = f'ycheck_pre_g{int(g)}_t{anchor_t}'
@@ -522,78 +522,78 @@ def transform_staggered_detrend_pre(
 
         for t in pre_periods:
             if t == g - 1:
-                continue  # anchor 已处理
+                continue  # Anchor point already handled.
             if t == g - 2:
-                continue  # 只有1个 future period，OLS 需要至少2个
+                continue  # Only 1 future period; OLS requires at least 2.
 
             col_name = f'ycheck_pre_g{int(g)}_t{t}'
 
-            # future periods: {t+1, ..., g-1}
+            # Future periods: {t+1, ..., g-1}.
             future_cols = [c for c in pivot.columns if t < c < g]
             if len(future_cols) < 2:
                 continue
 
-            # 提取 future periods 的数据矩阵 (units × future_periods)
-            Y_future = pivot[future_cols]  # DataFrame: units × future_periods
-            t_vals = np.array(future_cols, dtype=float)  # 时间值
+            # Extract future-period data matrix (units × future_periods).
+            Y_future = pivot[future_cols]
+            t_vals = np.array(future_cols, dtype=float)
 
-            # 向量化 OLS: Y = A + B*t
-            # 公式: B = (n*sum(t*Y) - sum(t)*sum(Y)) / (n*sum(t^2) - sum(t)^2)
-            #        A = (sum(Y) - B*sum(t)) / n
+            # Vectorized OLS: Y = A + B*t.
+            # Formulas: B = (n*Σ(tY) - Σt*ΣY) / (n*Σ(t²) - (Σt)²)
+            #           A = (ΣY - B*Σt) / n
 
-            # 计算每个单位的有效观测数（非 NaN）
+            # Count valid (non-NaN) observations per unit.
             valid_mask = Y_future.notna()
-            n_valid = valid_mask.sum(axis=1)  # Series: unit -> count
+            n_valid = valid_mask.sum(axis=1)
 
-            # 只处理有至少2个有效观测的单位
+            # Require at least 2 valid observations for OLS.
             enough_mask = n_valid >= 2
 
             if not enough_mask.any():
                 continue
 
-            # 将 NaN 替换为 0 用于求和（配合 valid_mask 计数）
+            # Replace NaN with 0 for summation (masked by valid_mask).
             Y_filled = Y_future.fillna(0.0)
 
-            # sum(Y), sum(t*Y), sum(t), sum(t^2) — 只对有效值求和
+            # Compute sufficient statistics over valid observations only.
             sum_Y = (Y_filled * valid_mask).sum(axis=1)
             sum_tY = (Y_filled * valid_mask * t_vals[np.newaxis, :]).sum(axis=1)
             sum_t = (valid_mask * t_vals[np.newaxis, :]).sum(axis=1)
             sum_t2 = (valid_mask * (t_vals ** 2)[np.newaxis, :]).sum(axis=1)
 
-            # OLS 公式
+            # OLS normal equations.
             denom = n_valid * sum_t2 - sum_t ** 2
 
-            # 避免除零（常数时间值或不足观测）
+            # Guard against division by zero (constant time or insufficient data).
             safe_denom = denom.where(denom.abs() > 1e-10, np.nan)
 
             B_hat = (n_valid * sum_tY - sum_t * sum_Y) / safe_denom
             A_hat = (sum_Y - B_hat * sum_t) / n_valid
 
-            # 拟合值 Y_hat = A + B * t
+            # Fitted value: Y_hat = A + B * t.
             Y_hat_at_t = A_hat + B_hat * float(t)
 
-            # 当前期 Y_it
+            # Current-period outcome Y_{it}.
             if t in pivot.columns:
                 Y_it = pivot[t]
             else:
                 continue
 
-            # 变换值 = Y_it - Y_hat
+            # Transformed value: Y_{it} - Y_hat_{it}.
             transformed = Y_it - Y_hat_at_t
 
-            # 只保留有效的（enough_mask 且 Y_it 非 NaN 且 OLS 成功）
+            # Retain valid entries (sufficient data, non-NaN outcome, successful OLS).
             valid = transformed[enough_mask].dropna()
 
             if len(valid) == 0:
                 continue
 
-            # 赋值
+            # Map transformed values back to the corresponding rows.
             period_mask = result[tvar] == t
             period_data = result.loc[period_mask]
             unit_map = valid.to_dict()
             new_cols[col_name].loc[period_mask] = period_data[ivar].map(unit_map).values
 
-    # 一次性添加所有新列
+    # Concatenate all new columns at once to avoid DataFrame fragmentation.
     if new_cols:
         new_df = pd.DataFrame(new_cols, index=result.index)
         result = pd.concat([result, new_df], axis=1)

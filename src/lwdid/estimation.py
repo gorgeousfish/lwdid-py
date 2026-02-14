@@ -520,7 +520,7 @@ def estimate_att(
         meat = X.T @ np.diag(omega_diag) @ X
         var_beta = XtX_inv @ meat @ XtX_inv
         
-        # Create a mock results object with HC4 standard errors
+        # Construct a results wrapper with HC4 standard errors.
         class HC4Results:
             def __init__(self, ols_results, var_beta):
                 self.params = ols_results.params
@@ -878,7 +878,7 @@ def estimate_period_effects(
                 meat_t = X_t.T @ np.diag(omega_diag_t) @ X_t
                 var_beta_t = XtX_inv_t @ meat_t @ XtX_inv_t
                 
-                # Create mock results
+                # Construct a results wrapper with HC4 standard errors.
                 class HC4ResultsT:
                     def __init__(self, ols_results, var_beta):
                         self.params = ols_results.params

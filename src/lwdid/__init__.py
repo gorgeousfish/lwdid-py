@@ -95,7 +95,7 @@ except ImportError:
         import pkg_resources
         __version__ = pkg_resources.get_distribution("lwdid").version
     except Exception:
-        __version__ = "0.2.0"  # Fallback if package not installed
+        __version__ = "0.2.1"  # Fallback if package not installed
 
 from .core import lwdid
 from .results import LWDIDResults

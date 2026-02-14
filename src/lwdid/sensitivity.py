@@ -1245,9 +1245,8 @@ def _filter_excluding_periods(
         
         if filtered_dfs:
             result = pd.concat(filtered_dfs, ignore_index=True)
-            # Re-encode time to be continuous for staggered
-            # Note: This is complex for staggered, so we skip re-encoding
-            # and let the caller handle potential discontinuity
+            # Time re-encoding is deferred to the caller for staggered designs,
+            # as cohort-specific period structures may introduce discontinuities.
             return result
         return data.iloc[0:0]
     

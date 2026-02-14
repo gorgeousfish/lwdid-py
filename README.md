@@ -4,7 +4,7 @@
 
 ## Lee–Wooldridge Difference-in-Differences for Panel Data
 
-![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)
 [![Documentation](https://readthedocs.org/projects/lwdid/badge/?version=latest)](https://lwdid.readthedocs.io)
@@ -380,7 +380,7 @@ Full API documentation is available at [lwdid.readthedocs.io](https://lwdid.read
 
 ## Version Notes
 
-- Current package version: `0.2.0` (`pyproject.toml`).
+- Current package version: `0.2.1` (`pyproject.toml`).
 - Includes generalized seasonal support (`Q`, `season_var`) and staggered seasonal transformations (`demeanq`, `detrendq` in staggered mode).
 - Pre-treatment dynamics and parallel trends testing (`include_pretreatment`, `pretreatment_test`).
 - No-anticipation robustness check (`exclude_pre_periods`).
@@ -406,7 +406,7 @@ If you use `lwdid` in your research, please cite both the software and the under
 @software{cai_lwdid_2025,
   author  = {Cai, Xuanyu and Xu, Wenli},
   title   = {lwdid: Lee--Wooldridge Difference-in-Differences for Panel Data},
-  version = {0.2.0},
+  version = {0.2.1},
   year    = {2025},
   url     = {https://github.com/gorgeousfish/lwdid-py}
 }
