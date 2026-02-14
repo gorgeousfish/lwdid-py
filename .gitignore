@@ -96,3 +96,5 @@ tests/_archived_dev_tests/
 
 # Hypothesis (property-based testing cache)
 .hypothesis/
+# Paper source
+paper/
