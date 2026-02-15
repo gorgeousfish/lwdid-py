@@ -35,6 +35,8 @@ import warnings
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from ..warnings_categories import DataWarning, SmallSampleWarning
+
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
@@ -354,14 +356,14 @@ def run_parallel_trends_test(
         warnings.warn(
             f"Only {n_pre_periods} pre-treatment period(s) available for testing "
             f"(minimum recommended: {min_pre_periods}). Joint test may have low power.",
-            UserWarning
+            SmallSampleWarning
         )
 
     if n_pre_periods == 0:
         warnings.warn(
             "No valid pre-treatment periods for testing (all excluded). "
             "Cannot perform parallel trends test.",
-            UserWarning
+            DataWarning
         )
         return ParallelTrendsTestResult(
             individual_tests=individual_tests,

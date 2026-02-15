@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.2 - 2026-02-15
+
+### Added
+
+#### Warning System Overhaul
+
+- **`warnings_categories.py`**: Custom warning category hierarchy
+  - `LWDIDWarning(UserWarning)` base class
+  - `SmallSampleWarning`, `OverlapWarning`, `NumericalWarning`, `DataWarning`, `ConvergenceWarning` subclasses
+  - Enables granular `warnings.filterwarnings()` control per category while maintaining backward compatibility with `UserWarning` filters
+- **`warning_registry.py`**: Collect-aggregate-flush warning system for staggered (g,r) loops
+  - `WarningRegistry` class with `collect()` / `flush()` / `get_diagnostics()` API
+  - Three verbosity modes: `'quiet'` (critical only), `'default'` (aggregated summaries with M/T ratios), `'verbose'` (all individual warnings)
+  - Aggregated summaries replace repetitive per-(g,r) warnings with category-level counts
+- **`verbose` parameter** in `lwdid()`: Controls warning output verbosity (`'quiet'`, `'default'`, `'verbose'`)
+- **`LWDIDResults.diagnostics` property**: Structured access to all collected warning records from estimation
+
+#### Pandas PerformanceWarning Suppression
+
+- `staggered/transformations.py`: Localized `warnings.catch_warnings()` context manager to suppress DataFrame fragmentation warnings
+- `transformations.py`: Batch `.assign()` refactor to eliminate fragmentation root cause
+
+### Changed
+
+- **All `warnings.warn()` calls** across the package now use custom warning categories instead of generic `UserWarning`:
+  - `estimation.py`: `SmallSampleWarning`, `NumericalWarning`
+  - `validation.py`: `DataWarning`, `SmallSampleWarning`
+  - `core.py`: `DataWarning`
+  - `sensitivity.py`: `NumericalWarning`, `DataWarning`, `ConvergenceWarning`
+  - `preprocessing/aggregation.py`: `DataWarning`, `SmallSampleWarning`
+  - `inference/wild_bootstrap.py`: `NumericalWarning`, `ConvergenceWarning`
+  - `staggered/estimators.py`: `SmallSampleWarning`, `OverlapWarning`, `NumericalWarning`, `ConvergenceWarning`
+  - `staggered/estimation.py`: Registry-based collection with `flush()` at loop end
+  - `staggered/control_groups.py`: `DataWarning`
+  - `staggered/aggregation.py`: `DataWarning`, `NumericalWarning`
+  - `randomization.py`, `staggered/transformations.py`, `staggered/transformations_pre.py`: Updated docstrings to reference correct categories
+- **`stacklevel` consistency**: Audited and corrected `stacklevel` parameter across all `warnings.warn()` calls to ensure warnings point to user code rather than package internals
+- **Staggered estimation loop**: Warnings within (g,r) iteration are now collected via `WarningRegistry` and emitted as aggregated summaries after the loop completes
+
+---
+
 ## 0.2.1 - 2026-02-14
 
 ### Performance

@@ -34,11 +34,21 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+
+from lwdid.warnings_categories import (
+    ConvergenceWarning,
+    DataWarning,
+    OverlapWarning,
+    SmallSampleWarning,
+)
+
+if TYPE_CHECKING:
+    from lwdid.warning_registry import WarningRegistry
 
 
 # ============================================================================
@@ -396,6 +406,7 @@ def estimate_ipwra(
     ivar_col: str | None = None,
     cohort_g: int | None = None,
     period_r: int | None = None,
+    warning_registry: WarningRegistry | None = None,
 ) -> IPWRAResult:
     """
     Estimate ATT using inverse probability weighted regression adjustment.
@@ -451,6 +462,11 @@ def estimate_ipwra(
         Cohort value (for staggered designs).
     period_r : int, optional
         Period value (for staggered designs).
+    warning_registry : WarningRegistry or None, optional
+        If provided, warnings are collected into the registry instead of
+        being emitted immediately via ``warnings.warn()``. When ``None``
+        (the default), warnings are emitted directly for backward
+        compatibility.
 
     Returns
     -------
@@ -503,15 +519,25 @@ def estimate_ipwra(
         raise ValueError(f"Insufficient control units: n_control={n_control}, requires at least 2.")
     
     if n_treated < 5:
-        warnings.warn(
-            f"Small treated sample (n_treated={n_treated}); IPWRA estimates may be unstable.",
-            UserWarning
-        )
+        msg = f"Small treated sample (n_treated={n_treated}); IPWRA estimates may be unstable."
+        if warning_registry is not None:
+            warning_registry.collect(
+                SmallSampleWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'n_treated': n_treated},
+            )
+        else:
+            warnings.warn(msg, SmallSampleWarning, stacklevel=2)
     if n_control < 10:
-        warnings.warn(
-            f"Small control sample (n_control={n_control}); outcome model may be unstable.",
-            UserWarning
-        )
+        msg = f"Small control sample (n_control={n_control}); outcome model may be unstable."
+        if warning_registry is not None:
+            warning_registry.collect(
+                SmallSampleWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'n_control': n_control},
+            )
+        else:
+            warnings.warn(msg, SmallSampleWarning, stacklevel=2)
     
     # Estimate propensity scores.
     pscores, ps_coef = estimate_propensity_score(
@@ -544,23 +570,37 @@ def estimate_ipwra(
     # Check for extreme weights indicating overlap violation.
     weights_cv = np.std(weights_control) / np.mean(weights_control) if np.mean(weights_control) > 0 else np.inf
     if weights_cv > 2.0:
-        warnings.warn(
+        msg = (
             f"Extreme IPW weights detected (CV={weights_cv:.2f} > 2.0), indicating potential "
             f"overlap violation. Consider checking propensity score distribution or increasing "
-            f"trim_threshold.",
-            UserWarning
+            f"trim_threshold."
         )
+        if warning_registry is not None:
+            warning_registry.collect(
+                OverlapWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'weights_cv': weights_cv},
+            )
+        else:
+            warnings.warn(msg, OverlapWarning, stacklevel=2)
     
     # Check proportion of extreme propensity scores.
     extreme_low = (pscores < 0.05).mean()
     extreme_high = (pscores > 0.95).mean()
     if extreme_low > 0.1 or extreme_high > 0.1:
-        warnings.warn(
+        msg = (
             f"High proportion of extreme propensity scores (p<0.05: {extreme_low:.1%}, "
             f"p>0.95: {extreme_high:.1%}), suggesting overlap assumption may be violated. "
-            f"Consider increasing trim_threshold or reviewing covariate selection.",
-            UserWarning
+            f"Consider increasing trim_threshold or reviewing covariate selection."
         )
+        if warning_registry is not None:
+            warning_registry.collect(
+                OverlapWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'extreme_low_pct': extreme_low, 'extreme_high_pct': extreme_high},
+            )
+        else:
+            warnings.warn(msg, OverlapWarning, stacklevel=2)
     
     weights_sum = weights_control.sum()
     if weights_sum <= 0:
@@ -580,7 +620,10 @@ def estimate_ipwra(
     elif se_method == 'bootstrap':
         se, ci_lower, ci_upper = compute_ipwra_se_bootstrap(
             data_clean, y, d, controls, propensity_controls,
-            trim_threshold, n_bootstrap, seed, alpha
+            trim_threshold, n_bootstrap, seed, alpha,
+            warning_registry=warning_registry,
+            cohort_g=cohort_g,
+            period_r=period_r,
         )
     else:
         raise ValueError(f"Unknown se_method: {se_method}. Use 'analytical' or 'bootstrap'.")
@@ -1026,6 +1069,9 @@ def compute_ipwra_se_bootstrap(
     n_bootstrap: int,
     seed: int | None,
     alpha: float,
+    warning_registry: WarningRegistry | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> tuple[float, float, float]:
     """
     Compute IPWRA standard error using nonparametric bootstrap.
@@ -1054,6 +1100,13 @@ def compute_ipwra_se_bootstrap(
         Random seed for reproducibility.
     alpha : float
         Significance level for confidence interval.
+    warning_registry : WarningRegistry or None, optional
+        If provided, warnings are collected into the registry instead of
+        being emitted immediately. Default is ``None``.
+    cohort_g : int or None, optional
+        Cohort identifier for registry context.
+    period_r : int or None, optional
+        Period identifier for registry context.
 
     Returns
     -------
@@ -1115,10 +1168,15 @@ def compute_ipwra_se_bootstrap(
             continue
     
     if len(att_boots) < n_bootstrap * 0.5:
-        warnings.warn(
-            f"Low bootstrap success rate: {len(att_boots)}/{n_bootstrap}",
-            UserWarning
-        )
+        msg = f"Low bootstrap success rate: {len(att_boots)}/{n_bootstrap}"
+        if warning_registry is not None:
+            warning_registry.collect(
+                ConvergenceWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'n_success': len(att_boots), 'n_bootstrap': n_bootstrap},
+            )
+        else:
+            warnings.warn(msg, ConvergenceWarning, stacklevel=2)
     
     if len(att_boots) < 10:
         raise ValueError(f"Insufficient bootstrap samples: {len(att_boots)}")
@@ -1207,6 +1265,7 @@ def estimate_psm(
     ivar_col: str | None = None,
     cohort_g: int | None = None,
     period_r: int | None = None,
+    warning_registry: WarningRegistry | None = None,
 ) -> PSMResult:
     """
     Estimate ATT using propensity score matching.
@@ -1306,10 +1365,15 @@ def estimate_psm(
         )
     
     if n_treated < 5:
-        warnings.warn(
-            f"Small treated sample (n_treated={n_treated}); PSM estimates may be unstable.",
-            UserWarning
-        )
+        msg = f"Small treated sample (n_treated={n_treated}); PSM estimates may be unstable."
+        if warning_registry is not None:
+            warning_registry.collect(
+                SmallSampleWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'n_treated': n_treated},
+            )
+        else:
+            warnings.warn(msg, SmallSampleWarning, stacklevel=2)
     
     # Estimate propensity scores.
     pscores, _ = estimate_propensity_score(
@@ -1358,14 +1422,20 @@ def estimate_psm(
     # Warn when match success rate falls below 50%.
     match_success_rate = n_valid / n_treated
     if match_success_rate < 0.5:
-        warnings.warn(
+        msg = (
             f"Low match success rate: {match_success_rate:.1%} "
             f"({n_valid}/{n_treated} treated units matched). "
             f"Results may be unreliable. Consider relaxing the caliper "
-            f"or checking propensity score overlap.",
-            UserWarning,
-            stacklevel=2,
+            f"or checking propensity score overlap."
         )
+        if warning_registry is not None:
+            warning_registry.collect(
+                OverlapWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'match_success_rate': match_success_rate},
+            )
+        else:
+            warnings.warn(msg, OverlapWarning, stacklevel=2)
     
     # Compute matched mean for each treated unit.
     att_individual = []
@@ -1407,6 +1477,9 @@ def estimate_psm(
             n_bootstrap=n_bootstrap,
             seed=seed,
             alpha=alpha,
+            warning_registry=warning_registry,
+            cohort_g=cohort_g,
+            period_r=period_r,
         )
     else:
         raise ValueError(
@@ -1665,6 +1738,9 @@ def _compute_psm_se_bootstrap(
     n_bootstrap: int,
     seed: int | None,
     alpha: float,
+    warning_registry: WarningRegistry | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> tuple[float, float, float]:
     """
     Compute PSM standard error using nonparametric bootstrap.
@@ -1699,6 +1775,13 @@ def _compute_psm_se_bootstrap(
         Random seed for reproducibility.
     alpha : float
         Significance level for confidence interval.
+    warning_registry : WarningRegistry or None, optional
+        If provided, warnings are collected into the registry instead of
+        being emitted immediately. Default is ``None``.
+    cohort_g : int or None, optional
+        Cohort identifier for registry context.
+    period_r : int or None, optional
+        Period identifier for registry context.
 
     Returns
     -------
@@ -1773,10 +1856,15 @@ def _compute_psm_se_bootstrap(
             continue
     
     if len(att_boots) < n_bootstrap * 0.5:
-        warnings.warn(
-            f"Low bootstrap success rate: {len(att_boots)}/{n_bootstrap}",
-            UserWarning
-        )
+        msg = f"Low bootstrap success rate: {len(att_boots)}/{n_bootstrap}"
+        if warning_registry is not None:
+            warning_registry.collect(
+                ConvergenceWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'n_success': len(att_boots), 'n_bootstrap': n_bootstrap},
+            )
+        else:
+            warnings.warn(msg, ConvergenceWarning, stacklevel=2)
     
     if len(att_boots) < 10:
         raise ValueError(f"Insufficient bootstrap samples: {len(att_boots)}")

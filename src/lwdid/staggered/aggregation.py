@@ -77,6 +77,7 @@ from .estimation import run_ols_regression
 from .transformations import get_cohorts, get_valid_periods_for_cohort
 from ..exceptions import NoNeverTreatedError
 from ..validation import is_never_treated, COHORT_FLOAT_TOLERANCE, get_cohort_mask
+from ..warnings_categories import DataWarning, NumericalWarning, SmallSampleWarning
 
 # Tolerance for weight sum validation (more permissive than COHORT_FLOAT_TOLERANCE).
 # When summing multiple floating-point weights, cumulative rounding errors may
@@ -317,7 +318,7 @@ def _compute_cohort_aggregated_variable(
 
     Warns
     -----
-    UserWarning
+    DataWarning
         If rows contain multiple non-NaN values (unexpected for correctly
         transformed data) or if units are excluded due to missing data.
 
@@ -352,7 +353,7 @@ def _compute_cohort_aggregated_variable(
         warnings.warn(
             f"{n_problematic} rows have multiple non-NaN transformed values. "
             f"Using mean for aggregation.",
-            UserWarning,
+            DataWarning,
             stacklevel=3
         )
 
@@ -374,7 +375,7 @@ def _compute_cohort_aggregated_variable(
     if n_valid < n_total:
         warnings.warn(
             f"Aggregation: {n_total - n_valid} units excluded due to missing data.",
-            UserWarning,
+            DataWarning,
             stacklevel=3
         )
     
@@ -481,7 +482,7 @@ def _add_cluster_to_reg_data(
 
     Warns
     -----
-    UserWarning
+    DataWarning, SmallSampleWarning
         If units have missing cluster values or if the number of clusters
         is below the recommended threshold for reliable inference.
 
@@ -528,7 +529,7 @@ def _add_cluster_to_reg_data(
         
         warnings.warn(
             "\n".join(warning_parts),
-            UserWarning,
+            DataWarning,
             stacklevel=3
         )
 
@@ -537,7 +538,7 @@ def _add_cluster_to_reg_data(
         warnings.warn(
             f"Number of clusters ({n_clusters}) is small, clustered standard errors may be unreliable. "
             f"At least 20 clusters are recommended.",
-            UserWarning,
+            SmallSampleWarning,
             stacklevel=3
         )
 
@@ -660,6 +661,7 @@ def aggregate_to_cohort(
         if not ydot_cols:
             warnings.warn(
                 f"Cohort {g}: No valid transformation columns, skipping",
+                DataWarning,
                 stacklevel=4
             )
             continue
@@ -671,6 +673,7 @@ def aggregate_to_cohort(
         except (ValueError, KeyError, IndexError) as e:
             warnings.warn(
                 f"Cohort {g}: Aggregated variable calculation failed - {e}",
+                NumericalWarning,
                 stacklevel=4
             )
             continue
@@ -705,6 +708,7 @@ def aggregate_to_cohort(
         if n_total < 2 or n_treat < 1 or n_control < 1:
             warnings.warn(
                 f"Cohort {g}: Insufficient sample size (total={n_total}, treat={n_treat}, control={n_control})",
+                SmallSampleWarning,
                 stacklevel=4
             )
             continue
@@ -713,7 +717,7 @@ def aggregate_to_cohort(
             warnings.warn(
                 f"Cohort {g}: Sample size is only 2 units, "
                 f"standard errors may be unreliable",
-                UserWarning,
+                SmallSampleWarning,
                 stacklevel=4
             )
 
@@ -744,6 +748,7 @@ def aggregate_to_cohort(
         except (ValueError, np.linalg.LinAlgError) as e:
             warnings.warn(
                 f"Cohort {g}: Regression estimation failed - {e}",
+                NumericalWarning,
                 stacklevel=4
             )
             continue
@@ -786,7 +791,7 @@ def aggregate_to_cohort(
             f"  2. Insufficient sample size (each cohort needs at least 1 treated + 1 NT unit)\n"
             f"  3. Aggregated variable calculation failed (data contains missing values)\n"
             f"Please check if the data transformation step was completed correctly.",
-            UserWarning,
+            NumericalWarning,
             stacklevel=4
         )
     elif n_successful < n_requested:
@@ -794,7 +799,7 @@ def aggregate_to_cohort(
         warnings.warn(
             f"Some cohort effect estimations failed: {n_successful}/{n_requested} succeeded.\n"
             f"Failed cohorts: {sorted(failed_cohorts)}",
-            UserWarning,
+            NumericalWarning,
             stacklevel=4
         )
     
@@ -912,7 +917,7 @@ def construct_aggregated_outcome(
                 f"T_max parameter ({T_max}) differs from data's max time value "
                 f"({int(data_T_max)}). Using provided T_max={T_max}. "
                 f"This may result in missing transformation columns if T_max > data max.",
-                UserWarning,
+                DataWarning,
                 stacklevel=5
             )
 
@@ -922,7 +927,7 @@ def construct_aggregated_outcome(
         warnings.warn(
             f"Cohort weights sum to {weights_sum:.10f}, expected 1.0. "
             f"This may indicate incorrect weight calculation.",
-            UserWarning,
+            NumericalWarning,
             stacklevel=5
         )
 
@@ -1038,7 +1043,7 @@ def construct_aggregated_outcome(
         warnings.warn(
             f"{n_non_int} unit(s) have non-integer gvar values and were skipped from aggregation. "
             f"Examples: {example_str}",
-            UserWarning,
+            DataWarning,
             stacklevel=5
         )
 
@@ -1064,7 +1069,7 @@ def construct_aggregated_outcome(
             f"{treated_nan_count} treated unit(s) have NaN Y_bar values.\n"
             f"These units will be excluded from overall effect estimation.\n"
             f"Possible causes: missing data, insufficient observations.{example_info}",
-            UserWarning,
+            DataWarning,
             stacklevel=5
         )
 
@@ -1085,7 +1090,7 @@ def construct_aggregated_outcome(
             f"Weights were renormalized to available cohorts (included in regression).\n"
             f"This may affect estimation if missingness is non-random."
             f"{example_info}",
-            UserWarning,
+            DataWarning,
             stacklevel=5
         )
 
@@ -1107,7 +1112,7 @@ def construct_aggregated_outcome(
             f"These units have no valid cohort observations and cannot be included.\n"
             f"They will be dropped from overall effect regression."
             f"{example_info}",
-            UserWarning,
+            DataWarning,
             stacklevel=5
         )
 
@@ -1131,7 +1136,7 @@ def construct_aggregated_outcome(
             f"Attempted cohorts: {list(cohorts)}\n"
             f"Successfully pre-computed cohorts: {list(cohort_Y_bar.keys())}\n"
             + ("\n".join(error_details) if error_details else ""),
-            UserWarning,
+            NumericalWarning,
             stacklevel=5
         )
     elif valid_ratio < 0.5:
@@ -1140,7 +1145,7 @@ def construct_aggregated_outcome(
             f"Some units' aggregated variables could not be computed, which may affect estimation reliability.\n"
             f"Successfully pre-computed cohorts: {list(cohort_Y_bar.keys())}"
             + (f"\nFailed cohorts: {list(cohort_errors.keys())}" if cohort_errors else ""),
-            UserWarning,
+            DataWarning,
             stacklevel=5
         )
     
@@ -1259,7 +1264,7 @@ def aggregate_to_overall(
         warnings.warn(
             f"Cohorts with 0 units detected and excluded: {sorted(zero_cohorts)}. "
             f"This may indicate data filtering issues.",
-            UserWarning,
+            DataWarning,
             stacklevel=4
         )
         cohort_sizes = {g: n for g, n in cohort_sizes.items() if n > 0}
@@ -1332,7 +1337,7 @@ def aggregate_to_overall(
             f"Cohort weights differ after dropping missing values (max diff: {max_diff:.3f}). "
             f"This may occur when NaN rates vary across cohorts. "
             f"Intended weights: {weights}; Effective weights: {effective_weights}",
-            UserWarning,
+            NumericalWarning,
             stacklevel=4
         )
         # Update weights to reflect actual sample used in regression
@@ -1348,7 +1353,7 @@ def aggregate_to_overall(
     if n_total == 2:
         warnings.warn(
             "Sample size is only 2 units, standard errors may be unreliable",
-            UserWarning,
+            SmallSampleWarning,
             stacklevel=4
         )
 
@@ -1677,7 +1682,7 @@ def aggregate_to_event_time(
 
     Warns
     -----
-    UserWarning
+    DataWarning, NumericalWarning
         If weight sum deviates from 1.0, if cohorts are excluded due to
         missing data, or if df information is unavailable.
 
@@ -1759,7 +1764,7 @@ def aggregate_to_event_time(
         if df.empty:
             warnings.warn(
                 f"No effects found in event_time_range [{min_e}, {max_e}]",
-                UserWarning,
+                DataWarning,
                 stacklevel=2
             )
             return []
@@ -1780,7 +1785,7 @@ def aggregate_to_event_time(
                 warnings.warn(
                     f"Event time {r}: {invalid_count} cohort(s) excluded due to "
                     f"missing ATT/SE: {excluded_cohorts}",
-                    UserWarning,
+                    DataWarning,
                     stacklevel=2
                 )
             event_df = event_df[valid_mask]
@@ -1790,7 +1795,7 @@ def aggregate_to_event_time(
             if verbose:
                 warnings.warn(
                     f"Event time {r}: All cohorts have invalid data, returning NaN",
-                    UserWarning,
+                    DataWarning,
                     stacklevel=2
                 )
             results.append(EventTimeEffect(
@@ -1819,7 +1824,7 @@ def aggregate_to_event_time(
         except ValueError as e:
             warnings.warn(
                 f"Event time {r}: Weight computation failed - {e}",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=2
             )
             results.append(EventTimeEffect(
@@ -1843,7 +1848,7 @@ def aggregate_to_event_time(
         if not is_valid:
             warnings.warn(
                 f"Event time {r}: Weight sum {weight_sum:.10f} deviates from 1.0",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=2
             )
 
@@ -1890,7 +1895,7 @@ def aggregate_to_event_time(
         if verbose and not cohort_dfs:
             warnings.warn(
                 f"Event time {r}: No df_inference available, using fallback df={df_inference}",
-                UserWarning,
+                DataWarning,
                 stacklevel=2
             )
 
@@ -1914,7 +1919,7 @@ def aggregate_to_event_time(
             t_crit = 1.96
             warnings.warn(
                 f"Event time {r}: Invalid df_inference={df_inference}, using z=1.96",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=2
             )
 
@@ -1944,7 +1949,7 @@ def aggregate_to_event_time(
         n_valid = sum(1 for e in results if not np.isnan(e.att))
         warnings.warn(
             f"aggregate_to_event_time: {n_valid}/{n_event_times} event times computed",
-            UserWarning,
+            DataWarning,
             stacklevel=2
         )
 

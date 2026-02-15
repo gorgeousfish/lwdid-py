@@ -38,6 +38,7 @@ more conservative inference when the number of clusters is small.
 
 import warnings
 from typing import Any
+from .warnings_categories import DataWarning, NumericalWarning, SmallSampleWarning
 
 import numpy as np
 import pandas as pd
@@ -179,7 +180,7 @@ def prepare_controls(
             f"  Found: N_1={N_treated}, K+1={nk}, condition N_1 > K+1: {N_treated > nk}\n"
             f"         N_0={N_control}, K+1={nk}, condition N_0 > K+1: {N_control > nk}\n"
             f"  Controls will be ignored in the regression.",
-            UserWarning,
+            SmallSampleWarning,
             stacklevel=3
         )
         
@@ -375,7 +376,7 @@ def estimate_att(
                     f"  Original sample size: {len(data_sample)}\n"
                     f"  Final sample size: {len(data_sample_clean)}\n"
                     f"  Controls will be included in the regression.",
-                    UserWarning,
+                    DataWarning,
                     stacklevel=3
                 )
 
@@ -401,8 +402,7 @@ def estimate_att(
                     f"Control variables not included: after dropping {n_missing} observations with missing controls, "
                     f"the sample would not satisfy N_1 > K+1 and N_0 > K+1.\n"
                     f"  Would have: N_1={N_treated_clean}, N_0={N_control_clean}, K+1={nk}\n"
-                    f"  Controls will be ignored, and observations with missing controls will be retained.",
-                    UserWarning,
+                    f"  Controls will be ignored, and observations with missing controls will be retained.", SmallSampleWarning,
                     stacklevel=3
                 )
 
@@ -458,7 +458,7 @@ def estimate_att(
                 f"HC1 (robust) may be unstable with very small samples "
                 f"(N_treated={n_treated}, N_control={n_control}). "
                 f"Consider using vce=None for exact inference under normality.",
-                UserWarning,
+                SmallSampleWarning,
                 stacklevel=3
             )
 
@@ -476,7 +476,7 @@ def estimate_att(
                 f"HC3 may be unstable with very small samples "
                 f"(N_treated={n_treated}, N_control={n_control}). "
                 f"Consider using vce=None for exact inference under normality.",
-                UserWarning,
+                SmallSampleWarning,
                 stacklevel=3
             )
         
@@ -501,8 +501,7 @@ def estimate_att(
             warnings.warn(
                 "Design matrix is singular or near-singular. "
                 "Using pseudo-inverse for HC4 variance estimation. "
-                "Results may be unreliable due to collinearity.",
-                UserWarning,
+                "Results may be unreliable due to collinearity.", NumericalWarning,
                 stacklevel=3
             )
         tmp = X @ XtX_inv
@@ -573,7 +572,7 @@ def estimate_att(
                 f"Cluster-robust inference with only {n_clusters} clusters may be unreliable. "
                 f"Statistical literature typically recommends >= 20-30 clusters for reliable inference. "
                 f"Consider using wild_cluster_bootstrap() from lwdid.inference for more reliable inference.",
-                UserWarning,
+                SmallSampleWarning,
                 stacklevel=3
             )
         elif n_clusters < 20:
@@ -581,7 +580,7 @@ def estimate_att(
             warnings.warn(
                 f"Cluster-robust inference with {n_clusters} clusters. "
                 f"For improved reliability, consider using wild_cluster_bootstrap() from lwdid.inference.",
-                UserWarning,
+                SmallSampleWarning,
                 stacklevel=3
             )
         
@@ -595,7 +594,7 @@ def estimate_att(
                     f"Cluster sizes range from {cluster_sizes.min()} to {cluster_sizes.max()} "
                     f"(mean={cluster_sizes.mean():.1f}). "
                     f"This may affect the reliability of cluster-robust inference.",
-                    UserWarning,
+                    DataWarning,
                     stacklevel=3
                 )
 
@@ -666,7 +665,7 @@ def estimate_att(
             f"Results (t-statistic={att/se_att:.2e}, p-value, CI) may be unreliable. "
             f"Consider checking: (1) model fit diagnostics (R², residuals), "
             f"(2) data quality (duplicates, errors), (3) model specification.",
-            UserWarning,
+            NumericalWarning,
             stacklevel=3
         )
 
@@ -938,7 +937,7 @@ def estimate_period_effects(
                     f"Period {period_label} (t={t}) regression produced degenerate results "
                     f"(se={se_t}). This likely indicates perfect separation (all d=0 or all d=1) "
                     f"or insufficient variation in treatment variable. Setting results to NaN.",
-                    category=UserWarning,
+                    category=SmallSampleWarning,
                     stacklevel=2
                 )
                 beta_t = se_t = t_stat = p_val = np.nan
@@ -969,7 +968,7 @@ def estimate_period_effects(
                 f"Setting results to NaN. This may indicate insufficient sample size, "
                 f"perfect separation (all d=0 or all d=1), or numerical issues. "
                 f"Check data quality for this period.",
-                category=UserWarning,
+                category=SmallSampleWarning,
                 stacklevel=2
             )
 

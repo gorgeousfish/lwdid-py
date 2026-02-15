@@ -245,6 +245,11 @@ class LWDIDResults:
         self._ri_failed: int | None = None
         self._data: pd.DataFrame | None = None
         
+        # === Warning diagnostics ===
+        # Populated by core.lwdid() from WarningRegistry.get_diagnostics().
+        # Defaults to empty list so the property is always safe to access.
+        self._diagnostics: list[dict] = []
+        
         # === Pre-treatment dynamics attributes ===
         self._att_pre_treatment: pd.DataFrame | None = results_dict.get('att_pre_treatment', None)
         self._parallel_trends_test: ParallelTrendsTestResult | None = results_dict.get('parallel_trends_test', None)
@@ -486,6 +491,25 @@ class LWDIDResults:
     @data.setter
     def data(self, value: pd.DataFrame | None) -> None:
         self._data = value
+
+    # === Warning Diagnostics ===
+
+    @property
+    def diagnostics(self) -> list[dict]:
+        """Structured diagnostic data collected during estimation.
+
+        Returns a list of dictionaries, each containing:
+        - 'category': warning category name (e.g. 'SmallSampleWarning')
+        - 'message': representative warning message text
+        - 'count': number of occurrences
+        - 'affected_pairs': list of (cohort, period) tuples affected
+        - 'context_summary': aggregated context information
+
+        This property is always populated regardless of the ``verbose``
+        setting, so full diagnostic information is available even when
+        warnings are suppressed during estimation.
+        """
+        return self._diagnostics
 
     # === Staggered-specific Properties ===
 
@@ -1104,6 +1128,7 @@ class LWDIDResults:
         import matplotlib.pyplot as plt
         import numpy as np
         import warnings
+        from .warnings_categories import DataWarning, NumericalWarning, SmallSampleWarning
         
         # pandas version compatibility: include_groups only available in pandas 2.0+
         _pandas_version = tuple(int(x) for x in pd.__version__.split('.')[:2])
@@ -1176,7 +1201,7 @@ class LWDIDResults:
                 # Fallback to simple weighted aggregation if aggregate_to_event_time fails
                 warnings.warn(
                     f"aggregate_to_event_time failed ({e}), using fallback weighted aggregation",
-                    UserWarning
+                    NumericalWarning
                 )
                 df['weight'] = df['cohort'].map(self.cohort_weights).fillna(0)
                 
@@ -1212,7 +1237,7 @@ class LWDIDResults:
                     f"When cohorts share control units, this may underestimate SE "
                     f"(confidence intervals may be too narrow). "
                     f"Consider using se_method='bootstrap' for more accurate SE.",
-                    UserWarning,
+                    SmallSampleWarning,
                     stacklevel=2
                 )
             
@@ -1259,7 +1284,7 @@ class LWDIDResults:
                     f"Reference period e={ref_period} not found in data. "
                     f"Available event times: {sorted(event_df['event_time'].unique())}. "
                     f"Skipping normalization.",
-                    UserWarning
+                    DataWarning
                 )
         
         # Create plot

@@ -95,11 +95,19 @@ except ImportError:
         import pkg_resources
         __version__ = pkg_resources.get_distribution("lwdid").version
     except Exception:
-        __version__ = "0.2.1"  # Fallback if package not installed
+        __version__ = "0.2.2"  # Fallback if package not installed
 
 from .core import lwdid
 from .results import LWDIDResults
 from .staggered.control_groups import ControlGroupStrategy
+from .warnings_categories import (
+    LWDIDWarning,
+    SmallSampleWarning,
+    OverlapWarning,
+    NumericalWarning,
+    DataWarning,
+    ConvergenceWarning,
+)
 from .exceptions import (
     # Core exceptions
     InsufficientDataError,
@@ -206,6 +214,13 @@ __all__ = [
     'AttritionAnalysis',
     'UnitMissingStats',
     'SelectionTestResult',
+    # Warning categories
+    'LWDIDWarning',
+    'SmallSampleWarning',
+    'OverlapWarning',
+    'NumericalWarning',
+    'DataWarning',
+    'ConvergenceWarning',
     # Exception hierarchy
     'LWDIDError',
     'InvalidParameterError',

@@ -76,6 +76,7 @@ _move_broken_tests.sh
 _cleanup_git_cache.sh
 _diagnose_*.py
 _verify_*.py
+_migrate_*.py
 test_fix.py
 test_hc_staggered.py
 verify_hc_status.py

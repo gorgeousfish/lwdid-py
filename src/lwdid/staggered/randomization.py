@@ -24,6 +24,8 @@ from typing import Literal
 import warnings
 
 import numpy as np
+
+from ..warnings_categories import DataWarning, NumericalWarning
 from numpy.random import SeedSequence, default_rng
 from numpy.typing import NDArray
 import pandas as pd
@@ -497,7 +499,7 @@ def randomization_inference_staggered(
                 warnings.warn(
                     "joblib is not installed; falling back to serial execution. "
                     "Install joblib to enable parallelization: pip install joblib",
-                    UserWarning,
+                    DataWarning,
                 )
                 perm_stats = np.array([
                     _single_staggered_ri_iteration(
@@ -531,7 +533,7 @@ def randomization_inference_staggered(
             f"Staggered RI: {n_failed}/{rireps} replications failed "
             f"({n_failed/rireps:.1%}). P-value computed using {n_valid} "
             f"valid replications.",
-            UserWarning
+            NumericalWarning
         )
 
     return StaggeredRIResult(

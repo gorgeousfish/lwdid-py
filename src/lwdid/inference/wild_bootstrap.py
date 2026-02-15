@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from typing import Literal
 import warnings
 from itertools import product
+from ..warnings_categories import NumericalWarning
 
 import numpy as np
 import pandas as pd
@@ -273,7 +274,7 @@ def _precompute_bootstrap_matrices(
             f"Design matrix condition number is large ({cond:.2e}). "
             f"Normal equations may lose ~{np.log10(cond):.0f} digits of "
             f"precision compared to SVD. Numerical accuracy may be reduced.",
-            UserWarning,
+            NumericalWarning,
             stacklevel=2,
         )
 

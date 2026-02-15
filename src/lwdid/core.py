@@ -66,6 +66,11 @@ from .exceptions import (
 )
 from .randomization import randomization_inference
 from .results import LWDIDResults
+from .warnings_categories import (
+    DataWarning,
+    NumericalWarning,
+    SmallSampleWarning,
+)
 from .staggered.estimators import (
     IPWResult,
     IPWRAResult,
@@ -451,7 +456,7 @@ def _estimate_period_effects_ipw(
             f"First post-treatment period ({tpost1}) is after the last period ({Tmax}). "
             f"No period-specific effects can be estimated. "
             f"This may indicate data issues or incorrect post indicator.",
-            UserWarning,
+            DataWarning,
             stacklevel=4
         )
         return pd.DataFrame(columns=[
@@ -583,7 +588,7 @@ def _estimate_period_effects_ipw(
             f"{', '.join(empty_periods[:5])}"
             f"{' ...' if len(empty_periods) > 5 else ''}. "
             f"Results for these periods set to NaN.",
-            UserWarning,
+            DataWarning,
             stacklevel=4
         )
     
@@ -593,7 +598,7 @@ def _estimate_period_effects_ipw(
             f"{', '.join(insufficient_periods[:3])}"
             f"{' ...' if len(insufficient_periods) > 3 else ''}. "
             f"Results for these periods set to NaN.",
-            UserWarning,
+            SmallSampleWarning,
             stacklevel=4
         )
     
@@ -603,7 +608,7 @@ def _estimate_period_effects_ipw(
             f"{', '.join(failed_periods[:3])}"
             f"{' ...' if len(failed_periods) > 3 else ''}. "
             f"Results for these periods set to NaN.",
-            UserWarning,
+            NumericalWarning,
             stacklevel=4
         )
     
@@ -649,6 +654,7 @@ def lwdid(
     pretreatment_test: bool = True,
     pretreatment_alpha: float = 0.05,
     exclude_pre_periods: int = 0,
+    verbose: str = 'default',
     **kwargs,
 ) -> LWDIDResults:
     """
@@ -866,6 +872,19 @@ def lwdid(
         
         Example: If treatment occurs at t=6 and ``exclude_pre_periods=2``,
         periods t=4 and t=5 are excluded from the pre-treatment sample.
+    verbose : {'quiet', 'default', 'verbose'}, default='default'
+        Warning output verbosity level (case-insensitive):
+
+        - 'quiet': Suppress informational warnings; emit only critical
+          warnings (convergence failures, numerical instability).
+        - 'default': Emit one aggregated summary per warning category.
+          Repeated warnings from (cohort, period) loops are collected
+          and reported as a single summary with affected-pair counts.
+        - 'verbose': Emit every individual warning record without
+          aggregation.
+
+        Regardless of the verbosity setting, all warnings are always
+        recorded in ``LWDIDResults.diagnostics`` for post-hoc inspection.
 
     Returns
     -------
@@ -921,7 +940,13 @@ def lwdid(
     LWDIDResults : Detailed documentation of the results container.
     """
     from .exceptions import UnbalancedPanelError
+    from .warning_registry import WarningRegistry
     
+    # Create centralized warning registry for deferred collection and aggregation.
+    # The registry buffers warnings during (g, r) iteration loops and emits
+    # aggregated summaries when flushed, preventing warning floods in staggered mode.
+    registry = WarningRegistry(verbose=verbose)
+
     # Validate unknown kwargs to catch parameter typos.
     # Reserved for backward compatibility: riseed is an alias for seed.
     _KNOWN_KWARGS = {'riseed'}
@@ -930,7 +955,7 @@ def lwdid(
         warnings.warn(
             f"Unknown keyword argument(s) ignored: {sorted(unknown_kwargs)}. "
             f"Valid extra arguments: {sorted(_KNOWN_KWARGS)}.",
-            UserWarning,
+            DataWarning,
             stacklevel=2
         )
 
@@ -1018,20 +1043,20 @@ def lwdid(
                             f"Could not reliably detect data frequency "
                             f"(confidence={confidence:.2f}). Using Q={Q}. "
                             f"Consider setting Q explicitly for seasonal transformations.",
-                            UserWarning,
+                            DataWarning,
                             stacklevel=2
                         )
                 except Exception as e:
                     # Detection failed, use default Q.
                     warnings.warn(
                         f"Frequency auto-detection failed: {e}. Using Q={Q}.",
-                        UserWarning,
+                        DataWarning,
                         stacklevel=2
                     )
             else:
                 warnings.warn(
                     "Cannot auto-detect frequency: tvar or ivar not specified. Using Q={Q}.",
-                    UserWarning,
+                    DataWarning,
                     stacklevel=2
                 )
 
@@ -1064,7 +1089,7 @@ def lwdid(
             warnings.warn(
                 "Both gvar and d/post parameters provided. Staggered mode takes precedence. "
                 "The d and post parameters will be ignored in staggered mode.",
-                UserWarning,
+                DataWarning,
                 stacklevel=2
             )
         return _lwdid_staggered(
@@ -1085,6 +1110,7 @@ def lwdid(
             pretreatment_test=pretreatment_test,
             pretreatment_alpha=pretreatment_alpha,
             exclude_pre_periods=exclude_pre_periods,
+            warning_registry=registry,
             **kwargs
         )
     else:
@@ -1175,7 +1201,7 @@ def lwdid(
                 f"Common timing mode (gvar=None): the following parameters "
                 f"are ignored: {', '.join(ignored_staggered_params)}. "
                 f"To use control_group/aggregate, specify the 'gvar' parameter for staggered adoption.",
-                UserWarning,
+                DataWarning,
                 stacklevel=2
             )
         
@@ -1579,7 +1605,7 @@ def lwdid(
             warnings.warn(
                 f"Randomization inference failed: {type(e).__name__}: {e}. "
                 f"ATT estimation results are still valid.",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=3
             )
             ri_result = {
@@ -1615,9 +1641,14 @@ def lwdid(
             warnings.warn(
                 f"Plotting failed: {type(e).__name__}: {str(e)}. "
                 f"The estimation results are unaffected.",
-                UserWarning,
+                DataWarning,
                 stacklevel=3  # _lwdid_classic() is level 2, so +1 to point to user code
             )
+
+    # Attach structured diagnostic records from the warning registry.
+    # Common timing mode typically has few warnings, but the registry
+    # still provides a consistent interface for post-hoc inspection.
+    results._diagnostics = registry.get_diagnostics()
 
     return results
 
@@ -1669,7 +1700,7 @@ def _validate_control_group_for_aggregate(
                 f"automatically switched from '{control_group}' to 'never_treated'."
             )
             logger.info(warning_msg)
-            warnings.warn(warning_msg, UserWarning, stacklevel=4)
+            warnings.warn(warning_msg, DataWarning, stacklevel=4)
             control_group_used = 'never_treated'
 
         if not has_never_treated:
@@ -1686,7 +1717,7 @@ def _validate_control_group_for_aggregate(
             warnings.warn(
                 f"Number of never-treated units is too few (N={n_never_treated}), "
                 f"inference results may be unreliable. Recommended N_NT >= 2.",
-                UserWarning,
+                SmallSampleWarning,
                 stacklevel=4
             )
 
@@ -1727,6 +1758,7 @@ def _lwdid_staggered(
     pretreatment_test: bool = True,
     pretreatment_alpha: float = 0.05,
     exclude_pre_periods: int = 0,
+    warning_registry: 'WarningRegistry | None' = None,
     **kwargs
 ) -> LWDIDResults:
     """
@@ -1813,7 +1845,7 @@ def _lwdid_staggered(
             "Parameter 'graph=True' is not yet supported in staggered mode.\n"
             "To visualize results, use the `plot_event_study()` method on the returned "
             "LWDIDResults object: `results.plot_event_study()`",
-            UserWarning,
+            DataWarning,
             stacklevel=4
         )
 
@@ -2027,7 +2059,7 @@ def _lwdid_staggered(
     cohort_sizes = validation_result['cohort_sizes']
 
     for warning in validation_result.get('warnings', []):
-        warnings.warn(warning, UserWarning, stacklevel=3)
+        warnings.warn(warning, DataWarning, stacklevel=3)
 
     control_group_used, switch_warning = _validate_control_group_for_aggregate(
         aggregate=aggregate_lower,
@@ -2104,6 +2136,7 @@ def _lwdid_staggered(
         caliper=caliper,
         with_replacement=with_replacement,
         match_order=match_order,
+        warning_registry=warning_registry,
     )
 
     att_by_cohort_time = pd.DataFrame([
@@ -2304,7 +2337,7 @@ def _lwdid_staggered(
                 f"All {n_total_cohorts} cohort-level ATT estimates are invalid (NaN or infinite). "
                 f"Cohort-aggregated statistics (att_cohort_agg, se_cohort_agg, etc.) remain None. "
                 f"Possible causes: insufficient sample size, numerical instability, or data quality issues.",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=3
             )
 
@@ -2406,7 +2439,7 @@ def _lwdid_staggered(
             warnings.warn(
                 f"Pre-treatment dynamics estimation failed: {e}. "
                 f"Continuing without pre-treatment effects.",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=3
             )
 
@@ -2515,6 +2548,14 @@ def _lwdid_staggered(
     )
     results.data = data_transformed
 
+    # Attach structured diagnostic records from the warning registry.
+    # Diagnostics are always complete regardless of verbosity setting,
+    # enabling post-hoc inspection via results.diagnostics.
+    if warning_registry is not None:
+        results._diagnostics = warning_registry.get_diagnostics()
+    else:
+        results._diagnostics = []
+
     # Randomization inference
     if ri:
         from .staggered.randomization import randomization_inference_staggered
@@ -2560,7 +2601,7 @@ def _lwdid_staggered(
                 warnings.warn(
                     "No valid cohort ATT estimates available for randomization inference. "
                     "All cohort-level ATT values are NaN.",
-                    UserWarning,
+                    DataWarning,
                     stacklevel=3
                 )
                 # Set RI attributes to NaN instead of returning incomplete results.
@@ -2587,7 +2628,7 @@ def _lwdid_staggered(
                     warnings.warn(
                         "No valid cohort-time ATT estimates available for randomization inference. "
                         "All cohort-time ATT values are NaN.",
-                        UserWarning,
+                        DataWarning,
                         stacklevel=3
                     )
                     # Set RI attributes to NaN instead of returning incomplete results.
@@ -2603,7 +2644,7 @@ def _lwdid_staggered(
             else:
                 warnings.warn(
                     "No available effect estimates, skipping randomization inference.",
-                    UserWarning,
+                    DataWarning,
                     stacklevel=3
                 )
                 # Set RI attributes to NaN instead of returning incomplete results.
@@ -2655,7 +2696,7 @@ def _lwdid_staggered(
             # LinAlgError: Singular matrix in permuted regressions
             warnings.warn(
                 f"Randomization inference failed: {type(e).__name__}: {e}",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=3
             )
             results.ri_pvalue = np.nan

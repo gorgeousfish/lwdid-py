@@ -1662,9 +1662,10 @@ def plot_missing_pattern(
     # Sample units if too many
     if len(all_units) > max_units:
         import warnings
+        from .warnings_categories import DataWarning
         warnings.warn(
             f"Panel has {len(all_units)} units. Showing random sample of {max_units}.",
-            UserWarning
+            DataWarning
         )
         np.random.seed(42)
         all_units = list(np.random.choice(all_units, max_units, replace=False))

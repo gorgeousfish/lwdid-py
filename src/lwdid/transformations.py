@@ -70,6 +70,7 @@ that preserves predicted values.
 from __future__ import annotations
 
 import warnings
+from .warnings_categories import DataWarning, NumericalWarning, SmallSampleWarning
 
 import numpy as np
 import pandas as pd
@@ -507,13 +508,13 @@ def apply_rolling_transform(
     # Note: Use original post indicator, not post_for_transform, for post-treatment average.
     post_data = data[data[post] == 1]
     ydot_postavg_map = post_data.groupby(ivar)['ydot'].mean()
-    data['ydot_postavg'] = data[ivar].map(ydot_postavg_map)
+    ydot_postavg_values = data[ivar].map(ydot_postavg_map)
 
-    # First post-treatment observation identifies cross-sectional regression sample.
-    # One row per unit enables standard treatment effect estimation.
-    data['firstpost'] = (
-        (data[tindex] == tpost1) &
-        data['ydot_postavg'].notna()
+    # Batch-assign post-treatment average and cross-sectional sample indicator
+    # to avoid incremental column creation fragmentation.
+    data = data.assign(
+        ydot_postavg=ydot_postavg_values,
+        firstpost=(data[tindex] == tpost1) & ydot_postavg_values.notna(),
     )
 
     # Remove temporary column if created during transformation.
@@ -583,7 +584,7 @@ def _demean_transform(
             warnings.warn(
                 f"Unit {unit_id}: all pre-treatment y values are NaN. "
                 f"Transformed outcome (ydot) will be NaN for this unit.",
-                UserWarning,
+                DataWarning,
                 stacklevel=3
             )
 
@@ -651,8 +652,7 @@ def detrend_unit(
     if t_variance < VARIANCE_THRESHOLD:
         warnings.warn(
             "Degenerate time variance detected: all pre-treatment time values are "
-            "identical, making OLS slope estimation impossible. Returning NaN.",
-            UserWarning, stacklevel=2
+            "identical, making OLS slope estimation impossible. Returning NaN.", NumericalWarning, stacklevel=2
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
@@ -665,7 +665,7 @@ def detrend_unit(
             f"Insufficient valid pre-treatment observations for OLS detrending: "
             f"found {n_valid} valid observations, require at least {n_params + 1} "
             f"(more than {n_params} parameters to ensure df >= 1). Returning NaN.",
-            UserWarning, stacklevel=2
+            SmallSampleWarning, stacklevel=2
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
@@ -684,7 +684,7 @@ def detrend_unit(
             f"This may indicate insufficient time variation or constant "
             f"outcome values in pre-treatment data. Returning NaN for "
             f"detrended values.",
-            UserWarning, stacklevel=3
+            NumericalWarning, stacklevel=3
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
@@ -771,7 +771,7 @@ def demeanq_unit(
             f"found {n_valid} valid observations with {n_seasons} distinct season(s), "
             f"require at least {n_params + 1} (more than {n_params} parameters). "
             f"Returning NaN.",
-            UserWarning, stacklevel=2
+            SmallSampleWarning, stacklevel=2
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
@@ -791,7 +791,7 @@ def demeanq_unit(
             f"OLS seasonal demeaning produced invalid coefficients (NaN or Inf). "
             f"This may indicate constant outcome values or collinearity in "
             f"pre-treatment data. Returning NaN for transformed values.",
-            UserWarning, stacklevel=3
+            NumericalWarning, stacklevel=3
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
@@ -803,8 +803,9 @@ def demeanq_unit(
     # - Post-period new seasons get zero coefficients (extrapolation from model).
     # - Post-period missing seasons require column alignment.
     missing_cols = set(s_dummies_pre.columns) - set(s_dummies_all.columns)
-    for col in missing_cols:
-        s_dummies_all[col] = 0.0
+    if missing_cols:
+        # Batch-assign all missing columns at once to avoid fragmentation.
+        s_dummies_all = s_dummies_all.assign(**{col: 0.0 for col in missing_cols})
     extra_cols = set(s_dummies_all.columns) - set(s_dummies_pre.columns)
     if extra_cols:
         s_dummies_all = s_dummies_all.drop(columns=list(extra_cols))
@@ -892,8 +893,7 @@ def detrendq_unit(
     if t_variance < VARIANCE_THRESHOLD:
         warnings.warn(
             "Degenerate time variance detected: all pre-treatment time values are "
-            "identical, making OLS slope estimation impossible. Returning NaN.",
-            UserWarning, stacklevel=2
+            "identical, making OLS slope estimation impossible. Returning NaN.", NumericalWarning, stacklevel=2
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
@@ -909,7 +909,7 @@ def detrendq_unit(
             f"found {n_valid} valid observations with {n_seasons} distinct season(s), "
             f"require at least {n_params + 1} (more than {n_params} parameters to ensure "
             f"df >= 1). Returning NaN.",
-            UserWarning, stacklevel=2
+            SmallSampleWarning, stacklevel=2
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
@@ -940,7 +940,7 @@ def detrendq_unit(
             f"This may indicate insufficient time variation, constant outcome values, "
             f"or collinearity in pre-treatment data. Returning NaN for transformed "
             f"values.",
-            UserWarning, stacklevel=3
+            NumericalWarning, stacklevel=3
         )
         return np.full(n_obs, np.nan), np.full(n_obs, np.nan)
 
@@ -955,8 +955,9 @@ def detrendq_unit(
     # - Post-period new seasons get zero coefficients (extrapolation from model).
     # - Post-period missing seasons require column alignment.
     missing_cols = set(s_dummies_pre.columns) - set(s_dummies_all.columns)
-    for col in missing_cols:
-        s_dummies_all[col] = 0.0
+    if missing_cols:
+        # Batch-assign all missing columns at once to avoid fragmentation.
+        s_dummies_all = s_dummies_all.assign(**{col: 0.0 for col in missing_cols})
     extra_cols = set(s_dummies_all.columns) - set(s_dummies_pre.columns)
     if extra_cols:
         s_dummies_all = s_dummies_all.drop(columns=list(extra_cols))

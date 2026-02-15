@@ -33,6 +33,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from .warnings_categories import DataWarning, SmallSampleWarning
+
 from .exceptions import (
     InsufficientDataError,
     InsufficientQuarterDiversityError,
@@ -225,7 +227,7 @@ def validate_and_prepare_data(
 
         warnings.warn(
             f"Dropped {n_dropped} observations due to missing values in required variables: {vars_str}",
-            UserWarning,
+            DataWarning,
             stacklevel=3
         )
     
@@ -287,7 +289,7 @@ def validate_and_prepare_data(
             f"Results are extremely sensitive to this single unit and may not be reliable. "
             f"Consider: (1) checking treatment variable '{d}' for coding errors, "
             f"(2) verifying sample selection, (3) using alternative methods (e.g., synthetic control).",
-            UserWarning,
+            SmallSampleWarning,
             stacklevel=2
         )
 
@@ -298,7 +300,7 @@ def validate_and_prepare_data(
             f"Results are extremely sensitive to this single unit and may not be reliable. "
             f"Consider: (1) checking treatment variable '{d}' for coding errors, "
             f"(2) verifying sample selection, (3) expanding the control group if possible.",
-            UserWarning,
+            SmallSampleWarning,
             stacklevel=2
         )
 
@@ -430,7 +432,7 @@ def _validate_outcome_dtype(
 
     Warns
     -----
-    UserWarning
+    DataWarning
         If the outcome variable has boolean type, which will be treated as
         numeric (1/0).
     """
@@ -460,7 +462,7 @@ def _validate_outcome_dtype(
             f"Outcome variable '{y}' has boolean type (True/False). "
             f"This will be treated as numeric (1/0). "
             f"If this is not your intent, please convert '{y}' to a proper numeric variable.",
-            category=UserWarning,
+            category=DataWarning,
             stacklevel=4
         )
 
@@ -1666,7 +1668,7 @@ def detect_frequency(
     if tvar not in data.columns:
         warnings.warn(
             f"Time variable '{tvar}' not found in data. Cannot detect frequency.",
-            UserWarning,
+            DataWarning,
             stacklevel=2
         )
         return result
@@ -1675,7 +1677,7 @@ def detect_frequency(
     if len(time_values) < 2:
         warnings.warn(
             "Insufficient time values for frequency detection (need at least 2).",
-            UserWarning,
+            DataWarning,
             stacklevel=2
         )
         return result
@@ -1868,7 +1870,7 @@ def _detect_frequency_numeric(
                 warnings.warn(
                     "Time variable appears to be a consecutive integer index. "
                     "Cannot reliably detect frequency. Please specify Q explicitly.",
-                    UserWarning,
+                    DataWarning,
                     stacklevel=3
                 )
 

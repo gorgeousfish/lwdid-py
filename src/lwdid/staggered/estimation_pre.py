@@ -26,6 +26,8 @@ from __future__ import annotations
 import warnings
 from dataclasses import dataclass
 
+from ..warnings_categories import DataWarning
+
 import numpy as np
 import pandas as pd
 
@@ -270,7 +272,7 @@ def estimate_pre_treatment_effects(
         if len(pre_periods) == 0:
             warnings.warn(
                 f"Cohort {g} has no pre-treatment periods (T_min={T_min}).",
-                UserWarning
+                DataWarning
             )
             continue
 
@@ -455,7 +457,7 @@ def estimate_pre_treatment_effects(
         warnings.warn(
             f"Skipped {n_skipped}/{n_total_pairs} pre-treatment (cohort, period) pairs "
             f"due to insufficient data or errors.",
-            UserWarning
+            DataWarning
         )
 
     # Sort by cohort, then by event_time descending (anchor first)

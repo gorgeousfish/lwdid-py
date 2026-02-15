@@ -61,6 +61,13 @@ from .control_groups import (
 from .transformations import get_cohorts, get_valid_periods_for_cohort
 from .estimators import estimate_ipwra, estimate_psm, IPWRAResult, PSMResult
 from ..exceptions import InvalidParameterError
+from ..warning_registry import WarningRegistry
+from ..warnings_categories import (
+    ConvergenceWarning,
+    DataWarning,
+    NumericalWarning,
+    SmallSampleWarning,
+)
 
 
 @dataclass
@@ -132,6 +139,9 @@ def _compute_leverage(
     XtX_inv: np.ndarray,
     clip_max: float = _LEVERAGE_CLIP_MAX,
     warn_threshold: float = _LEVERAGE_WARN_THRESHOLD,
+    warning_registry: WarningRegistry | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> np.ndarray:
     """
     Compute leverage values (hat matrix diagonal elements).
@@ -149,6 +159,13 @@ def _compute_leverage(
         Upper bound for leverage value clipping to prevent division by zero.
     warn_threshold : float, default=0.9
         Threshold above which to warn about extreme leverage values.
+    warning_registry : WarningRegistry or None, optional
+        If provided, warnings are collected into the registry instead of
+        being emitted immediately. Default is ``None``.
+    cohort_g : int or None, optional
+        Cohort identifier for registry context.
+    period_r : int or None, optional
+        Period identifier for registry context.
 
     Returns
     -------
@@ -177,12 +194,19 @@ def _compute_leverage(
     # Check for extreme leverage values
     max_h = np.max(h_ii)
     if max_h > warn_threshold:
-        warnings.warn(
+        msg = (
             f"Extreme leverage detected: max(h_ii) = {max_h:.4f} > {warn_threshold}. "
             f"HC standard errors may be numerically unstable. "
-            f"Consider using HC4 or checking for influential observations.",
-            UserWarning
+            f"Consider using HC4 or checking for influential observations."
         )
+        if warning_registry is not None:
+            warning_registry.collect(
+                NumericalWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'max_leverage': float(max_h)},
+            )
+        else:
+            warnings.warn(msg, NumericalWarning, stacklevel=3)
 
     # Clip to ensure numerical stability (prevent division by zero in HC2-HC4)
     h_ii = np.clip(h_ii, 0, clip_max)
@@ -195,6 +219,9 @@ def _compute_hc_variance(
     residuals: np.ndarray,
     XtX_inv: np.ndarray,
     hc_type: str,
+    warning_registry: WarningRegistry | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> np.ndarray:
     """
     Compute heteroskedasticity-consistent (HC) variance-covariance matrix.
@@ -257,21 +284,33 @@ def _compute_hc_variance(
     elif hc_lower == 'hc2':
         # HC2: Leverage-adjusted estimator using hat matrix diagonal.
         # Ω_ii = e_i² / (1 - h_ii)
-        h_ii = _compute_leverage(X, XtX_inv)
+        h_ii = _compute_leverage(
+            X, XtX_inv,
+            warning_registry=warning_registry,
+            cohort_g=cohort_g, period_r=period_r,
+        )
         omega_diag = e2 / (1 - h_ii)
 
     elif hc_lower == 'hc3':
         # HC3: Small-sample adjustment using squared leverage correction.
         # Ω_ii = e_i² / (1 - h_ii)²
         # Recommended for small samples with few treated or control units.
-        h_ii = _compute_leverage(X, XtX_inv)
+        h_ii = _compute_leverage(
+            X, XtX_inv,
+            warning_registry=warning_registry,
+            cohort_g=cohort_g, period_r=period_r,
+        )
         omega_diag = e2 / ((1 - h_ii) ** 2)
 
     elif hc_lower == 'hc4':
         # HC4: Adaptive leverage adjustment for high-influence observations.
         # Ω_ii = e_i² / (1 - h_ii)^δ_i where δ_i = min(4, n·h_ii/k)
         # Provides stronger adjustment for observations with extreme leverage.
-        h_ii = _compute_leverage(X, XtX_inv)
+        h_ii = _compute_leverage(
+            X, XtX_inv,
+            warning_registry=warning_registry,
+            cohort_g=cohort_g, period_r=period_r,
+        )
         delta = np.minimum(4.0, n * h_ii / k)
         # Guard against numerical issues from negative leverage estimates
         delta = np.maximum(delta, 0.0)
@@ -295,6 +334,9 @@ def _compute_hc1_variance(
     X: np.ndarray,
     residuals: np.ndarray,
     XtX_inv: np.ndarray,
+    warning_registry: WarningRegistry | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> np.ndarray:
     """
     Compute HC1 variance-covariance matrix.
@@ -310,6 +352,13 @@ def _compute_hc1_variance(
         OLS residuals of shape (N,).
     XtX_inv : np.ndarray
         Inverse of X'X matrix of shape (K, K).
+    warning_registry : WarningRegistry or None, optional
+        If provided, warnings are collected into the registry instead of
+        being emitted immediately. Default is ``None``.
+    cohort_g : int or None, optional
+        Cohort identifier for registry context.
+    period_r : int or None, optional
+        Period identifier for registry context.
 
     Returns
     -------
@@ -330,7 +379,11 @@ def _compute_hc1_variance(
         raise ValueError(
             f"HC1 variance requires n > k. Got n={n}, k={k}."
         )
-    return _compute_hc_variance(X, residuals, XtX_inv, 'hc1')
+    return _compute_hc_variance(
+        X, residuals, XtX_inv, 'hc1',
+        warning_registry=warning_registry,
+        cohort_g=cohort_g, period_r=period_r,
+    )
 
 
 def run_ols_regression(
@@ -341,6 +394,9 @@ def run_ols_regression(
     vce: str | None = None,
     cluster_var: str | None = None,
     alpha: float = 0.05,
+    warning_registry: WarningRegistry | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> dict[str, Any]:
     """
     Estimate the ATT via OLS regression on cross-sectional data.
@@ -455,12 +511,19 @@ def run_ols_regression(
                 X_interactions
             ])
         else:
-            # Insufficient sample size for covariate adjustment
-            warnings.warn(
+            # 样本量不足，无法进行协变量调整
+            msg = (
                 f"Controls not included: N_treated={n_treated}, N_control={n_control}, K={K}. "
-                f"Need N_treated > K+1 and N_control > K+1.",
-                UserWarning
+                f"Need N_treated > K+1 and N_control > K+1."
             )
+            if warning_registry is not None:
+                warning_registry.collect(
+                    SmallSampleWarning, msg,
+                    cohort=cohort_g, period=period_r,
+                    context={'n_treated': n_treated, 'n_control': n_control, 'K': K},
+                )
+            else:
+                warnings.warn(msg, SmallSampleWarning, stacklevel=2)
             X = np.column_stack([np.ones(n), d_vals])
     else:
         # Without covariates, simple difference-in-means identifies the ATT
@@ -479,11 +542,18 @@ def run_ols_regression(
 
     if df_resid <= 0:
         att = beta[1]
-        warnings.warn(
+        msg = (
             f"No degrees of freedom (n={n}, k={X.shape[1]}). "
-            f"Point estimate is valid but SE, CI, and p-value are unavailable.",
-            UserWarning
+            f"Point estimate is valid but SE, CI, and p-value are unavailable."
         )
+        if warning_registry is not None:
+            warning_registry.collect(
+                NumericalWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'n': n, 'k': X.shape[1]},
+            )
+        else:
+            warnings.warn(msg, NumericalWarning, stacklevel=2)
         return {
             'att': att,
             'se': np.nan,
@@ -508,7 +578,11 @@ def run_ols_regression(
 
     elif vce_lower in ('hc0', 'hc1', 'hc2', 'hc3', 'hc4', 'robust'):
         # Heteroskedasticity-consistent standard errors
-        var_beta = _compute_hc_variance(X, residuals, XtX_inv, vce_lower)
+        var_beta = _compute_hc_variance(
+            X, residuals, XtX_inv, vce_lower,
+            warning_registry=warning_registry,
+            cohort_g=cohort_g, period_r=period_r,
+        )
         df_inference = df_resid
 
     elif vce_lower == 'cluster':
@@ -527,14 +601,20 @@ def run_ols_regression(
             raise ValueError(f"Need at least 2 clusters, got {G}")
 
         if G < 20:
-            warnings.warn(
+            msg = (
                 f"Few clusters (G={G} < 20). Over-rejection of the null "
                 f"hypothesis is likely with cluster-robust standard errors. "
                 f"Consider wild cluster bootstrap or bias-corrected methods. "
-                f"See Cameron, Gelbach & Miller (2008) and Cameron & Miller (2015).",
-                UserWarning,
-                stacklevel=2,
+                f"See Cameron, Gelbach & Miller (2008) and Cameron & Miller (2015)."
             )
+            if warning_registry is not None:
+                warning_registry.collect(
+                    SmallSampleWarning, msg,
+                    cohort=cohort_g, period=period_r,
+                    context={'G': G},
+                )
+            else:
+                warnings.warn(msg, SmallSampleWarning, stacklevel=2)
 
         # Sum of cluster-level outer products accounts for within-cluster
         # correlation of errors; this is the "meat" of the sandwich estimator.
@@ -609,6 +689,7 @@ def estimate_cohort_time_effects(
     caliper: float | None = None,
     return_diagnostics: bool = False,
     match_order: str | None = None,
+    warning_registry: WarningRegistry | None = None,
 ) -> list[CohortTimeEffect]:
     """
     Estimate treatment effects for all valid cohort-period pairs.
@@ -852,6 +933,9 @@ def estimate_cohort_time_effects(
                         vce=vce,
                         cluster_var=cluster_var,
                         alpha=alpha,
+                        warning_registry=warning_registry,
+                        cohort_g=int(g),
+                        period_r=int(r),
                     )
                 elif estimator == 'ipwra':
                     est_result = _estimate_single_effect_ipwra(
@@ -863,6 +947,9 @@ def estimate_cohort_time_effects(
                         trim_threshold=trim_threshold,
                         se_method=se_method,
                         alpha=alpha,
+                        warning_registry=warning_registry,
+                        cohort_g=int(g),
+                        period_r=int(r),
                     )
                 elif estimator == 'psm':
                     est_result = _estimate_single_effect_psm(
@@ -875,6 +962,9 @@ def estimate_cohort_time_effects(
                         caliper=caliper,
                         trim_threshold=trim_threshold,
                         alpha=alpha,
+                        warning_registry=warning_registry,
+                        cohort_g=int(g),
+                        period_r=int(r),
                     )
                 else:
                     raise ValueError(f"Unknown estimator: {estimator}")
@@ -902,14 +992,27 @@ def estimate_cohort_time_effects(
     # =========================================================================
     # Reporting
     # =========================================================================
+    n_total_pairs = sum(
+        len(get_valid_periods_for_cohort(g, T_max)) for g in cohorts
+    )
+
     if skipped_pairs:
         n_skipped = len(skipped_pairs)
-        n_total_pairs = sum(len(get_valid_periods_for_cohort(g, T_max)) for g in cohorts)
-        warnings.warn(
+        msg = (
             f"Skipped {n_skipped}/{n_total_pairs} (cohort, period) pairs due to "
-            f"insufficient data or errors. Use verbose=True for details.",
-            UserWarning
+            f"insufficient data or errors. Use verbose=True for details."
         )
+        if warning_registry is not None:
+            warning_registry.collect(
+                DataWarning, msg,
+                context={'n_skipped': n_skipped, 'n_total_pairs': n_total_pairs},
+            )
+        else:
+            warnings.warn(msg, DataWarning, stacklevel=2)
+
+    # Flush aggregated warnings collected during the (g, r) loop.
+    if warning_registry is not None:
+        warning_registry.flush(total_pairs=n_total_pairs)
 
     results.sort(key=lambda x: (x.cohort, x.period))
 
@@ -980,6 +1083,9 @@ def _estimate_single_effect_ipwra(
     trim_threshold: float = 0.01,
     se_method: str = 'analytical',
     alpha: float = 0.05,
+    warning_registry: WarningRegistry | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> dict[str, Any]:
     """
     Estimate ATT using inverse probability weighted regression adjustment.
@@ -1005,6 +1111,13 @@ def _estimate_single_effect_ipwra(
         Standard error computation method: 'analytical' or 'bootstrap'.
     alpha : float, default=0.05
         Significance level for confidence interval construction.
+    warning_registry : WarningRegistry or None, optional
+        If provided, warnings are collected into the registry instead of
+        being emitted immediately. Default is ``None``.
+    cohort_g : int or None, optional
+        Cohort identifier for registry context.
+    period_r : int or None, optional
+        Period identifier for registry context.
 
     Returns
     -------
@@ -1022,7 +1135,10 @@ def _estimate_single_effect_ipwra(
             propensity_controls=propensity_controls,
             trim_threshold=trim_threshold,
             se_method=se_method,
-            alpha=alpha
+            alpha=alpha,
+            warning_registry=warning_registry,
+            cohort_g=cohort_g,
+            period_r=period_r,
         )
 
         return {
@@ -1039,10 +1155,15 @@ def _estimate_single_effect_ipwra(
         }
 
     except Exception as e:
-        warnings.warn(
-            f"IPWRA estimation failed: {str(e)}. Returning NaN.",
-            UserWarning
-        )
+        msg = f"IPWRA estimation failed: {str(e)}. Returning NaN."
+        if warning_registry is not None:
+            warning_registry.collect(
+                ConvergenceWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'error': str(e)},
+            )
+        else:
+            warnings.warn(msg, ConvergenceWarning, stacklevel=3)
         return {
             'att': np.nan,
             'se': np.nan,
@@ -1068,6 +1189,9 @@ def _estimate_single_effect_psm(
     caliper: float | None = None,
     trim_threshold: float = 0.01,
     alpha: float = 0.05,
+    warning_registry: WarningRegistry | None = None,
+    cohort_g: int | None = None,
+    period_r: int | None = None,
 ) -> dict[str, Any]:
     """
     Estimate ATT using propensity score matching.
@@ -1095,6 +1219,13 @@ def _estimate_single_effect_psm(
         Threshold for trimming extreme propensity scores.
     alpha : float, default=0.05
         Significance level for confidence interval construction.
+    warning_registry : WarningRegistry or None, optional
+        If provided, warnings are collected into the registry instead of
+        being emitted immediately. Default is ``None``.
+    cohort_g : int or None, optional
+        Cohort identifier for registry context.
+    period_r : int or None, optional
+        Period identifier for registry context.
 
     Returns
     -------
@@ -1113,7 +1244,10 @@ def _estimate_single_effect_psm(
             with_replacement=with_replacement,
             caliper=caliper,
             trim_threshold=trim_threshold,
-            alpha=alpha
+            alpha=alpha,
+            warning_registry=warning_registry,
+            cohort_g=cohort_g,
+            period_r=period_r,
         )
 
         return {
@@ -1132,10 +1266,15 @@ def _estimate_single_effect_psm(
         }
 
     except Exception as e:
-        warnings.warn(
-            f"PSM estimation failed: {str(e)}. Returning NaN.",
-            UserWarning
-        )
+        msg = f"PSM estimation failed: {str(e)}. Returning NaN."
+        if warning_registry is not None:
+            warning_registry.collect(
+                ConvergenceWarning, msg,
+                cohort=cohort_g, period=period_r,
+                context={'error': str(e)},
+            )
+        else:
+            warnings.warn(msg, ConvergenceWarning, stacklevel=3)
         return {
             'att': np.nan,
             'se': np.nan,

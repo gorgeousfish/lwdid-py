@@ -4,7 +4,7 @@
 
 ## 面向面板数据的 Lee–Wooldridge 双重差分方法（Difference-in-Differences）
 
-![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)
+![Version](https://img.shields.io/badge/version-0.2.2-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)
 [![Documentation](https://readthedocs.org/projects/lwdid/badge/?version=latest)](https://lwdid.readthedocs.io)
@@ -364,7 +364,7 @@ sel_diag = diagnose_selection_mechanism(data, ivar="unit", tvar="year", y="outco
 
 ## 版本说明
 
-- 当前包版本：`0.2.1`（`pyproject.toml`）。
+- 当前包版本：`0.2.2`（`pyproject.toml`）。
 - 包含广义季节性支持（`Q`、`season_var`）及错位处理时点季节性变换（staggered 模式下的 `demeanq`、`detrendq`）。
 - 预处理期动态效应与平行趋势检验（`include_pretreatment`、`pretreatment_test`）。
 - 无预期效应稳健性检验（`exclude_pre_periods`）。
@@ -390,7 +390,7 @@ sel_diag = diagnose_selection_mechanism(data, ivar="unit", tvar="year", y="outco
 @software{cai_lwdid_2025,
   author  = {Cai, Xuanyu and Xu, Wenli},
   title   = {lwdid: Lee--Wooldridge Difference-in-Differences for Panel Data},
-  version = {0.2.1},
+  version = {0.2.2},
   year    = {2025},
   url     = {https://github.com/gorgeousfish/lwdid-py}
 }

@@ -36,6 +36,7 @@ import warnings
 from dataclasses import dataclass, field
 from math import fsum
 from typing import Any, Literal
+from ..warnings_categories import DataWarning, SmallSampleWarning
 
 import numpy as np
 import pandas as pd
@@ -388,8 +389,7 @@ def _validate_weights(
 
     if n_missing > 0:
         warnings.warn(
-            f"Excluded {n_missing} observations with missing weights.",
-            UserWarning,
+            f"Excluded {n_missing} observations with missing weights.", DataWarning,
             stacklevel=3
         )
         data_clean = data[~missing_mask].copy()
@@ -787,7 +787,7 @@ def aggregate_to_panel(
             f"Excluded {len(excluded_cells)} cells: "
             f"{sum(1 for c in excluded_cells if 'min_cell_size' in c['reason'])} below min_cell_size, "
             f"{sum(1 for c in excluded_cells if 'NaN' in c['reason'])} with all-NaN outcomes.",
-            UserWarning,
+            DataWarning,
             stacklevel=2
         )
 
@@ -817,8 +817,7 @@ def aggregate_to_panel(
     if n_units < 3:
         warnings.warn(
             f"Aggregation resulted in {n_units} units. "
-            f"lwdid requires at least 3 units for valid estimation.",
-            UserWarning,
+            f"lwdid requires at least 3 units for valid estimation.", SmallSampleWarning,
             stacklevel=2
         )
 

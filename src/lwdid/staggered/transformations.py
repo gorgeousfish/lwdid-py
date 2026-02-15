@@ -45,6 +45,14 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from ..warnings_categories import DataWarning
+
+# Context manager to suppress pandas PerformanceWarning caused by
+# incremental column creation in (g,r) loops. The fragmentation is
+# inherent to the staggered design where each cohort-period pair
+# produces a separate transformed outcome column.
+_PERF_WARNING_FILTER = ('ignore', '', pd.errors.PerformanceWarning)
+
 
 def get_cohorts(
     data: pd.DataFrame,
@@ -303,7 +311,7 @@ def transform_staggered_demean(
 
     Warns
     -----
-    UserWarning
+    DataWarning
         If no never-treated units are found in the data.
 
     See Also
@@ -399,34 +407,40 @@ def transform_staggered_demean(
         warnings.warn(
             "No never-treated units found. Overall and cohort effects cannot "
             "be estimated. Only (g,r)-specific effects are available.",
-            UserWarning
+            DataWarning
         )
 
     # =========================================================================
     # Compute Transformations
     # =========================================================================
-    for g in cohorts:
-        # Compute effective pre-treatment upper bound with exclusion.
-        # Use strict inequality: t < (g - exclude_pre_periods)
-        pre_upper_bound = g - exclude_pre_periods
-        pre_mask = result[tvar] < pre_upper_bound
+    # Suppress PerformanceWarning from incremental column creation in (g,r)
+    # loops. Each cohort-period pair requires a separate transformed outcome
+    # column, making batch pre-allocation impractical.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(*_PERF_WARNING_FILTER)
 
-        # Vectorized computation across units for efficiency with large panels.
-        pre_means = result[pre_mask].groupby(ivar)[y].mean()
+        for g in cohorts:
+            # Compute effective pre-treatment upper bound with exclusion.
+            # Use strict inequality: t < (g - exclude_pre_periods)
+            pre_upper_bound = g - exclude_pre_periods
+            pre_mask = result[tvar] < pre_upper_bound
 
-        post_periods = get_valid_periods_for_cohort(g, T_max)
+            # Vectorized computation across units for efficiency with large panels.
+            pre_means = result[pre_mask].groupby(ivar)[y].mean()
 
-        for r in post_periods:
-            col_name = f'ydot_g{int(g)}_r{r}'
-            result[col_name] = np.nan
+            post_periods = get_valid_periods_for_cohort(g, T_max)
 
-            period_mask = result[tvar] == r
+            for r in post_periods:
+                col_name = f'ydot_g{int(g)}_r{r}'
+                result[col_name] = np.nan
 
-            # Transform all units to enable both treated and control estimation.
-            result.loc[period_mask, col_name] = (
-                result.loc[period_mask, y].values -
-                result.loc[period_mask, ivar].map(pre_means).values
-            )
+                period_mask = result[tvar] == r
+
+                # Transform all units to enable both treated and control estimation.
+                result.loc[period_mask, col_name] = (
+                    result.loc[period_mask, y].values -
+                    result.loc[period_mask, ivar].map(pre_means).values
+                )
 
     return result
 
@@ -499,7 +513,7 @@ def transform_staggered_detrend(
 
     Warns
     -----
-    UserWarning
+    DataWarning
         If no never-treated units are found in the data.
 
     See Also
@@ -585,7 +599,7 @@ def transform_staggered_detrend(
         warnings.warn(
             "No never-treated units found. Overall and cohort effects cannot "
             "be estimated. Only (g,r)-specific effects are available.",
-            UserWarning
+            DataWarning
         )
 
     # =========================================================================
@@ -594,47 +608,53 @@ def transform_staggered_detrend(
     # Process unit by unit to allow different trend estimates per unit.
     all_units = result[ivar].unique()
 
-    for g in cohorts:
-        # Compute effective pre-treatment upper bound with exclusion.
-        pre_upper_bound = g - exclude_pre_periods
+    # Suppress PerformanceWarning from incremental column creation in (g,r)
+    # loops. Each cohort-period pair requires a separate transformed outcome
+    # column, making batch pre-allocation impractical.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(*_PERF_WARNING_FILTER)
 
-        post_periods = get_valid_periods_for_cohort(g, T_max)
+        for g in cohorts:
+            # Compute effective pre-treatment upper bound with exclusion.
+            pre_upper_bound = g - exclude_pre_periods
 
-        # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
-        for r in post_periods:
-            col_name = f'ycheck_g{int(g)}_r{r}'
-            result[col_name] = np.nan
+            post_periods = get_valid_periods_for_cohort(g, T_max)
 
-        for unit_id in all_units:
-            unit_mask = result[ivar] == unit_id
-            unit_data = result[unit_mask]
-
-            # Strict inequality ensures pre-treatment window excludes treatment onset.
-            pre_data = unit_data[unit_data[tvar] < pre_upper_bound].dropna(subset=[y])
-
-            if len(pre_data) < 2:
-                # OLS requires at least 2 points to identify intercept and slope.
-                continue
-
-            t_vals = pre_data[tvar].values.astype(float)
-            y_vals = pre_data[y].values.astype(float)
-
-            try:
-                # polyfit returns [slope, intercept] in descending degree order.
-                B, A = np.polyfit(t_vals, y_vals, deg=1)
-            except (np.linalg.LinAlgError, ValueError):
-                # Collinearity or ill-conditioned design matrix prevents estimation.
-                continue
-
-            # Out-of-sample residuals identify treatment effects under parallel trends.
+            # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
             for r in post_periods:
                 col_name = f'ycheck_g{int(g)}_r{r}'
-                period_mask = unit_mask & (result[tvar] == r)
+                result[col_name] = np.nan
 
-                if period_mask.any():
-                    y_r = result.loc[period_mask, y].values[0]
-                    predicted = A + B * r
-                    result.loc[period_mask, col_name] = y_r - predicted
+            for unit_id in all_units:
+                unit_mask = result[ivar] == unit_id
+                unit_data = result[unit_mask]
+
+                # Strict inequality ensures pre-treatment window excludes treatment onset.
+                pre_data = unit_data[unit_data[tvar] < pre_upper_bound].dropna(subset=[y])
+
+                if len(pre_data) < 2:
+                    # OLS requires at least 2 points to identify intercept and slope.
+                    continue
+
+                t_vals = pre_data[tvar].values.astype(float)
+                y_vals = pre_data[y].values.astype(float)
+
+                try:
+                    # polyfit returns [slope, intercept] in descending degree order.
+                    B, A = np.polyfit(t_vals, y_vals, deg=1)
+                except (np.linalg.LinAlgError, ValueError):
+                    # Collinearity or ill-conditioned design matrix prevents estimation.
+                    continue
+
+                # Out-of-sample residuals identify treatment effects under parallel trends.
+                for r in post_periods:
+                    col_name = f'ycheck_g{int(g)}_r{r}'
+                    period_mask = unit_mask & (result[tvar] == r)
+
+                    if period_mask.any():
+                        y_r = result.loc[period_mask, y].values[0]
+                        predicted = A + B * r
+                        result.loc[period_mask, col_name] = y_r - predicted
 
     return result
 
@@ -917,7 +937,7 @@ def transform_staggered_demeanq(
 
     Warns
     -----
-    UserWarning
+    DataWarning
         If no never-treated units are found in the data.
 
     See Also
@@ -1027,7 +1047,7 @@ def transform_staggered_demeanq(
         warnings.warn(
             "No never-treated units found. Overall and cohort effects cannot "
             "be estimated. Only (g,r)-specific effects are available.",
-            UserWarning
+            DataWarning
         )
 
     # =========================================================================
@@ -1035,45 +1055,51 @@ def transform_staggered_demeanq(
     # =========================================================================
     all_units = result[ivar].unique()
 
-    for g in cohorts:
-        post_periods = get_valid_periods_for_cohort(g, T_max)
+    # Suppress PerformanceWarning from incremental column creation in (g,r)
+    # loops. Each cohort-period pair requires a separate transformed outcome
+    # column, making batch pre-allocation impractical.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(*_PERF_WARNING_FILTER)
 
-        # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
-        for r in post_periods:
-            col_name = f'ydot_g{int(g)}_r{r}'
-            result[col_name] = np.nan
+        for g in cohorts:
+            post_periods = get_valid_periods_for_cohort(g, T_max)
 
-        for unit_id in all_units:
-            unit_mask = result[ivar] == unit_id
-            unit_data = result[unit_mask]
-
-            # Estimate seasonal intercept and dummy coefficients from pre-treatment data.
-            mu, gamma, observed_seasons = _compute_pre_treatment_seasonal_mean(
-                unit_data, y, tvar, season_var, g, Q, exclude_pre_periods
-            )
-
-            if np.isnan(mu):
-                # Insufficient pre-treatment data for seasonal parameter estimation.
-                continue
-
-            # Apply transformation using fixed pre-treatment parameters.
+            # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
             for r in post_periods:
                 col_name = f'ydot_g{int(g)}_r{r}'
-                period_mask = unit_mask & (result[tvar] == r)
+                result[col_name] = np.nan
 
-                if period_mask.any():
-                    y_r = result.loc[period_mask, y].values[0]
-                    season_r = result.loc[period_mask, season_var].values[0]
+            for unit_id in all_units:
+                unit_mask = result[ivar] == unit_id
+                unit_data = result[unit_mask]
 
-                    # Seasonal prediction: mu + gamma_q for season q.
-                    predicted = mu
-                    if len(gamma) > 0 and season_r in observed_seasons:
-                        season_idx = observed_seasons.index(season_r)
-                        # Reference season (index 0) has gamma=0 by construction.
-                        if season_idx > 0:
-                            predicted += gamma[season_idx - 1]
+                # Estimate seasonal intercept and dummy coefficients from pre-treatment data.
+                mu, gamma, observed_seasons = _compute_pre_treatment_seasonal_mean(
+                    unit_data, y, tvar, season_var, g, Q, exclude_pre_periods
+                )
 
-                    result.loc[period_mask, col_name] = y_r - predicted
+                if np.isnan(mu):
+                    # Insufficient pre-treatment data for seasonal parameter estimation.
+                    continue
+
+                # Apply transformation using fixed pre-treatment parameters.
+                for r in post_periods:
+                    col_name = f'ydot_g{int(g)}_r{r}'
+                    period_mask = unit_mask & (result[tvar] == r)
+
+                    if period_mask.any():
+                        y_r = result.loc[period_mask, y].values[0]
+                        season_r = result.loc[period_mask, season_var].values[0]
+
+                        # Seasonal prediction: mu + gamma_q for season q.
+                        predicted = mu
+                        if len(gamma) > 0 and season_r in observed_seasons:
+                            season_idx = observed_seasons.index(season_r)
+                            # Reference season (index 0) has gamma=0 by construction.
+                            if season_idx > 0:
+                                predicted += gamma[season_idx - 1]
+
+                        result.loc[period_mask, col_name] = y_r - predicted
 
     return result
 
@@ -1152,7 +1178,7 @@ def transform_staggered_detrendq(
 
     Warns
     -----
-    UserWarning
+    DataWarning
         If no never-treated units are found in the data.
 
     See Also
@@ -1264,7 +1290,7 @@ def transform_staggered_detrendq(
         warnings.warn(
             "No never-treated units found. Overall and cohort effects cannot "
             "be estimated. Only (g,r)-specific effects are available.",
-            UserWarning
+            DataWarning
         )
 
     # =========================================================================
@@ -1272,47 +1298,53 @@ def transform_staggered_detrendq(
     # =========================================================================
     all_units = result[ivar].unique()
 
-    for g in cohorts:
-        post_periods = get_valid_periods_for_cohort(g, T_max)
+    # Suppress PerformanceWarning from incremental column creation in (g,r)
+    # loops. Each cohort-period pair requires a separate transformed outcome
+    # column, making batch pre-allocation impractical.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(*_PERF_WARNING_FILTER)
 
-        # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
-        for r in post_periods:
-            col_name = f'ycheck_g{int(g)}_r{r}'
-            result[col_name] = np.nan
+        for g in cohorts:
+            post_periods = get_valid_periods_for_cohort(g, T_max)
 
-        for unit_id in all_units:
-            unit_mask = result[ivar] == unit_id
-            unit_data = result[unit_mask]
-
-            # Estimate trend and seasonal parameters from pre-treatment data.
-            alpha, beta, gamma, observed_seasons, t_mean = _compute_pre_treatment_seasonal_trend(
-                unit_data, y, tvar, season_var, g, Q, exclude_pre_periods
-            )
-
-            if np.isnan(alpha) or np.isnan(beta):
-                # Insufficient pre-treatment data for trend parameter estimation.
-                continue
-
-            # Apply transformation using fixed pre-treatment parameters.
+            # Pre-allocate columns to avoid repeated DataFrame resizing overhead.
             for r in post_periods:
                 col_name = f'ycheck_g{int(g)}_r{r}'
-                period_mask = unit_mask & (result[tvar] == r)
+                result[col_name] = np.nan
 
-                if period_mask.any():
-                    y_r = result.loc[period_mask, y].values[0]
-                    season_r = result.loc[period_mask, season_var].values[0]
+            for unit_id in all_units:
+                unit_mask = result[ivar] == unit_id
+                unit_data = result[unit_mask]
 
-                    # Center time at pre-treatment mean for numerical stability.
-                    t_centered = r - t_mean
-                    predicted = alpha + beta * t_centered
+                # Estimate trend and seasonal parameters from pre-treatment data.
+                alpha, beta, gamma, observed_seasons, t_mean = _compute_pre_treatment_seasonal_trend(
+                    unit_data, y, tvar, season_var, g, Q, exclude_pre_periods
+                )
 
-                    # Add seasonal effect: gamma_q for season q.
-                    if len(gamma) > 0 and season_r in observed_seasons:
-                        season_idx = observed_seasons.index(season_r)
-                        # Reference season (index 0) has gamma=0 by construction.
-                        if season_idx > 0:
-                            predicted += gamma[season_idx - 1]
+                if np.isnan(alpha) or np.isnan(beta):
+                    # Insufficient pre-treatment data for trend parameter estimation.
+                    continue
 
-                    result.loc[period_mask, col_name] = y_r - predicted
+                # Apply transformation using fixed pre-treatment parameters.
+                for r in post_periods:
+                    col_name = f'ycheck_g{int(g)}_r{r}'
+                    period_mask = unit_mask & (result[tvar] == r)
+
+                    if period_mask.any():
+                        y_r = result.loc[period_mask, y].values[0]
+                        season_r = result.loc[period_mask, season_var].values[0]
+
+                        # Center time at pre-treatment mean for numerical stability.
+                        t_centered = r - t_mean
+                        predicted = alpha + beta * t_centered
+
+                        # Add seasonal effect: gamma_q for season q.
+                        if len(gamma) > 0 and season_r in observed_seasons:
+                            season_idx = observed_seasons.index(season_r)
+                            # Reference season (index 0) has gamma=0 by construction.
+                            if season_idx > 0:
+                                predicted += gamma[season_idx - 1]
+
+                        result.loc[period_mask, col_name] = y_r - predicted
 
     return result

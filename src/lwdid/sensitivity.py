@@ -28,6 +28,8 @@ import warnings
 
 import numpy as np
 import pandas as pd
+
+from .warnings_categories import DataWarning, NumericalWarning
 from scipy import stats
 
 
@@ -844,7 +846,7 @@ class ComprehensiveSensitivityResult:
         ])
         
         if n_plots == 0:
-            warnings.warn("No results to plot")
+            warnings.warn("No results to plot", DataWarning, stacklevel=2)
             return None
         
         fig, axes = plt.subplots(1, n_plots, figsize=figsize)
@@ -1261,7 +1263,9 @@ def _filter_excluding_periods(
         if exclude_periods >= len(pre_times):
             warnings.warn(
                 f"Cannot exclude {exclude_periods} periods: only {len(pre_times)} "
-                f"pre-treatment periods available."
+                f"pre-treatment periods available.",
+                DataWarning,
+                stacklevel=2,
             )
             return data.copy()
         
@@ -1583,7 +1587,7 @@ def _run_single_specification(
         )
         
     except Exception as e:
-        warnings.warn(f"Specification {spec_id} (n_pre={n_pre_periods}) failed: {e}")
+        warnings.warn(f"Specification {spec_id} (n_pre={n_pre_periods}) failed: {e}", NumericalWarning, stacklevel=2)
         return SpecificationResult(
             specification_id=spec_id,
             n_pre_periods=n_pre_periods,
@@ -1807,7 +1811,9 @@ def robustness_pre_periods(
     if len(n_pre_values) < 2:
         warnings.warn(
             f"Only {len(n_pre_values)} specification(s) possible. "
-            "Consider expanding pre_period_range or reducing step."
+            "Consider expanding pre_period_range or reducing step.",
+            DataWarning,
+            stacklevel=2,
         )
     
     # 4. Run estimations for each specification
@@ -2001,7 +2007,9 @@ def sensitivity_no_anticipation(
     if max_anticipation < 1:
         warnings.warn(
             "Insufficient pre-treatment periods for anticipation analysis. "
-            f"Need at least {min_required + 1} pre-periods, have {max_available}."
+            f"Need at least {min_required + 1} pre-periods, have {max_available}.",
+            DataWarning,
+            stacklevel=2,
         )
     
     if verbose:
@@ -2050,7 +2058,7 @@ def sensitivity_no_anticipation(
             ))
             
         except Exception as e:
-            warnings.warn(f"Exclusion {exclude} failed: {e}")
+            warnings.warn(f"Exclusion {exclude} failed: {e}", NumericalWarning, stacklevel=2)
             result_warnings.append(f"Exclusion {exclude} failed: {e}")
             estimates.append(AnticipationEstimate(
                 excluded_periods=exclude,
@@ -2223,7 +2231,7 @@ def sensitivity_analysis(
                     "Consider using detrend method or investigating data quality."
                 )
         except Exception as e:
-            warnings.warn(f"Pre-period analysis failed: {e}")
+            warnings.warn(f"Pre-period analysis failed: {e}", NumericalWarning, stacklevel=2)
     
     # 2. No-anticipation sensitivity
     if 'anticipation' in analyses:
@@ -2244,7 +2252,7 @@ def sensitivity_analysis(
                     f"{anticipation_result.recommended_exclusion} period(s) before treatment."
                 )
         except Exception as e:
-            warnings.warn(f"Anticipation analysis failed: {e}")
+            warnings.warn(f"Anticipation analysis failed: {e}", NumericalWarning, stacklevel=2)
     
     # 3. Transformation comparison
     if 'transformation' in analyses:
@@ -2287,10 +2295,12 @@ def sensitivity_analysis(
             else:
                 warnings.warn(
                     f"Insufficient pre-periods for detrend comparison "
-                    f"(need {min_pre_detrend}, have {max_pre})"
+                    f"(need {min_pre_detrend}, have {max_pre})",
+                    DataWarning,
+                    stacklevel=2,
                 )
         except Exception as e:
-            warnings.warn(f"Transformation comparison failed: {e}")
+            warnings.warn(f"Transformation comparison failed: {e}", NumericalWarning, stacklevel=2)
     
     # 4. Estimator comparison
     if 'estimator' in analyses and controls is not None:
@@ -2325,7 +2335,7 @@ def sensitivity_analysis(
                             "Consider which estimator assumptions are most appropriate."
                         )
         except Exception as e:
-            warnings.warn(f"Estimator comparison failed: {e}")
+            warnings.warn(f"Estimator comparison failed: {e}", NumericalWarning, stacklevel=2)
     
     # Generate overall assessment
     issues = []

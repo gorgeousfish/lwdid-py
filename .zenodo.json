@@ -1,6 +1,6 @@
 {
   "title": "lwdid: Lee & Wooldridge Difference-in-Differences with Rolling Transformations for Panel Data",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Python implementation of the Lee & Wooldridge difference-in-differences methods with unit-specific rolling transformations. Supports common timing and staggered adoption designs, demeaning and detrending transformations, seasonal adjustments, multiple estimators (RA, IPW, IPWRA, PSM), heteroskedasticity-robust inference, and randomization inference.",
   "creators": [
     {

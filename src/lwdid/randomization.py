@@ -41,6 +41,7 @@ import statsmodels.api as sm
 
 from . import estimation
 from .exceptions import RandomizationError
+from .warnings_categories import NumericalWarning
 
 
 def randomization_inference(
@@ -135,7 +136,7 @@ def randomization_inference(
 
     Warns
     -----
-    UserWarning
+    NumericalWarning
         When bootstrap failure rate exceeds 5%, indicating potential issues
         with extreme treatment proportions or data quality.
 
@@ -455,7 +456,7 @@ def randomization_inference(
                 f"  The p-value is computed using {n_valid} valid replications.\n"
                 f"  Consider using ri_method='permutation' for classical Fisher RI "
                 f"to avoid failures.",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=2
             )
         else:
@@ -469,7 +470,7 @@ def randomization_inference(
                 f"  Failure reasons: {dict(failure_counts)}\n"
                 f"  The p-value is computed using {n_valid} valid replications.\n"
                 f"  Recommendation: Use ri_method='permutation' or investigate data issues.",
-                UserWarning,
+                NumericalWarning,
                 stacklevel=2
             )
 

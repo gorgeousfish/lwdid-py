@@ -47,6 +47,8 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
+from ..warnings_categories import SmallSampleWarning
+
 import numpy as np
 import pandas as pd
 
@@ -433,7 +435,7 @@ def transform_staggered_detrend_pre(
 
     Warns
     -----
-    UserWarning
+    SmallSampleWarning
         If a cohort has fewer than 3 pre-treatment periods (detrending
         requires at least 2 future periods for OLS).
 
@@ -492,7 +494,7 @@ def transform_staggered_detrend_pre(
                 f"Detrending requires at least 3 pre-treatment periods to have "
                 f"valid detrended values (2 future periods for OLS). "
                 f"Only anchor point will have value 0.",
-                UserWarning
+                SmallSampleWarning
             )
 
     # =========================================================================
