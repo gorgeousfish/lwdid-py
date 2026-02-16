@@ -28,13 +28,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Run tests
+      - name: Run tests (default: excludes slow and monte_carlo)
         run: |
-          pytest tests/ -v --tb=short -x -q \
-            --ignore=tests/test_performance_benchmarks.py \
-            --ignore=tests/test_bootstrap_optimization_e2e.py \
-            -m "not slow"
+          pytest tests/ -v --tb=short -x -q
 
       - name: Run integration tests
         run: |
-          pytest tests/ -v --tb=short -m integration
+          pytest tests/ -v --tb=short -m integration -o "addopts="

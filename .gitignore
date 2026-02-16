@@ -38,7 +38,6 @@ test_lwdid_env/
 *~
 
 # Testing
-tests/
 .pytest_cache/
 .coverage
 htmlcov/
@@ -94,6 +93,29 @@ tests/BUG_FIXES_REPORT.md
 
 # Archived dev tests (not part of release)
 tests/_archived_dev_tests/
+
+# Development-phase bug-fix data files in staggered/
+tests/staggered/bug*
+tests/staggered/test_bug*
+
+# Orphaned development data files in staggered/ (not used by release tests)
+tests/staggered/cattaneo2_test.csv
+tests/staggered/hc_test_data.csv
+tests/staggered/nlsw88_full.csv
+tests/staggered/nlsw88_test.csv
+tests/staggered/simulated_test.csv
+tests/staggered/stata_cluster_results.json
+tests/staggered/stata_cluster_test_data.csv
+tests/staggered/stata_demean_validation.csv
+tests/staggered/stata_dr_diagnostics.json
+tests/staggered/stata_full_match_info.csv
+tests/staggered/stata_ipwra_results.json
+tests/staggered/stata_match_info.csv
+tests/staggered/stata_psm_se_results.json
+tests/staggered/stata_psm_test_data.csv
+tests/staggered/stata_r_hc_reference.json
+tests/staggered/stata_tebalance_cattaneo2.json
+tests/staggered/womenwk_test.csv
 
 # Hypothesis (property-based testing cache)
 .hypothesis/

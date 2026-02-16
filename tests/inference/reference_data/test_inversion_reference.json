@@ -1,0 +1,26 @@
+{
+  "att": 2.1550550838126945,
+  "ci_lower": 1.443091426213133,
+  "ci_upper": 2.7707186794011505,
+  "pvalue": 0.01002004008016032,
+  "se_bootstrap": 0.33868042173163715,
+  "t_stat_original": 7.06553513999204,
+  "n_clusters": 8,
+  "ci_method": "test_inversion",
+  "_metadata": {
+    "data_params": {
+      "N": 100,
+      "G": 8,
+      "seed": 42
+    },
+    "bootstrap_params": {
+      "n_bootstrap": 499,
+      "weight_type": "rademacher",
+      "alpha": 0.05,
+      "seed": 42,
+      "grid_points": 15,
+      "ci_tol": 0.01
+    },
+    "description": "Test Inversion CI 优化前参考结果"
+  }
+}
