@@ -124,3 +124,18 @@ paper/
 
 # Generated PDF
 README_zh.pdf
+
+# Orphaned test data (only used by archived dev tests, not active release tests)
+tests/data/psm_crosssection_small.csv
+tests/data/psm_crosssection_test.csv
+tests/data/psm_test_n100.csv
+tests/data/detrend_e2e_test.csv
+tests/data/detrend_e2e_python_result.csv
+tests/data/lw_common_timing_validation.csv
+tests/data/staggered_simulation.csv
+tests/staggered/reference_data/hc_test_data.csv
+tests/staggered/reference_data/nlsw88_full.csv
+tests/staggered/reference_data/womenwk_test.csv
+tests/staggered/reference_data/stata_demean_validation.csv
+tests/staggered/reference_data/stata_full_match_info.csv
+tests/staggered/reference_data/stata_match_info.csv
