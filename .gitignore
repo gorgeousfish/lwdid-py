@@ -121,3 +121,6 @@ tests/staggered/womenwk_test.csv
 .hypothesis/
 # Paper source
 paper/
+
+# Generated PDF
+README_zh.pdf
