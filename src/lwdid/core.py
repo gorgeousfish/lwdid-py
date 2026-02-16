@@ -2378,6 +2378,11 @@ def _lwdid_staggered(
             pre_treatment_effects_to_dataframe,
         )
         from .staggered.parallel_trends import run_parallel_trends_test
+        from .warning_registry import WarningRegistry as _WR
+
+        # 为 pre-treatment 估计创建独立的 warning registry，
+        # 因为 post-treatment 的 registry 已经 flush 过了。
+        pre_registry = _WR(verbose=warning_registry._verbose if warning_registry else 'default')
         
         # Apply pre-treatment transformation
         try:
@@ -2418,6 +2423,7 @@ def _lwdid_staggered(
                 transform_type=pre_transform_type,
                 propensity_controls=ps_controls_final,
                 trim_threshold=trim_threshold,
+                warning_registry=pre_registry,
             )
             
             # Convert to DataFrame
@@ -2551,10 +2557,13 @@ def _lwdid_staggered(
     # Attach structured diagnostic records from the warning registry.
     # Diagnostics are always complete regardless of verbosity setting,
     # enabling post-hoc inspection via results.diagnostics.
+    diag_records = []
     if warning_registry is not None:
-        results._diagnostics = warning_registry.get_diagnostics()
-    else:
-        results._diagnostics = []
+        diag_records.extend(warning_registry.get_diagnostics())
+    # 合并 pre-treatment registry 的 diagnostics（如果存在）
+    if include_pretreatment and 'pre_registry' in dir():
+        diag_records.extend(pre_registry.get_diagnostics())
+    results._diagnostics = diag_records
 
     # Randomization inference
     if ri:

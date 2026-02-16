@@ -122,6 +122,7 @@ def estimate_pre_treatment_effects(
     n_neighbors: int = 1,
     with_replacement: bool = True,
     caliper: float | None = None,
+    warning_registry: 'WarningRegistry | None' = None,
 ) -> list[PreTreatmentEffect]:
     """
     Estimate pre-treatment effects for all valid cohort-period pairs.
@@ -401,6 +402,9 @@ def estimate_pre_treatment_effects(
                         vce=vce,
                         cluster_var=cluster_var,
                         alpha=alpha,
+                        warning_registry=warning_registry,
+                        cohort_g=int(g),
+                        period_r=int(t),
                     )
                 elif estimator == 'ipwra':
                     est_result = _estimate_single_effect_ipwra(
@@ -412,6 +416,9 @@ def estimate_pre_treatment_effects(
                         trim_threshold=trim_threshold,
                         se_method=se_method,
                         alpha=alpha,
+                        warning_registry=warning_registry,
+                        cohort_g=int(g),
+                        period_r=int(t),
                     )
                 elif estimator == 'psm':
                     est_result = _estimate_single_effect_psm(
@@ -424,6 +431,9 @@ def estimate_pre_treatment_effects(
                         caliper=caliper,
                         trim_threshold=trim_threshold,
                         alpha=alpha,
+                        warning_registry=warning_registry,
+                        cohort_g=int(g),
+                        period_r=int(t),
                     )
                 else:
                     raise ValueError(f"Unknown estimator: {estimator}")
@@ -454,11 +464,22 @@ def estimate_pre_treatment_effects(
     if skipped_pairs:
         n_skipped = len(skipped_pairs)
         n_total_pairs = sum(len(get_pre_treatment_periods_for_cohort(g, T_min)) for g in cohorts)
-        warnings.warn(
+        msg = (
             f"Skipped {n_skipped}/{n_total_pairs} pre-treatment (cohort, period) pairs "
-            f"due to insufficient data or errors.",
-            DataWarning
+            f"due to insufficient data or errors."
         )
+        if warning_registry is not None:
+            warning_registry.collect(
+                DataWarning, msg,
+                context={'n_skipped': n_skipped, 'n_total_pairs': n_total_pairs},
+            )
+        else:
+            warnings.warn(msg, DataWarning)
+
+    # Flush aggregated warnings collected during the pre-treatment (g, t) loop.
+    if warning_registry is not None:
+        n_total_pairs = sum(len(get_pre_treatment_periods_for_cohort(g, T_min)) for g in cohorts)
+        warning_registry.flush(total_pairs=n_total_pairs)
 
     # Sort by cohort, then by event_time descending (anchor first)
     results.sort(key=lambda x: (x.cohort, -x.event_time))

@@ -264,14 +264,33 @@ class WarningRegistry:
         for cat, records in grouped.items():
             if cat in _CRITICAL_CATEGORIES:
                 msg = self._format_summary(cat, records, total_pairs)
-                warnings.warn(msg, cat, stacklevel=2)
+                # Use warn_explicit with fixed filename/lineno so Python's
+                # default filter can deduplicate across repeated lwdid() calls
+                # (e.g. inside bootstrap loops).
+                warnings.warn_explicit(
+                    msg, cat,
+                    filename='lwdid.warning_registry',
+                    lineno=0,
+                )
 
     def _flush_default(self, total_pairs: int | None) -> None:
         """Emit one aggregated summary per category."""
         grouped = self._aggregate_by_category()
         for cat, records in grouped.items():
             msg = self._format_summary(cat, records, total_pairs)
-            warnings.warn(msg, cat, stacklevel=2)
+            # Use warn_explicit with fixed filename/lineno so Python's
+            # default filter can deduplicate across repeated lwdid() calls
+            # (e.g. inside bootstrap loops where each iteration creates a
+            # new WarningRegistry).  The default filter suppresses warnings
+            # with the same (message, category, module, lineno) combination,
+            # but because aggregated messages contain varying statistics the
+            # message text differs each time.  Fixing filename+lineno at
+            # least prevents the *same* message from appearing twice.
+            warnings.warn_explicit(
+                msg, cat,
+                filename='lwdid.warning_registry',
+                lineno=0,
+            )
 
     def _flush_verbose(self) -> None:
         """Emit every individual warning record."""
