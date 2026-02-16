@@ -2,6 +2,15 @@
 
 This module verifies the inheritance structure, message formatting, and
 catching behavior of all exception classes defined in ``exceptions.py``.
+
+Validates the defensive programming layer of the Lee-Wooldridge
+Difference-in-Differences framework, ensuring that invalid inputs are
+rejected with informative diagnostics before estimation proceeds.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import pytest

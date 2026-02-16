@@ -1,0 +1,64 @@
+{
+  "description": "HC Standard Error Reference Values for End-to-End Validation",
+  "data_generation": {
+    "dgp": "Y = 1 + 2*D + 0.5*X1 + 0.3*X2 + sigma*epsilon",
+    "heteroskedasticity": "sigma = sqrt(1 + 0.5*|X1|)",
+    "treatment_assignment": "D = 1{Z + 0.5*X1 + 0.3*X2 > 0}",
+    "seed": 20230796,
+    "n": 200
+  },
+  "ols_coefficients": {
+    "description": "OLS point estimates [_cons, d, x1, x2]",
+    "values": [0.84177574, 2.01011307, 0.66901349, 0.20942904]
+  },
+  "stata_reference": {
+    "description": "Stata regress results with vce(robust/hc2/hc3)",
+    "stata_version": "Stata 18",
+    "commands": [
+      "regress y d x1 x2, vce(robust)  // HC1",
+      "regress y d x1 x2, vce(hc2)",
+      "regress y d x1 x2, vce(hc3)"
+    ],
+    "hc0_se": {
+      "note": "Calculated from HC1: HC0 = HC1 * sqrt((N-K)/N)",
+      "values": [0.11305510, 0.16363073, 0.10103177, 0.09166922]
+    },
+    "hc1_se": {
+      "note": "Stata vce(robust) default",
+      "values": [0.11420290, 0.16529200, 0.10205750, 0.09259990]
+    },
+    "hc2_se": {
+      "note": "Stata vce(hc2)",
+      "values": [0.11445960, 0.16544740, 0.10268420, 0.09302780]
+    },
+    "hc3_se": {
+      "note": "Stata vce(hc3)",
+      "values": [0.11589050, 0.16729280, 0.10437200, 0.09441210]
+    }
+  },
+  "python_manual_reference": {
+    "description": "Manual HC calculation using NumPy for cross-validation",
+    "hc0_se": [0.11305510037368771, 0.16363075334696006, 0.10103181034774156, 0.0916692330445468],
+    "hc1_se": [0.11420289731708627, 0.16529202186042694, 0.10205754030348753, 0.09259990901709855],
+    "hc2_se": [0.11445956067644679, 0.1654474438914636, 0.10268422482233175, 0.09302776783508536],
+    "hc3_se": [0.1158905147542697, 0.16729276870973395, 0.10437204255467353, 0.0944120780865226],
+    "hc4_se": [0.11522933798749678, 0.166042355038768, 0.10411309862048765, 0.09393351361316772]
+  },
+  "hc4_reference": {
+    "description": "HC4 (Cribari-Neto 2004) - Note: Stata does not support vce(hc4)",
+    "formula": "omega_i = e_i^2 / (1 - h_ii)^delta_i, delta_i = min(4, n*h_ii/p)",
+    "validation_source": "Manual calculation using NumPy, equivalent to R sandwich::vcovHC(type='HC4')",
+    "values": [0.11522933798749678, 0.166042355038768, 0.10411309862048765, 0.09393351361316772]
+  },
+  "tolerance": {
+    "stata_comparison": 1e-5,
+    "r_comparison": 1e-6,
+    "note": "Stata uses fewer decimal places in display, so tolerance is slightly higher"
+  },
+  "coefficient_order": ["_cons", "d", "x1", "x2"],
+  "leverage_stats": {
+    "mean": 0.02,
+    "max": 0.055197,
+    "min": 0.009642
+  }
+}

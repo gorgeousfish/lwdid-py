@@ -25,8 +25,6 @@ import pytest
 
 # Attempt to import lwdid; skip tests if unavailable
 try:
-    import sys
-    sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
     from lwdid import lwdid
     LWDID_AVAILABLE = True
 except ImportError:
@@ -441,7 +439,3 @@ class TestWalmartNumericalValidation:
         
         assert np.isclose(watt_se, expected_se, atol=1e-10), \
             f"WATT SE computation error: {watt_se} != {expected_se}"
-
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '-s'])

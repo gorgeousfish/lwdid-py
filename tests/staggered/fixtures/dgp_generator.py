@@ -1,18 +1,26 @@
 """
-Staggered DiD 数据生成过程 (DGP) 生成器
+Data Generating Process (DGP) for staggered Difference-in-Differences simulations.
 
-基于 Lee & Wooldridge (2023) 论文设定，用于Monte Carlo模拟。
+Implements the Monte Carlo DGP specification from Section 7.2 of
+Lee & Wooldridge (2023), designed for validating staggered DiD estimators.
 
-DGP参数（论文Section 7.2）:
+DGP parameters (Paper Section 7.2):
 - N = 1000 units, T = 6 periods
 - Cohort shares: g4=12%, g5=11%, g6=11%, NT=66%
-- 真实ATT: τ_{g,r} = 1.5 + 0.5*(r-g) + 0.3*(g-4)
+- True ATT: tau_{g,r} = 1.5 + 0.5*(r-g) + 0.3*(g-4)
 
-使用方法:
+Usage:
 >>> from fixtures.dgp_generator import StaggeredDGP
 >>> dgp = StaggeredDGP(n_units=1000, seed=42)
 >>> data = dgp.generate()
 >>> true_att = dgp.get_true_att(g=4, r=5)
+
+References
+----------
+Lee, S. J. & Wooldridge, J. M. (2023). "Simple Difference-in-Differences
+    Estimation in Fixed Effects Models." SSRN 5325686.
+Lee, S. J. & Wooldridge, J. M. (2025). "A Simple Transformation Approach
+    to DiD Estimation for Panel Data." SSRN 4516518.
 """
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -22,29 +30,29 @@ import pandas as pd
 
 class StaggeredDGP:
     """
-    Staggered DiD 数据生成过程。
-    
-    实现Lee & Wooldridge (2023)论文中的DGP设定，
-    用于Monte Carlo验证。
-    
+    Staggered Difference-in-Differences data generating process.
+
+    Implements the DGP specification from Lee & Wooldridge (2023, Section 7.2)
+    for Monte Carlo validation of staggered DiD estimators.
+
     Attributes
     ----------
     n_units : int
-        单位数量
+        Number of cross-sectional units.
     n_periods : int
-        时期数量
+        Number of time periods.
     cohort_shares : Dict[int, float]
-        各cohort的份额 {cohort: share}
+        Share of units in each treatment cohort {cohort: share}.
     base_att : float
-        基础处理效应
+        Baseline average treatment effect on the treated.
     exposure_coef : float
-        暴露时间系数
+        Coefficient on treatment exposure duration.
     cohort_coef : float
-        cohort系数
+        Coefficient on cohort timing.
     seed : int
-        随机种子
+        Random number generator seed.
     """
-    
+
     def __init__(
         self,
         n_units: int = 1000,
@@ -55,125 +63,122 @@ class StaggeredDGP:
         cohort_coef: float = 0.3,
         seed: Optional[int] = None,
     ):
-        """
-        初始化DGP。
-        
+        """Initialize the staggered DGP with simulation parameters.
+
         Parameters
         ----------
         n_units : int
-            单位数量
+            Number of cross-sectional units.
         n_periods : int
-            时期数量 (T)
+            Number of time periods (T).
         cohort_shares : Dict[int, float], optional
-            各cohort的份额。默认: {0: 0.66, 4: 0.12, 5: 0.11, 6: 0.11}
-            cohort=0 表示 Never Treated
+            Share of units in each cohort. Default: {0: 0.66, 4: 0.12, 5: 0.11, 6: 0.11}.
+            Cohort 0 denotes never-treated units.
         base_att : float
-            基础处理效应 τ_0
+            Baseline treatment effect tau_0.
         exposure_coef : float
-            暴露时间系数 β (r-g的系数)
+            Exposure duration coefficient beta (coefficient on r-g).
         cohort_coef : float
-            cohort系数 γ (g-4的系数)
+            Cohort timing coefficient gamma (coefficient on g-4).
         seed : int, optional
-            随机种子
+            Random number generator seed for reproducibility.
         """
         self.n_units = n_units
         self.n_periods = n_periods
-        
+
         if cohort_shares is None:
-            # 默认份额（论文设定）
+            # Default shares per paper specification (Section 7.2)
             self.cohort_shares = {0: 0.66, 4: 0.12, 5: 0.11, 6: 0.11}
         else:
             self.cohort_shares = cohort_shares
-        
+
         self.base_att = base_att
         self.exposure_coef = exposure_coef
         self.cohort_coef = cohort_coef
-        
+
         if seed is not None:
             np.random.seed(seed)
         self.seed = seed
-        
-        # 验证份额和为1
+
+        # Validate that cohort shares sum to unity
         total_share = sum(self.cohort_shares.values())
         if abs(total_share - 1.0) > 1e-10:
-            raise ValueError(f"cohort_shares必须和为1，当前: {total_share}")
-    
+            raise ValueError(f"cohort_shares must sum to 1, got: {total_share}")
+
     def get_true_att(self, g: int, r: int) -> float:
-        """
-        计算真实ATT τ_{g,r}。
-        
-        公式: τ_{g,r} = τ_0 + β*(r-g) + γ*(g-4)
-        
+        """Compute the true ATT tau_{g,r} for a given cohort-period pair.
+
+        Formula: tau_{g,r} = tau_0 + beta*(r-g) + gamma*(g-4)
+
         Parameters
         ----------
         g : int
-            Cohort (处理开始时期)
+            Treatment cohort (first treatment period).
         r : int
-            评估时期
-        
+            Evaluation period.
+
         Returns
         -------
         float
-            真实ATT
+            True average treatment effect on the treated.
         """
-        if g == 0:  # Never Treated
+        if g == 0:  # Never-treated units
             return 0.0
-        if r < g:  # Pre-treatment
+        if r < g:  # Pre-treatment periods
             return 0.0
-        
-        # τ_{g,r} = 1.5 + 0.5*(r-g) + 0.3*(g-4)
+
+        # tau_{g,r} = 1.5 + 0.5*(r-g) + 0.3*(g-4)
         return self.base_att + self.exposure_coef * (r - g) + self.cohort_coef * (g - 4)
-    
+
     def generate(self) -> pd.DataFrame:
-        """
-        生成模拟数据。
-        
+        """Generate simulated staggered DiD panel data.
+
         Returns
         -------
         pd.DataFrame
-            面板数据，包含列:
-            - id: 单位标识
-            - year: 时期 (1, 2, ..., T)
-            - y: 结果变量
-            - gvar: cohort (0=NT, 4, 5, 6)
-            - x1, x2: 协变量
-            - treated: 处理状态 (0/1)
+            Panel dataset with columns:
+            - id: unit identifier
+            - year: time period (1, 2, ..., T)
+            - y: outcome variable
+            - gvar: treatment cohort (0=never-treated, 4, 5, 6)
+            - x1, x2: covariates
+            - treated: treatment status indicator (0/1)
         """
-        # Step 1: 分配cohorts
+        # Step 1: Assign treatment cohorts
         cohorts = list(self.cohort_shares.keys())
         probs = list(self.cohort_shares.values())
         unit_cohorts = np.random.choice(cohorts, size=self.n_units, p=probs)
-        
-        # Step 2: 生成单位级协变量
+
+        # Step 2: Generate unit-level covariates
         x1 = np.random.randn(self.n_units)
         x2 = np.random.randn(self.n_units)
-        
-        # Step 3: 生成面板数据
+
+        # Step 3: Construct panel observations
         data_list = []
-        
+
         for i in range(self.n_units):
             g = unit_cohorts[i]
-            
+
             for t in range(1, self.n_periods + 1):
-                # 基础结果模型: Y = α + β_1*t + β_2*x1 + β_3*x2 + ε
+                # Baseline outcome model: Y = alpha + beta_1*t + beta_2*x1 + beta_3*x2 + epsilon
                 y_base = 1.0 + 0.5 * t + 0.3 * x1[i] + 0.2 * x2[i]
-                
-                # 个体效应 (固定效应的一种模拟)
+
+                # Individual-specific effect (simulated fixed effect)
                 individual_effect = 0.1 * i / self.n_units
-                
-                # 添加随机误差
+
+                # Idiosyncratic error term
                 epsilon = np.random.randn()
-                
-                # 处理效应
+
+                # Treatment effect
                 if g > 0 and t >= g:
                     tau = self.get_true_att(g, t)
                     treated = 1
                 else:
                     tau = 0.0
                     treated = 0
-                
+
                 y = y_base + individual_effect + tau + epsilon
-                
+
                 data_list.append({
                     'id': i + 1,
                     'year': t,
@@ -182,7 +187,7 @@ class StaggeredDGP:
                     'x1': x1[i],
                     'x2': x2[i],
                     'treated': treated,
-                    # 便于与Stata对照的指示变量
+                    # Cohort and period indicator variables for Stata cross-validation
                     'g0': 1 if g == 0 else 0,
                     'g4': 1 if g == 4 else 0,
                     'g5': 1 if g == 5 else 0,
@@ -191,17 +196,16 @@ class StaggeredDGP:
                     'f05': 1 if t == 5 else 0,
                     'f06': 1 if t == 6 else 0,
                 })
-        
+
         return pd.DataFrame(data_list)
-    
+
     def get_all_true_atts(self) -> Dict[Tuple[int, int], float]:
-        """
-        返回所有有效(g,r)组合的真实ATT。
-        
+        """Return true ATT values for all valid (g, r) cohort-period pairs.
+
         Returns
         -------
         Dict[Tuple[int, int], float]
-            {(g, r): true_att}
+            Mapping of {(g, r): true_att} for all post-treatment periods.
         """
         true_atts = {}
         for g in [c for c in self.cohort_shares.keys() if c > 0]:
@@ -215,38 +219,23 @@ def generate_staggered_data(
     n_periods: int = 6,
     seed: Optional[int] = None,
 ) -> Tuple[pd.DataFrame, Dict[Tuple[int, int], float]]:
-    """
-    便捷函数：生成staggered数据和真实ATT。
-    
+    """Convenience function to generate staggered DiD data with true ATT values.
+
     Parameters
     ----------
     n_units : int
-        单位数量
+        Number of cross-sectional units.
     n_periods : int
-        时期数量
+        Number of time periods.
     seed : int, optional
-        随机种子
-    
+        Random number generator seed for reproducibility.
+
     Returns
     -------
     Tuple[pd.DataFrame, Dict]
-        (数据, {(g,r): true_att})
+        (panel_data, {(g, r): true_att}) tuple.
     """
     dgp = StaggeredDGP(n_units=n_units, n_periods=n_periods, seed=seed)
     data = dgp.generate()
     true_atts = dgp.get_all_true_atts()
     return data, true_atts
-
-
-if __name__ == '__main__':
-    # 测试DGP
-    dgp = StaggeredDGP(n_units=100, seed=42)
-    data = dgp.generate()
-    
-    print("数据形状:", data.shape)
-    print("\nCohort分布:")
-    print(data.groupby('gvar')['id'].nunique())
-    
-    print("\n真实ATT:")
-    for (g, r), att in dgp.get_all_true_atts().items():
-        print(f"  τ_({g},{r}) = {att:.4f}")

@@ -1,12 +1,19 @@
 """
-Unit tests for event-time aggregation (WATT) functionality.
+Unit tests for event-time aggregation (Weighted Average Treatment on the Treated).
 
-Tests cover:
-- Weight normalization (Task 5.2)
-- WATT formula correctness (Task 5.3)
-- SE formula correctness (Task 5.4)
-- t-distribution inference (Task 5.5)
-- Edge cases (Task 5.6)
+Validates weight normalization, the WATT formula, standard error computation,
+t-distribution inference, and edge cases for the event-time aggregation
+procedure.
+
+Validates Section 7 (event-time aggregation) of the Lee-Wooldridge
+Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
 """
 
 import math

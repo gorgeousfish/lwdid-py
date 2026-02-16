@@ -1,8 +1,10 @@
 """
-Story 1.1: Lee-Wooldridge (2023) Paper Table 7.2-7.5 Validation Tests
+Monte Carlo validation tests against Lee-Wooldridge (2025) Tables 7.2--7.5.
 
 This module validates the Python implementation against the simulation results
-reported in Lee & Wooldridge (2023) Tables 7.2-7.5 for the common timing case.
+reported in Lee & Wooldridge (2025) Tables 7.2--7.5 for the common timing case,
+covering all four model specification scenarios (correct/misspecified outcome
+model and propensity score).
 
 Table References
 ----------------
@@ -28,7 +30,10 @@ Following Section 7.1:
 
 References
 ----------
-Lee & Wooldridge (2023), Section 7, Tables 7.2-7.5
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
 """
 
 import numpy as np
@@ -39,6 +44,7 @@ from typing import Dict, List, Tuple
 from dataclasses import dataclass
 
 from lwdid import lwdid
+from lwdid.exceptions import LWDIDError
 
 
 # =============================================================================
@@ -321,12 +327,6 @@ class TestScenario1C_BothCorrect:
         # True ATT (average across post-treatment periods)
         true_att = np.mean(list(true_effects.values()))
         
-        print(f"\nScenario 1C Results (true ATT ≈ {true_att:.4f}):")
-        for est, att in results.items():
-            bias = att - true_att
-            rel_bias = abs(bias) / true_att
-            print(f"  {est}: ATT={att:.4f}, Bias={bias:.4f}, RelBias={rel_bias:.2%}")
-        
         # All should have relatively small bias (< 20% for single simulation)
         for est, att in results.items():
             rel_bias = abs(att - true_att) / true_att
@@ -355,15 +355,11 @@ class TestScenario1C_BothCorrect:
                         rolling='demean', estimator=est, controls=['x1', 'x2'],
                     )
                     atts[est.upper()].append(result.att)
-                except Exception as e:
+                except (LWDIDError, ValueError, RuntimeError) as e:
                     warnings.warn(f"Rep {rep}, {est} failed: {e}")
         
         # Compute SDs
         sds = {est: np.std(vals, ddof=1) for est, vals in atts.items() if len(vals) > 5}
-        
-        print(f"\nScenario 1C Efficiency (N=500, {n_reps} reps):")
-        for est, sd in sds.items():
-            print(f"  {est} SD: {sd:.4f}")
         
         # Qualitative ordering: RA < PSM, IPWRA < PSM
         if 'RA' in sds and 'PSM' in sds:
@@ -409,20 +405,15 @@ class TestScenario3C_OutcomeMisspecified:
                         rolling='demean', estimator=est, controls=['x1', 'x2'],
                     )
                     biases[est.upper()].append(result.att - true_att)
-                except Exception:
+                except (LWDIDError, ValueError, RuntimeError):
                     pass
         
         mean_biases = {est: np.mean(vals) for est, vals in biases.items() if vals}
-        
-        print(f"\nScenario 3C Doubly Robust Test (N=1000):")
-        for est, bias in mean_biases.items():
-            print(f"  {est} Mean Bias: {bias:.4f}")
         
         # IPWRA should have smaller absolute bias than RA
         if 'RA' in mean_biases and 'IPWRA' in mean_biases:
             ra_bias = abs(mean_biases['RA'])
             ipwra_bias = abs(mean_biases['IPWRA'])
-            print(f"  |RA Bias|: {ra_bias:.4f}, |IPWRA Bias|: {ipwra_bias:.4f}")
             
             # Allow some margin for small sample Monte Carlo
             # Paper shows RA bias ~0.154, IPWRA bias ~-0.002
@@ -467,19 +458,17 @@ class TestScenario4C_BothMisspecified:
                         rolling='demean', estimator=est, controls=['x1', 'x2'],
                     )
                     results[est.upper()].append(result.att)
-                except Exception:
+                except (LWDIDError, ValueError, RuntimeError):
                     pass
         
         mean_true = np.mean(true_atts)
         
-        print(f"\nScenario 4C Results (N=1000, true ATT ≈ {mean_true:.4f}):")
         for est, atts in results.items():
             if atts:
                 mean_att = np.mean(atts)
                 bias = mean_att - mean_true
                 sd = np.std(atts, ddof=1)
                 rmse = np.sqrt(bias**2 + sd**2)
-                print(f"  {est}: Mean ATT={mean_att:.4f}, Bias={bias:.4f}, SD={sd:.4f}, RMSE={rmse:.4f}")
 
 
 @pytest.mark.monte_carlo
@@ -496,10 +485,6 @@ class TestPaperComparison:
         2. Scenario 3C: IPWRA unbiased (doubly robust)
         3. Scenario 4C: IPWRA less biased and lower RMSE than RA
         """
-        print("\n" + "="*60)
-        print("Paper Table 7.2-7.5 Pattern Validation")
-        print("="*60)
-        
         scenarios = ['1C', '3C', '4C']
         n_reps = 5  # Small for speed
         
@@ -519,15 +504,8 @@ class TestPaperComparison:
                             rolling='demean', estimator=est, controls=['x1', 'x2'],
                         )
                         biases[est.upper()].append(result.att - true_att)
-                    except Exception:
+                    except (LWDIDError, ValueError, RuntimeError):
                         pass
-            
-            print(f"\nScenario {scenario}:")
-            for est, bias_list in biases.items():
-                if bias_list:
-                    mean_bias = np.mean(bias_list)
-                    abs_bias = abs(mean_bias)
-                    print(f"  {est}: Mean Bias = {mean_bias:+.4f} (|bias| = {abs_bias:.4f})")
             
             # Verify key patterns
             if scenario == '1C':
@@ -543,8 +521,4 @@ class TestPaperComparison:
                     ra_bias = abs(np.mean(biases['RA']))
                     ipwra_bias = abs(np.mean(biases['IPWRA']))
                     # Paper shows IPWRA much less biased, allow some margin
-                    print(f"  → IPWRA bias ({ipwra_bias:.4f}) vs RA bias ({ra_bias:.4f})")
 
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v", "-s"])

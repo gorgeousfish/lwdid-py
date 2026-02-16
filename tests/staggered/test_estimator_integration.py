@@ -1,7 +1,16 @@
 """
-Tests for E3-S3: IPWRA/PSM Estimator Integration into Staggered Main Flow
+Integration tests for IPWRA/PSM estimator routing in the staggered main flow.
 
-Tests that the estimator parameter correctly routes to different estimation methods.
+Verifies that the ``estimator`` parameter correctly dispatches to RA, IPWRA,
+and PSM estimation methods within the unified ``lwdid()`` staggered pipeline.
+
+Validates the estimator dispatch mechanism described in Section 7 of the
+Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import os
@@ -11,6 +20,7 @@ import pandas as pd
 import warnings
 
 from lwdid import lwdid
+from lwdid.exceptions import LWDIDError
 
 
 class TestEstimatorParameterValidation:
@@ -215,19 +225,11 @@ class TestEstimatorIntegration:
                         aggregate='overall',
                     )
                     results[est] = result.att_overall
-                except Exception as e:
+                except (LWDIDError, ValueError, RuntimeError) as e:
                     results[est] = f"Error: {e}"
         
         # RA should definitely work
         assert isinstance(results['ra'], (int, float)) and not np.isnan(results['ra'])
-        
-        # Print comparison
-        print(f"\nEstimator comparison:")
-        for est, val in results.items():
-            if isinstance(val, (int, float)):
-                print(f"  {est}: {val:.4f}")
-            else:
-                print(f"  {est}: {val}")
 
 
 class TestCastleLawIntegration:
@@ -269,8 +271,6 @@ class TestCastleLawIntegration:
         assert result.att_overall is not None
         assert abs(result.att_overall - 0.092) < 0.05, \
             f"RA estimate too far from expected: {result.att_overall}"
-        
-        print(f"\nCastle RA: ATT = {result.att_overall:.4f}, SE = {result.se_overall:.4f}")
     
     def test_castle_ipwra_with_controls(self, castle_data):
         """Castle Law IPWRA estimation with controls"""
@@ -302,7 +302,6 @@ class TestCastleLawIntegration:
         # Should produce a result
         assert result is not None
         if result.att_overall is not None and not np.isnan(result.att_overall):
-            print(f"\nCastle IPWRA: ATT = {result.att_overall:.4f}")
             assert abs(result.att_overall) < 0.5  # Reasonable range
     
     def test_castle_psm_with_controls(self, castle_data):
@@ -331,7 +330,7 @@ class TestCastleLawIntegration:
         # PSM may have limited success with small cohorts
         assert result is not None
         if result.att_overall is not None and not np.isnan(result.att_overall):
-            print(f"\nCastle PSM: ATT = {result.att_overall:.4f}")
+            pass
     
     def test_castle_estimator_comparison(self, castle_data):
         """Compare all three estimators on Castle Law data"""
@@ -371,7 +370,7 @@ class TestCastleLawIntegration:
                     aggregate='overall',
                 )
                 results['ipwra'] = (r_ipwra.att_overall, r_ipwra.se_overall)
-            except Exception as e:
+            except (LWDIDError, ValueError, RuntimeError) as e:
                 results['ipwra'] = (np.nan, np.nan)
         
         # PSM
@@ -391,19 +390,8 @@ class TestCastleLawIntegration:
                     aggregate='overall',
                 )
                 results['psm'] = (r_psm.att_overall, r_psm.se_overall)
-            except Exception as e:
+            except (LWDIDError, ValueError, RuntimeError) as e:
                 results['psm'] = (np.nan, np.nan)
-        
-        print(f"\n=== Castle Law Estimator Comparison ===")
-        for est, (att, se) in results.items():
-            if not np.isnan(att):
-                print(f"  {est.upper():6s}: ATT = {att:7.4f}, SE = {se:.4f}")
-            else:
-                print(f"  {est.upper():6s}: Failed")
         
         # RA should work
         assert not np.isnan(results['ra'][0])
-
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '-s'])

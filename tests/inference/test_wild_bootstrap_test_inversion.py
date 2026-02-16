@@ -12,6 +12,18 @@ Test coverage:
   - Weight type coverage (rademacher, mammen, webb)
   - Edge cases (small N/G, SE=0)
   - Performance benchmark (N=500, B=999, grid_points=25 < 15s)
+
+Validates the test inversion confidence interval procedure for Wild Cluster
+Bootstrap inference in the Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
+Cameron, A. C. & Miller, D. L. (2015). A Practitioner's Guide to
+    Cluster-Robust Inference. Journal of Human Resources, 50(2), 317--372.
 """
 
 import json

@@ -2,15 +2,17 @@
 End-to-end integration tests with Stata-aligned benchmarks.
 
 Validates the full ``lwdid()`` pipeline against reference values from
-Lee & Wooldridge (2023) Table 3 using the California Proposition 99
+Lee & Wooldridge (2025) Table 3 using the California Proposition 99
 smoking dataset and hand-constructed MVE (Minimum Verifiable Example) data.
 
 Test IDs follow the PRD test matrix (T001--T020, B001--B020).
 
 References
 ----------
-Lee, S. J. & Wooldridge, J. M. (2023). Table 3 — Smoking data benchmarks.
-Lee, S. J. & Wooldridge, J. M. (2025). Procedure 2.1 and 3.1.
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
 
 Stata command:
     lwdid lcigsale d, ivar(state) tvar(year) post(post) rolling(demean)

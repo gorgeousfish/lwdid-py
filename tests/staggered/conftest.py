@@ -33,8 +33,8 @@ _DATA_DIR = _PACKAGE_ROOT / "data"
 
 
 def get_test_data_path(filename: str) -> str:
-    """Return the absolute path to a file inside ``tests/staggered/``."""
-    return str(_STAGGERED_DIR / filename)
+    """Return the absolute path to a file inside ``tests/staggered/reference_data/``."""
+    return str(_STAGGERED_DIR / "reference_data" / filename)
 
 
 # ---------------------------------------------------------------------------

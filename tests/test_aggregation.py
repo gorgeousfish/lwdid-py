@@ -1,8 +1,18 @@
 """
-Tests for staggered effect aggregation module.
+Tests for the staggered effect aggregation module.
 
-Tests cohort-specific (τ_g) and overall (τ_ω) effect aggregation
-based on Lee & Wooldridge (2025) Section 7.
+Tests cohort-specific (τ_g) and overall (τ_ω) effect aggregation,
+including variance-weighted combination of (g,r)-specific estimates.
+
+Validates Section 7 (aggregation procedures) of the Lee-Wooldridge
+Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
 """
 
 import os
@@ -453,6 +463,7 @@ class TestEdgeCases:
 # Stata Comparison Tests
 # =============================================================================
 
+@pytest.mark.stata_alignment
 class TestStataComparison:
     """Tests comparing to hand-calculated Stata-equivalent results."""
     
@@ -521,6 +532,8 @@ class TestStataComparison:
 # Castle Law End-to-End Tests
 # =============================================================================
 
+@pytest.mark.integration
+@pytest.mark.paper_validation
 class TestCastleLaw:
     """End-to-end tests with Castle Law data."""
     
@@ -604,13 +617,6 @@ class TestCastleLaw:
             vce='hc3'
         )
         
-        print(f"\nCastle Law Overall Effect:")
-        print(f"  τ̂_ω = {result.att:.6f} (paper: ~0.092)")
-        print(f"  SE (HC3) = {result.se:.6f}")
-        print(f"  t-stat = {result.t_stat:.4f} (paper HC3: ~1.50)")
-        print(f"  p-value = {result.pvalue:.4f}")
-        print(f"  N_treat = {result.n_treated}, N_control = {result.n_control}")
-        
         # Verify against paper
         ATT_EXPECTED = 0.092
         ATT_TOLERANCE = 0.02
@@ -664,10 +670,8 @@ class TestCastleLaw:
         
         assert len(cohort_effects) == 5
         
-        print("\nCastle Law Cohort Effects:")
         for effect in cohort_effects:
             g = effect.cohort
-            print(f"  Cohort {g}: τ_g = {effect.att:.4f}, SE = {effect.se:.4f}")
             
             assert not np.isnan(effect.att)
             assert effect.se > 0
@@ -703,10 +707,6 @@ class TestCastleLaw:
             weight = overall_effect.cohort_weights[effect.cohort]
             weighted_sum += weight * effect.att
         
-        print(f"\nWeighted Average Consistency:")
-        print(f"  Manual weighted average: {weighted_sum:.6f}")
-        print(f"  Regression overall: {overall_effect.att:.6f}")
-        
         assert np.isclose(overall_effect.att, weighted_sum, atol=1e-6)
     
     def test_castle_cohort_weights(self, castle_data):
@@ -728,10 +728,8 @@ class TestCastleLaw:
             2009: 1/N_treat,
         }
         
-        print("\nCohort Weights:")
         for g, expected_w in expected_weights.items():
             actual_w = result.cohort_weights.get(g, 0)
-            print(f"  Cohort {g}: actual={actual_w:.4f}, expected={expected_w:.4f}")
             assert np.isclose(actual_w, expected_w, atol=0.001)
         
         # Weights sum to 1
@@ -808,11 +806,3 @@ class TestUtilityFunctions:
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 0
         assert 'cohort' in df.columns
-
-
-# =============================================================================
-# Run Tests
-# =============================================================================
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])

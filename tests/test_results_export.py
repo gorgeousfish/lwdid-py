@@ -1,10 +1,16 @@
-"""Results Export Tests
+"""Tests for exporting estimation results to various formats.
 
-Tests for exporting estimation results to various formats:
-- Excel (.xlsx) export
-- CSV (.csv) export
-- LaTeX (.tex) export
-- Error handling for missing data
+This module verifies the serialization of ``LWDIDResults`` objects to
+Excel (.xlsx), CSV (.csv), and LaTeX (.tex) formats, including correct
+handling of missing data and staggered-adoption metadata.
+
+Validates the results reporting layer of the Lee-Wooldridge
+Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import os

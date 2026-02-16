@@ -1,9 +1,16 @@
 """
-Integration tests for event-time aggregation (WATT).
+Integration tests for event-time aggregation (Weighted Average Treatment on the Treated).
 
-Tests cover:
-- Task 7.2: Pipeline integration tests
-- Task 7.3: Empirical data tests
+Validates the end-to-end WATT pipeline integration and empirical data
+consistency for the event-time aggregation procedure.
+
+Validates Section 7 (event-time aggregation pipeline) of the Lee-Wooldridge
+Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import numpy as np

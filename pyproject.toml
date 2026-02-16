@@ -63,13 +63,4 @@ skip_covered = false
 [tool.coverage.html]
 directory = "htmlcov"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-markers = [
-    "slow: marks tests that take > 10 seconds",
-    "integration: end-to-end integration tests exercising the full lwdid() pipeline",
-    "stata_alignment: tests validated against Stata teffects output",
-    "paper_validation: tests replicating published numerical results",
-    "monte_carlo: Monte Carlo simulation tests (typically > 30 seconds)",
-]
-addopts = "-m 'not slow and not monte_carlo'"
+

@@ -2,17 +2,24 @@
 Integration tests for pre-treatment period dynamics functionality.
 
 This module contains end-to-end integration tests that verify the complete
-pre-treatment workflow including:
-- Data transformation
-- Effect estimation
-- Parallel trends testing
-- Backward compatibility with existing functionality
+pre-treatment workflow including data transformation, effect estimation,
+parallel trends testing, and backward compatibility with existing
+functionality.
+
+Validates the pre-treatment diagnostic procedures (Appendix D) of the
+Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import numpy as np
 import pandas as pd
 import pytest
 
+from lwdid.exceptions import LWDIDError
 from lwdid.staggered import (
     # Post-treatment (existing)
     transform_staggered_demean,
@@ -415,11 +422,7 @@ class TestAllEstimators:
             # Should produce some results
             assert len(pre_effects) > 0
             
-        except Exception as e:
+        except (LWDIDError, ValueError, RuntimeError) as e:
             # Some estimators may fail with small samples
             # This is acceptable as long as it's a meaningful error
             assert "insufficient" in str(e).lower() or "error" in str(e).lower()
-
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])

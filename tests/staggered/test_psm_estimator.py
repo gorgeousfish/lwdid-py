@@ -1,11 +1,18 @@
 """
-PSM (Propensity Score Matching) Estimator Tests
+PSM (Propensity Score Matching) estimator tests.
 
-测试倾向得分匹配估计量的实现，对应Story E3-S2。
+Validates the propensity score matching estimator implementation for
+staggered Difference-in-Differences designs.
 
-Reference:
-    Story E3-S2: PSM估计量实现
-    docs/stories/story-E3-S2-psm-estimator.md
+Validates Section 7.1 (PSM estimator specification) of the Lee-Wooldridge
+Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
 """
 
 import pytest
@@ -30,23 +37,23 @@ from lwdid.staggered.estimators import (
 @pytest.fixture
 def simple_psm_data():
     """
-    简单的PSM测试数据
+    Simple PSM test data.
     
     DGP: Y = 1 + 0.5*x1 + 0.3*x2 + 2.0*D + ε
-    真实ATT = 2.0
+    True ATT = 2.0
     """
     np.random.seed(42)
     n = 200
     
-    # 生成协变量
+    # Generate covariates
     x1 = np.random.normal(0, 1, n)
     x2 = np.random.normal(0, 1, n)
     
-    # 生成处理指示符（依赖协变量）
+    # Generate treatment indicator (depends on covariates)
     ps_true = 1 / (1 + np.exp(-0.5 * x1 - 0.3 * x2))
     D = (np.random.uniform(0, 1, n) < ps_true).astype(int)
     
-    # 生成结果变量
+    # Generate outcome variable
     Y = 1 + 0.5 * x1 + 0.3 * x2 + 2.0 * D + np.random.normal(0, 0.5, n)
     
     return pd.DataFrame({
@@ -59,7 +66,7 @@ def simple_psm_data():
 
 @pytest.fixture
 def large_psm_data():
-    """较大的PSM测试数据，用于Bootstrap测试"""
+    """Larger PSM test data for bootstrap testing."""
     np.random.seed(123)
     n = 500
     
@@ -81,14 +88,14 @@ def large_psm_data():
 
 @pytest.fixture
 def imbalanced_data():
-    """处理组和控制组大小不平衡的数据"""
+    """Data with imbalanced treatment and control group sizes."""
     np.random.seed(456)
     n = 100
     
     x1 = np.random.normal(0, 1, n)
     x2 = np.random.normal(0, 1, n)
     
-    # 高倾向得分，导致大多数是处理组
+    # High propensity score, resulting in mostly treated units
     ps_true = 1 / (1 + np.exp(-1.5 - 0.5 * x1))
     D = (np.random.uniform(0, 1, n) < ps_true).astype(int)
     
@@ -107,10 +114,10 @@ def imbalanced_data():
 # ============================================================================
 
 class TestEstimatePSMBasic:
-    """estimate_psm() 基本功能测试"""
+    """Basic functionality tests for estimate_psm()."""
     
     def test_basic_functionality(self, simple_psm_data):
-        """测试基本功能"""
+        """Test basic functionality."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -124,11 +131,11 @@ class TestEstimatePSMBasic:
         assert result.n_control > 0
         assert result.att is not None
         assert result.se > 0
-        # ATT应该接近真实值2.0（容忍较大误差因为样本小）
+        # ATT should be close to the true value 2.0 (larger tolerance for small sample)
         assert abs(result.att - 2.0) < 1.0
     
     def test_returns_psm_result(self, simple_psm_data):
-        """测试返回PSMResult对象"""
+        """Test that PSMResult object is returned."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -136,7 +143,7 @@ class TestEstimatePSMBasic:
             propensity_controls=['x1', 'x2'],
         )
         
-        # 检查所有必要属性
+        # Verify all required attributes
         assert hasattr(result, 'att')
         assert hasattr(result, 'se')
         assert hasattr(result, 'ci_lower')
@@ -152,7 +159,7 @@ class TestEstimatePSMBasic:
         assert hasattr(result, 'n_dropped')
     
     def test_confidence_interval_contains_att(self, simple_psm_data):
-        """测试置信区间包含ATT"""
+        """Test that confidence interval contains ATT."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -160,9 +167,9 @@ class TestEstimatePSMBasic:
             propensity_controls=['x1', 'x2'],
         )
         
-        # CI应该包含ATT
+        # CI should contain ATT
         assert result.ci_lower < result.att < result.ci_upper
-        # CI宽度应该是正的
+        # CI width should be positive
         assert result.ci_upper - result.ci_lower > 0
 
 
@@ -171,10 +178,10 @@ class TestEstimatePSMBasic:
 # ============================================================================
 
 class TestKNNMatching:
-    """k-NN匹配测试"""
+    """Tests for k-NN matching."""
     
     def test_k_neighbors_1(self, simple_psm_data):
-        """测试1-NN匹配"""
+        """Test 1-NN matching."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -183,12 +190,12 @@ class TestKNNMatching:
             n_neighbors=1,
         )
         
-        # 每个处理单位最多匹配1个控制单位
+        # Each treated unit should match at most 1 control unit
         for count in result.match_counts:
             assert count <= 1
     
     def test_k_neighbors_3(self, simple_psm_data):
-        """测试3-NN匹配"""
+        """Test 3-NN matching."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -197,14 +204,14 @@ class TestKNNMatching:
             n_neighbors=3,
         )
         
-        # 每个处理单位最多匹配3个控制单位
+        # Each treated unit should match at most 3 control units
         for count in result.match_counts:
             assert count <= 3
         
         assert result.att is not None
     
     def test_k_neighbors_effect_on_variance(self, large_psm_data):
-        """测试k增大对方差的影响"""
+        """Test the effect of increasing k on variance."""
         result_1nn = estimate_psm(
             data=large_psm_data,
             y='Y',
@@ -223,7 +230,7 @@ class TestKNNMatching:
             se_method='abadie_imbens',
         )
         
-        # 两种方法都应该成功
+        # Both methods should succeed
         assert result_1nn.att is not None
         assert result_5nn.att is not None
 
@@ -233,10 +240,10 @@ class TestKNNMatching:
 # ============================================================================
 
 class TestReplacementOptions:
-    """有放回/无放回匹配测试"""
+    """Tests for with/without replacement matching."""
     
     def test_with_replacement_default(self, simple_psm_data):
-        """测试默认有放回匹配"""
+        """Test default with-replacement matching."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -248,7 +255,7 @@ class TestReplacementOptions:
         assert result.att is not None
     
     def test_without_replacement(self, simple_psm_data):
-        """测试无放回匹配"""
+        """Test without-replacement matching."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -257,12 +264,12 @@ class TestReplacementOptions:
             with_replacement=False,
         )
         
-        # 无放回时，n_matched应该<=n_treated
+        # Without replacement, n_matched should be <= n_treated
         assert result.n_matched <= result.n_treated
         assert result.att is not None
     
     def test_without_replacement_constraint(self, simple_psm_data):
-        """测试无放回匹配的约束"""
+        """Test without-replacement matching constraint."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -272,7 +279,7 @@ class TestReplacementOptions:
             n_neighbors=1,
         )
         
-        # 匹配的控制单位数应该<=控制组大小
+        # Number of matched controls should be <= control group size
         assert result.n_matched <= result.n_control
 
 
@@ -281,10 +288,10 @@ class TestReplacementOptions:
 # ============================================================================
 
 class TestCaliper:
-    """Caliper匹配阈值测试"""
+    """Tests for caliper matching threshold."""
     
     def test_no_caliper(self, simple_psm_data):
-        """测试无caliper"""
+        """Test without caliper."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -294,10 +301,10 @@ class TestCaliper:
         )
         
         assert result.caliper is None
-        assert result.n_dropped == 0  # 无caliper时不应有dropped
+        assert result.n_dropped == 0  # No units should be dropped without caliper
     
     def test_caliper_sd_scale(self, simple_psm_data):
-        """测试以标准差为单位的caliper"""
+        """Test caliper in standard deviation units."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -311,7 +318,7 @@ class TestCaliper:
         assert result.att is not None
     
     def test_caliper_absolute_scale(self, simple_psm_data):
-        """测试绝对值caliper"""
+        """Test absolute value caliper."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -325,7 +332,7 @@ class TestCaliper:
         assert result.att is not None
     
     def test_strict_caliper_drops_units(self, simple_psm_data):
-        """测试严格caliper导致单位被丢弃"""
+        """Test that a strict caliper causes units to be dropped."""
         result_loose = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -344,7 +351,7 @@ class TestCaliper:
             caliper_scale='sd',
         )
         
-        # 严格caliper应该导致更多dropped
+        # Strict caliper should result in more dropped units
         assert result_strict.n_dropped >= result_loose.n_dropped
 
 
@@ -353,10 +360,10 @@ class TestCaliper:
 # ============================================================================
 
 class TestSEMethods:
-    """标准误计算方法测试"""
+    """Tests for standard error computation methods."""
     
     def test_abadie_imbens_se(self, simple_psm_data):
-        """测试Abadie-Imbens标准误"""
+        """Test Abadie-Imbens standard errors."""
         result = estimate_psm(
             data=simple_psm_data,
             y='Y',
@@ -369,14 +376,14 @@ class TestSEMethods:
         assert not np.isnan(result.se)
     
     def test_bootstrap_se(self, large_psm_data):
-        """测试Bootstrap标准误"""
+        """Test bootstrap standard errors."""
         result = estimate_psm(
             data=large_psm_data,
             y='Y',
             d='D',
             propensity_controls=['x1', 'x2'],
             se_method='bootstrap',
-            n_bootstrap=50,  # 减少bootstrap次数以加速测试
+            n_bootstrap=50,  # Reduced for faster testing
             seed=42,
         )
         
@@ -384,7 +391,7 @@ class TestSEMethods:
         assert not np.isnan(result.se)
     
     def test_se_methods_comparable(self, large_psm_data):
-        """测试两种SE方法结果可比"""
+        """Test that the two SE methods produce comparable results."""
         result_ai = estimate_psm(
             data=large_psm_data,
             y='Y',
@@ -403,7 +410,7 @@ class TestSEMethods:
             seed=42,
         )
         
-        # 两种方法的SE应该在同一数量级
+        # The two methods' SEs should be of the same order of magnitude
         ratio = result_ai.se / result_boot.se
         assert 0.3 < ratio < 3.0, f"SE ratio out of range: {ratio}"
     
@@ -517,10 +524,10 @@ class TestInputValidation:
 # ============================================================================
 
 class TestEdgeCases:
-    """边界情况测试"""
+    """Edge case tests."""
     
     def test_small_sample_warning(self):
-        """测试小样本警告"""
+        """Test small sample warning."""
         np.random.seed(789)
         data = pd.DataFrame({
             'Y': np.random.normal(0, 1, 20),
@@ -537,8 +544,8 @@ class TestEdgeCases:
                 propensity_controls=['x1'],
             )
             
-            # 应该有小样本警告
-            assert result.att is not None  # 但仍应返回结果
+            # Should have small sample warning
+            assert result.att is not None  # But should still return a result
     
     def test_caliper_too_strict(self):
         """Test overly strict caliper raises error."""
@@ -563,9 +570,9 @@ class TestEdgeCases:
             )
     
     def test_handles_missing_values(self, simple_psm_data):
-        """测试处理缺失值"""
+        """Test handling of missing values."""
         data = simple_psm_data.copy()
-        # 添加一些缺失值
+        # Add some missing values
         data.loc[0, 'Y'] = np.nan
         data.loc[1, 'x1'] = np.nan
         
@@ -576,7 +583,7 @@ class TestEdgeCases:
             propensity_controls=['x1', 'x2'],
         )
         
-        # 应该成功处理
+        # Should handle successfully
         assert result.att is not None
 
 
@@ -585,17 +592,17 @@ class TestEdgeCases:
 # ============================================================================
 
 class TestHelperFunctions:
-    """辅助函数测试"""
+    """Helper function tests."""
     
     def test_validate_psm_inputs_valid(self, simple_psm_data):
-        """测试有效输入"""
-        # 不应抛出异常
+        """Test valid inputs."""
+        # Should not raise an exception
         _validate_psm_inputs(
             simple_psm_data, 'Y', 'D', ['x1', 'x2'], 1
         )
     
     def test_nearest_neighbor_match_basic(self):
-        """测试最近邻匹配基本功能"""
+        """Test basic nearest neighbor matching."""
         pscores_treat = np.array([0.3, 0.5, 0.7])
         pscores_control = np.array([0.25, 0.55, 0.8])
         
@@ -608,11 +615,11 @@ class TestHelperFunctions:
         
         assert len(matched) == 3
         assert dropped == 0
-        # 第一个处理单位(0.3)应该匹配到第一个控制单位(0.25)
+        # First treated unit (0.3) should match the first control unit (0.25)
         assert 0 in matched[0]
     
     def test_nearest_neighbor_match_caliper(self):
-        """测试带caliper的匹配"""
+        """Test matching with caliper."""
         pscores_treat = np.array([0.3, 0.5, 0.9])
         pscores_control = np.array([0.25, 0.55])
         
@@ -624,16 +631,16 @@ class TestHelperFunctions:
         )
         
         assert len(matched) == 3
-        # 最后一个处理单位(0.9)应该被dropped，因为离所有控制单位太远
+        # Last treated unit (0.9) should be dropped because it's too far from all controls
         assert dropped >= 1
     
     def test_compute_psm_se_abadie_imbens(self):
-        """测试Abadie-Imbens SE计算"""
-        # 设计不同的个体效应以确保方差>0
+        """Test Abadie-Imbens SE computation."""
+        # Design different individual effects to ensure variance > 0
         Y_treat = np.array([1.0, 2.5, 3.0, 5.0])
         Y_control = np.array([0.5, 1.5, 2.5, 3.5])
         matched_ids = [[0], [1], [2], [3]]
-        # 个体效应: 0.5, 1.0, 0.5, 1.5 -> 不同，方差>0
+        # Individual effects: 0.5, 1.0, 0.5, 1.5 -> different, variance > 0
         
         se, ci_lower, ci_upper = _compute_psm_se_abadie_imbens(
             Y_treat, Y_control, matched_ids, att=0.875, alpha=0.05
@@ -648,10 +655,10 @@ class TestHelperFunctions:
 # ============================================================================
 
 class TestReproducibility:
-    """可复现性测试"""
+    """Reproducibility tests."""
     
     def test_bootstrap_reproducible_with_seed(self, large_psm_data):
-        """测试带种子的Bootstrap可复现"""
+        """Test that bootstrap is reproducible with the same seed."""
         result1 = estimate_psm(
             data=large_psm_data,
             y='Y',
@@ -672,7 +679,7 @@ class TestReproducibility:
             seed=12345,
         )
         
-        # ATT应该完全相同（确定性匹配）
+        # ATT should be exactly the same (deterministic matching)
         assert result1.att == result2.att
-        # SE应该相同（相同种子的Bootstrap）
+        # SE should be the same (same seed for bootstrap)
         assert result1.se == result2.se

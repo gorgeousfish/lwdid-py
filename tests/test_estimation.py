@@ -4,10 +4,15 @@ Unit tests for the estimation module.
 Tests OLS regression, variance estimation (HC3, cluster), period-by-period
 effects, and covariate centering logic in ``lwdid.estimation``.
 
+Validates the cross-sectional regression step (Procedures 2.1 and 3.1,
+Section 4.12) of the Lee-Wooldridge Difference-in-Differences framework.
+
 References
 ----------
-Lee, S. J. & Wooldridge, J. M. (2023). Table 3 (smoking data benchmarks).
-Lee, S. J. & Wooldridge, J. M. (2025). Procedure 2.1, Section 4.12.
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
 """
 
 import numpy as np

@@ -1,18 +1,22 @@
 """
-Unit Tests for Staggered Data Transformations
+Unit tests for staggered data transformations.
 
-Tests for transform_staggered_demean() and transform_staggered_detrend()
-based on Story E1-S1 acceptance criteria.
+Validates ``transform_staggered_demean()`` and ``transform_staggered_detrend()``
+for cohort-specific rolling transformations in staggered adoption designs.
+
+Validates Section 4 (Procedures 2.1 and 3.1, cohort-specific transformations)
+of the Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import warnings
 import pytest
 import numpy as np
 import pandas as pd
-
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from lwdid.staggered.transformations import (
     transform_staggered_demean,
@@ -680,7 +684,3 @@ class TestHelperFunctions:
         
         periods = get_valid_periods_for_cohort(4, 6)
         assert periods == [4, 5, 6]
-
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])

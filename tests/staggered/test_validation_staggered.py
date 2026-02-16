@@ -1,8 +1,17 @@
 """
 Tests for staggered DiD data validation functions.
 
-Story E2-S3: Data Validation Extension
-Tests is_never_treated() and validate_staggered_data() functions.
+Validates ``is_never_treated()`` and ``validate_staggered_data()`` for
+correct enforcement of panel structure requirements in staggered adoption
+designs.
+
+Validates the input validation layer (Section 4, data requirements) of the
+Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import numpy as np

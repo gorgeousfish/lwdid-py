@@ -1,15 +1,18 @@
 """
-E4-S2: Event Study Plot Tests
+Tests for event study plot generation in staggered DiD settings.
 
-Tests for plot_event_study() functionality in staggered DiD settings.
+Validates ``plot_event_study()`` functionality including figure creation,
+axis labelling, reference period handling, aggregation methods (mean vs
+weighted), output format export (PNG, PDF), pre-treatment filtering, and
+error handling for non-staggered results.
 
-Test coverage:
-- Basic functionality: returns (fig, ax), labels, reference period
-- Aggregation methods: mean vs weighted
-- Output formats: PNG, PDF, custom figsize
-- Pre-treatment filtering
-- Error handling: non-staggered results, empty data
-- Castle Law end-to-end tests
+Validates the event study visualization of cohort-period estimates from
+the Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import os
@@ -17,9 +20,6 @@ import tempfile
 import pytest
 import numpy as np
 import pandas as pd
-
-import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from lwdid import lwdid, LWDIDResults
 
@@ -890,11 +890,3 @@ class TestEventStudyVisualQuality:
         
         import matplotlib.pyplot as plt
         plt.close(fig)
-
-
-# =============================================================================
-# Main Execution
-# =============================================================================
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '--tb=short'])

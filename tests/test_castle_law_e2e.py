@@ -169,8 +169,6 @@ class TestCastleDemean:
         expected_att = 0.092
         tolerance = 0.03
         
-        print(f"Demean τ_ω = {result.att_overall:.4f} (expected ≈ {expected_att})")
-        
         assert abs(result.att_overall - expected_att) < tolerance, \
             f"Overall effect {result.att_overall:.4f} differs from expected {expected_att} by more than {tolerance}"
     
@@ -199,9 +197,6 @@ class TestCastleDemean:
         # Check cohort effects are computed for each cohort
         att_cohort_df = result.att_by_cohort
         cohorts_with_effects = att_cohort_df['cohort'].tolist()
-        
-        print(f"Cohort effects computed for: {cohorts_with_effects}")
-        print(att_cohort_df[['cohort', 'att', 'se']].to_string(index=False))
     
     @pytest.mark.integration
     def test_demean_cohort_time_effects(self, castle_data):
@@ -224,10 +219,7 @@ class TestCastleDemean:
         # Check we have (g,r) effects
         assert result.att_by_cohort_time is not None
         
-        # Print sample of effects
         att_gr_df = result.att_by_cohort_time
-        print(f"Total (g,r) effects: {len(att_gr_df)}")
-        print(att_gr_df.head(10)[['cohort', 'period', 'event_time', 'att', 'se']].to_string(index=False))
 
 
 # =============================================================================
@@ -268,8 +260,6 @@ class TestCastleDetrend:
         # Check overall effect is approximately 0.067
         expected_att = 0.067
         tolerance = 0.03
-        
-        print(f"Detrend τ_ω = {result.att_overall:.4f} (expected ≈ {expected_att})")
         
         assert abs(result.att_overall - expected_att) < tolerance, \
             f"Overall effect {result.att_overall:.4f} differs from expected {expected_att} by more than {tolerance}"
@@ -325,11 +315,6 @@ class TestCohortWeights:
             2008: 2/21,
             2009: 1/21
         }
-        
-        print("Cohort weights:")
-        for g, w in sorted(result.cohort_weights.items()):
-            expected = expected_weights.get(g, 0)
-            print(f"  {g}: {w:.4f} (expected {expected:.4f})")
 
 
 # =============================================================================
@@ -387,7 +372,3 @@ class TestControlGroupVerification:
         # Control group should have been switched
         assert result.control_group == 'not_yet_treated'
         assert result.control_group_used == 'never_treated'
-
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '-s'])

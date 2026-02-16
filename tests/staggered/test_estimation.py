@@ -1,13 +1,19 @@
 """
-Tests for staggered estimation module (E1-S3).
+Tests for the staggered (g,r)-specific effect estimation module.
 
-Tests cover:
-- Basic (g,r) effect estimation
-- Sample construction logic
-- Control group exclusion
-- Standard error types
-- Edge cases
-- Castle Law end-to-end test
+Validates basic (g,r) effect estimation, sample construction logic,
+control group exclusion, standard error types, edge cases, and the
+Castle Law end-to-end pipeline.
+
+Validates Section 4 (cohort-period estimation) of the Lee-Wooldridge
+Difference-in-Differences framework for staggered adoption designs.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
 """
 
 import pytest
@@ -372,6 +378,8 @@ class TestUtilityFunctions:
 # Castle Law End-to-End Test
 # ============================================================================
 
+@pytest.mark.integration
+@pytest.mark.stata_alignment
 class TestCastleLawEndToEnd:
     """End-to-end test using Castle Law data."""
     
@@ -444,11 +452,3 @@ class TestCastleLawEndToEnd:
         assert len(results) <= expected_max
         assert len(results) >= 15, \
             f"Expected at least 15 (g,r) pairs, got {len(results)}"
-
-
-# ============================================================================
-# Run Tests
-# ============================================================================
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])

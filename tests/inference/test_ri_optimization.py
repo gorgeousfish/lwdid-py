@@ -1,8 +1,16 @@
 """
-Randomization Inference 优化测试。
+Randomization inference optimization tests.
 
-测试 Task 6（无控制变量直接计算）和 Task 7（批量向量化）的数值正确性。
-确保优化后的快速路径与参考数据完全一致。
+Validates the numerical correctness of the no-controls direct computation
+(Task 6) and the batch vectorization path (Task 7). Ensures that the
+optimized fast paths produce results identical to the reference data.
+
+References
+----------
+Lee, S. J. & Wooldridge, J. M. (2023). "Simple Difference-in-Differences
+    Estimation in Fixed Effects Models." SSRN 5325686.
+Lee, S. J. & Wooldridge, J. M. (2025). "A Simple Transformation Approach
+    to DiD Estimation for Panel Data." SSRN 4516518.
 """
 
 import json
@@ -22,7 +30,7 @@ from hypothesis import given, settings, strategies as st
 # ---------------------------------------------------------------------------
 
 def _generate_ri_test_data(N=50, seed=42, with_controls=False):
-    """与参考数据生成脚本完全相同的数据生成逻辑。"""
+    """Generate test data using the same logic as the reference data script."""
     rng = np.random.default_rng(seed)
     d = rng.binomial(1, 0.4, N).astype(int)
     if d.sum() < 2:
@@ -47,7 +55,7 @@ def _generate_ri_test_data(N=50, seed=42, with_controls=False):
 
 @pytest.fixture
 def reference_data():
-    """加载 RI 参考数据。"""
+    """Load RI reference data."""
     ref_path = os.path.join(
         os.path.dirname(__file__), 'reference_data', 'ri_reference.json'
     )
@@ -57,25 +65,25 @@ def reference_data():
 
 @pytest.fixture
 def data_no_controls():
-    """无控制变量测试数据。"""
+    """Test data without control variables."""
     return _generate_ri_test_data(N=50, seed=42, with_controls=False)
 
 
 @pytest.fixture
 def data_with_controls():
-    """有控制变量测试数据。"""
+    """Test data with control variables."""
     return _generate_ri_test_data(N=50, seed=42, with_controls=True)
 
 
 # ===========================================================================
-# Task 6: RI 无控制变量直接计算 数值回归测试
+# Task 6: RI no-controls direct computation — numerical regression tests
 # ===========================================================================
 
 class TestRINoControlsRegression:
-    """Task 6: 无控制变量快速路径与参考数据一致。"""
+    """Task 6: No-controls fast path matches reference data."""
 
     def test_permutation_atts_match_reference(self, reference_data, data_no_controls):
-        """permutation 模式 ATT 数组与参考值一致（浮点精度内）。"""
+        """Permutation mode ATT array matches reference values (within floating-point precision)."""
         from lwdid.randomization import randomization_inference
 
         result = randomization_inference(
@@ -86,11 +94,12 @@ class TestRINoControlsRegression:
         )
 
         ref_atts = np.array(reference_data['permutation_no_controls']['atts'])
-        # 直接计算与 OLS 数学等价，但浮点路径不同，容差 1e-12
+        # Direct computation is mathematically equivalent to OLS, but follows
+        # a different floating-point path; tolerance set to 1e-12
         np.testing.assert_allclose(result['atts'], ref_atts, rtol=0, atol=1e-12)
 
     def test_permutation_pvalue_matches_reference(self, reference_data, data_no_controls):
-        """permutation 模式 p-value 完全一致。"""
+        """Permutation mode p-value matches reference exactly."""
         from lwdid.randomization import randomization_inference
 
         result = randomization_inference(
@@ -105,7 +114,7 @@ class TestRINoControlsRegression:
         assert result['ri_failed'] == reference_data['permutation_no_controls']['ri_failed']
 
     def test_bootstrap_atts_match_reference(self, reference_data, data_no_controls):
-        """bootstrap 模式 ATT 数组与参考值一致（浮点精度内）。"""
+        """Bootstrap mode ATT array matches reference values (within floating-point precision)."""
         from lwdid.randomization import randomization_inference
 
         with warnings.catch_warnings():
@@ -120,10 +129,10 @@ class TestRINoControlsRegression:
         ref_atts = np.array(reference_data['bootstrap_no_controls']['atts'])
         new_atts = result['atts']
 
-        # 比较有效值（NaN 位置也必须一致）
+        # Compare valid values (NaN positions must also match)
         ref_nan = np.isnan(ref_atts)
         new_nan = np.isnan(new_atts)
-        np.testing.assert_array_equal(ref_nan, new_nan, err_msg="NaN 位置不一致")
+        np.testing.assert_array_equal(ref_nan, new_nan, err_msg="NaN positions do not match")
 
         valid = ~ref_nan
         np.testing.assert_allclose(
@@ -131,7 +140,7 @@ class TestRINoControlsRegression:
         )
 
     def test_bootstrap_pvalue_matches_reference(self, reference_data, data_no_controls):
-        """bootstrap 模式 p-value 完全一致。"""
+        """Bootstrap mode p-value matches reference exactly."""
         from lwdid.randomization import randomization_inference
 
         with warnings.catch_warnings():
@@ -149,7 +158,7 @@ class TestRINoControlsRegression:
 
 
 # ===========================================================================
-# Task 6: Property-Based Test — ATT 直接计算与 OLS 等价性
+# Task 6: Property-Based Test — direct ATT vs. OLS equivalence
 # ===========================================================================
 
 class TestDirectATTEqualsOLS:
@@ -160,10 +169,10 @@ class TestDirectATTEqualsOLS:
     @pytest.mark.parametrize("n1_frac", [0.1, 0.3, 0.5, 0.7, 0.9])
     def test_direct_att_equals_ols_att(self, n, n1_frac, seed):
         """
-        对于任意 (n, n1_frac, seed)，
-        mean(y|d=1) - mean(y|d=0) == OLS(y ~ 1 + d).params[1]
+        For any (n, n1_frac, seed),
+        mean(y|d=1) - mean(y|d=0) == OLS(y ~ 1 + d).params[1].
 
-        验证 AC-4.1: 快速路径数学等价性
+        Validates AC-4.1: fast-path mathematical equivalence.
         """
         rng = np.random.default_rng(seed)
         n1 = max(1, int(n * n1_frac))
@@ -175,7 +184,7 @@ class TestDirectATTEqualsOLS:
         d = np.array([1] * n1 + [0] * n0)
         y = rng.normal(size=n)
 
-        # 直接计算
+        # Direct computation
         att_direct = y[d == 1].mean() - y[d == 0].mean()
 
         # OLS
@@ -235,16 +244,16 @@ class TestDirectATTEqualsOLS_PBT:
 
 
 # ===========================================================================
-# Task 6: 有控制变量路径不受影响
+# Task 6: With-controls path remains unaffected
 # ===========================================================================
 
 class TestRIWithControlsUnchanged:
-    """有控制变量场景仍走 OLS 路径，结果与参考数据完全一致。"""
+    """With-controls scenario still follows the OLS path; results match reference data exactly."""
 
     def test_permutation_with_controls_matches_reference(
         self, reference_data, data_with_controls
     ):
-        """有控制变量 permutation 模式匹配参考值。"""
+        """Permutation mode with controls matches reference values."""
         from lwdid.randomization import randomization_inference
 
         result = randomization_inference(
@@ -261,7 +270,7 @@ class TestRIWithControlsUnchanged:
     def test_bootstrap_with_controls_matches_reference(
         self, reference_data, data_with_controls
     ):
-        """有控制变量 bootstrap 模式匹配参考值。"""
+        """Bootstrap mode with controls matches reference values."""
         from lwdid.randomization import randomization_inference
 
         with warnings.catch_warnings():
@@ -286,14 +295,14 @@ class TestRIWithControlsUnchanged:
 
 
 # ===========================================================================
-# Task 6: 性能基准测试
+# Task 6: Performance benchmarks
 # ===========================================================================
 
 class TestRINoControlsPerformance:
-    """无控制变量快速路径性能测试。"""
+    """No-controls fast path performance tests."""
 
     def test_permutation_performance(self, data_no_controls):
-        """permutation 无控制变量: N=50, R=1000 应 < 1.0s（快速路径）。"""
+        """Permutation without controls: N=50, R=1000 should complete in < 1.0s (fast path)."""
         from lwdid.randomization import randomization_inference
 
         start = time.perf_counter()
@@ -305,11 +314,10 @@ class TestRINoControlsPerformance:
         )
         elapsed = time.perf_counter() - start
 
-        print(f"  permutation N=50 R=1000: {elapsed:.3f}s")
         assert elapsed < 1.0, f"RI permutation took {elapsed:.3f}s, target < 1.0s"
 
     def test_bootstrap_performance(self, data_no_controls):
-        """bootstrap 无控制变量: N=50, R=1000 应 < 0.5s（快速路径）。"""
+        """Bootstrap without controls: N=50, R=1000 should complete in < 0.5s (fast path)."""
         from lwdid.randomization import randomization_inference
 
         with warnings.catch_warnings():
@@ -323,26 +331,25 @@ class TestRINoControlsPerformance:
             )
             elapsed = time.perf_counter() - start
 
-        print(f"  bootstrap N=50 R=1000: {elapsed:.3f}s")
         assert elapsed < 0.5, f"RI bootstrap took {elapsed:.3f}s, target < 0.5s"
 
 
 # ===========================================================================
-# Task 7: RI 批量向量化测试
+# Task 7: RI batch vectorization tests
 # ===========================================================================
 
 class TestRIBatchEqualsLoop:
-    """Task 7: 批量向量化路径与循环路径数值等价。
+    """Task 7: Batch vectorized path is numerically equivalent to the loop path.
 
-    批量路径消除 Python for 循环，一次性计算所有 ATT。
-    循环路径通过 _force_loop=True 强制使用逐次计算。
-    两者应产生相同的 ATT 数组（浮点精度内）。
+    The batch path eliminates the Python for-loop and computes all ATTs at once.
+    The loop path is forced via _force_loop=True for per-iteration computation.
+    Both paths should produce identical ATT arrays (within floating-point precision).
     """
 
     @pytest.mark.parametrize("ri_method", ["permutation", "bootstrap"])
     @pytest.mark.parametrize("seed", [0, 42, 123, 999])
     def test_batch_equals_loop_atts(self, data_no_controls, ri_method, seed):
-        """批量路径与循环路径 ATT 数组逐元素一致。"""
+        """Batch and loop paths produce element-wise identical ATT arrays."""
         from lwdid.randomization import randomization_inference
 
         with warnings.catch_warnings():
@@ -367,24 +374,24 @@ class TestRIBatchEqualsLoop:
         atts_batch = result_batch['atts']
         atts_loop = result_loop['atts']
 
-        # NaN 位置必须一致
+        # NaN positions must match
         nan_batch = np.isnan(atts_batch)
         nan_loop = np.isnan(atts_loop)
         np.testing.assert_array_equal(nan_batch, nan_loop,
-                                      err_msg="NaN 位置不一致")
+                                      err_msg="NaN positions do not match")
 
-        # 有效值在浮点精度内一致
+        # Valid values must agree within floating-point precision
         valid = ~nan_batch
         if valid.any():
             np.testing.assert_allclose(
                 atts_batch[valid], atts_loop[valid],
                 rtol=0, atol=1e-14,
-                err_msg=f"ATT 值不一致 (method={ri_method}, seed={seed})"
+                err_msg=f"ATT values do not match (method={ri_method}, seed={seed})"
             )
 
     @pytest.mark.parametrize("ri_method", ["permutation", "bootstrap"])
     def test_batch_equals_loop_pvalue(self, data_no_controls, ri_method):
-        """批量路径与循环路径 p-value 完全一致。"""
+        """Batch and loop paths produce identical p-values."""
         from lwdid.randomization import randomization_inference
 
         with warnings.catch_warnings():
@@ -410,7 +417,7 @@ class TestRIBatchEqualsLoop:
 
     @pytest.mark.parametrize("N", [10, 30, 100, 200])
     def test_batch_equals_loop_various_sizes(self, N):
-        """不同样本量下批量与循环等价。"""
+        """Batch and loop paths are equivalent across different sample sizes."""
         from lwdid.randomization import randomization_inference
 
         data = _generate_ri_test_data(N=N, seed=77)
@@ -439,26 +446,26 @@ class TestRIBatchEqualsLoop:
 
 
 class TestRIMemoryFallback:
-    """Task 7: 内存超限时正确回退到循环模式。"""
+    """Task 7: Correct fallback to loop mode when memory limit is exceeded."""
 
     def test_large_rireps_uses_loop(self):
-        """当 rireps * N > MAX_BATCH_ELEMENTS 时回退到循环模式。
+        """Falls back to loop mode when rireps * N > MAX_BATCH_ELEMENTS.
 
-        通过 monkey-patch MAX_BATCH_ELEMENTS 为极小值来触发回退，
-        然后验证结果与 _force_loop=True 一致。
+        Validates that results from the batch path and the forced loop path
+        are identical, confirming correct fallback behavior.
         """
         from lwdid import randomization as ri_module
         from lwdid.randomization import randomization_inference
 
         data = _generate_ri_test_data(N=50, seed=42)
 
-        # 保存原始阈值
+        # Save original threshold
         original_threshold = 50_000_000
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            # 正常批量路径
+            # Normal batch path
             result_batch = randomization_inference(
                 firstpost_df=data,
                 y_col='ydot_postavg', d_col='d_', ivar='ivar',
@@ -466,7 +473,7 @@ class TestRIMemoryFallback:
                 controls=None, _return_atts=True, _force_loop=False,
             )
 
-            # 强制循环路径
+            # Forced loop path
             result_loop = randomization_inference(
                 firstpost_df=data,
                 y_col='ydot_postavg', d_col='d_', ivar='ivar',
@@ -474,14 +481,14 @@ class TestRIMemoryFallback:
                 controls=None, _return_atts=True, _force_loop=True,
             )
 
-        # 两者应一致（因为 N=50, R=100 远小于阈值，都走批量路径或循环路径）
+        # Both should agree (N=50, R=100 is well below the threshold)
         np.testing.assert_allclose(
             result_batch['atts'], result_loop['atts'],
             rtol=0, atol=1e-14,
         )
 
     def test_force_loop_always_uses_loop(self):
-        """_force_loop=True 始终使用循环模式，不受阈值影响。"""
+        """_force_loop=True always uses loop mode regardless of threshold."""
         from lwdid.randomization import randomization_inference
 
         data = _generate_ri_test_data(N=10, seed=42)
@@ -489,7 +496,7 @@ class TestRIMemoryFallback:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            # 即使 N 很小（远低于阈值），_force_loop=True 也走循环
+            # Even with small N (well below threshold), _force_loop=True uses loop
             result = randomization_inference(
                 firstpost_df=data,
                 y_col='ydot_postavg', d_col='d_', ivar='ivar',
@@ -497,17 +504,18 @@ class TestRIMemoryFallback:
                 controls=None, _return_atts=True, _force_loop=True,
             )
 
-        # 应正常返回结果
+        # Should return results normally
         assert len(result['atts']) == 100
         assert result['ri_valid'] == 100
         assert result['ri_failed'] == 0
 
 
+@pytest.mark.performance
 class TestRIBatchPerformance:
-    """Task 7: 批量向量化性能基准测试。"""
+    """Task 7: Batch vectorization performance benchmarks."""
 
     def test_permutation_batch_performance(self):
-        """permutation 批量模式: N=50, R=1000 应 < 0.2s。"""
+        """Permutation batch mode: N=50, R=1000 should complete in < 0.2s."""
         from lwdid.randomization import randomization_inference
 
         data = _generate_ri_test_data(N=50, seed=42)
@@ -521,11 +529,10 @@ class TestRIBatchPerformance:
         )
         elapsed = time.perf_counter() - start
 
-        print(f"  permutation batch N=50 R=1000: {elapsed:.4f}s")
         assert elapsed < 0.2, f"RI batch took {elapsed:.4f}s, target < 0.2s"
 
     def test_bootstrap_batch_performance(self):
-        """bootstrap 批量模式: N=50, R=1000 应 < 0.2s。"""
+        """Bootstrap batch mode: N=50, R=1000 should complete in < 0.2s."""
         from lwdid.randomization import randomization_inference
 
         data = _generate_ri_test_data(N=50, seed=42)
@@ -541,7 +548,6 @@ class TestRIBatchPerformance:
             )
             elapsed = time.perf_counter() - start
 
-        print(f"  bootstrap batch N=50 R=1000: {elapsed:.4f}s")
         assert elapsed < 0.2, f"RI batch took {elapsed:.4f}s, target < 0.2s"
 
     def test_batch_faster_than_loop(self):
@@ -590,26 +596,27 @@ class TestRIBatchPerformance:
         t_loop = time.perf_counter() - start
 
         speedup = t_loop / t_batch if t_batch > 0 else float('inf')
-        print(f"  batch: {t_batch:.4f}s, loop: {t_loop:.4f}s, speedup: {speedup:.1f}x")
         # Relaxed from 3.0x to 2.0x to accommodate CI/machine variability;
         # the primary correctness guarantee is in test_batch_equals_loop_atts.
         assert speedup >= 2.0, f"Speedup {speedup:.1f}x < 2x target"
 
 
 # ===========================================================================
-# Task 8: RI 有控制变量高效 OLS 测试
+# Task 8: RI with-controls efficient OLS tests
 # ===========================================================================
 
 class TestRIWithControlsOptimized:
-    """Task 8: np.linalg.lstsq 替代 sm.OLS 的数值正确性。
+    """Task 8: Numerical correctness of np.linalg.lstsq replacing sm.OLS.
 
-    验证预计算设计矩阵模板 + lstsq 与参考数据（旧 sm.OLS 路径）完全一致。
+    Validates that the precomputed design matrix template combined with lstsq
+    produces results identical to the reference data (generated via the original
+    sm.OLS path).
     """
 
     def test_permutation_with_controls_atts_match(
         self, reference_data, data_with_controls
     ):
-        """有控制变量 permutation ATT 数组与参考值一致。"""
+        """With-controls permutation ATT array matches reference values."""
         from lwdid.randomization import randomization_inference
 
         result = randomization_inference(
@@ -620,13 +627,13 @@ class TestRIWithControlsOptimized:
         )
 
         ref_atts = np.array(reference_data['permutation_with_controls']['atts'])
-        # lstsq 与 sm.OLS 使用不同的数值路径（SVD vs QR），容差 1e-10
+        # lstsq and sm.OLS use different numerical paths (SVD vs QR); tolerance 1e-10
         np.testing.assert_allclose(result['atts'], ref_atts, rtol=1e-10)
 
     def test_bootstrap_with_controls_atts_match(
         self, reference_data, data_with_controls
     ):
-        """有控制变量 bootstrap ATT 数组与参考值一致。"""
+        """With-controls bootstrap ATT array matches reference values."""
         from lwdid.randomization import randomization_inference
 
         with warnings.catch_warnings():
@@ -641,7 +648,7 @@ class TestRIWithControlsOptimized:
         ref_atts = np.array(reference_data['bootstrap_with_controls']['atts'])
         new_atts = result['atts']
 
-        # NaN 位置一致
+        # NaN positions must match
         ref_nan = np.isnan(ref_atts)
         new_nan = np.isnan(new_atts)
         np.testing.assert_array_equal(ref_nan, new_nan)
@@ -651,15 +658,15 @@ class TestRIWithControlsOptimized:
 
     @pytest.mark.parametrize("seed", [0, 42, 123, 999])
     def test_lstsq_equals_statsmodels_ols(self, seed):
-        """Property: np.linalg.lstsq 与 sm.OLS 对于相同设计矩阵产生相同系数。
+        """Property: np.linalg.lstsq and sm.OLS produce identical coefficients for the same design matrix.
 
-        验证 AC-6.1: ATT 估计完全一致（rtol < 1e-10）
+        Validates AC-6.1: ATT estimates are identical (rtol < 1e-10).
         """
         rng = np.random.default_rng(seed)
         N = 50
         K = 3
 
-        # 生成随机数据
+        # Generate random data
         d = rng.binomial(1, 0.4, N).astype(float)
         if d.sum() < 2:
             d[:2] = 1
@@ -670,7 +677,7 @@ class TestRIWithControlsOptimized:
         X_controls = rng.normal(size=(N, K))
         X_centered = X_controls - X_controls[d == 1].mean(axis=0)
 
-        # 构建设计矩阵: [intercept, d, controls, d*controls_centered]
+        # Build design matrix: [intercept, d, controls, d*controls_centered]
         X = np.column_stack([
             np.ones(N),
             d,
@@ -689,7 +696,7 @@ class TestRIWithControlsOptimized:
 
     @pytest.mark.parametrize("K", [1, 2, 3, 5])
     def test_various_control_counts(self, K):
-        """不同控制变量数量下 lstsq 路径正确。"""
+        """lstsq path is correct across different numbers of control variables."""
         from lwdid.randomization import randomization_inference
 
         rng = np.random.default_rng(42)
@@ -719,12 +726,13 @@ class TestRIWithControlsOptimized:
             controls=ctrl_names, _return_atts=True,
         )
 
-        # 基本合理性检查
+        # Basic sanity checks
         assert result['ri_valid'] == 100
         assert result['ri_failed'] == 0
         atts = result['atts']
         assert not np.any(np.isnan(atts))
-        # ATT 应在合理范围内（真实效应 1.5，排列分布应以 0 为中心）
+        # ATTs should be in a reasonable range (true effect is 1.5; the
+        # permutation distribution should be centered around 0)
         assert np.abs(atts.mean()) < 1.0
 
 
@@ -908,7 +916,6 @@ class TestRIWithControlsPerformance:
         )
         elapsed = time.perf_counter() - start
 
-        print(f"  permutation with controls N=50 K=2 R=1000: {elapsed:.3f}s")
         assert elapsed < 1.0, f"RI with controls took {elapsed:.3f}s, target < 1.0s"
 
     def test_bootstrap_with_controls_k2_performance(self):
@@ -928,7 +935,6 @@ class TestRIWithControlsPerformance:
             )
             elapsed = time.perf_counter() - start
 
-        print(f"  bootstrap with controls N=50 K=2 R=1000: {elapsed:.3f}s")
         assert elapsed < 1.0, f"RI with controls took {elapsed:.3f}s, target < 1.0s"
 
     @pytest.mark.performance
@@ -953,7 +959,6 @@ class TestRIWithControlsPerformance:
         )
         elapsed = time.perf_counter() - start
 
-        print(f"  permutation with controls N=50 K=3 R=1000: {elapsed:.3f}s")
         assert elapsed < 0.5, f"RI with controls took {elapsed:.3f}s, target < 0.5s"
 
     @pytest.mark.performance
@@ -979,7 +984,6 @@ class TestRIWithControlsPerformance:
             )
             elapsed = time.perf_counter() - start
 
-        print(f"  bootstrap with controls N=50 K=3 R=1000: {elapsed:.3f}s")
         assert elapsed < 1.0, f"RI with controls took {elapsed:.3f}s, target < 1.0s"
 
     @pytest.mark.performance
@@ -1048,8 +1052,6 @@ class TestRIWithControlsPerformance:
         t_sm = time.perf_counter() - start
 
         speedup = t_sm / t_lstsq if t_lstsq > 0 else float('inf')
-        print(f"  lstsq: {t_lstsq:.3f}s, statsmodels: {t_sm:.3f}s, "
-              f"speedup: {speedup:.1f}x (R={reps})")
         # The spec targets >= 20x for the full end-to-end function call.
         # The raw loop speedup varies by machine and warm-up state; we use
         # a conservative 2x threshold here. The actual performance target

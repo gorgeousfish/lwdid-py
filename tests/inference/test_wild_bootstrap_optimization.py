@@ -16,6 +16,18 @@ Acceptance criteria validated:
   - AC-1.4: CI identical (rtol < 1e-10)
   - AC-1.7: Both impose_null modes correct
   - AC-3.1: No pandas operations inside the bootstrap loop
+
+Validates the Wild Cluster Bootstrap inference procedure of the
+Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
+Cameron, A. C. & Miller, D. L. (2015). A Practitioner's Guide to
+    Cluster-Robust Inference. Journal of Human Resources, 50(2), 317--372.
 """
 
 import json
@@ -125,6 +137,7 @@ class TestTStatsBootstrapMatch:
 
     @pytest.mark.parametrize('scenario', SCENARIOS)
     def test_t_stats_match_reference(self, test_data, reference_data, scenario):
+        """Verify bootstrap t-statistics match pre-saved reference values element-wise."""
         result, ref = _run_bootstrap(test_data, reference_data, scenario)
         ref_t_stats = np.array(ref['t_stats_bootstrap'])
         np.testing.assert_allclose(
@@ -151,6 +164,7 @@ class TestPValueMatch:
 
     @pytest.mark.parametrize('scenario', SCENARIOS)
     def test_pvalue_matches_reference(self, test_data, reference_data, scenario):
+        """Verify p-value matches reference within 4/B boundary tolerance."""
         result, ref = _run_bootstrap(test_data, reference_data, scenario)
         B = len(ref['t_stats_bootstrap'])
         # Conservative tolerance: 4/B accounts for boundary samples in both modes
@@ -171,6 +185,7 @@ class TestCIMatch:
 
     @pytest.mark.parametrize('scenario', SCENARIOS)
     def test_ci_matches_reference(self, test_data, reference_data, scenario):
+        """Verify confidence interval bounds match reference within rtol=1e-10."""
         result, ref = _run_bootstrap(test_data, reference_data, scenario)
         np.testing.assert_allclose(
             result.ci_lower, ref['ci_lower'], rtol=1e-10,
@@ -191,6 +206,7 @@ class TestATTAndSEMatch:
 
     @pytest.mark.parametrize('scenario', SCENARIOS)
     def test_att_matches_reference(self, test_data, reference_data, scenario):
+        """Verify ATT point estimate matches reference within rtol=1e-10."""
         result, ref = _run_bootstrap(test_data, reference_data, scenario)
         np.testing.assert_allclose(
             result.att, ref['att'], rtol=1e-10,
@@ -199,6 +215,7 @@ class TestATTAndSEMatch:
 
     @pytest.mark.parametrize('scenario', SCENARIOS)
     def test_se_bootstrap_matches_reference(self, test_data, reference_data, scenario):
+        """Verify bootstrap standard error matches reference within rtol=1e-10."""
         result, ref = _run_bootstrap(test_data, reference_data, scenario)
         np.testing.assert_allclose(
             result.se_bootstrap, ref['se_bootstrap'], rtol=1e-10,
@@ -207,6 +224,7 @@ class TestATTAndSEMatch:
 
     @pytest.mark.parametrize('scenario', SCENARIOS)
     def test_t_stat_original_matches_reference(self, test_data, reference_data, scenario):
+        """Verify original t-statistic matches reference within rtol=1e-10."""
         result, ref = _run_bootstrap(test_data, reference_data, scenario)
         np.testing.assert_allclose(
             result.t_stat_original, ref['t_stat_original'], rtol=1e-10,
@@ -222,6 +240,7 @@ class TestImposeNullModes:
     """AC-1.7: Both impose_null=True and impose_null=False produce valid results."""
 
     def test_impose_null_true_produces_valid_results(self, test_data, reference_data):
+        """Verify impose_null=True produces finite p-value and valid CI."""
         result, ref = _run_bootstrap(
             test_data, reference_data, 'impose_null_true_rademacher'
         )
@@ -231,6 +250,7 @@ class TestImposeNullModes:
         assert result.n_clusters == ref['n_clusters']
 
     def test_impose_null_false_produces_valid_results(self, test_data, reference_data):
+        """Verify impose_null=False produces finite p-value and valid CI."""
         result, ref = _run_bootstrap(
             test_data, reference_data, 'impose_null_false_rademacher'
         )
@@ -249,6 +269,7 @@ class TestNoPandasInLoop:
     """AC-3.1: Verify precompute dict contains only numpy arrays, not DataFrames."""
 
     def test_precomp_contains_numpy_arrays(self, test_data):
+        """Verify precomputed matrices are numpy arrays, not pandas DataFrames."""
         precomp = _precompute_bootstrap_matrices(
             test_data, 'y_transformed', 'd', 'cluster', None
         )
@@ -384,7 +405,7 @@ class TestBatchEqualsLoop:
         )
 
     def test_full_enumeration_batch_equals_loop(self, data):
-        """Full enumeration mode: batch and loop must agree."""
+        """Full enumeration mode: batch and loop must produce identical t-statistics."""
         # Use small G for full enumeration
         small_data = _generate_test_data(N=40, G=8, seed=99)
 

@@ -2,24 +2,30 @@
 Edge case and exception handling tests for lwdid bug fixes.
 
 This module tests boundary conditions and error handling to ensure
-the bug fixes properly handle edge cases.
+the implementation gracefully handles degenerate panel structures,
+minimal sample sizes, and unusual covariate configurations.
+
+Validates robustness of the estimation pipeline described in Procedures
+2.1 and 3.1 of the Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
+Lee, S. & Wooldridge, J. M. (2026). Simple Approaches to Inference with
+    DiD Estimators with Small Cross-Sectional Sample Sizes. SSRN 5325686.
 """
 
 import warnings
 import pytest
 import numpy as np
 import pandas as pd
-import sys
-import os
-
-# Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
 from lwdid import lwdid
 from lwdid.validation import validate_and_prepare_data
 from lwdid.exceptions import (
     InvalidParameterError,
     InsufficientDataError,
+    LWDIDError,
     RandomizationError,
 )
 
@@ -362,14 +368,6 @@ class TestNumericalEdgeCases:
                 )
                 # If it runs, ATT should be 0 for constant outcome
                 assert result.att == 0 or np.isnan(result.att)
-            except Exception:
-                # Some edge cases may raise exceptions, which is acceptable
+            except (LWDIDError, ValueError, RuntimeError):
+                # Edge cases may raise domain-specific or numerical exceptions
                 pass
-
-
-# =============================================================================
-# Run tests
-# =============================================================================
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '--tb=short'])

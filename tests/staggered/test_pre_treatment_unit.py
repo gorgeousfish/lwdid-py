@@ -1,18 +1,23 @@
 """
 Unit tests for pre-treatment period dynamics functionality.
 
-This module contains comprehensive unit tests for:
-- Pre-treatment demeaning transformation (formula D.1)
-- Pre-treatment detrending transformation (formula D.2)
-- Pre-treatment control group selection
-- Pre-treatment effect estimation
-- Parallel trends testing
+This module contains comprehensive unit tests for pre-treatment demeaning
+(formula D.1) and detrending (formula D.2) transformations, control group
+selection, effect estimation, and parallel trends testing.
 
 Tests verify correctness properties including:
 - Anchor point convention (t = g-1 → 0)
 - Rolling window computations
 - Boundary condition handling
 - Numerical stability
+
+Validates the pre-treatment diagnostic procedures (Appendix D) of the
+Lee-Wooldridge Difference-in-Differences framework.
+
+References
+----------
+Lee, S. & Wooldridge, J. M. (2025). A Simple Transformation Approach to
+    Difference-in-Differences Estimation for Panel Data. SSRN 4516518.
 """
 
 import numpy as np
@@ -572,7 +577,3 @@ class TestNumericalStability:
             col = f'ydot_pre_g4_t{t}'
             val = result[(result['id'] == 1) & (result['time'] == t)][col].values[0]
             assert np.isclose(val, 0.0, atol=1e-10)
-
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
