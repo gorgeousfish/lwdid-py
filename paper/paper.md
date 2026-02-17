@@ -17,7 +17,7 @@ authors:
 affiliations:
   - name: City University of Macau, Macau SAR, China
     index: 1
-date: 11 February 2026
+date: 17 February 2026
 bibliography: paper.bib
 ---
 # Summary
