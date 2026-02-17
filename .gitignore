@@ -119,8 +119,14 @@ tests/staggered/womenwk_test.csv
 
 # Hypothesis (property-based testing cache)
 .hypothesis/
-# Paper source
-paper/
+# Paper - 忽略生成文件，保留源文件
+paper/*.pdf
+paper/*.crossref
+paper/jats/
+paper/参考文献bib.txt
+paper/build_paper.sh
+paper/paper_cn.md
+paper/paper_cn.pdf
 
 # Generated PDF
 README_zh.pdf
